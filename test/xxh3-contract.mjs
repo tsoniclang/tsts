@@ -145,6 +145,13 @@ const projectedBytes = Array.from(
 );
 assert.equal(projectedBytes.every((value) => value >= 0 && value <= 255), true);
 
+const wide = implementation.Uint128.$make(0x8000_0000_0000_0000n, 1n);
+assert.deepEqual(
+  Array.from({ length: 16 }, (_, index) => wide.Bytes().get(index)),
+  [128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+);
+assertSameDigest(implementation.Uint128.$copy(wide), wide, "wide-word copy");
+
 console.log(
   `xxh3: ${corpus.length} unique inputs; streaming, reset, and bytes verified`,
 );

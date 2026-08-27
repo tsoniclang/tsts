@@ -6,7 +6,7 @@ by the pinned GoToTS compiler.
 This repository owns only product assembly:
 
 - the exact TS-Go and GoToTS revisions;
-- the selected Go translation and executable TypeScript target profiles;
+- the selected Go build and translation profile;
 - certified product-specific implementations;
 - differential runtime and performance certification.
 
@@ -19,11 +19,13 @@ Bootstrap tools run from one isolated package graph containing exactly one
 TSTS package, so the checker, fact owners, target transformer, and AST encoder
 share node and symbol identity.
 
-`gotots.json` selects canonical Go translation. `typescript-target.json`
-selects target-owned executable lowering; its semantic digest is sealed into
-the generated target manifest so stale target output cannot be replayed.
-
 The compiler source and generated output are not hand-maintained here.
+
+The selected product uses GoToTS's one fixed synchronous serial execution
+contract. The TypeScript target performs pointer, scalar, and representation
+lowering only; it does not run a post-generation effect analysis or repair
+callable execution. Any provider-facing asynchronous contract and any reached
+operation that would require suspension fail before publication.
 
 ## Build
 

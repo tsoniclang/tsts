@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 5,
+  "execution": "synchronous",
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
-    "cooperativeEffects": "closed-direct"
+    "representationProjections": "closed-direct"
   }
 }

@@ -1,6 +1,6 @@
 import { New as newError } from "@gotots/gostdlib/errors.js";
 import { GoInterfaceValue } from "@gotots/runtime/interface-value.js";
-import type { Awaitable, bool, gostring, int } from "@gotots/runtime/scalars.js";
+import type { bool, gostring, int } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 
 import {
@@ -184,12 +184,12 @@ export class Event {
 }
 
 interface WatchOptions {
-  ignore: ((path: gostring) => Awaitable<bool>) | undefined;
+  ignore: ((path: gostring) => bool) | undefined;
   recursive: bool;
 }
 
 export interface WatchOption extends GoInterfaceValue {
-  $go$private$fswatch$applyWatchOption(options: WatchOptions): Awaitable<void>;
+  $go$private$fswatch$applyWatchOption(options: WatchOptions): void;
 }
 
 export function WatchOption$is(
@@ -202,7 +202,7 @@ class IgnoreOption extends ProductInterfaceValue implements WatchOption {
   readonly $go$methods = new Set<object>(WatchOption$contract);
   readonly goTypeName = "fswatch.ignoreOption";
 
-  constructor(private readonly ignore: (path: gostring) => Awaitable<bool>) {
+  constructor(private readonly ignore: (path: gostring) => bool) {
     super();
   }
 
@@ -221,7 +221,7 @@ class RecursiveOption extends ProductInterfaceValue implements WatchOption {
 }
 
 export function WithIgnore(
-  fn: ((path: gostring) => Awaitable<bool>) | undefined,
+  fn: ((path: gostring) => bool) | undefined,
 ): WatchOption | undefined {
   return fn === undefined ? undefined : new IgnoreOption(fn);
 }
@@ -233,14 +233,14 @@ export function WithRecursive(): WatchOption | undefined {
 export class WatchCallback {
   constructor(
     public readonly $value:
-      | ((events: RuntimeSlice<Event$Storage>, failure: GoInterface | undefined) => Awaitable<void>)
+      | ((events: RuntimeSlice<Event$Storage>, failure: GoInterface | undefined) => void)
       | undefined,
   ) {}
 }
 
 export interface Watch extends GoInterfaceValue {
-  Close(): Awaitable<GoInterface | undefined>;
-  $go$private$fswatch$unexported(): Awaitable<void>;
+  Close(): GoInterface | undefined;
+  $go$private$fswatch$unexported(): void;
 }
 
 export function Watch$is(value: GoInterfaceValue | undefined): value is Watch {
@@ -275,19 +275,19 @@ class WatchHandle extends ProductInterfaceValue implements Watch {
 }
 
 export interface Watcher extends GoInterfaceValue {
-  Available(): Awaitable<bool>;
-  HasFastRecursiveBackend(): Awaitable<bool>;
-  Name(): Awaitable<gostring>;
+  Available(): bool;
+  HasFastRecursiveBackend(): bool;
+  Name(): gostring;
   WatchDirectory(
     dir: gostring,
     fn: WatchCallback,
     options: RuntimeSlice<WatchOption | undefined>,
-  ): Awaitable<[Watch | undefined, GoInterface | undefined]>;
+  ): [Watch | undefined, GoInterface | undefined];
   WatchFile(
     path: gostring,
     fn: WatchCallback,
-  ): Awaitable<[Watch | undefined, GoInterface | undefined]>;
-  $go$private$fswatch$unexported(): Awaitable<void>;
+  ): [Watch | undefined, GoInterface | undefined];
+  $go$private$fswatch$unexported(): void;
 }
 
 export function Watcher$is(
@@ -320,11 +320,11 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     return this.name;
   }
 
-  async WatchDirectory(
+  WatchDirectory(
     dir: gostring,
     fn: WatchCallback,
     selected: RuntimeSlice<WatchOption | undefined>,
-  ): Promise<[Watch | undefined, GoInterface | undefined]> {
+  ): [Watch | undefined, GoInterface | undefined] {
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
@@ -347,15 +347,15 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
 
     const options: WatchOptions = { ignore: undefined, recursive: false };
     for (let index = 0; index < selected.length; index++) {
-      await selected.get(index)?.$go$private$fswatch$applyWatchOption(options);
+      selected.get(index)?.$go$private$fswatch$applyWatchOption(options);
     }
     return this.watchPath(dir, undefined, fn, options);
   }
 
-  async WatchFile(
+  WatchFile(
     path: gostring,
     fn: WatchCallback,
-  ): Promise<[Watch | undefined, GoInterface | undefined]> {
+  ): [Watch | undefined, GoInterface | undefined] {
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
@@ -390,8 +390,6 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     const timer: { current: NodeTimer | undefined } = {
       current: undefined,
     };
-    let delivery = Promise.resolve();
-
     const flush = (): void => {
       timer.current = undefined;
       if (pending.size === 0 || fn.$value === undefined) {
@@ -401,9 +399,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
         Event.$storageOf(Event.$make(kind, path))
       );
       pending.clear();
-      delivery = delivery.then(async () => {
-        await fn.$value?.(RuntimeSlice.literal<Event$Storage>(events), undefined);
-      });
+      fn.$value(RuntimeSlice.literal<Event$Storage>(events), undefined);
     };
 
     let watcher: NodeFSWatcher;
@@ -416,30 +412,26 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
             return;
           }
           const path = nodePath.resolve(root, fileName);
-          delivery = delivery.then(async () => {
-            if (options.ignore !== undefined && await options.ignore(path)) {
-              return;
-            }
-            const kind = event === "rename" && !nodeFS.existsSync(path)
-              ? EventDelete$constant()
-              : EventUpdate$constant();
-            pending.set(path, kind);
-            if (timer.current === undefined) {
-              timer.current = nodeTimers.setTimeout(flush, 50);
-            }
-          });
+          if (options.ignore !== undefined && options.ignore(path)) {
+            return;
+          }
+          const kind = event === "rename" && !nodeFS.existsSync(path)
+            ? EventDelete$constant()
+            : EventUpdate$constant();
+          pending.set(path, kind);
+          if (timer.current === undefined) {
+            timer.current = nodeTimers.setTimeout(flush, 50);
+          }
         },
       );
     } catch {
       return [undefined, newError(`fswatch: cannot watch path: ${root}`)];
     }
     watcher.on("error", (failure) => {
-      delivery = delivery.then(async () => {
-        await fn.$value?.(
-          RuntimeSlice.literal<Event$Storage>([]),
-          newError(`fswatch: watch terminated: ${failure.message}`),
-        );
-      });
+      fn.$value?.(
+        RuntimeSlice.literal<Event$Storage>([]),
+        newError(`fswatch: watch terminated: ${failure.message}`),
+      );
     });
     return [new WatchHandle(watcher, timer), undefined];
   }

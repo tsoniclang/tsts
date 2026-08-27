@@ -8,8 +8,6 @@ declare module "@gotots/runtime/array.js" {
 }
 
 declare module "@gotots/runtime/interface-value.js" {
-  import type { Awaitable } from "@gotots/runtime/scalars.js";
-
   export abstract class GoInterfaceValue {
     abstract readonly $go$type: { readonly comparable: boolean };
     abstract readonly $go$methods: ReadonlySet<object>;
@@ -25,7 +23,7 @@ declare module "@gotots/runtime/interface-value.js" {
   }
 
   export interface GoError extends GoInterfaceValue {
-    Error(): Awaitable<string>;
+    Error(): string;
   }
 }
 
@@ -36,18 +34,17 @@ declare module "@gotots/runtime/panic.js" {
 }
 
 declare module "@gotots/runtime/scalars.js" {
-  export type Awaitable<T> = T | Promise<T>;
   export type gostring = string;
   export type int = number;
   export type int8 = number;
   export type int16 = number;
   export type int32 = number;
-  export type int64 = number;
+  export type int64 = bigint;
   export type uint = number;
   export type uint8 = number;
   export type uint16 = number;
   export type uint32 = number;
-  export type uint64 = number;
+  export type uint64 = bigint;
   export type uintptr = number;
 }
 
@@ -56,10 +53,10 @@ declare module "@gotots/runtime/slice.js" {
 
   export class RuntimeSlice<T> {
     readonly length: number;
-    static make<T>(length: number, capacity: number | null, zero: T): RuntimeSlice<T>;
+    static make<T>(length: number | bigint, capacity: number | bigint | null, zero: T): RuntimeSlice<T>;
     static nil<T>(): RuntimeSlice<T>;
-    get(index: number): T;
-    set(index: number, value: T): void;
+    get(index: number | bigint): T;
+    set(index: number | bigint, value: T): void;
   }
 
   export function goSliceAddress<T>(

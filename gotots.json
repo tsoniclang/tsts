@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "distribution": {
     "root": "tools/gotots"
   },
@@ -15,9 +15,8 @@
     "tags": ["noasm"]
   },
   "semantics": {
-    "integers": "number",
-    "evaluationOrder": "direct",
-    "concurrency": "cooperative"
+    "integers": "fixed64-bigint",
+    "evaluationOrder": "direct"
   },
   "providers": {
     "standardLibrary": true,

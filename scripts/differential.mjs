@@ -68,6 +68,7 @@ async function verifyEmit(source) {
   const commonArguments = ["--pretty", "false", source];
   const native = execute(nativeCompiler, [
     ...commonArguments,
+    "--singleThreaded",
     "--outDir",
     nativeOutput,
   ]);
@@ -104,7 +105,7 @@ async function verifyEmit(source) {
 for (const fixture of ["valid", "syntax", "semantic"]) {
   const source = join(repositoryRoot, "test", "fixtures", fixture, "main.ts");
   const compilerArguments = ["--noEmit", "--pretty", "false", source];
-  const native = execute(nativeCompiler, compilerArguments);
+  const native = execute(nativeCompiler, [...compilerArguments, "--singleThreaded"]);
   const generated = execute(process.execPath, [generatedCompiler, ...compilerArguments]);
 
   assert.equal(native.signal, null, `${fixture}: native compiler was terminated`);

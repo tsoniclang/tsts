@@ -16,6 +16,7 @@ test("implementation bundles use semantic package and support identities", async
     const contractPath = join(repositoryRoot, relativeContract);
     const bundleRoot = dirname(contractPath);
     const contract = await readJson(contractPath);
+    assert.deepEqual(contract.compilation, product.semantics, relativeContract);
     const expectedSource = semanticSourcePath(contract.package);
     assert.equal(contract.source, expectedSource, relativeContract);
     assert.deepEqual(
@@ -46,6 +47,25 @@ test("product runner imports the selected semantic package", async () => {
   const runner = await readFile(join(repositoryRoot, "assembly/runner.ts"), "utf8");
   assert.ok(runner.includes(JSON.stringify(expectedImport)));
   assert.doesNotMatch(runner, stalePathIdentity);
+});
+
+test("product runner seals the fixed serial execution contract", async () => {
+  const product = await readJson(join(repositoryRoot, "gotots.json"));
+  assert.deepEqual(
+    Object.keys(product.semantics).sort(),
+    ["evaluationOrder", "integers"],
+  );
+  const runner = await readFile(join(repositoryRoot, "assembly/runner.ts"), "utf8");
+  assert.match(
+    runner,
+    /import \{ state as osState \} from "@gotots\/gostdlib\/os\.js";/u,
+  );
+  assert.match(
+    runner,
+    /osState\.Args = osState\.Args\.append\("", \["--singleThreaded"\]\);/u,
+  );
+  assert.equal(runner.match(/"--singleThreaded"/gu)?.length, 1);
+  assert.doesNotMatch(runner, /process\.argv/u);
 });
 
 function semanticSourcePath(packageContract) {

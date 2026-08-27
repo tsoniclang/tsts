@@ -19,17 +19,38 @@ bootstrap_state="$root/.temp/bootstrap-state"
 "$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp"
 
 if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
-  exec "$host/env" TSTS_GUARDED=1 \
+  "$host/env" TSTS_GUARDED=1 TSTS_SCALAR_TRANSACTION=toolchain \
     "$host/bash" "$root/scripts/run-guarded.sh" \
     "$host/bash" "$root/scripts/check-scalar.sh"
+  exec "$host/env" TSTS_GUARDED=1 TSTS_SCALAR_TRANSACTION=product \
+    "$host/bash" "$root/scripts/run-guarded.sh" \
+    "$host/bash" "$root/scripts/check-scalar.sh"
+fi
+
+scalar_transaction="${TSTS_SCALAR_TRANSACTION:-}"
+case "$scalar_transaction" in
+  toolchain|product) ;;
+  *)
+    echo "guarded scalar transaction must be toolchain or product" >&2
+    exit 2
+    ;;
+esac
+
+if [[ "$scalar_transaction" = "toolchain" ]]; then
+  "$host/env" -i \
+    HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
+    TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+    "$TSTS_NODE_BUILDER" "$root/scripts/construct-toolchain.mjs" \
+    "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
+    "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host"
+  exit 0
 fi
 
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
-  "$TSTS_NODE_BUILDER" "$root/scripts/build-toolchain.mjs" \
-  "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
-  "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host")"
+  "$TSTS_NODE_BUILDER" "$root/scripts/open-selected-toolchain.mjs" \
+  "$root" "$TSTS_NODE_BUILDER")"
 IFS=$'\t' read -r \
   toolchain_digest toolchain_root gotots printer tsgo go go_root go_module_cache \
   node npm node_root state_root tool_cache_root immutable_distribution immutable_source \
@@ -55,7 +76,10 @@ run_toolchain "$node" "$root/scripts/target.mjs" \
   "$toolchain_root"
 run_toolchain "$tsgo" -p "$root/.temp/scalar/target/tsconfig.json"
 run_toolchain "$tsgo" -p "$root/.temp/scalar/target/tsconfig.emit.json"
-actual="$(run_toolchain "$node" "$root/.temp/scalar/target/out/runner.js")"
+run_toolchain "$node" "$root/scripts/assemble.mjs" \
+  "$root" "$root/.temp/scalar/target" "$toolchain_digest" "$toolchain_root"
+actual="$(run_toolchain "$node" --input-type=module --eval \
+  "const { actual } = await import('./.temp/scalar/target/out/runner.js'); process.stdout.write(String(actual));")"
 if [[ "$actual" != "11" ]]; then
   echo "scalar target output = '$actual', want '11'" >&2
   exit 1

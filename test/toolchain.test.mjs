@@ -355,7 +355,8 @@ test("product consumers have one immutable path and a closed environment", async
 
   const repositoryRoot = resolve(".");
   for (const script of [
-    "assemble.mjs", "target.mjs", "verify-target-manifest.mjs", "verify-typescript-target.mjs",
+    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs", "target.mjs",
+    "verify-target-manifest.mjs", "verify-typescript-target.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
   }
@@ -373,8 +374,73 @@ test("product consumers have one immutable path and a closed environment", async
   );
   assert.match(
     await readFile(join(repositoryRoot, "scripts", "run-guarded.sh"), "utf8"),
-    /go_memory_limit="6GiB"[\s\S]*node_old_space_mib="8192"/u,
+    /go_memory_limit="6GiB"[\s\S]*node_old_space_mib="10240"/u,
   );
+});
+
+test("product check isolates guarded phase lifetimes", async () => {
+  const repositoryRoot = resolve(".");
+  const check = await readFile(join(repositoryRoot, "scripts", "check.sh"), "utf8");
+  assert.doesNotMatch(check, /TSTS_GUARDED=1/u);
+  assert.match(check, /product check must own fresh assembly, toolchain, product, and replay guards/u);
+
+  const testGuard = check.indexOf('"$root/scripts/run-guarded.sh"');
+  const testCommand = check.indexOf(' --test "$root"/test/*.test.mjs');
+  const build = check.indexOf('"$root/scripts/build.sh"');
+  const replay = check.indexOf('"$root/scripts/replay.sh"');
+  assert.ok(testGuard >= 0, "assembly tests lack their guard");
+  assert.ok(testCommand > testGuard, "assembly tests escape their guard");
+  assert.ok(build > testCommand, "build does not follow the assembly-test transaction");
+  assert.ok(replay > build, "replay does not follow the build transaction");
+  assert.equal(check.match(/run-guarded\.sh/gu)?.length, 1);
+
+  const buildScript = await readFile(join(repositoryRoot, "scripts", "build.sh"), "utf8");
+  assert.match(
+    buildScript,
+    /TSTS_BUILD_TRANSACTION=toolchain[\s\S]*run-guarded\.sh[\s\S]*TSTS_BUILD_TRANSACTION=product[\s\S]*run-guarded\.sh/u,
+  );
+  assert.equal(buildScript.match(/run-guarded\.sh/gu)?.length, 2);
+  assert.match(
+    buildScript,
+    /build_transaction="\$\{TSTS_BUILD_TRANSACTION:-\}"[\s\S]*toolchain\|product[\s\S]*guarded build transaction must be toolchain or product/u,
+  );
+  assert.match(
+    buildScript,
+    /if \[\[ "\$build_transaction" = "toolchain" \]\]; then[\s\S]*construct-toolchain\.mjs[\s\S]*exit 0\s+fi[\s\S]*open-selected-toolchain\.mjs/u,
+  );
+  const constructor = buildScript.indexOf("construct-toolchain.mjs");
+  const opener = buildScript.indexOf("open-selected-toolchain.mjs");
+  assert.ok(constructor >= 0, "toolchain transaction lacks its constructor");
+  assert.ok(opener > constructor, "product transaction does not follow construction");
+  assert.equal(buildScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
+  assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
+
+  const constructorScript = await readFile(
+    join(repositoryRoot, "scripts", "construct-toolchain.mjs"),
+    "utf8",
+  );
+  assert.match(constructorScript, /await buildToolchain\(/u);
+  assert.doesNotMatch(constructorScript, /createDistributionWorkspace|openSelectedToolchain/u);
+  const openerScript = await readFile(
+    join(repositoryRoot, "scripts", "open-selected-toolchain.mjs"),
+    "utf8",
+  );
+  assert.match(openerScript, /await openSelectedToolchain\(/u);
+  assert.match(openerScript, /await createDistributionWorkspace\(/u);
+  assert.doesNotMatch(openerScript, /buildToolchain/u);
+
+  const scalarScript = await readFile(join(repositoryRoot, "scripts", "check-scalar.sh"), "utf8");
+  assert.match(
+    scalarScript,
+    /TSTS_SCALAR_TRANSACTION=toolchain[\s\S]*run-guarded\.sh[\s\S]*TSTS_SCALAR_TRANSACTION=product[\s\S]*run-guarded\.sh/u,
+  );
+  assert.equal(scalarScript.match(/run-guarded\.sh/gu)?.length, 2);
+  assert.equal(scalarScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
+  assert.equal(scalarScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
+
+  const replayScript = await readFile(join(repositoryRoot, "scripts", "replay.sh"), "utf8");
+  assert.match(replayScript, /TSTS_GUARDED=1[\s\S]*run-guarded\.sh/u);
+  assert.equal(replayScript.match(/run-guarded\.sh/gu)?.length, 1);
 });
 
 test("exact toolchain retains the guarded process envelope", async () => {
@@ -402,7 +468,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
     ...process.env,
     TSTS_GO_MEMORY_LIMIT: "6GiB",
     TSTS_GO_MAX_PROCS: "2",
-    TSTS_NODE_OLD_SPACE_MIB: "8192",
+    TSTS_NODE_OLD_SPACE_MIB: "10240",
     AMBIENT_POISON: "must-not-survive",
   };
   const result = spawnSync(
@@ -414,7 +480,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   assert.equal(result.stdout, [
     "GOMEMLIMIT=6GiB",
     "GOMAXPROCS=2",
-    "NODE_OPTIONS=--max-old-space-size=8192",
+    "NODE_OPTIONS=--max-old-space-size=10240",
     `PATH=${join(nodeRoot, "bin")}:${join(goRoot, "bin")}`,
     "AMBIENT=",
     "",

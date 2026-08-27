@@ -14,25 +14,55 @@ test("target profile has one stable semantic identity", async () => {
   const first = join(root, "first.json");
   const second = join(root, "second.json");
   await writeFile(first, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 5,
+    execution: "synchronous",
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",
+      representationProjections: "closed-direct",
     },
   }), "utf8");
   await writeFile(second, JSON.stringify({
     optimizations: {
+      representationProjections: "closed-direct",
       scalarProjections: "closed-direct",
       pointerFlows: "closed-direct",
     },
-    schemaVersion: 1,
+    execution: "synchronous",
+    schemaVersion: 5,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
   const right = await readTypeScriptTargetProfile(second);
   assert.equal(left.digest, right.digest);
+  assert.equal(left.execution, "synchronous");
   assert.deepEqual(left.optimizations, right.optimizations);
   assert.equal(Object.isFrozen(left.optimizations), true);
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile rejects effect and diagnostic compatibility fields", async () => {
+  const root = await createScratch("removed-fields-");
+  const path = join(root, "profile.json");
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 5,
+    execution: "synchronous",
+    optimizations: { cooperativeEffects: "closed-program" },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /unsupported field 'cooperativeEffects'/u,
+  );
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 5,
+    execution: "synchronous",
+    optimizations: {},
+    diagnostics: { planningPhases: true },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /unsupported field 'diagnostics'/u,
+  );
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
@@ -40,13 +70,33 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 5,
+    execution: "synchronous",
     optimizations: {},
     fallback: true,
   }), "utf8");
   await assert.rejects(
     readTypeScriptTargetProfile(path),
     /unsupported field 'fallback'/u,
+  );
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile rejects non-synchronous execution", async () => {
+  const root = await createScratch("execution-");
+  const path = join(root, "profile.json");
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 5,
+    execution: "unrestricted",
+    optimizations: {
+      pointerFlows: "closed-direct",
+      scalarProjections: "closed-direct",
+      representationProjections: "closed-direct",
+    },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /execution must be 'synchronous'/u,
   );
   await removeSuccessfulScratchTree(resolve("."), root);
 });

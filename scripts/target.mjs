@@ -1,15 +1,14 @@
 import {
   copyFile,
-  lstat,
   mkdir,
   readFile,
   readdir,
-  rename,
   writeFile,
 } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
+import { replaceDirectory } from "./directory-transaction.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   canonicalTargetSourcePath,
@@ -78,6 +77,7 @@ const project = {
     id: "typescript",
     options: {
       printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
+      execution: targetProfile.execution,
       optimizations: targetProfile.optimizations,
     },
   }],
@@ -97,8 +97,12 @@ if (errors.length !== 0) {
 if (result.targets.length !== 1) {
   throw new Error(`TypeScript target count ${result.targets.length} is not one`);
 }
+const compileResult = result.targets[0].compileResult;
+if (compileResult.kind !== "resolved") {
+  throw new Error("TypeScript target compilation was rejected without a reported error");
+}
 
-const artifacts = result.targets[0].compileResult.artifacts.map((artifact) =>
+const artifacts = compileResult.value.artifacts.map((artifact) =>
   artifact.kind === "source"
     ? {
         ...artifact,
@@ -106,6 +110,7 @@ const artifacts = result.targets[0].compileResult.artifacts.map((artifact) =>
       }
     : artifact
 );
+verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
@@ -164,7 +169,7 @@ const sealedTarget = await sealTargetManifest(
 const supersededTarget = await replaceDirectory(
   targetRoot,
   stagedTarget,
-  join(repositoryRoot, ".temp", "preserved"),
+  join(repositoryRoot, ".temp", "preserved", `${basename(targetRoot)}-${runIdentity}`),
 );
 if (supersededTarget !== undefined) {
   await removeSuccessfulScratchTree(repositoryRoot, supersededTarget);
@@ -175,6 +180,59 @@ console.log(
   `target_files=${sealedTarget.files.length} profile=${targetProfile.digest} ` +
     `toolchain=${toolchain.digest} output=${targetRoot}`,
 );
+
+function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
+  const selected = artifacts.filter((artifact) =>
+    artifact.path === "tsonic-typescript-optimization.json"
+  );
+  if (selected.length !== 1) {
+    throw new Error(
+      `TypeScript optimization evidence count ${selected.length} is not one`,
+    );
+  }
+  const evidence = parseRecord(selected[0].text, "TypeScript optimization evidence");
+  rejectUnknownKeys(
+    evidence,
+    new Set([
+      "schemaVersion",
+      "sourceExecution",
+      "profileIdentity",
+      "sourceMembership",
+      "programIndex",
+      "pointer",
+      "scalar",
+      "representationProjections",
+    ]),
+    "TypeScript optimization evidence",
+  );
+  if (evidence["schemaVersion"] !== 23) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 23");
+  }
+  if (evidence["sourceExecution"] !== profile.execution) {
+    throw new Error("TypeScript optimization evidence execution differs from the selected profile");
+  }
+  const expectedIdentity = [
+    "typescript-optimization-v4",
+    `pointer=${profile.optimizations.pointerFlows}`,
+    `scalar=${profile.optimizations.scalarProjections}`,
+    `representations=${profile.optimizations.representationProjections}`,
+  ].join("/");
+  if (evidence["profileIdentity"] !== expectedIdentity) {
+    throw new Error("TypeScript optimization evidence profile differs from the selected profile");
+  }
+  const membership = evidence["sourceMembership"];
+  if (!Array.isArray(membership) || !membership.every((path) => typeof path === "string")) {
+    throw new Error("TypeScript optimization evidence source membership is invalid");
+  }
+  const canonicalMembership = membership.map((path) =>
+    canonicalTargetSourcePath(path, sourceLayout.canonicalSet)
+  ).sort(compareCodeUnits);
+  assertEqualPaths(
+    "TypeScript optimization evidence and selected source membership",
+    canonicalMembership,
+    sourceLayout.expectedArtifacts,
+  );
+}
 
 async function readCanonicalManifest(root) {
   const document = parseRecord(
@@ -257,29 +315,6 @@ async function writeOwnedFile(root, path, text) {
   await writeFile(target, text, "utf8");
 }
 
-async function replaceDirectory(target, staged, preservedRoot) {
-  try {
-    await lstat(target);
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      await mkdir(dirname(target), { recursive: true });
-      await rename(staged, target);
-      return undefined;
-    }
-    throw error;
-  }
-  await mkdir(preservedRoot, { recursive: true });
-  const preserved = join(preservedRoot, `${basename(target)}-${runIdentity}`);
-  await rename(target, preserved);
-  try {
-    await rename(staged, target);
-  } catch (error) {
-    await rename(preserved, target);
-    throw error;
-  }
-  return preserved;
-}
-
 async function listPhysicalFiles(root, directory = "") {
   const paths = [];
   for (const entry of await readdir(join(root, directory), { withFileTypes: true })) {
@@ -319,6 +354,13 @@ function parseRecord(text, subject) {
 
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function rejectUnknownKeys(value, allowed, subject) {
+  const unexpected = Object.keys(value).find((key) => !allowed.has(key));
+  if (unexpected !== undefined) {
+    throw new Error(`${subject} has unsupported field '${unexpected}'`);
+  }
 }
 
 function assertEqualPaths(subject, expected, actual) {

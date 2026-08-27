@@ -4,7 +4,7 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import type {
   bool,
   gostring,
-  int64,
+  int,
   uint8,
   uint64,
 } from "@gotots/runtime/scalars.js";
@@ -20,13 +20,14 @@ type HashState = {
   h3: number;
   h4: number;
   length: number;
-  seed: number;
+  seed: uint64;
   pendingHighSurrogate: number | undefined;
 };
 
-function makeState(seed: number): HashState {
-  const low = seed >>> 0;
-  const high = Math.floor(seed / 4_294_967_296) >>> 0;
+function makeState(seed: uint64): HashState {
+  const normalizedSeed = BigInt.asUintN(64, seed);
+  const low = Number(normalizedSeed & 0xffff_ffffn);
+  const high = Number((normalizedSeed >> 32n) & 0xffff_ffffn);
   return {
     h1: (0x9e3779b1 ^ low) >>> 0,
     h2: (0x85ebca77 ^ high) >>> 0,
@@ -77,8 +78,8 @@ function digest(target: HashState): Uint128 {
   const h3 = avalanche(materialized.h3 ^ Math.imul(materialized.length, 0x85ebca77));
   const h4 = avalanche(materialized.h4 ^ Math.imul(materialized.length, 0xc2b2ae3d));
   return Uint128.$make(
-    (h1 & 0x03ffffff) * laneBase + (h2 & 0x03ffffff),
-    (h3 & 0x03ffffff) * laneBase + (h4 & 0x03ffffff),
+    BigInt((h1 & 0x03ffffff) * laneBase + (h2 & 0x03ffffff)),
+    BigInt((h3 & 0x03ffffff) * laneBase + (h4 & 0x03ffffff)),
   );
 }
 
@@ -166,12 +167,12 @@ function flushPendingHighSurrogate(target: HashState): void {
   mixUTF8CodePoint(target, pending);
 }
 
-function encodeWord(value: number): number[] {
+function encodeWord(value: uint64): number[] {
   const result = new Array<number>(8);
-  let remaining = value;
+  let remaining = BigInt.asUintN(64, value);
   for (let index = 7; index >= 0; index--) {
-    result[index] = remaining % 256;
-    remaining = Math.floor(remaining / 256);
+    result[index] = Number(remaining & 0xffn);
+    remaining >>= 8n;
   }
   return result;
 }
@@ -215,7 +216,7 @@ export class Uint128 {
   }
 
   public static $zero(): Uint128 {
-    return Uint128.$make(0, 0);
+    return Uint128.$make(0n, 0n);
   }
 
   public static $copy(source: Uint128): Uint128 {
@@ -227,11 +228,13 @@ export class Uint128 {
   }
 
   public static $hash(source: Uint128): number {
+    const high = BigInt.asUintN(64, source.Hi);
+    const low = BigInt.asUintN(64, source.Lo);
     return avalanche(
-      (source.Hi >>> 0) ^
-        Math.floor(source.Hi / 4_294_967_296) ^
-        (source.Lo >>> 0) ^
-        Math.floor(source.Lo / 4_294_967_296),
+      Number(high & 0xffff_ffffn) ^
+        Number((high >> 32n) & 0xffff_ffffn) ^
+        Number(low & 0xffff_ffffn) ^
+        Number((low >> 32n) & 0xffff_ffffn),
     );
   }
 
@@ -257,7 +260,7 @@ export class Hasher {
     h3: number,
     h4: number,
     length: number,
-    seed: number,
+    seed: uint64,
   ): Hasher {
     return new Hasher({
       h1,
@@ -271,7 +274,7 @@ export class Hasher {
   }
 
   public static $zero(): Hasher {
-    return new Hasher(makeState(0));
+    return new Hasher(makeState(0n));
   }
 
   public static $copy(source: Hasher): Hasher {
@@ -311,7 +314,7 @@ export class Hasher {
   public static Write(
     hasher: Pointer<Hasher> | undefined,
     value: RuntimeSlice<uint8>,
-  ): [int64, GoError | undefined] {
+  ): [int, GoError | undefined] {
     const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
     flushPendingHighSurrogate(state);
     for (let index = 0; index < value.length; index++) {
@@ -323,7 +326,7 @@ export class Hasher {
   public static WriteString(
     hasher: Pointer<Hasher> | undefined,
     value: gostring,
-  ): [int64, GoError | undefined] {
+  ): [int, GoError | undefined] {
     const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
     const written = mixString(state, value);
     return [written, undefined];
@@ -333,11 +336,11 @@ export class Hasher {
 export function $initialize(): void {}
 
 function Hash128(value: RuntimeSlice<uint8>): Uint128 {
-  return hashSlice(value, 0);
+  return hashSlice(value, 0n);
 }
 
 export function HashString128(value: gostring): Uint128 {
-  return hashString(value, 0);
+  return hashString(value, 0n);
 }
 
 function Hash128Seed(

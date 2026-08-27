@@ -16,24 +16,60 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "optimizations"]),
+    new Set(["schemaVersion", "execution", "optimizations"]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 1) {
-    throw new Error("TypeScript target profile schemaVersion must be 1");
+  if (parsed["schemaVersion"] !== 5) {
+    throw new Error("TypeScript target profile schemaVersion must be 5");
+  }
+  if (parsed["execution"] !== "synchronous") {
+    throw new Error("TSTS TypeScript target execution must be 'synchronous'");
   }
   const optimizations = parsed["optimizations"];
   if (!isRecord(optimizations)) {
     throw new Error("TypeScript target profile optimizations must be an object");
   }
+  rejectUnknownKeys(
+    optimizations,
+    new Set([
+      "pointerFlows",
+      "scalarProjections",
+      "representationProjections",
+    ]),
+    "TypeScript target profile optimizations",
+  );
+  assertOptimizationChoice(
+    optimizations["pointerFlows"],
+    "pointerFlows",
+    "location",
+  );
+  assertOptimizationChoice(
+    optimizations["scalarProjections"],
+    "scalarProjections",
+    "preserve",
+  );
+  assertOptimizationChoice(
+    optimizations["representationProjections"],
+    "representationProjections",
+    "preserve",
+  );
   const normalized = normalizeJson(parsed);
   const digest = createHash("sha256")
     .update(JSON.stringify(normalized))
     .digest("hex");
   return Object.freeze({
     digest,
+    execution: parsed["execution"],
     optimizations: freezeJson(optimizations),
   });
+}
+
+function assertOptimizationChoice(value, name, canonical) {
+  if (value !== canonical && value !== "closed-direct") {
+    throw new Error(
+      `TypeScript target optimization '${name}' must be '${canonical}' or 'closed-direct'`,
+    );
+  }
 }
 
 function normalizeJson(value) {

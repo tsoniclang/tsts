@@ -19,17 +19,38 @@ bootstrap_state="$root/.temp/bootstrap-state"
 "$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp"
 
 if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
-  exec "$host/env" TSTS_GUARDED=1 \
+  "$host/env" TSTS_GUARDED=1 TSTS_BUILD_TRANSACTION=toolchain \
     "$host/bash" "$root/scripts/run-guarded.sh" \
     "$host/bash" "$root/scripts/build.sh"
+  exec "$host/env" TSTS_GUARDED=1 TSTS_BUILD_TRANSACTION=product \
+    "$host/bash" "$root/scripts/run-guarded.sh" \
+    "$host/bash" "$root/scripts/build.sh"
+fi
+
+build_transaction="${TSTS_BUILD_TRANSACTION:-}"
+case "$build_transaction" in
+  toolchain|product) ;;
+  *)
+    echo "guarded build transaction must be toolchain or product" >&2
+    exit 2
+    ;;
+esac
+
+if [[ "$build_transaction" = "toolchain" ]]; then
+  "$host/env" -i \
+    HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
+    TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+    "$TSTS_NODE_BUILDER" "$root/scripts/construct-toolchain.mjs" \
+    "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
+    "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host"
+  exit 0
 fi
 
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
-  "$TSTS_NODE_BUILDER" "$root/scripts/build-toolchain.mjs" \
-  "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
-  "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host")"
+  "$TSTS_NODE_BUILDER" "$root/scripts/open-selected-toolchain.mjs" \
+  "$root" "$TSTS_NODE_BUILDER")"
 IFS=$'\t' read -r \
   toolchain_digest toolchain_root gotots printer tsgo go go_root go_module_cache \
   node npm node_root state_root tool_cache_root immutable_distribution immutable_source \

@@ -15,9 +15,8 @@
     ]
   },
   "compilation": {
-    "integers": "number",
-    "evaluationOrder": "direct",
-    "concurrency": "cooperative"
+    "integers": "fixed64-bigint",
+    "evaluationOrder": "direct"
   },
   "source": "target/packages/github.com/microsoft/typescript-go/internal/fswatch/package.ts",
   "tsconfig": "tsconfig.json",

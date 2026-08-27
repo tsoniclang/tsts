@@ -47,6 +47,15 @@ The selected Go and TypeScript target profiles are explicit and versioned in
 shell state. Every implementation bundle is package-atomic,
 signature-certified, strict-ESM, and selected before output is sealed.
 
+The selected TSTS product is synchronous. `gotots.json` owns that language
+decision with concurrency disabled. GoToTS must emit synchronous callable
+contracts directly; `typescript-target.json` requires the TypeScript target
+to reject authored suspension syntax before publication. The target may lower
+pointer, scalar, and representation shapes, but it must not infer effects,
+consume effect manifests, or remove `Promise`, `async`, or `await` after
+generation. A cooperative product requires separate explicit authority and is
+not a fallback path.
+
 TSTS public behavior is compared against the exact pinned TS-Go revision.
 Intentional internal equivalence envelopes must be named, bounded, and proven
 not to escape into observable output. Compile-only success is not runtime
@@ -67,6 +76,9 @@ Every product checkpoint must:
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
+Assembly tests, exact toolchain construction, product generation/typecheck,
+and runtime replay each own a fresh guarded transaction; never wrap the
+complete checkpoint in one resource scope.
 Remove successful scratch only after its owning transaction commits, through
 the path-confined scratch-lifecycle owner; never retain successful staging
 trees as failure evidence.

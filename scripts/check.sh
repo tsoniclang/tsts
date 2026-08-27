@@ -18,13 +18,13 @@ done
 bootstrap_state="$root/.temp/bootstrap-state"
 "$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp" "$bootstrap_state/npm-cache"
 
-if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
-  exec "$host/env" TSTS_GUARDED=1 \
-    "$host/bash" "$root/scripts/run-guarded.sh" \
-    "$host/bash" "$root/scripts/check.sh"
+if [[ -n "${TSTS_GUARDED:-}" ]]; then
+  echo "the product check must own fresh assembly, toolchain, product, and replay guards" >&2
+  exit 2
 fi
 
-"$host/env" -i \
+"$host/bash" "$root/scripts/run-guarded.sh" \
+  "$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="${TSTS_NODE_BUILDER%/*}:$host" LANG=C LC_ALL=C \
   TZ=UTC NODE_OPTIONS= NODE_PATH= NPM_CONFIG_CACHE="$bootstrap_state/npm-cache" \

@@ -1,9 +1,9 @@
 declare module "@gotots/runtime/scalars.js" {
   export type bool = boolean;
   export type gostring = string;
-  export type int64 = number;
+  export type int = number;
   export type uint8 = number;
-  export type uint64 = number;
+  export type uint64 = bigint;
 }
 
 declare module "@gotots/runtime/array.js" {
@@ -27,7 +27,7 @@ declare module "@gotots/runtime/slice.js" {
 
 declare module "@gotots/runtime/interface-value.js" {
   export interface GoError {
-    Error(): string | Promise<string>;
+    Error(): string;
   }
 }
 
