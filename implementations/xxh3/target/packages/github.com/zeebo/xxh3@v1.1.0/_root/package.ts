@@ -199,6 +199,10 @@ export class Uint128 {
     return new Uint128(source);
   }
 
+  public static $zeroStorage(): Uint128$Storage {
+    return { Hi: 0n, Lo: 0n };
+  }
+
   public get Hi(): uint64 {
     return this.$storage.Hi;
   }
