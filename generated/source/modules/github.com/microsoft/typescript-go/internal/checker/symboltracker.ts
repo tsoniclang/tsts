@@ -38,7 +38,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_0 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_0: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_0).PopErrorFallbackNode();
     }
     static PushErrorFallbackNode(__go_this: {
@@ -47,7 +47,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_1 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_1: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_0 = node;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_1).PushErrorFallbackNode(__gotots_argument_0);
     }
@@ -58,7 +58,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_2 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_2: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_2).ReportCyclicStructureError();
     }
     static ReportInaccessibleThisError(__go_this: {
@@ -68,7 +68,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_3 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_3: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_3).ReportInaccessibleThisError();
     }
     static ReportInaccessibleUniqueSymbolError(__go_this: {
@@ -78,7 +78,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_4 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_4: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_4).ReportInaccessibleUniqueSymbolError();
     }
     static ReportInferenceFallback(__go_this: {
@@ -87,7 +87,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_5 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_5: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_1 = node;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_5).ReportInferenceFallback(__gotots_argument_1);
     }
@@ -98,7 +98,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_6 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_6: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_2 = specifier;
         const __gotots_argument_3 = symbolName;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_6).ReportLikelyUnsafeImportRequiredError(__gotots_argument_2, __gotots_argument_3);
@@ -110,7 +110,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_7 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_7: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_4 = propertyName;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_7).ReportNonSerializableProperty(__gotots_argument_4);
     }
@@ -121,7 +121,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_8 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_8: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_5 = containingFile;
         const __gotots_argument_6 = parentSymbol;
         const __gotots_argument_7 = augmentingSymbol;
@@ -134,7 +134,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_9 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_9: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_8 = propertyName;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_9).ReportPrivateInBaseOfClassExpression(__gotots_argument_8);
     }
@@ -145,7 +145,7 @@ export class SymbolTrackerImpl {
         if ((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined) {
             return;
         }
-        const __gotots_receiver_10 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_10: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_10).ReportTruncationError();
     }
     static TrackSymbol(__go_this: {
@@ -154,7 +154,7 @@ export class SymbolTrackerImpl {
         if (!(__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DisableTrackSymbol) {
             let __gotots_logical_result_0 = !((__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner === undefined);
             if (__gotots_logical_result_0) {
-                const __gotots_receiver_11 = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+                const __gotots_receiver_11: SymbolTrackerImpl["inner"] = (__go_this ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
                 const __gotots_argument_9 = __go_symbol;
                 const __gotots_argument_10 = enclosingDeclaration;
                 const __gotots_argument_11 = meaning;

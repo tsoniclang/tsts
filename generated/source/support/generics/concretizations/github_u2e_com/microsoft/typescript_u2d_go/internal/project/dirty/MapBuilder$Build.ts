@@ -13,8 +13,6 @@ export function MapBuilder$Build$Named_tspath$Path$PointerTo_Named_collections$S
         return $argument0;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined): tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined): tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined>): int => {
@@ -29,8 +27,6 @@ export function MapBuilder$Build$Named_tspath$Path$PointerTo_Named_collections$S
 }
 export function MapBuilder$Build$Named_tspath$Path$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint($argument0: MapBuilder__from_dirty<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>> | undefined): GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>> {
     return MapBuilder__from_dirty.Build$kernel<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>($argument0, ($argument0: GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>): GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>> => {
-        return $argument0;
-    }, ($argument0: RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>): RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined> => {
         return $argument0;
     }, ($argument0: RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>): RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined> => {
         return $argument0;

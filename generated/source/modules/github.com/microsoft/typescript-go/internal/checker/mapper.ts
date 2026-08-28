@@ -150,7 +150,7 @@ export function newSimpleTypeMapper(source: tsonicTypeScriptRuntime.Location<Typ
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new $goInterfaceAdapter$PointerTo_Named_checker$SimpleTypeMapper(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.source = source;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.target = target;
-    const __gotots_store_1 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_1: SimpleTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "TypeMapper");
 }
 export class ArrayTypeMapper {
@@ -169,7 +169,7 @@ export class ArrayTypeMapper {
     static Map(m: {
         value: ArrayTypeMapper;
     } | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined {
-        const __gotots_range_0 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources;
+        const __gotots_range_0: ArrayTypeMapper["sources"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_index_0;
             const __gotots_range_value_1 = __gotots_range_0.get(__gotots_range_index_0);
@@ -189,7 +189,7 @@ export function newArrayTypeMapper(sources: RuntimeSlice<tsonicTypeScriptRuntime
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new $goInterfaceAdapter$PointerTo_Named_checker$ArrayTypeMapper(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources = sources;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.targets = targets;
-    const __gotots_store_3 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_3: ArrayTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "TypeMapper");
 }
 export class ArrayToSingleTypeMapper {
@@ -216,7 +216,7 @@ export function newArrayToSingleTypeMapper(sources: RuntimeSlice<tsonicTypeScrip
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new $goInterfaceAdapter$PointerTo_Named_checker$ArrayToSingleTypeMapper(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources = sources;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.target = target;
-    const __gotots_store_6 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_6: ArrayToSingleTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "TypeMapper");
 }
 export class DeferredTypeMapper {
@@ -230,7 +230,7 @@ export class DeferredTypeMapper {
     static Map(m: {
         value: DeferredTypeMapper;
     } | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined {
-        const __gotots_range_2 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources;
+        const __gotots_range_2: DeferredTypeMapper["sources"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources;
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_4 = __gotots_range_index_2;
             const __gotots_range_value_5 = __gotots_range_2.get(__gotots_range_index_2);
@@ -251,7 +251,7 @@ export function newDeferredTypeMapper(sources: RuntimeSlice<tsonicTypeScriptRunt
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new $goInterfaceAdapter$PointerTo_Named_checker$DeferredTypeMapper(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sources = sources;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.targets = targets;
-    const __gotots_store_5 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_5: DeferredTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "TypeMapper");
 }
 export class FunctionTypeMapper {
@@ -265,7 +265,7 @@ export class FunctionTypeMapper {
     static Map(m: {
         value: FunctionTypeMapper;
     } | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined {
-        const __gotots_callee_0 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fn;
+        const __gotots_callee_0: FunctionTypeMapper["fn"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fn;
         const __gotots_argument_1 = t;
         return (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
     }
@@ -276,7 +276,7 @@ export function newFunctionTypeMapper(fn: (($0: tsonicTypeScriptRuntime.Location
     } | undefined = { value: new FunctionTypeMapper(TypeMapperBase.$zero(), void 0) };
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new GoInterfaceAdapter(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fn = fn;
-    const __gotots_store_0 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_0: FunctionTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "TypeMapper");
 }
 export class MergedTypeMapper {
@@ -317,7 +317,7 @@ export function newMergedTypeMapper(m1: tsonicTypeScriptRuntime.Location<TypeMap
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase.TypeMapper.data = new $goInterfaceAdapter$PointerTo_Named_checker$MergedTypeMapper(m);
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.m1 = m1;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.m2 = m2;
-    const __gotots_store_2 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_2: MergedTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "TypeMapper");
 }
 export class CompositeTypeMapper {
@@ -360,7 +360,7 @@ export function newCompositeTypeMapper(c: tsonicTypeScriptRuntime.Location<Check
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c = c;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.m1 = m1;
     (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.m2 = m2;
-    const __gotots_store_4 = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
+    const __gotots_store_4: CompositeTypeMapper["TypeMapperBase"] = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeMapperBase;
     return tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "TypeMapper");
 }
 export class InferenceTypeMapper {
@@ -391,7 +391,7 @@ export class InferenceTypeMapper {
     static Map(m: {
         value: InferenceTypeMapper;
     } | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined {
-        const __gotots_range_1 = ((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferences;
+        const __gotots_range_1: InferenceContext["inferences"] = ((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferences;
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_2 = __gotots_range_index_1;
             const __gotots_range_value_3 = __gotots_range_1.get(__gotots_range_index_1);

@@ -84,7 +84,7 @@ export class serverProgressReporter {
     static $go$private$lsp$done(r: {
         value: serverProgressReporter;
     } | undefined): GoReceiveChannel<GoEmptyStruct> | undefined {
-        const __gotots_receiver_10 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+        const __gotots_receiver_10: Server["backgroundCtx"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
         return goInterfaceNonNil<$goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void>(__gotots_receiver_10).Done();
     }
     static $go$private$lsp$localize(r: {
@@ -124,17 +124,17 @@ export class projectLoadingProgress {
     } | undefined, token: gostring, text: gostring, begun: bool): bool {
         const text$location = tsonicTypeScriptRuntime.boundLocation({}, () => text, text$next => text = text$next);
         if (!begun) {
-            const __gotots_receiver_7 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+            const __gotots_receiver_7: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
             const __gotots_argument_8 = $state__diagnostics.Loading;
             const __gotots_argument_9 = RuntimeSlice.nil<GoInterface | undefined>();
             let title = goInterfaceNonNil<progressReporter>(__gotots_receiver_7).$go$private$lsp$localize(__gotots_argument_8, __gotots_argument_9);
-            const __gotots_receiver_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+            const __gotots_receiver_8: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
             const __gotots_argument_10 = token;
             const __gotots_argument_11 = new WorkDoneProgressBeginOrReportOrEnd__from_lsproto({ value: new WorkDoneProgressBegin__from_lsproto(StringLiteralBegin__from_lsproto.$zero(), title, void 0, text$location, void 0) }, void 0, void 0);
             goInterfaceNonNil<progressReporter>(__gotots_receiver_8).$go$private$lsp$sendProgress(__gotots_argument_10, __gotots_argument_11);
         }
         else {
-            const __gotots_receiver_9 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+            const __gotots_receiver_9: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
             const __gotots_argument_12 = token;
             const __gotots_argument_13 = new WorkDoneProgressBeginOrReportOrEnd__from_lsproto(void 0, { value: new WorkDoneProgressReport__from_lsproto(StringLiteralReport__from_lsproto.$zero(), void 0, text$location, void 0) }, void 0);
             goInterfaceNonNil<progressReporter>(__gotots_receiver_9).$go$private$lsp$sendProgress(__gotots_argument_12, __gotots_argument_13);
@@ -147,7 +147,7 @@ export class projectLoadingProgress {
         value: Message__from_diagnostics;
     } | undefined, args: RuntimeSlice<GoInterface | undefined>): void {
         const __gotots_select_3 = GoChannel.$selectSend((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, new progressEvent(message, args, true));
-        const __gotots_receiver_11 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+        const __gotots_receiver_11: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
         const __gotots_channel_4 = goInterfaceNonNil<progressReporter>(__gotots_receiver_11).$go$private$lsp$done();
         const __gotots_channel_5 = (value: GoEmptyStruct, ok: boolean): void => {
             __gotots_receive_3 = [value, ok];
@@ -212,7 +212,7 @@ export class projectLoadingProgress {
                 boolean
             ] | undefined = undefined;
             const __gotots_select_1 = GoChannel.$selectReceive(__gotots_channel_0, __gotots_channel_1);
-            const __gotots_receiver_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+            const __gotots_receiver_1: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
             const __gotots_channel_2 = goInterfaceNonNil<progressReporter>(__gotots_receiver_1).$go$private$lsp$done();
             const __gotots_channel_3 = (value: GoEmptyStruct, ok: boolean): void => {
                 __gotots_receive_2 = [value, ok];
@@ -229,7 +229,7 @@ export class projectLoadingProgress {
                         GoPanic.raiseRuntime("selected receive has no result");
                     }
                     let ev = progressEvent.$copy(__gotots_receive_0[0]);
-                    const __gotots_receiver_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+                    const __gotots_receiver_2: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
                     const __gotots_argument_0 = ev.message;
                     const __gotots_argument_1 = ev.args;
                     let text = goInterfaceNonNil<progressReporter>(__gotots_receiver_2).$go$private$lsp$localize(__gotots_argument_0, __gotots_argument_1);
@@ -242,7 +242,7 @@ export class projectLoadingProgress {
                             begun = false;
                             if (named_time.TimeDurationValueOperations.$project((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.delay) <= 0n) {
                                 delayFired = true;
-                                const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+                                const __gotots_receiver_3: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
                                 const __gotots_argument_2 = token;
                                 goInterfaceNonNil<progressReporter>(__gotots_receiver_3).$go$private$lsp$createWorkDoneProgress(__gotots_argument_2);
                             }
@@ -274,7 +274,7 @@ export class projectLoadingProgress {
                         }
                         if (OrderedMap$Size$string$int(loading$location) === 0) {
                             if (begun) {
-                                const __gotots_receiver_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+                                const __gotots_receiver_4: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
                                 const __gotots_argument_3 = token;
                                 const __gotots_argument_4 = new WorkDoneProgressBeginOrReportOrEnd__from_lsproto(void 0, void 0, { value: new WorkDoneProgressEnd__from_lsproto(StringLiteralEnd__from_lsproto.$zero(), void 0) });
                                 goInterfaceNonNil<progressReporter>(__gotots_receiver_4).$go$private$lsp$sendProgress(__gotots_argument_3, __gotots_argument_4);
@@ -286,7 +286,7 @@ export class projectLoadingProgress {
                         else if (delayFired) {
                             let first = FirstOrNilSeq$string(OrderedMap$Keys$string$int(loading$location));
                             const first$location = tsonicTypeScriptRuntime.boundLocation({}, () => first, first$next => first = first$next);
-                            const __gotots_receiver_5 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+                            const __gotots_receiver_5: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
                             const __gotots_argument_5 = token;
                             const __gotots_argument_6 = new WorkDoneProgressBeginOrReportOrEnd__from_lsproto(void 0, { value: new WorkDoneProgressReport__from_lsproto(StringLiteralReport__from_lsproto.$zero(), void 0, first$location, void 0) }, void 0);
                             goInterfaceNonNil<progressReporter>(__gotots_receiver_5).$go$private$lsp$sendProgress(__gotots_argument_5, __gotots_argument_6);
@@ -297,7 +297,7 @@ export class projectLoadingProgress {
                 case 1: {
                     delayFired = true;
                     if (token !== "" && OrderedMap$Size$string$int(loading$location) > 0) {
-                        const __gotots_receiver_6 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+                        const __gotots_receiver_6: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
                         const __gotots_argument_7 = token;
                         goInterfaceNonNil<progressReporter>(__gotots_receiver_6).$go$private$lsp$createWorkDoneProgress(__gotots_argument_7);
                         let first = FirstOrNilSeq$string(OrderedMap$Keys$string$int(loading$location));
@@ -321,7 +321,7 @@ export class projectLoadingProgress {
         value: Message__from_diagnostics;
     } | undefined, args: RuntimeSlice<GoInterface | undefined>): void {
         const __gotots_select_5 = GoChannel.$selectSend((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, new progressEvent(message, args, false));
-        const __gotots_receiver_12 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
+        const __gotots_receiver_12: projectLoadingProgress["reporter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reporter;
         const __gotots_channel_6 = goInterfaceNonNil<progressReporter>(__gotots_receiver_12).$go$private$lsp$done();
         const __gotots_channel_7 = (value: GoEmptyStruct, ok: boolean): void => {
             __gotots_receive_4 = [value, ok];

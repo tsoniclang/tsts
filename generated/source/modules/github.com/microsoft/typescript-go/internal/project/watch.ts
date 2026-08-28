@@ -82,7 +82,7 @@ export class watchRegistry {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: watchRegistry["mu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -136,7 +136,7 @@ export class watchRegistry {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: watchRegistry["mu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -181,7 +181,7 @@ export class watchRegistry {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: watchRegistry["mu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -229,7 +229,7 @@ export class watchRegistry {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: watchRegistry["mu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -280,7 +280,7 @@ export class watchRegistry {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: watchRegistry["mu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };

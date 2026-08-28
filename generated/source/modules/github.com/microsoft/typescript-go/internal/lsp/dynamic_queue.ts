@@ -39,7 +39,7 @@ export class dynamicQueue<T> {
     declare private readonly then?: never;
     static Get$kernel<T>(q: {
         value: dynamicQueue<T>;
-    } | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, ctx: GoInterface | undefined): [
+    } | undefined, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, ctx: GoInterface | undefined): [
         T,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -48,7 +48,7 @@ export class dynamicQueue<T> {
             let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<GoInterface>(__gotots_receiver_0).Err();
             if (!(err__shadow_1 === undefined)) {
                 let zero__shadow_1: T = $go$zero$void_to_T0();
-                return [$go$copy$T0_to_T0(zero__shadow_1), err__shadow_1];
+                return [zero__shadow_1, err__shadow_1];
             }
         }
         const __gotots_results_0 = dynamicQueue.$go$private$lsp$getReady<T>(q, ctx);
@@ -56,11 +56,11 @@ export class dynamicQueue<T> {
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_0[1];
         if (!(err === undefined)) {
             let zero__shadow_1: T = $go$zero$void_to_T0();
-            return [$go$copy$T0_to_T0(zero__shadow_1), err];
+            return [zero__shadow_1, err];
         }
-        let item: T = $go$copy$T0_to_T0($go$index$SliceOf_T0_int_to_T0(dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items, 0));
+        let item: T = $go$index$SliceOf_T0_int_to_T0(dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items, 0);
         let zero: T = $go$zero$void_to_T0();
-        dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items.set(0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(zero)));
+        dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items.set(0, $go$to_container_storage$T0_to_T0(zero));
         dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items = dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items.slice(1, null, null);
         if ($go$length$SliceOf_T0_to_int(dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items) === 0) {
             dynamicQueueState.$storageOf((state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).items = RuntimeSlice.nil<GoContainerStorage<T>>();
@@ -69,11 +69,11 @@ export class dynamicQueue<T> {
         else {
             GoChannel.send(dynamicQueue.$storageOf((q ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).ready, state);
         }
-        return [$go$copy$T0_to_T0(item), void 0];
+        return [item, void 0];
     }
     static Put$kernel<T>(q: {
         value: dynamicQueue<T>;
-    } | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, ctx: GoInterface | undefined, item: T): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    } | undefined, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, ctx: GoInterface | undefined, item: T): $goInterface$Interface_Method_Error_void_to_string | undefined {
         {
             const __gotots_receiver_1 = ctx;
             let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<GoInterface>(__gotots_receiver_1).Err();
@@ -92,14 +92,14 @@ export class dynamicQueue<T> {
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
             __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(item)));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0(item));
         }
         else {
             __gotots_slice_build_1 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
             for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.set(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
+                __gotots_slice_build_1.set(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_0.get(__gotots_slice_build_3))));
             }
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(item)));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0(item));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.$initialize(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
             }

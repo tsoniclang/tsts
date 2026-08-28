@@ -15,11 +15,5 @@ export function Box$Original$PointerTo_Named_project$Project($argument0: {
         value: Project__from_project;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
-        return $argument0;
     });
 }

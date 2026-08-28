@@ -166,7 +166,7 @@ export class InvalidTextError {
             if (__gotots_switch_selection_0 === -1) {
                 let __gotots_switch_match_0 = false;
                 if (!__gotots_switch_match_0) {
-                    const __gotots_conversion_0 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.What;
+                    const __gotots_conversion_0: InvalidTextError["What"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.What;
                     const __gotots_conversion_1 = RuntimeSlice.make<uint8>(__gotots_conversion_0.length, null, 0);
                     for (let __gotots_conversion_2 = 0; __gotots_conversion_2 < __gotots_conversion_0.length; __gotots_conversion_2++) {
                         __gotots_conversion_1.set(__gotots_conversion_2, __gotots_conversion_0.charCodeAt(__gotots_conversion_2));
@@ -194,7 +194,7 @@ export class InvalidTextError {
             }
             __gotots_control_target_1: switch (__gotots_switch_selection_0) {
                 case 0: {
-                    const __gotots_conversion_3 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.What;
+                    const __gotots_conversion_3: InvalidTextError["What"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.What;
                     const __gotots_conversion_4 = RuntimeSlice.make<uint8>(__gotots_conversion_3.length, null, 0);
                     for (let __gotots_conversion_5 = 0; __gotots_conversion_5 < __gotots_conversion_3.length; __gotots_conversion_5++) {
                         __gotots_conversion_4.set(__gotots_conversion_5, __gotots_conversion_3.charCodeAt(__gotots_conversion_5));

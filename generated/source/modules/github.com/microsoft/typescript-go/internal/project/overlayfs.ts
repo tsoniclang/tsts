@@ -253,7 +253,7 @@ export class overlayFS {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.RWMutex.RLock((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: overlayFS["mu"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncRWMutexRUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -310,7 +310,7 @@ export class overlayFS {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.RWMutex.Lock((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: overlayFS["mu"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncRWMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -617,7 +617,7 @@ export class overlayFS {
                         let uri = __gotots_range_value_3;
                         let events: fileEvents | undefined = __gotots_range_value_4;
                         const __gotots_receiver_2 = uri;
-                        const __gotots_receiver_1 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                        const __gotots_receiver_1: overlayFS["fs"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                         const __gotots_argument_2 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_1).UseCaseSensitiveFileNames();
                         let path = __gotots_receiver_2.Path(__gotots_argument_2);
                         let o: {
@@ -681,7 +681,7 @@ export class overlayFS {
                                         const __gotots_store_5 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                                         const __gotots_argument_6 = fileBase.Content(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "fileBase"));
                                         const __gotots_argument_7 = Overlay.Version(o);
-                                        const __gotots_argument_8 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+                                        const __gotots_argument_8: Overlay["kind"] = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
                                         o = newOverlay(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7, __gotots_argument_8);
                                         (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText = matchesDiskText;
                                         newOverlays.store(path, o);
@@ -745,7 +745,7 @@ export class overlayFS {
                                 const __gotots_store_9 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                                 const __gotots_argument_11 = fileBase.Content(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "fileBase"));
                                 const __gotots_argument_12 = Overlay.Version(o);
-                                const __gotots_argument_13 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+                                const __gotots_argument_13: Overlay["kind"] = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
                                 o = newOverlay(__gotots_argument_10, __gotots_argument_11, __gotots_argument_12, __gotots_argument_13);
                                 (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText = true;
                                 newOverlays.store(path, o);

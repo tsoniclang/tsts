@@ -12,9 +12,7 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 export function RefCountCache$Ref$Named_project$ParseCacheKey$PointerTo_Named_ast$SourceFile$Named_project$FileHandle($argument0: {
     value: RefCountCache__from_project<ParseCacheKey__from_project, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, FileHandle__from_project | undefined>;
 } | undefined, $argument1: ParseCacheKey__from_project): void {
-    return RefCountCache__from_project.Ref$kernel<ParseCacheKey__from_project, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, FileHandle__from_project | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
-        return $argument0;
-    }, ($argument0: ParseCacheKey__from_project): ParseCacheKey__from_project => {
+    return RefCountCache__from_project.Ref$kernel<ParseCacheKey__from_project, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, FileHandle__from_project | undefined>($argument0, ($argument0: ParseCacheKey__from_project): ParseCacheKey__from_project => {
         return ParseCacheKey__from_project.$copy($argument0);
     }, ($argument0: {
         value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;

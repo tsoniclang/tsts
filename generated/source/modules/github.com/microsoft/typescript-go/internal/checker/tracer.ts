@@ -106,7 +106,7 @@ export class Tracer {
     static RecordType(t: {
         value: Tracer;
     } | undefined, typ: tsonicTypeScriptRuntime.Location<Type> | undefined): void {
-        const __gotots_receiver_0 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.recorder;
+        const __gotots_receiver_0: Tracer["recorder"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.recorder;
         const __gotots_argument_0 = wrapType(typ);
         goInterfaceNonNil<Tracer__from_tracing>(__gotots_receiver_0).RecordType(__gotots_argument_0);
     }

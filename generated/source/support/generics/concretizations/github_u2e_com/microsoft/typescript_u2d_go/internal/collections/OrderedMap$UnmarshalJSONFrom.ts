@@ -14,7 +14,8 @@ import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
 export function OrderedMap$UnmarshalJSONFrom$PointerTo_Named_ast$Node$Struct_void($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.UnmarshalJSONFrom$kernel<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>($argument0, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy($argument0);
+        return (void GoEmptyStruct.$copy,
+            $argument0);
     }, ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return $argument0;
     }, ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
@@ -39,7 +40,8 @@ export function OrderedMap$UnmarshalJSONFrom$PointerTo_Named_printer$EmitHelper$
     return OrderedMap__from_collections.UnmarshalJSONFrom$kernel<{
         value: EmitHelper__from_printer;
     } | undefined, GoEmptyStruct>($argument0, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy($argument0);
+        return (void GoEmptyStruct.$copy,
+            $argument0);
     }, ($argument0: {
         value: EmitHelper__from_printer;
     } | undefined): {

@@ -60,7 +60,7 @@ export class Converters {
     static LineAndCharacterToPosition(c: {
         value: Converters;
     } | undefined, script: Script | undefined, lineAndCharacter: Position__from_lsproto): TextPos__from_core {
-        const __gotots_callee_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getLineMap;
+        const __gotots_callee_1: Converters["getLineMap"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getLineMap;
         const __gotots_receiver_5 = script;
         const __gotots_argument_7 = goInterfaceNonNil<Script>(__gotots_receiver_5).FileName();
         let lineMap: {
@@ -115,7 +115,7 @@ export class Converters {
         const __gotots_argument_3 = goInterfaceNonNil<Script>(__gotots_receiver_2).Text().length | 0;
         const __gotots_argument_5 = globalThis.Math.min(__gotots_argument_2, __gotots_argument_3);
         position = globalThis.Math.max(__gotots_argument_4, __gotots_argument_5);
-        const __gotots_callee_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getLineMap;
+        const __gotots_callee_0: Converters["getLineMap"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getLineMap;
         const __gotots_receiver_3 = script;
         const __gotots_argument_6 = goInterfaceNonNil<Script>(__gotots_receiver_3).FileName();
         let lineMap: {

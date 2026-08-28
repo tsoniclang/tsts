@@ -41,7 +41,7 @@ export class Glob {
     } | undefined): gostring {
         let b = named_strings.StringsBuilderOperations.$zero();
         const b$location = tsonicTypeScriptRuntime.boundLocation({}, () => b, b$next => b = b$next);
-        const __gotots_range_4 = (g ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elems;
+        const __gotots_range_4: Glob["elems"] = (g ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elems;
         for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
             const __gotots_range_value_5 = __gotots_range_4.get(__gotots_range_index_4);
             let e: element | undefined = __gotots_range_value_5;

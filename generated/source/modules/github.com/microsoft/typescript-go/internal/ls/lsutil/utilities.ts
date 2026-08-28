@@ -87,7 +87,9 @@ export function ShouldUseUriStyleNodeCoreModules(file: tsonicTypeScriptRuntime.L
     return Program__from_compiler.UsesUriStyleNodeCoreModules(program);
 }
 export function QuotePreferenceFromString(str: tsonicTypeScriptRuntime.Location<StringLiteral__from_ast> | undefined): QuotePreference {
-    if (!((LiteralLikeNodeBase__from_ast.$storageOf(LiteralLikeNodeBase__from_ast.$fromStorage(LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$fromStorage(StringLiteral__from_ast.$storageOf(((str ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).TokenFlags & TokenFlagsSingleQuote$constant__from_ast()) === 0)) {
+    if (!(((void LiteralLikeNodeBase__from_ast.$storageOf, (void LiteralLikeNodeBase__from_ast.$fromStorage,
+        (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
+            StringLiteral__from_ast.$storageOf(((str ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).TokenFlags & TokenFlagsSingleQuote$constant__from_ast()) === 0)) {
         return QuotePreferenceSingle$constant();
     }
     return QuotePreferenceDouble$constant();

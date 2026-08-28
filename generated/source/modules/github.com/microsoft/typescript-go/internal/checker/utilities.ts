@@ -577,18 +577,12 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
         else if (!((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsConditional$constant()) >>> 0 === 0)) {
             {
                 const __gotots_receiver_3 = ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker;
-                const __gotots_store_0 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_13 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
-                const __gotots_store_1 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t2) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
+                const __gotots_argument_13 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_store_1 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t2) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
+                const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 let c = Checker.$go$private$checker$compareNodes(__gotots_receiver_3, __gotots_argument_13, __gotots_argument_14);
                 if (c !== 0) {
                     return c;
@@ -688,23 +682,27 @@ export function compareTupleTypes(t1: {
     if ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length !== (t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length) {
         return (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length - (t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length;
     }
-    const __gotots_range_1 = (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
+    const __gotots_range_1: TupleType["elementInfos"] = (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
         const __gotots_range_value_1 = __gotots_range_index_1;
         let i = __gotots_range_value_1;
         {
-            let c = TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags - TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags;
+            let c = (void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags - (void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                (t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags;
             if (c !== 0) {
                 return c;
             }
         }
     }
-    const __gotots_range_2 = (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
+    const __gotots_range_2: TupleType["elementInfos"] = (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
         const __gotots_range_value_2 = __gotots_range_index_2;
         let i = __gotots_range_value_2;
         {
-            let c = compareElementLabels(TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration, TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration);
+            let c = compareElementLabels((void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                (t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration, (void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                (t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration);
             if (c !== 0) {
                 return c;
             }
@@ -946,20 +944,20 @@ export class orderedSet<T> {
         });
     }
     declare private readonly then?: never;
-    static $go$private$checker$add$kernel<T>(s: orderedSet<T> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct, $1: int) => GoMapValue<T, GoEmptyStruct>, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, value: T): void {
+    static $go$private$checker$add$kernel<T>(s: orderedSet<T> | undefined, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct, $1: int) => GoMapValue<T, GoEmptyStruct>, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, value: T): void {
         const __gotots_slice_build_0 = orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).values;
         const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
             __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(value)));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0(value));
         }
         else {
             __gotots_slice_build_1 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
             for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.set(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
+                __gotots_slice_build_1.set(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_0.get(__gotots_slice_build_3))));
             }
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(value)));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, $go$to_container_storage$T0_to_T0(value));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.$initialize(__gotots_slice_build_3, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
             }
@@ -972,7 +970,7 @@ export class orderedSet<T> {
             orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).valuesByKey = $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void(GoEmptyStruct.$zero(), $go$length$SliceOf_T0_to_int(orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).values));
             const __gotots_range_5 = orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).values.slice(0, $go$length$SliceOf_T0_to_int(orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).values) - 1, null);
             for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_5.length; __gotots_range_index_4++) {
-                const __gotots_range_value_8 = $go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_range_5.get(__gotots_range_index_4)));
+                const __gotots_range_value_8 = $go$from_container_storage$T0_to_T0(__gotots_range_5.get(__gotots_range_index_4));
                 let v: T = __gotots_range_value_8;
                 orderedSet.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).valuesByKey.store(v, new GoEmptyStruct);
             }

@@ -864,8 +864,9 @@ export function newTypeData(t: tsonicTypeScriptRuntime.Location<Type__from_check
                         let tuple: {
                             value: TupleType__from_checker;
                         } | undefined = Type__from_checker.AsTupleType(t);
-                        const __gotots_store_0 = (tuple ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InterfaceType;
-                        ref = TypeReference__from_checker.AsTypeReference(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "TypeReference"));
+                        const __gotots_store_0: TupleType__from_checker["InterfaceType"] = (tuple ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InterfaceType;
+                        ref =
+                            (void TypeReference__from_checker.AsTypeReference, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "TypeReference"));
                         ((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeResponse>).value.ElementFlags = TupleType__from_checker.ElementFlags(tuple);
                         let fixedLen = TupleType__from_checker.FixedLength(tuple);
                         const fixedLen$location = tsonicTypeScriptRuntime.boundLocation({}, () => fixedLen, fixedLen$next => fixedLen = fixedLen$next);

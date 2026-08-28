@@ -51,11 +51,13 @@ export function typeNodeCouldReferToUndefined(node: tsonicTypeScriptRuntime.Loca
             break;
         }
         case KindIntersectionType$constant__from_ast(): {
-            return Some$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf(((UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes, typeNodeCouldReferToUndefined);
+            return Some$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf((((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes, typeNodeCouldReferToUndefined);
             break;
         }
         case KindUnionType$constant__from_ast(): {
-            return Some$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf(((UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes, typeNodeCouldReferToUndefined);
+            return Some$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf((((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes, typeNodeCouldReferToUndefined);
             break;
         }
         case KindConditionalType$constant__from_ast(): {

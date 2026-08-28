@@ -261,15 +261,19 @@ export function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost | unde
     const __gotots_struct_0 = CompilerOptions__from_core.$zero();
     __gotots_struct_0.AllowJs = __gotots_field_0;
     const __gotots_argument_1 = { value: __gotots_struct_0 };
-    const __gotots_argument_2 = RuntimeSlice.literal<FileExtensionInfo__from_tsoptions$Storage>([FileExtensionInfo__from_tsoptions.$storageOf(FileExtensionInfo__from_tsoptions.$fromStorage({
-            Extension: "node",
-            IsMixedContent: false,
-            ScriptKind: ScriptKindExternal$constant__from_core()
-        })), FileExtensionInfo__from_tsoptions.$storageOf(FileExtensionInfo__from_tsoptions.$fromStorage({
-            Extension: "json",
-            IsMixedContent: false,
-            ScriptKind: ScriptKindJSON$constant__from_core()
-        }))]);
+    const __gotots_argument_2 = RuntimeSlice.literal<FileExtensionInfo__from_tsoptions$Storage>([
+        (void FileExtensionInfo__from_tsoptions.$storageOf, (void FileExtensionInfo__from_tsoptions.$fromStorage,
+            {
+                Extension: "node",
+                IsMixedContent: false,
+                ScriptKind: ScriptKindExternal$constant__from_core()
+            })), (void FileExtensionInfo__from_tsoptions.$storageOf, (void FileExtensionInfo__from_tsoptions.$fromStorage,
+            {
+                Extension: "json",
+                IsMixedContent: false,
+                ScriptKind: ScriptKindJSON$constant__from_core()
+            })),
+    ]);
     let extGroups = GetSupportedExtensions__from_tsoptions(__gotots_argument_1, __gotots_argument_2);
     const __gotots_range_2 = extGroups;
     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {

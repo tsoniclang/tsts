@@ -139,18 +139,20 @@ export class Tag {
             let __gotots_slice_build_1 = __gotots_slice_build_0;
             if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                 __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, Extension.$storageOf(Extension.$fromStorage({
-                    s: ext
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void Extension.$storageOf, (void Extension.$fromStorage,
+                    {
+                        s: ext
+                    })));
             }
             else {
                 __gotots_slice_build_1 = goSliceAllocate<Extension$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                 for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.set(__gotots_slice_build_3, Extension.$storageOf(Extension.$copy(Extension.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                 }
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, Extension.$storageOf(Extension.$fromStorage({
-                    s: ext
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void Extension.$storageOf, (void Extension.$fromStorage,
+                    {
+                        s: ext
+                    })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.$initialize(__gotots_slice_build_3, Extension.$storageOf(Extension.$zero()));
                 }

@@ -397,20 +397,21 @@ export function init(): void {
     Detect();
 }
 export function Detect(): void {
-    CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU)).ThreadsPerCore = 1;
-    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage(CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU)).Cache).L1I = -1;
-    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage(CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU)).Cache).L1D = -1;
-    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage(CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU)).Cache).L2 = -1;
-    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage(CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU)).Cache).L3 = -1;
+    (void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+        $state.CPU)).ThreadsPerCore = 1;
+    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage((void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+        $state.CPU)).Cache).L1I = -1;
+    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage((void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+        $state.CPU)).Cache).L1D = -1;
+    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage((void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+        $state.CPU)).Cache).L2 = -1;
+    $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$fromStorage((void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+        $state.CPU)).Cache).L3 = -1;
     let safe = true;
     if (!($state.detectArmFlag === undefined)) {
         safe = !(($state.detectArmFlag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<bool>).value;
     }
-    addInfo(tsonicTypeScriptRuntime.projectLocation<CPUInfo$Storage, CPUInfo>(tsonicTypeScriptRuntime.propertyLocation($state, "CPU"), ($go$storage: CPUInfo$Storage): CPUInfo => {
-        return CPUInfo.$fromStorage($go$storage);
-    }, ($go$value: CPUInfo): CPUInfo$Storage => {
-        return CPUInfo.$storageOf($go$value);
-    }), safe);
+    addInfo(tsonicTypeScriptRuntime.projectLocation<CPUInfo$Storage, CPUInfo>(tsonicTypeScriptRuntime.propertyLocation($state, "CPU"), CPUInfo.$fromStorage, CPUInfo.$storageOf), safe);
     if (!($state.displayFeats === undefined) &&
         (($state.displayFeats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<bool>).value) {
         fmt__from_gostdlib.Println(RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("cpu features:"), new GoInterfaceAdapter(strings__from_gostdlib.Join(CPUInfo.$fromStorage($state.CPU).FeatureSet(), ","))]));
@@ -426,7 +427,8 @@ export function Detect(): void {
             if (!(feat__shadow_1.$value ===
                 ((void FeatureID,
                     UNKNOWN$int) as int))) {
-                const __gotots_store_1 = CPUInfo.$storageOf(CPUInfo.$fromStorage($state.CPU));
+                const __gotots_store_1 = (void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
+                    $state.CPU));
                 flagSet.$go$private$cpuid$unset(tsonicTypeScriptRuntime.projectLocation<GoArray<uint64, 4>, flagSet>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "featureSet"), ($go$storage: GoArray<uint64, 4>): flagSet => {
                     return new flagSet($go$storage);
                 }, ($go$value: flagSet): GoArray<uint64, 4> => {

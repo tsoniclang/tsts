@@ -96,7 +96,7 @@ export class Watcher {
         let watchesByID: GoMapValue<gostring, RuntimeSlice<watch | undefined>> = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.watches;
         (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.watches = GoMap.nil();
         if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flushTimer === undefined)) {
-            const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flushTimer;
+            const __gotots_receiver_0: Watcher["flushTimer"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flushTimer;
             time__from_gostdlib.Timer.Stop(__gotots_receiver_0 === void 0 ? void 0 :
                 (__gotots_receiver_0 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value);
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flushTimer = void 0;
@@ -172,7 +172,7 @@ export class Watcher {
             let directory = __gotots_results_3[0];
             let ok = __gotots_results_3[1];
             if (!ok || directory === "") {
-                const __gotots_receiver_4 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_4: Watcher["logger"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_3 = "lspwatcher: skipping watcher %q: unrecognized pattern %q";
                 const __gotots_argument_4 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(id), new $goInterfaceAdapter$string(watchPatternString(fileSystemWatcher))]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_4).Logf(__gotots_argument_3, __gotots_argument_4);
@@ -182,7 +182,7 @@ export class Watcher {
             {
                 let err: $goInterface$Interface_Method_Error_void_to_string | undefined = watch.$go$private$lspwatcher$reconcile(newWatch, false);
                 if (!(err === undefined)) {
-                    const __gotots_receiver_5 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_5: Watcher["logger"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_5 = "lspwatcher: failed to register watcher %q for %q: %v";
                     const __gotots_argument_6 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(id), new $goInterfaceAdapter$string(directory), err]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_5).Logf(__gotots_argument_5, __gotots_argument_6);
@@ -207,12 +207,12 @@ export class Watcher {
         if ((kind & WatchKindCreate$constant__from_lsproto()) >>> 0 === 0) {
             return;
         }
-        const __gotots_receiver_18 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_18: Watcher["fs"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_field_0 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_18).UseCaseSensitiveFileNames();
         let comparePathsOptions = new ComparePathsOptions__from_tspath(__gotots_field_0, "");
         let paths = RuntimeSlice.literal<gostring>([requestedDirectory]);
         if (recursive) {
-            const __gotots_receiver_19 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+            const __gotots_receiver_19: Watcher["fs"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
             const __gotots_argument_27 = watchedDirectory;
             const __gotots_argument_28 = (path: gostring, entry: $goInterface$Interface_Method_fs$Info_void_to_Named_fs$FileInfo_Named_error_Method_fs$IsDir_void_to_bool_Method_fs$Name_void_to_string_Method_fs$Type_void_to_Named_fs$FileMode | undefined, err: $goInterface$Interface_Method_Error_void_to_string | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined => {
                 if (!(err === undefined)) {
@@ -228,7 +228,7 @@ export class Watcher {
             goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_19).WalkDir(__gotots_argument_27, __gotots_argument_28);
         }
         else {
-            const __gotots_receiver_20 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+            const __gotots_receiver_20: Watcher["fs"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
             const __gotots_argument_29 = watchedDirectory;
             let entries = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_20).GetAccessibleEntries(__gotots_argument_29);
             const __gotots_range_5 = Entries__from_vfs.$storageOf(entries).Files;
@@ -307,7 +307,7 @@ export class Watcher {
             } | undefined = __gotots_range_value_13;
             changes = changes.append(void 0, [event]);
         }
-        const __gotots_callee_1 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.onChanges;
+        const __gotots_callee_1: Watcher["onChanges"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.onChanges;
         const __gotots_argument_32 = changes;
         (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_32);
     }
@@ -322,7 +322,7 @@ export class Watcher {
         if ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pending.isNil()) {
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pending = $goMap$MapOf_string_To_PointerTo_Named_lsproto$FileEvent.make(events.length, []);
         }
-        const __gotots_receiver_21 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_21: Watcher["fs"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_field_1 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_21).UseCaseSensitiveFileNames();
         let comparePathsOptions = new ComparePathsOptions__from_tspath(__gotots_field_1, "");
         const __gotots_range_7 = events;
@@ -438,21 +438,21 @@ export class watch {
                             __gotots_return_0 = void 0;
                             break __gotots_return_block_0;
                         }
-                        const __gotots_receiver_7 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                        const __gotots_receiver_7: Watcher["fs"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                         const __gotots_argument_7 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).requestedDirectory;
                         if (goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).DirectoryExists(__gotots_argument_7)) {
                             if ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchingTarget && !((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).subscription === undefined)) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }
-                            const __gotots_receiver_8 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                            const __gotots_receiver_8: Watcher["fs"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                             const __gotots_argument_8 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).requestedDirectory;
                             let targetDirectory = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_8).Realpath(__gotots_argument_8);
                             let options = RuntimeSlice.nil<WatchOption__from_fswatch | undefined>();
                             if ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).recursive) {
                                 options = options.append(void 0, [WithRecursive__from_fswatch()]);
                             }
-                            const __gotots_receiver_9 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backend;
+                            const __gotots_receiver_9: Watcher["backend"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backend;
                             const __gotots_argument_9 = targetDirectory;
                             const __gotots_argument_10 = watch.$go$private$lspwatcher$targetCallback(w, targetDirectory);
                             const __gotots_argument_11 = options;
@@ -492,14 +492,14 @@ export class watch {
                             __gotots_return_0 = void 0;
                             break __gotots_return_block_0;
                         }
-                        const __gotots_receiver_12 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                        const __gotots_receiver_12: Watcher["fs"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                         const __gotots_argument_12 = ancestor;
                         let ancestorDirectory = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_12).Realpath(__gotots_argument_12);
                         if (!(w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchingTarget && !((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).subscription === undefined) && (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirectory === ancestorDirectory) {
                             __gotots_return_0 = void 0;
                             break __gotots_return_block_0;
                         }
-                        const __gotots_receiver_13 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backend;
+                        const __gotots_receiver_13: Watcher["backend"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backend;
                         const __gotots_argument_13 = ancestorDirectory;
                         const __gotots_argument_14 = watch.$go$private$lspwatcher$ancestorCallback(w);
                         const __gotots_argument_15 = RuntimeSlice.nil<WatchOption__from_fswatch | undefined>();
@@ -587,7 +587,7 @@ export class watch {
                     }
                     __gotots_control_target_0: switch (__gotots_switch_selection_0) {
                         case 0: {
-                            const __gotots_receiver_15 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                            const __gotots_receiver_15: Watcher["logger"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                             const __gotots_argument_19 = "lspwatcher: watch overflow in %q (some events may have been dropped): %v";
                             const __gotots_argument_20 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(watchedDirectory), err]);
                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_15).Logf(__gotots_argument_19, __gotots_argument_20);
@@ -595,14 +595,14 @@ export class watch {
                         }
                         case 1: {
                             terminated = true;
-                            const __gotots_receiver_16 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                            const __gotots_receiver_16: Watcher["logger"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                             const __gotots_argument_23 = "lspwatcher: watch terminated in %q (directory removed): %v";
                             const __gotots_argument_24 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(watchedDirectory), err]);
                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_16).Logf(__gotots_argument_23, __gotots_argument_24);
                             break;
                         }
                         case 2: {
-                            const __gotots_receiver_17 = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                            const __gotots_receiver_17: Watcher["logger"] = (watcher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                             const __gotots_argument_25 = "lspwatcher: watch error in %q: %v";
                             const __gotots_argument_26 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(watchedDirectory), err]);
                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_17).Logf(__gotots_argument_25, __gotots_argument_26);

@@ -179,10 +179,10 @@ export class EmitResolver {
             try {
                 __gotots_return_block_0: {
                     container = EmitContext__from_printer.ParseNode(emitContext, container);
-                    const __gotots_receiver_3 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_3: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_3 === void 0 ? void 0 :
                         (__gotots_receiver_3 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_4 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_4: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_5 = __gotots_receiver_4 === void 0 ? void 0 :
                         (__gotots_receiver_4 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -339,11 +339,11 @@ export class EmitResolver {
             try {
                 __gotots_return_block_0: {
                     node = EmitContext__from_printer.ParseNode(emitContext, node);
-                    const __gotots_receiver_6 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_6: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_6 === void 0 ? void 0 :
                         (__gotots_receiver_6 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
                     let t: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getTypeOfSymbol((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker, Checker.$go$private$checker$getSymbolOfDeclaration((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker, node));
-                    const __gotots_receiver_7 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_7: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Unlock(__gotots_receiver_7 === void 0 ? void 0 :
                         (__gotots_receiver_7 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
                     if (t === undefined) {
@@ -352,10 +352,10 @@ export class EmitResolver {
                     }
                     let enumResult: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
                     if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsEnumLike$constant()) >>> 0 === 0)) {
-                        const __gotots_receiver_8 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_8: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_8 === void 0 ? void 0 :
                             (__gotots_receiver_8 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                        const __gotots_receiver_9 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_9: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         const __gotots_receiver_10 = __gotots_receiver_9 === void 0 ? void 0 :
                             (__gotots_receiver_9 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
@@ -494,10 +494,10 @@ export class EmitResolver {
                         __gotots_return_0 = NodeFactory__from_ast.NewKeywordTypeNode(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "NodeFactory"), KindAnyKeyword$constant__from_ast());
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_11 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_11: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_11 === void 0 ? void 0 :
                         (__gotots_receiver_11 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_12 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_12: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_13 = __gotots_receiver_12 === void 0 ? void 0 :
                         (__gotots_receiver_12 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -554,10 +554,10 @@ export class EmitResolver {
                         __gotots_return_0 = NodeFactory__from_ast.NewKeywordTypeNode(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "NodeFactory"), KindAnyKeyword$constant__from_ast());
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_12 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_12: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_12 === void 0 ? void 0 :
                         (__gotots_receiver_12 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_13 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_13: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_14 = __gotots_receiver_13 === void 0 ? void 0 :
                         (__gotots_receiver_13 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -615,10 +615,10 @@ export class EmitResolver {
                         __gotots_return_0 = NodeFactory__from_ast.NewKeywordTypeNode(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "NodeFactory"), KindAnyKeyword$constant__from_ast());
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_13 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_13: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_13 === void 0 ? void 0 :
                         (__gotots_receiver_13 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_14 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_14: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_15 = __gotots_receiver_14 === void 0 ? void 0 :
                         (__gotots_receiver_14 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -674,10 +674,10 @@ export class EmitResolver {
                         __gotots_return_0 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_14 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_14: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_14 === void 0 ? void 0 :
                         (__gotots_receiver_14 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_15 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_15: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_16 = __gotots_receiver_15 === void 0 ? void 0 :
                         (__gotots_receiver_15 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -730,10 +730,10 @@ export class EmitResolver {
                         __gotots_return_0 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_15 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_15: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_15 === void 0 ? void 0 :
                         (__gotots_receiver_15 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_16 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_16: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_17 = __gotots_receiver_16 === void 0 ? void 0 :
                         (__gotots_receiver_16 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -802,10 +802,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_16 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_16: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_16 === void 0 ? void 0 :
                         (__gotots_receiver_16 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_17 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_17: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_18 = __gotots_receiver_17 === void 0 ? void 0 :
                         (__gotots_receiver_17 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -853,10 +853,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_17 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_17: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_17 === void 0 ? void 0 :
                         (__gotots_receiver_17 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_18 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_18: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_19 = __gotots_receiver_18 === void 0 ? void 0 :
                         (__gotots_receiver_18 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -904,20 +904,22 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_store_30 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(ElementAccessExpression__from_ast.$storageOf(((expression ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                    const __gotots_argument_57 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_store_30 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                        (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                            (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                                (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                                    (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                        (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                            ElementAccessExpression__from_ast.$storageOf(((expression ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+                    const __gotots_argument_57 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (!IsParseTreeNode__from_ast(__gotots_argument_57)) {
                         __gotots_return_0 = "";
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_18 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_18: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_18 === void 0 ? void 0 :
                         (__gotots_receiver_18 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_19 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_19: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_20 = __gotots_receiver_19 === void 0 ? void 0 :
                         (__gotots_receiver_19 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -971,10 +973,10 @@ export class EmitResolver {
                         __gotots_return_0 = NewResult__from_evaluator(void 0, false, false, false);
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_20 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_20: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_20 === void 0 ? void 0 :
                         (__gotots_receiver_20 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_21 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_21: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_22 = __gotots_receiver_21 === void 0 ? void 0 :
                         (__gotots_receiver_21 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1033,10 +1035,10 @@ export class EmitResolver {
                         __gotots_return_0 = void 0;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_21 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_21: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_21 === void 0 ? void 0 :
                         (__gotots_receiver_21 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_22 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_22: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_23 = __gotots_receiver_22 === void 0 ? void 0 :
                         (__gotots_receiver_22 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1084,10 +1086,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_22 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_22: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_22 === void 0 ? void 0 :
                         (__gotots_receiver_22 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_23 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_23: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_24 = __gotots_receiver_23 === void 0 ? void 0 :
                         (__gotots_receiver_23 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1135,10 +1137,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_23 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_23: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_23 === void 0 ? void 0 :
                         (__gotots_receiver_23 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_24 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_24: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_25 = __gotots_receiver_24 === void 0 ? void 0 :
                         (__gotots_receiver_24 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1202,10 +1204,10 @@ export class EmitResolver {
                         __gotots_return_0 = void 0;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_24 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_24: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_24 === void 0 ? void 0 :
                         (__gotots_receiver_24 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_25 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_25: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_26 = __gotots_receiver_25 === void 0 ? void 0 :
                         (__gotots_receiver_25 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1256,10 +1258,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_26 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_26: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_26 === void 0 ? void 0 :
                         (__gotots_receiver_26 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_27 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_27: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_28 = __gotots_receiver_27 === void 0 ? void 0 :
                         (__gotots_receiver_27 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1321,10 +1323,10 @@ export class EmitResolver {
                         __gotots_return_0 = void 0;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_27 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_27: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_27 === void 0 ? void 0 :
                         (__gotots_receiver_27 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_28 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_28: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_29 = __gotots_receiver_28 === void 0 ? void 0 :
                         (__gotots_receiver_28 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1378,10 +1380,10 @@ export class EmitResolver {
                         __gotots_return_0 = void 0;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_29 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_29: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_29 === void 0 ? void 0 :
                         (__gotots_receiver_29 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_30 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_30: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_31 = __gotots_receiver_30 === void 0 ? void 0 :
                         (__gotots_receiver_30 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1435,10 +1437,10 @@ export class EmitResolver {
                         __gotots_return_0 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_31 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_31: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_31 === void 0 ? void 0 :
                         (__gotots_receiver_31 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_32 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_32: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_33 = __gotots_receiver_32 === void 0 ? void 0 :
                         (__gotots_receiver_32 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1488,10 +1490,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_33 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_33: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_33 === void 0 ? void 0 :
                         (__gotots_receiver_33 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_34 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_34: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_35 = __gotots_receiver_34 === void 0 ? void 0 :
                         (__gotots_receiver_34 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1539,10 +1541,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_34 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_34: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_34 === void 0 ? void 0 :
                         (__gotots_receiver_34 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_35 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_35: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_36 = __gotots_receiver_35 === void 0 ? void 0 :
                         (__gotots_receiver_35 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1691,10 +1693,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_35 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_35: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_35 === void 0 ? void 0 :
                         (__gotots_receiver_35 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_36 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_36: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_37 = __gotots_receiver_36 === void 0 ? void 0 :
                         (__gotots_receiver_36 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1751,10 +1753,10 @@ export class EmitResolver {
                             __gotots_return_0 = false;
                             break __gotots_return_block_0;
                         }
-                        const __gotots_receiver_36 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_36: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_36 === void 0 ? void 0 :
                             (__gotots_receiver_36 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                        const __gotots_receiver_37 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_37: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         const __gotots_receiver_38 = __gotots_receiver_37 === void 0 ? void 0 :
                             (__gotots_receiver_37 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
@@ -1768,10 +1770,10 @@ export class EmitResolver {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_39 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_39: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_39 === void 0 ? void 0 :
                         (__gotots_receiver_39 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_40 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_40: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_41 = __gotots_receiver_40 === void 0 ? void 0 :
                         (__gotots_receiver_40 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
@@ -1821,10 +1823,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_38 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_38: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_38 === void 0 ? void 0 :
                         (__gotots_receiver_38 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_39 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_39: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_40 = __gotots_receiver_39 === void 0 ? void 0 :
                         (__gotots_receiver_39 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1872,10 +1874,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_39 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_39: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_39 === void 0 ? void 0 :
                         (__gotots_receiver_39 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_40 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_40: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_41 = __gotots_receiver_40 === void 0 ? void 0 :
                         (__gotots_receiver_40 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -1949,10 +1951,10 @@ export class EmitResolver {
                             __gotots_return_0 = false;
                             break __gotots_return_block_0;
                         }
-                        const __gotots_receiver_40 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_40: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_40 === void 0 ? void 0 :
                             (__gotots_receiver_40 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                        const __gotots_receiver_41 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_41: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         const __gotots_receiver_42 = __gotots_receiver_41 === void 0 ? void 0 :
                             (__gotots_receiver_41 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
@@ -2017,34 +2019,25 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_store_34 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_64 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_store_34 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                        StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
+                    const __gotots_argument_64 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (!IsParseTreeNode__from_ast(__gotots_argument_64)) {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_store_35 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_65 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_store_35 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                        StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
+                    const __gotots_argument_65 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = GetSourceFileOfNode__from_ast(__gotots_argument_65);
                     if (DeclarationBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.DeclarationBase).Symbol === undefined) {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
                     const __gotots_receiver_41 = r;
-                    const __gotots_store_36 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_66 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_store_36 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                        StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
+                    const __gotots_argument_66 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let importTarget: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = EmitResolver.GetExternalModuleFileFromDeclaration(__gotots_receiver_41, __gotots_argument_66);
                     if (importTarget === undefined) {
                         __gotots_return_0 = false;
@@ -2054,10 +2047,10 @@ export class EmitResolver {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_42 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_42: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_42 === void 0 ? void 0 :
                         (__gotots_receiver_42 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_43 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_43: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_44 = __gotots_receiver_43 === void 0 ? void 0 :
                         (__gotots_receiver_43 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2163,10 +2156,10 @@ export class EmitResolver {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_43 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_43: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_43 === void 0 ? void 0 :
                         (__gotots_receiver_43 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_44 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_44: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_45 = __gotots_receiver_44 === void 0 ? void 0 :
                         (__gotots_receiver_44 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2224,10 +2217,10 @@ export class EmitResolver {
                         break __gotots_return_block_0;
                     }
                     if (isDeclarationReadonly(node) || IsVariableDeclaration__from_ast(node) && IsVarConst__from_ast(node)) {
-                        const __gotots_receiver_44 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_44: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_44 === void 0 ? void 0 :
                             (__gotots_receiver_44 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                        const __gotots_receiver_45 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                        const __gotots_receiver_45: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                         const __gotots_receiver_46 = __gotots_receiver_45 === void 0 ? void 0 :
                             (__gotots_receiver_45 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
@@ -2279,10 +2272,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_45 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_45: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_45 === void 0 ? void 0 :
                         (__gotots_receiver_45 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_46 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_46: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_47 = __gotots_receiver_46 === void 0 ? void 0 :
                         (__gotots_receiver_46 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2335,10 +2328,10 @@ export class EmitResolver {
                         __gotots_return_0 = true;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_46 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_46: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_46 === void 0 ? void 0 :
                         (__gotots_receiver_46 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_47 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_47: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_48 = __gotots_receiver_47 === void 0 ? void 0 :
                         (__gotots_receiver_47 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2422,10 +2415,10 @@ export class EmitResolver {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_47 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_47: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_47 === void 0 ? void 0 :
                         (__gotots_receiver_47 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_48 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_48: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_49 = __gotots_receiver_48 === void 0 ? void 0 :
                         (__gotots_receiver_48 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2478,10 +2471,10 @@ export class EmitResolver {
                         __gotots_return_0 = true;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_48 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_48: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_48 === void 0 ? void 0 :
                         (__gotots_receiver_48 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_49 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_49: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_50 = __gotots_receiver_49 === void 0 ? void 0 :
                         (__gotots_receiver_49 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2528,10 +2521,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_49 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_49: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_49 === void 0 ? void 0 :
                         (__gotots_receiver_49 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_50 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_50: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_51 = __gotots_receiver_50 === void 0 ? void 0 :
                         (__gotots_receiver_50 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2590,10 +2583,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_50 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_50: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_50 === void 0 ? void 0 :
                         (__gotots_receiver_50 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_51 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_51: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_52 = __gotots_receiver_51 === void 0 ? void 0 :
                         (__gotots_receiver_51 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2602,29 +2595,17 @@ export class EmitResolver {
                     const __gotots_store_38 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     const __gotots_receiver_53 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "declarationFileLinks");
                     const __gotots_store_39 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_67 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_argument_67 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (DeclarationFileLinks.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$DeclarationFileLinks(__gotots_receiver_53, __gotots_argument_67) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationFileLinks>).value).aliasesMarked) {
                         break __gotots_return_block_0;
                     }
                     const __gotots_store_40 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     const __gotots_receiver_54 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "declarationFileLinks");
                     const __gotots_store_41 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_68 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_argument_68 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     DeclarationFileLinks.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$DeclarationFileLinks(__gotots_receiver_54, __gotots_argument_68) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationFileLinks>).value).aliasesMarked = true;
                     const __gotots_store_42 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    })), new Visitor__from_ast((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.aliasMarkingVisitor));
+                    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), new Visitor__from_ast((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.aliasMarkingVisitor));
                 }
             }
             catch (__gotots_caught_1) {
@@ -2668,10 +2649,10 @@ export class EmitResolver {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_53 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_53: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_53 === void 0 ? void 0 :
                         (__gotots_receiver_53 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_54 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_54: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_55 = __gotots_receiver_54 === void 0 ? void 0 :
                         (__gotots_receiver_54 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2726,10 +2707,10 @@ export class EmitResolver {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_54 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_54: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_54 === void 0 ? void 0 :
                         (__gotots_receiver_54 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_55 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_55: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_56 = __gotots_receiver_55 === void 0 ? void 0 :
                         (__gotots_receiver_55 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2779,10 +2760,10 @@ export class EmitResolver {
             try {
                 __gotots_return_block_0: {
                     typeNode = EmitContext__from_printer.ParseNode(emitContext, typeNode);
-                    const __gotots_receiver_55 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_55: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     sync__from_gostdlib.Mutex.Lock(__gotots_receiver_55 === void 0 ? void 0 :
                         (__gotots_receiver_55 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
-                    const __gotots_receiver_56 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
+                    const __gotots_receiver_56: EmitResolver["checkerMu"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerMu;
                     const __gotots_receiver_57 = __gotots_receiver_56 === void 0 ? void 0 :
                         (__gotots_receiver_56 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
@@ -2962,31 +2943,31 @@ export class EmitResolver {
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.referenceResolver === undefined) {
             const __gotots_argument_69 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.compilerOptions;
             const __gotots_field_0 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.resolveName;
-            const __gotots_receiver_56 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_56: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_1 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
                 return Checker.$go$private$checker$getResolvedSymbolOrNil(__gotots_receiver_56, $argument0);
             };
-            const __gotots_receiver_57 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_57: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_2 = ($argument0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
                 return Checker.$go$private$checker$getMergedSymbol(__gotots_receiver_57, $argument0);
             };
-            const __gotots_receiver_58 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_58: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_3 = ($argument0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
                 return Checker.$go$private$checker$getParentOfSymbol(__gotots_receiver_58, $argument0);
             };
-            const __gotots_receiver_59 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_59: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_4 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
                 return Checker.$go$private$checker$getSymbolOfDeclaration(__gotots_receiver_59, $argument0);
             };
-            const __gotots_receiver_60 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_60: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_5 = ($argument0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, $argument1: SymbolFlags__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                 return Checker.$go$private$checker$getTypeOnlyAliasDeclarationEx(__gotots_receiver_60, $argument0, $argument1);
             };
-            const __gotots_receiver_61 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_61: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_6 = ($argument0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
                 return Checker.$go$private$checker$getExportSymbolOfValueSymbolIfExported(__gotots_receiver_61, $argument0);
             };
-            const __gotots_receiver_62 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
+            const __gotots_receiver_62: EmitResolver["checker"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker;
             const __gotots_field_7 = ($argument0: tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast> | undefined): [
                 gostring,
                 bool
@@ -3094,11 +3075,7 @@ export class EmitResolver {
                 if (!(container === undefined)) {
                     const __gotots_receiver_2 = c;
                     const __gotots_store_6 = NodeBase__from_ast.$storageOf(((container ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_17 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_argument_17 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let fileSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker.$go$private$checker$getSymbolOfDeclaration(__gotots_receiver_2, __gotots_argument_17);
                     Checker.$go$private$checker$resolveExternalModuleSymbol(c, fileSymbol, false);
                 }

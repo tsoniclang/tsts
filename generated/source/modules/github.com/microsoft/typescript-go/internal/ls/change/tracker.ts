@@ -395,7 +395,8 @@ export class Tracker {
                     break;
                 }
                 case KindPropertySignature$constant__from_ast(): {
-                    endNode = NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$fromStorage(PropertySignatureDeclaration__from_ast.$storageOf(((Node__from_ast.AsPropertySignatureDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken;
+                    endNode = (void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
+                        PropertySignatureDeclaration__from_ast.$storageOf(((Node__from_ast.AsPropertySignatureDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken;
                     break;
                 }
                 case KindPropertyDeclaration$constant__from_ast(): {
@@ -595,7 +596,8 @@ export class Tracker {
                 let comments = AppendSeq$SliceOf_Named_ast$CommentRange$Named_ast$CommentRange(Collect$Named_ast$CommentRange(GetTrailingCommentRanges__from_scanner((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, SourceFile__from_ast.Text(sourceFile), Node__from_ast.End(node))), GetLeadingCommentRanges__from_scanner((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, SourceFile__from_ast.Text(sourceFile), Node__from_ast.End(node)));
                 if (comments.length > 0) {
                     {
-                        let realEnd = TextRange__from_core.$fromStorage(CommentRange__from_ast.$storageOf(CommentRange__from_ast.$fromStorage(comments.get(comments.length - 1))).TextRange).End();
+                        let realEnd = TextRange__from_core.$fromStorage((void CommentRange__from_ast.$storageOf, (void CommentRange__from_ast.$fromStorage,
+                            comments.get(comments.length - 1))).TextRange).End();
                         if (realEnd !== 0) {
                             return realEnd;
                         }
@@ -621,7 +623,8 @@ export class Tracker {
             {
                 let JSDocComments = GetJSDocCommentRanges__from_parser((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, RuntimeSlice.nil<CommentRange__from_ast$Storage>(), node, SourceFile__from_ast.Text(sourceFile));
                 if (JSDocComments.length > 0) {
-                    return GetLineStartPositionForPosition__from_format(TextRange__from_core.$fromStorage(CommentRange__from_ast.$storageOf(CommentRange__from_ast.$fromStorage(JSDocComments.get(0))).TextRange).Pos(), sourceFile);
+                    return GetLineStartPositionForPosition__from_format(TextRange__from_core.$fromStorage((void CommentRange__from_ast.$storageOf, (void CommentRange__from_ast.$fromStorage,
+                        JSDocComments.get(0))).TextRange).Pos(), sourceFile);
                 }
             }
         }
@@ -659,7 +662,8 @@ export class Tracker {
                 comments = Collect$Named_ast$CommentRange(GetTrailingCommentRanges__from_scanner((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, SourceFile__from_ast.Text(sourceFile), fullStart));
             }
             if (comments.length > 0) {
-                return SkipTriviaEx__from_scanner(SourceFile__from_ast.Text(sourceFile), TextRange__from_core.$fromStorage(CommentRange__from_ast.$storageOf(CommentRange__from_ast.$fromStorage(comments.get(0))).TextRange).End(), new SkipTriviaOptions__from_scanner(true, true, false));
+                return SkipTriviaEx__from_scanner(SourceFile__from_ast.Text(sourceFile), TextRange__from_core.$fromStorage((void CommentRange__from_ast.$storageOf, (void CommentRange__from_ast.$fromStorage,
+                    comments.get(0))).TextRange).End(), new SkipTriviaOptions__from_scanner(true, true, false));
             }
         }
         let nextLineStart = IfElse$int(fullStart > 0, 1, 0);
@@ -778,12 +782,9 @@ export class Tracker {
             }
         }
         const __gotots_binary_operand_0 = Node__from_ast.End(node);
-        const __gotots_store_2 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        const __gotots_binary_operand_1 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_store_2 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+            NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+        const __gotots_binary_operand_1 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         if (__gotots_binary_operand_0 === __gotots_binary_operand_1 && IsStatement__from_ast(node)) {
             options.Prefix = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).newLine + options.Prefix;
         }

@@ -19,7 +19,8 @@ export class TypeEraserTransformer {
     declare private readonly then?: never;
     static $go$private$tstransforms$elide(tx: TypeEraserTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         const __gotots_store_155 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return EmitContext__from_printer.NewNotEmittedStatement(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_155, "Transformer")), Node__from_ast.AsNode(node));
+        return EmitContext__from_printer.NewNotEmittedStatement(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_155, "Transformer")), (void Node__from_ast.AsNode,
+            node));
     }
     static $go$private$tstransforms$popNode(tx: TypeEraserTransformer | undefined, grandparentNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentNode = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).parentNode;
@@ -199,7 +200,8 @@ export class TypeEraserTransformer {
                             let n: {
                                 value: ConstructorDeclaration__from_ast;
                             } | undefined = Node__from_ast.AsConstructorDeclaration(node);
-                            if (NodeIsMissing__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body)) {
+                            if (NodeIsMissing__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body)) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }
@@ -210,11 +212,13 @@ export class TypeEraserTransformer {
                             const __gotots_argument_21 = void 0;
                             const __gotots_argument_22 = void 0;
                             const __gotots_store_20 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_23 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_23 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_24 = void 0;
                             const __gotots_argument_25 = void 0;
                             const __gotots_store_21 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_26 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            const __gotots_argument_26 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
                             __gotots_return_0 = NodeFactory__from_ast.UpdateConstructorDeclaration(__gotots_receiver_8, __gotots_argument_20, __gotots_argument_21, __gotots_argument_22, __gotots_argument_23, __gotots_argument_24, __gotots_argument_25, __gotots_argument_26);
                             break __gotots_return_block_0;
                             break;
@@ -223,7 +227,8 @@ export class TypeEraserTransformer {
                             let n: {
                                 value: MethodDeclaration__from_ast;
                             } | undefined = Node__from_ast.AsMethodDeclaration(node);
-                            if (NodeIsMissing__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body)) {
+                            if (NodeIsMissing__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body)) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }
@@ -236,17 +241,20 @@ export class TypeEraserTransformer {
                             const __gotots_store_25 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                             const __gotots_argument_27 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "NamedMemberBase"));
                             const __gotots_argument_29 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_9, __gotots_argument_27);
-                            const __gotots_argument_30 = BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken;
+                            const __gotots_argument_30 = (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken;
                             const __gotots_store_26 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_31 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "Transformer")), MethodDeclaration__from_ast.Name(n));
                             const __gotots_argument_32 = void 0;
                             const __gotots_argument_33 = void 0;
                             const __gotots_store_27 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_34 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_34 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_35 = void 0;
                             const __gotots_argument_36 = void 0;
                             const __gotots_store_28 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_37 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            const __gotots_argument_37 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
                             __gotots_return_0 = NodeFactory__from_ast.UpdateMethodDeclaration(__gotots_receiver_10, __gotots_argument_28, __gotots_argument_29, __gotots_argument_30, __gotots_argument_31, __gotots_argument_32, __gotots_argument_33, __gotots_argument_34, __gotots_argument_35, __gotots_argument_36, __gotots_argument_37);
                             break __gotots_return_block_0;
                             break;
@@ -255,12 +263,14 @@ export class TypeEraserTransformer {
                             let n: {
                                 value: GetAccessorDeclaration__from_ast;
                             } | undefined = Node__from_ast.AsGetAccessorDeclaration(node);
-                            if (NodeIsMissing__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body) && HasSyntacticModifier__from_ast(node, ModifierFlagsAbstract$constant__from_ast())) {
+                            if (NodeIsMissing__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body) && HasSyntacticModifier__from_ast(node, ModifierFlagsAbstract$constant__from_ast())) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }
                             const __gotots_store_29 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            let body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            let body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
                             if (body === undefined) {
                                 const __gotots_store_30 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                                 const __gotots_store_31 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -277,14 +287,15 @@ export class TypeEraserTransformer {
                             const __gotots_argument_41 = n;
                             const __gotots_store_36 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_12 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "Transformer"));
-                            const __gotots_store_37 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
+                            const __gotots_store_37: GetAccessorDeclaration__from_ast["AccessorDeclarationBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
                             const __gotots_argument_40 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_37, "NamedMemberBase"));
                             const __gotots_argument_42 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_12, __gotots_argument_40);
                             const __gotots_store_38 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_43 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "Transformer")), GetAccessorDeclaration__from_ast.Name(n));
                             const __gotots_argument_44 = void 0;
                             const __gotots_store_39 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_45 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_45 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_46 = void 0;
                             const __gotots_argument_47 = void 0;
                             const __gotots_argument_48 = body;
@@ -296,12 +307,14 @@ export class TypeEraserTransformer {
                             let n: {
                                 value: SetAccessorDeclaration__from_ast;
                             } | undefined = Node__from_ast.AsSetAccessorDeclaration(node);
-                            if (NodeIsMissing__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body) && HasSyntacticModifier__from_ast(node, ModifierFlagsAbstract$constant__from_ast())) {
+                            if (NodeIsMissing__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body) && HasSyntacticModifier__from_ast(node, ModifierFlagsAbstract$constant__from_ast())) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }
                             const __gotots_store_40 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            let body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            let body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
                             if (body === undefined) {
                                 const __gotots_store_41 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                                 const __gotots_store_42 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -318,14 +331,15 @@ export class TypeEraserTransformer {
                             const __gotots_argument_52 = n;
                             const __gotots_store_47 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_15 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_47, "Transformer"));
-                            const __gotots_store_48 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
+                            const __gotots_store_48: SetAccessorDeclaration__from_ast["AccessorDeclarationBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
                             const __gotots_argument_51 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_48, "NamedMemberBase"));
                             const __gotots_argument_53 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_15, __gotots_argument_51);
                             const __gotots_store_49 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_54 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_49, "Transformer")), SetAccessorDeclaration__from_ast.Name(n));
                             const __gotots_argument_55 = void 0;
                             const __gotots_store_50 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_56 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_56 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_57 = void 0;
                             const __gotots_argument_58 = void 0;
                             const __gotots_argument_59 = body;
@@ -381,7 +395,7 @@ export class TypeEraserTransformer {
                             const __gotots_argument_69 = n;
                             const __gotots_store_61 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_19 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "Transformer"));
-                            const __gotots_store_62 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
+                            const __gotots_store_62: ClassDeclaration__from_ast["ClassLikeBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
                             const __gotots_argument_68 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_62, "ModifiersBase"));
                             const __gotots_argument_70 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_19, __gotots_argument_68);
                             const __gotots_store_63 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -405,7 +419,7 @@ export class TypeEraserTransformer {
                             const __gotots_argument_76 = n;
                             const __gotots_store_68 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_21 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_68, "Transformer"));
-                            const __gotots_store_69 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
+                            const __gotots_store_69: ClassExpression__from_ast["ClassLikeBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
                             const __gotots_argument_75 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_69, "ModifiersBase"));
                             const __gotots_argument_77 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_21, __gotots_argument_75);
                             const __gotots_store_70 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -421,7 +435,9 @@ export class TypeEraserTransformer {
                         }
                         case KindFunctionDeclaration$constant__from_ast(): {
                             let n: tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast> | undefined = Node__from_ast.AsFunctionDeclaration(node);
-                            if (NodeIsMissing__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body)) {
+                            if (NodeIsMissing__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body)) {
                                 __gotots_return_0 = TypeEraserTransformer.$go$private$tstransforms$elide(tx, node);
                                 break __gotots_return_block_0;
                             }
@@ -432,22 +448,24 @@ export class TypeEraserTransformer {
                             const __gotots_store_75 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_23 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_75, "Transformer"));
                             const __gotots_store_76 = FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value);
-                            const __gotots_argument_82 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                                return ModifiersBase__from_ast.$fromStorage($go$storage);
-                            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                                return ModifiersBase__from_ast.$storageOf($go$value);
-                            }));
+                            const __gotots_argument_82 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                             const __gotots_argument_84 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_23, __gotots_argument_82);
-                            const __gotots_argument_85 = BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).AsteriskToken;
+                            const __gotots_argument_85 = (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).AsteriskToken;
                             const __gotots_store_77 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_86 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_77, "Transformer")), FunctionDeclaration__from_ast.Name(n));
                             const __gotots_argument_87 = void 0;
                             const __gotots_store_78 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_88 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_78, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_88 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_78, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Parameters);
                             const __gotots_argument_89 = void 0;
                             const __gotots_argument_90 = void 0;
                             const __gotots_store_79 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_91 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_79, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body);
+                            const __gotots_argument_91 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_79, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body);
                             __gotots_return_0 = NodeFactory__from_ast.UpdateFunctionDeclaration(__gotots_receiver_24, __gotots_argument_83, __gotots_argument_84, __gotots_argument_85, __gotots_argument_86, __gotots_argument_87, __gotots_argument_88, __gotots_argument_89, __gotots_argument_90, __gotots_argument_91);
                             break __gotots_return_block_0;
                             break;
@@ -465,16 +483,19 @@ export class TypeEraserTransformer {
                             const __gotots_store_83 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                             const __gotots_argument_92 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_83, "ModifiersBase"));
                             const __gotots_argument_94 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_25, __gotots_argument_92);
-                            const __gotots_argument_95 = BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken;
+                            const __gotots_argument_95 = (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken;
                             const __gotots_store_84 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_96 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_84, "Transformer")), FunctionExpression__from_ast.Name(n));
                             const __gotots_argument_97 = void 0;
                             const __gotots_store_85 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_98 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_85, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_98 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_85, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_99 = void 0;
                             const __gotots_argument_100 = void 0;
                             const __gotots_store_86 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_101 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_86, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            const __gotots_argument_101 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_86, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
                             __gotots_return_0 = NodeFactory__from_ast.UpdateFunctionExpression(__gotots_receiver_26, __gotots_argument_93, __gotots_argument_94, __gotots_argument_95, __gotots_argument_96, __gotots_argument_97, __gotots_argument_98, __gotots_argument_99, __gotots_argument_100, __gotots_argument_101);
                             break __gotots_return_block_0;
                             break;
@@ -494,12 +515,14 @@ export class TypeEraserTransformer {
                             const __gotots_argument_104 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_27, __gotots_argument_102);
                             const __gotots_argument_105 = void 0;
                             const __gotots_store_91 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_106 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_91, "Transformer")), FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
+                            const __gotots_argument_106 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_91, "Transformer")), (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters);
                             const __gotots_argument_107 = void 0;
                             const __gotots_argument_108 = void 0;
-                            const __gotots_argument_109 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.EqualsGreaterThanToken;
+                            const __gotots_argument_109: ArrowFunction__from_ast["EqualsGreaterThanToken"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.EqualsGreaterThanToken;
                             const __gotots_store_92 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_110 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_92, "Transformer")), BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
+                            const __gotots_argument_110 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_92, "Transformer")), (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
                             __gotots_return_0 = NodeFactory__from_ast.UpdateArrowFunction(__gotots_receiver_28, __gotots_argument_103, __gotots_argument_104, __gotots_argument_105, __gotots_argument_106, __gotots_argument_107, __gotots_argument_108, __gotots_argument_109, __gotots_argument_110);
                             break __gotots_return_block_0;
                             break;
@@ -515,11 +538,7 @@ export class TypeEraserTransformer {
                                 const __gotots_store_93 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                                 const __gotots_argument_111 = Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_93, "Transformer"));
                                 const __gotots_store_94 = ParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-                                const __gotots_argument_112 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                                    return ModifiersBase__from_ast.$fromStorage($go$storage);
-                                }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                                    return ModifiersBase__from_ast.$storageOf($go$value);
-                                }));
+                                const __gotots_argument_112 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                                 const __gotots_argument_113 = ModifierFlagsParameterPropertyModifier$constant__from_ast();
                                 modifiers = ExtractModifiers__from_transformers(__gotots_argument_111, __gotots_argument_112, __gotots_argument_113);
                             }
@@ -536,7 +555,8 @@ export class TypeEraserTransformer {
                                 else {
                                     const __gotots_store_98 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                                     const __gotots_store_99 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_98, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-                                    modifiers = NodeFactory__from_ast.NewModifierList(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_99, "NodeFactory"), Concat$SliceOf_PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(RuntimeSlice.literal<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>([NodeList__from_ast.$storageOf(NodeList__from_ast.$fromStorage(ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Nodes, visited])));
+                                    modifiers = NodeFactory__from_ast.NewModifierList(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_99, "NodeFactory"), Concat$SliceOf_PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(RuntimeSlice.literal<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>([(void NodeList__from_ast.$storageOf, (void NodeList__from_ast.$fromStorage,
+                                            ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Nodes, visited])));
                                 }
                             }
                             const __gotots_store_100 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -567,7 +587,14 @@ export class TypeEraserTransformer {
                             const __gotots_argument_124 = void 0;
                             const __gotots_store_107 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_125 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_107, "Transformer")), CallExpression__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments);
-                            const __gotots_argument_126 = Node__from_ast.$storageOf(Node__from_ast.$fromStorage(NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(CallExpression__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Flags;
+                            const __gotots_argument_126 = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
+                                (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                                    (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                                        (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                                            (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                                                (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                                                    (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                                        CallExpression__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Flags;
                             __gotots_return_0 = NodeFactory__from_ast.UpdateCallExpression(__gotots_receiver_30, __gotots_argument_121, __gotots_argument_122, __gotots_argument_123, __gotots_argument_124, __gotots_argument_125, __gotots_argument_126);
                             break __gotots_return_block_0;
                             break;
@@ -599,11 +626,18 @@ export class TypeEraserTransformer {
                             const __gotots_argument_131 = n;
                             const __gotots_store_114 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_132 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_114, "Transformer")), (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Tag);
-                            const __gotots_argument_133 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.QuestionDotToken;
+                            const __gotots_argument_133: TaggedTemplateExpression__from_ast["QuestionDotToken"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.QuestionDotToken;
                             const __gotots_argument_134 = void 0;
                             const __gotots_store_115 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_argument_135 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_115, "Transformer")), (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Template);
-                            const __gotots_argument_136 = Node__from_ast.$storageOf(Node__from_ast.$fromStorage(NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Flags;
+                            const __gotots_argument_136 = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
+                                (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                                    (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                                        (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                                            (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                                                (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                                                    (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                                        MemberExpressionBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Flags;
                             __gotots_return_0 = NodeFactory__from_ast.UpdateTaggedTemplateExpression(__gotots_receiver_32, __gotots_argument_131, __gotots_argument_132, __gotots_argument_133, __gotots_argument_134, __gotots_argument_135, __gotots_argument_136);
                             break __gotots_return_block_0;
                             break;
@@ -716,8 +750,8 @@ export class TypeEraserTransformer {
                             const __gotots_store_137 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                             const __gotots_argument_148 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_137, "ModifiersBase"));
                             const __gotots_argument_149 = importClause;
-                            const __gotots_argument_150 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                            const __gotots_argument_151 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                            const __gotots_argument_150: ImportDeclaration__from_ast["ModuleSpecifier"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                            const __gotots_argument_151: ImportDeclaration__from_ast["Attributes"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                             __gotots_return_0 = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_37, __gotots_argument_147, __gotots_argument_148, __gotots_argument_149, __gotots_argument_150, __gotots_argument_151);
                             break __gotots_return_block_0;
                             break;
@@ -726,12 +760,9 @@ export class TypeEraserTransformer {
                             let n: {
                                 value: ImportClause__from_ast;
                             } | undefined = Node__from_ast.AsImportClause(node);
-                            const __gotots_store_138 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-                            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_138, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                                return Node__from_ast.$fromStorage($go$storage);
-                            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                                return Node__from_ast.$storageOf($go$value);
-                            }))) {
+                            const __gotots_store_138 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                                NodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
+                            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_138, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }

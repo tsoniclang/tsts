@@ -55,7 +55,8 @@ export class Set<T> {
         }
         let clone: tsonicTypeScriptRuntime.Location<Set<T>> | undefined = tsonicTypeScriptRuntime.location<Set<T>>(Set.$fromStorage<T>({
             M: generic_maps_kernel.MapsCloneKernel<GoMapValue<T, GoEmptyStruct>, T, GoEmptyStruct>($go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, $go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, $go$copy$T0_to_T0, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-                return GoEmptyStruct.$copy($argument0);
+                return (void GoEmptyStruct.$copy,
+                    $argument0);
             }, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void, (): GoEmptyStruct => {
                 return GoEmptyStruct.$zero();
             }, Set.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set<T>>).value).M)
@@ -84,7 +85,7 @@ export class Set<T> {
         let ok = __gotots_results_0[1];
         return ok;
     }
-    static Intersects$kernel<T>(s: tsonicTypeScriptRuntime.Location<Set<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, other: tsonicTypeScriptRuntime.Location<Set<T>> | undefined): bool {
+    static Intersects$kernel<T>(s: tsonicTypeScriptRuntime.Location<Set<T>> | undefined, other: tsonicTypeScriptRuntime.Location<Set<T>> | undefined): bool {
         if (s === undefined || other === undefined) {
             return false;
         }
@@ -95,15 +96,15 @@ export class Set<T> {
             if (!__gotots_range_value_5[1]) {
                 continue;
             }
-            const __gotots_range_value_6 = $go$copy$T0_to_T0(__gotots_range_value_4);
+            const __gotots_range_value_6 = __gotots_range_value_4;
             let key: T = __gotots_range_value_6;
-            if (Set.Has<T>(other, $go$copy$T0_to_T0(key))) {
+            if (Set.Has<T>(other, key)) {
                 return true;
             }
         }
         return false;
     }
-    static IsSubsetOf$kernel<T>(s: tsonicTypeScriptRuntime.Location<Set<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, other: tsonicTypeScriptRuntime.Location<Set<T>> | undefined): bool {
+    static IsSubsetOf$kernel<T>(s: tsonicTypeScriptRuntime.Location<Set<T>> | undefined, other: tsonicTypeScriptRuntime.Location<Set<T>> | undefined): bool {
         if (s === undefined) {
             return true;
         }
@@ -114,9 +115,9 @@ export class Set<T> {
             if (!__gotots_range_value_2[1]) {
                 continue;
             }
-            const __gotots_range_value_3 = $go$copy$T0_to_T0(__gotots_range_value_1);
+            const __gotots_range_value_3 = __gotots_range_value_1;
             let key: T = __gotots_range_value_3;
-            if (!Set.Has<T>(other, $go$copy$T0_to_T0(key))) {
+            if (!Set.Has<T>(other, key)) {
                 return false;
             }
         }
@@ -150,7 +151,8 @@ export class Set<T> {
                 Set.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set<T>>).value).M = $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void(GoEmptyStruct.$zero(), $go$length$MapOf_T0_To_Struct_void_to_int(Set.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set<T>>).value).M));
             }
             generic_maps_kernel.MapsCopyKernel<GoMapValue<T, GoEmptyStruct>, GoMapValue<T, GoEmptyStruct>, T, GoEmptyStruct>($go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, $go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, $go$copy$T0_to_T0, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-                return GoEmptyStruct.$copy($argument0);
+                return (void GoEmptyStruct.$copy,
+                    $argument0);
             }, Set.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set<T>>).value).M, Set.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set<T>>).value).M);
         }
         return result;

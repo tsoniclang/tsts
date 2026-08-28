@@ -126,12 +126,9 @@ export function formatNodeLines(ctx: GoInterface | undefined, sourceFile: tsonic
 export function FormatDocument(ctx: GoInterface | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<TextChange__from_core$Storage> {
     const __gotots_argument_10 = ctx;
     const __gotots_argument_8 = 0;
-    const __gotots_store_0 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_9 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-        return Node__from_ast.$fromStorage($go$storage);
-    }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-        return Node__from_ast.$storageOf($go$value);
-    }));
+    const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+        NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+    const __gotots_argument_9 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     const __gotots_argument_11 = NewTextRange__from_core(__gotots_argument_8, __gotots_argument_9);
     const __gotots_argument_12 = sourceFile;
     const __gotots_argument_13 = FormatRequestKindFormatDocument$constant();

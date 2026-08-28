@@ -168,8 +168,8 @@ export class emitter {
                     let printerOptions = new PrinterOptions__from_printer(Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RemoveComments), (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NewLine, true, CompilerOptions__from_core.GetEmitScriptTarget(options), !((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitOnly === EmitOnlyForcedDts$constant()) && Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationMap), Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InlineSourceMap), false, true, true, false, false, false);
                     let printer__shadow_1: Printer__from_printer | undefined = NewPrinter__from_printer(PrinterOptions__from_printer.$copy(printerOptions), new PrintHandlers__from_printer(void 0, void 0, void 0, void 0, void 0, void 0, void 0), emitContext);
                     const __gotots_field_2 = IfElse$Named_core$Tristate(!((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitOnly === EmitOnlyForcedDts$constant()) && Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationMap), TSTrue$constant__from_core(), TSFalse$constant__from_core());
-                    const __gotots_field_3 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SourceRoot;
-                    const __gotots_field_4 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MapRoot;
+                    const __gotots_field_3: CompilerOptions__from_core["SourceRoot"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SourceRoot;
+                    const __gotots_field_4: CompilerOptions__from_core["MapRoot"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MapRoot;
                     const __gotots_struct_0 = CompilerOptions__from_core.$zero();
                     __gotots_struct_0.SourceMap = __gotots_field_2;
                     __gotots_struct_0.SourceRoot = __gotots_field_3;
@@ -391,11 +391,7 @@ export class emitter {
         }
         const __gotots_receiver_18 = printer_;
         const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_24 = sourceFile;
         const __gotots_argument_25 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).writer;
         const __gotots_argument_26 = sourceMapGenerator;
@@ -645,11 +641,7 @@ export function getScriptTransformers(emitContext: {
     let __gotots_logical_result_3 = !Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.VerbatimModuleSyntax);
     if (__gotots_logical_result_3) {
         const __gotots_store_8 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_3 = !IsInJSFile__from_ast(__gotots_argument_40);
     }
     let importElisionEnabled = __gotots_logical_result_3;
@@ -779,7 +771,7 @@ export function sourceFileMayBeEmitted(sourceFile: tsonicTypeScriptRuntime.Locat
         const __gotots_argument_8 = goInterfaceNonNil<SourceFileMayBeEmittedHost>(__gotots_receiver_5).GetCurrentDirectory();
         let commonDir = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_7, __gotots_argument_8);
         const __gotots_argument_9 = SourceFile__from_ast.FileName(sourceFile);
-        const __gotots_argument_10 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
+        const __gotots_argument_10: CompilerOptions__from_core["OutDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
         const __gotots_receiver_6 = host;
         const __gotots_argument_11 = goInterfaceNonNil<SourceFileMayBeEmittedHost>(__gotots_receiver_6).GetCurrentDirectory();
         const __gotots_argument_12 = commonDir;

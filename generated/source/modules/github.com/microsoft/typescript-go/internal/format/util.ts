@@ -107,21 +107,14 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
     if (IsPropertyAssignment__from_ast(parent)) {
         let pa: tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast> | undefined = Node__from_ast.AsPropertyAssignment(parent);
         const __gotots_store_0 = PropertyAssignment__from_ast.$storageOf(((pa ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value);
-        let mods: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-            return NamedMemberBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-            return NamedMemberBase__from_ast.$storageOf($go$value);
-        }));
-        let __gotots_logical_result_1 = tsonicTypeScriptRuntime.sameLocation(child, NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$fromStorage(PropertyAssignment__from_ast.$storageOf(((pa ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NamedMemberBase)).PostfixToken);
+        let mods: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+        let __gotots_logical_result_1 = tsonicTypeScriptRuntime.sameLocation(child, (void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
+            PropertyAssignment__from_ast.$storageOf(((pa ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NamedMemberBase)).PostfixToken);
         if (!__gotots_logical_result_1) {
             let __gotots_logical_result_0 = !(mods === undefined);
             if (__gotots_logical_result_0) {
                 const __gotots_store_1 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                    return NodeList__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                    return NodeList__from_ast.$storageOf($go$value);
-                });
+                const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_1 = child;
                 const __gotots_argument_2 = IsModifierLike__from_ast;
                 __gotots_logical_result_0 = isGrammarErrorElement(__gotots_argument_0, __gotots_argument_1, __gotots_argument_2);
@@ -143,11 +136,7 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
             let __gotots_logical_result_2 = !(mods === undefined);
             if (__gotots_logical_result_2) {
                 const __gotots_store_3 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                    return NodeList__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                    return NodeList__from_ast.$storageOf($go$value);
-                });
+                const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_4 = child;
                 const __gotots_argument_5 = IsModifierLike__from_ast;
                 __gotots_logical_result_2 = isGrammarErrorElement(__gotots_argument_3, __gotots_argument_4, __gotots_argument_5);
@@ -161,14 +150,16 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
             && Node__from_ast.$storageOf(((child ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindExclamationToken$constant__from_ast();
     }
     if (IsConstructorDeclaration__from_ast(parent)) {
-        return tsonicTypeScriptRuntime.sameLocation(child, FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsConstructorDeclaration(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type)
+        return tsonicTypeScriptRuntime.sameLocation(child, (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+            FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsConstructorDeclaration(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type)
             || isGrammarErrorElement(Node__from_ast.TypeParameterList(parent), child, IsTypeParameterDeclaration__from_ast);
     }
     if (IsGetAccessorDeclaration__from_ast(parent)) {
         return isGrammarErrorElement(Node__from_ast.TypeParameterList(parent), child, IsTypeParameterDeclaration__from_ast);
     }
     if (IsSetAccessorDeclaration__from_ast(parent)) {
-        return tsonicTypeScriptRuntime.sameLocation(child, FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsSetAccessorDeclaration(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type)
+        return tsonicTypeScriptRuntime.sameLocation(child, (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+            FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsSetAccessorDeclaration(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type)
             || isGrammarErrorElement(Node__from_ast.TypeParameterList(parent), child, IsTypeParameterDeclaration__from_ast);
     }
     if (IsNamespaceExportDeclaration__from_ast(parent)) {
@@ -177,11 +168,7 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
         let __gotots_logical_result_4 = !(mods === undefined);
         if (__gotots_logical_result_4) {
             const __gotots_store_5 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-            const __gotots_argument_6 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                return NodeList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                return NodeList__from_ast.$storageOf($go$value);
-            });
+            const __gotots_argument_6 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             const __gotots_argument_7 = child;
             const __gotots_argument_8 = IsModifierLike__from_ast;
             __gotots_logical_result_4 = isGrammarErrorElement(__gotots_argument_6, __gotots_argument_7, __gotots_argument_8);

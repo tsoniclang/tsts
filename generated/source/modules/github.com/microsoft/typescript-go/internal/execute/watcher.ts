@@ -146,7 +146,7 @@ export class watchCompilerHost {
     static GetSourceFile(h: {
         value: watchCompilerHost;
     } | undefined, opts: SourceFileParseOptions__from_ast): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
-        const __gotots_receiver_57 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerHost;
+        const __gotots_receiver_57: watchCompilerHost["CompilerHost"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerHost;
         const __gotots_receiver_58 = goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_57).FS();
         const __gotots_argument_97 = SourceFileParseOptions__from_ast.$storageOf(opts).FileName;
         let info: $goInterface$Interface_Method_fs$IsDir_void_to_bool_Method_fs$ModTime_void_to_Named_time$Time_Method_fs$Mode_void_to_Named_fs$FileMode_Method_fs$Name_void_to_string_Method_fs$Size_void_to_int64_Method_fs$Sys_void_to_Interface_void | undefined = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_58).Stat(__gotots_argument_97);
@@ -167,12 +167,12 @@ export class watchCompilerHost {
                 }
             }
         }
-        const __gotots_receiver_60 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerHost;
+        const __gotots_receiver_60: watchCompilerHost["CompilerHost"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerHost;
         const __gotots_argument_98 = SourceFileParseOptions__from_ast.$copy(opts);
         let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_60).GetSourceFile(__gotots_argument_98);
         if (!(file === undefined)) {
             if (!(info === undefined)) {
-                const __gotots_receiver_62 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cache;
+                const __gotots_receiver_62: watchCompilerHost["cache"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cache;
                 const __gotots_argument_99 = new Path__from_tspath(SourceFileParseOptions__from_ast.$storageOf(opts).Path);
                 const __gotots_field_19 = file;
                 const __gotots_receiver_61 = info;
@@ -1089,7 +1089,8 @@ export function createWatcher(sys: System__from_tsc | undefined, configParseResu
     let w: Watcher | undefined = new Watcher(named_sync.SyncMutexOperations.$zero(), __gotots_field_0, "", __gotots_field_1, __gotots_field_2, __gotots_field_3, __gotots_field_4, __gotots_field_5, __gotots_field_6, __gotots_field_7, void 0, void 0, false, false, RuntimeSlice.nil<gostring>(), __gotots_field_8, void 0, GoMap.make(0, []), void 0, $goMap$MapOf_string_To_Named_time$Time.nil(), GoChannel.make<GoEmptyStruct>(1, (): GoEmptyStruct => {
         return GoEmptyStruct.$zero();
     }, (value: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy(value);
+        return (void GoEmptyStruct.$copy,
+            value);
     }), void 0, named_sync.SyncMutexOperations.$zero(), GoMap__from_gotots_runtime.nil<gostring, EventKind__from_fswatch>(new EventKind__from_fswatch(0)), false);
     if (!(((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile === undefined)) {
         (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).configFileName = SourceFile__from_ast.FileName((((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SourceFile);

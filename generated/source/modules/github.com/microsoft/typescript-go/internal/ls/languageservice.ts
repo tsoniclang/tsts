@@ -212,24 +212,26 @@ export class LanguageService {
                         let __gotots_slice_build_85 = __gotots_slice_build_84;
                         if (__gotots_slice_build_86 <= __gotots_slice_build_84.capacity) {
                             __gotots_slice_build_85 = __gotots_slice_build_84.$withLength(__gotots_slice_build_86);
-                            __gotots_slice_build_85.set(__gotots_slice_build_84.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                                RenameFile: { value: new RenameFile__from_lsproto(StringLiteralRename__from_lsproto.$zero(), void 0, FileNameToDocumentURI__from_lsconv(oldOriginalPath), FileNameToDocumentURI__from_lsconv(newOriginalPath), void 0) },
-                                TextDocumentEdit: void 0,
-                                CreateFile: void 0,
-                                DeleteFile: void 0
-                            })));
+                            __gotots_slice_build_85.set(__gotots_slice_build_84.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                                {
+                                    RenameFile: { value: new RenameFile__from_lsproto(StringLiteralRename__from_lsproto.$zero(), void 0, FileNameToDocumentURI__from_lsconv(oldOriginalPath), FileNameToDocumentURI__from_lsconv(newOriginalPath), void 0) },
+                                    TextDocumentEdit: void 0,
+                                    CreateFile: void 0,
+                                    DeleteFile: void 0
+                                })));
                         }
                         else {
                             __gotots_slice_build_85 = goSliceAllocate<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(__gotots_slice_build_86, RuntimeSlice.$grownCapacity(__gotots_slice_build_84.capacity, __gotots_slice_build_86));
                             for (let __gotots_slice_build_87 = 0; __gotots_slice_build_87 < __gotots_slice_build_84.length; __gotots_slice_build_87++) {
                                 __gotots_slice_build_85.set(__gotots_slice_build_87, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage(__gotots_slice_build_84.get(__gotots_slice_build_87)))));
                             }
-                            __gotots_slice_build_85.set(__gotots_slice_build_84.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                                RenameFile: { value: new RenameFile__from_lsproto(StringLiteralRename__from_lsproto.$zero(), void 0, FileNameToDocumentURI__from_lsconv(oldOriginalPath), FileNameToDocumentURI__from_lsconv(newOriginalPath), void 0) },
-                                TextDocumentEdit: void 0,
-                                CreateFile: void 0,
-                                DeleteFile: void 0
-                            })));
+                            __gotots_slice_build_85.set(__gotots_slice_build_84.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                                {
+                                    RenameFile: { value: new RenameFile__from_lsproto(StringLiteralRename__from_lsproto.$zero(), void 0, FileNameToDocumentURI__from_lsconv(oldOriginalPath), FileNameToDocumentURI__from_lsconv(newOriginalPath), void 0) },
+                                    TextDocumentEdit: void 0,
+                                    CreateFile: void 0,
+                                    DeleteFile: void 0
+                                })));
                             for (let __gotots_slice_build_87 = __gotots_slice_build_86; __gotots_slice_build_87 < __gotots_slice_build_85.capacity; __gotots_slice_build_87++) {
                                 __gotots_slice_build_85.$initialize(__gotots_slice_build_87, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
                             }
@@ -267,22 +269,24 @@ export class LanguageService {
                 let __gotots_slice_build_91 = __gotots_slice_build_90;
                 if (__gotots_slice_build_92 <= __gotots_slice_build_90.capacity) {
                     __gotots_slice_build_91 = __gotots_slice_build_90.$withLength(__gotots_slice_build_92);
-                    __gotots_slice_build_91.set(__gotots_slice_build_90.length + 0, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage({
-                        TextEdit: edit,
-                        AnnotatedTextEdit: void 0,
-                        SnippetTextEdit: void 0
-                    })));
+                    __gotots_slice_build_91.set(__gotots_slice_build_90.length + 0, (void TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf, (void TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage,
+                        {
+                            TextEdit: edit,
+                            AnnotatedTextEdit: void 0,
+                            SnippetTextEdit: void 0
+                        })));
                 }
                 else {
                     __gotots_slice_build_91 = goSliceAllocate<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage>(__gotots_slice_build_92, RuntimeSlice.$grownCapacity(__gotots_slice_build_90.capacity, __gotots_slice_build_92));
                     for (let __gotots_slice_build_93 = 0; __gotots_slice_build_93 < __gotots_slice_build_90.length; __gotots_slice_build_93++) {
                         __gotots_slice_build_91.set(__gotots_slice_build_93, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$copy(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage(__gotots_slice_build_90.get(__gotots_slice_build_93)))));
                     }
-                    __gotots_slice_build_91.set(__gotots_slice_build_90.length + 0, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage({
-                        TextEdit: edit,
-                        AnnotatedTextEdit: void 0,
-                        SnippetTextEdit: void 0
-                    })));
+                    __gotots_slice_build_91.set(__gotots_slice_build_90.length + 0, (void TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf, (void TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage,
+                        {
+                            TextEdit: edit,
+                            AnnotatedTextEdit: void 0,
+                            SnippetTextEdit: void 0
+                        })));
                     for (let __gotots_slice_build_93 = __gotots_slice_build_92; __gotots_slice_build_93 < __gotots_slice_build_91.capacity; __gotots_slice_build_93++) {
                         __gotots_slice_build_91.$initialize(__gotots_slice_build_93, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$zero()));
                     }
@@ -294,24 +298,26 @@ export class LanguageService {
             let __gotots_slice_build_95 = __gotots_slice_build_94;
             if (__gotots_slice_build_96 <= __gotots_slice_build_94.capacity) {
                 __gotots_slice_build_95 = __gotots_slice_build_94.$withLength(__gotots_slice_build_96);
-                __gotots_slice_build_95.set(__gotots_slice_build_94.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                    TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(new OptionalVersionedTextDocumentIdentifier__from_lsproto(uri, IntegerOrNull__from_lsproto.$zero()), lspEdits) },
-                    CreateFile: void 0,
-                    RenameFile: void 0,
-                    DeleteFile: void 0
-                })));
+                __gotots_slice_build_95.set(__gotots_slice_build_94.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                    {
+                        TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(new OptionalVersionedTextDocumentIdentifier__from_lsproto(uri, IntegerOrNull__from_lsproto.$zero()), lspEdits) },
+                        CreateFile: void 0,
+                        RenameFile: void 0,
+                        DeleteFile: void 0
+                    })));
             }
             else {
                 __gotots_slice_build_95 = goSliceAllocate<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(__gotots_slice_build_96, RuntimeSlice.$grownCapacity(__gotots_slice_build_94.capacity, __gotots_slice_build_96));
                 for (let __gotots_slice_build_97 = 0; __gotots_slice_build_97 < __gotots_slice_build_94.length; __gotots_slice_build_97++) {
                     __gotots_slice_build_95.set(__gotots_slice_build_97, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage(__gotots_slice_build_94.get(__gotots_slice_build_97)))));
                 }
-                __gotots_slice_build_95.set(__gotots_slice_build_94.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                    TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(new OptionalVersionedTextDocumentIdentifier__from_lsproto(uri, IntegerOrNull__from_lsproto.$zero()), lspEdits) },
-                    CreateFile: void 0,
-                    RenameFile: void 0,
-                    DeleteFile: void 0
-                })));
+                __gotots_slice_build_95.set(__gotots_slice_build_94.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                    {
+                        TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(new OptionalVersionedTextDocumentIdentifier__from_lsproto(uri, IntegerOrNull__from_lsproto.$zero()), lspEdits) },
+                        CreateFile: void 0,
+                        RenameFile: void 0,
+                        DeleteFile: void 0
+                    })));
                 for (let __gotots_slice_build_97 = __gotots_slice_build_96; __gotots_slice_build_97 < __gotots_slice_build_95.capacity; __gotots_slice_build_97++) {
                     __gotots_slice_build_95.$initialize(__gotots_slice_build_97, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
                 }
@@ -536,20 +542,22 @@ export class LanguageService {
                 let __gotots_slice_build_1 = __gotots_slice_build_0;
                 if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                     __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, SignatureUsage.$storageOf(SignatureUsage.$fromStorage({
-                        Name: node,
-                        Call: callExpr
-                    })));
+                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void SignatureUsage.$storageOf, (void SignatureUsage.$fromStorage,
+                        {
+                            Name: node,
+                            Call: callExpr
+                        })));
                 }
                 else {
                     __gotots_slice_build_1 = goSliceAllocate<SignatureUsage__from_ls$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                     for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                         __gotots_slice_build_1.set(__gotots_slice_build_3, SignatureUsage.$storageOf(SignatureUsage.$copy(SignatureUsage.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                     }
-                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, SignatureUsage.$storageOf(SignatureUsage.$fromStorage({
-                        Name: node,
-                        Call: callExpr
-                    })));
+                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void SignatureUsage.$storageOf, (void SignatureUsage.$fromStorage,
+                        {
+                            Name: node,
+                            Call: callExpr
+                        })));
                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                         __gotots_slice_build_1.$initialize(__gotots_slice_build_3, SignatureUsage.$storageOf(SignatureUsage.$zero()));
                     }
@@ -621,7 +629,8 @@ export class LanguageService {
         for (let __gotots_range_index_105 = 0; __gotots_range_index_105 < __gotots_range_114.length; __gotots_range_index_105++) {
             const __gotots_range_value_142 = __gotots_range_114.get(__gotots_range_index_105);
             let stmt: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_142;
-            if (!IsAmbientModule__from_ast(Node__from_ast.AsNode(stmt))) {
+            if (!IsAmbientModule__from_ast((void Node__from_ast.AsNode,
+                stmt))) {
                 continue;
             }
             let ambientModule: {
@@ -676,11 +685,7 @@ export class LanguageService {
         let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (pos === 0) {
             const __gotots_store_16 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         else {
             node = GetTouchingPropertyName__from_astnav(file, pos);
@@ -739,11 +744,7 @@ export class LanguageService {
         let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (pos === 0) {
             const __gotots_store_17 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         else {
             node = GetTouchingPropertyName__from_astnav(file, pos);
@@ -1018,11 +1019,7 @@ export class LanguageService {
         };
         const __gotots_callee_42 = visit;
         const __gotots_store_15 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         (__gotots_callee_42 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_144);
         return [CodeLensesOrNull__from_lsproto.$fromStorage({
                 CodeLenses: result$location
@@ -1127,11 +1124,7 @@ export class LanguageService {
             const __gotots_receiver_25 = l;
             const __gotots_argument_140 = ctx;
             const __gotots_store_12 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_141 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_141 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_142 = file;
             let symbols = LanguageService.$go$private$ls$getDocumentSymbolsForChildren(__gotots_receiver_25, __gotots_argument_140, __gotots_argument_141, __gotots_argument_142);
             const symbols$location = tsonicTypeScriptRuntime.boundLocation({}, () => symbols, symbols$next => symbols = symbols$next);
@@ -1147,11 +1140,7 @@ export class LanguageService {
         for (let __gotots_range_index_51 = 0; __gotots_range_index_51 < __gotots_range_56.length; __gotots_range_index_51++) {
             const __gotots_range_value_69 = __gotots_range_index_51;
             let i = __gotots_range_value_69;
-            symbolInfoPtrs.set(i, tsonicTypeScriptRuntime.projectLocation<SymbolInformation__from_lsproto$Storage, SymbolInformation__from_lsproto>(goSliceAddress<SymbolInformation__from_lsproto$Storage>(symbolInfos, i), ($go$storage: SymbolInformation__from_lsproto$Storage): SymbolInformation__from_lsproto => {
-                return SymbolInformation__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: SymbolInformation__from_lsproto): SymbolInformation__from_lsproto$Storage => {
-                return SymbolInformation__from_lsproto.$storageOf($go$value);
-            }));
+            symbolInfoPtrs.set(i, tsonicTypeScriptRuntime.projectLocation<SymbolInformation__from_lsproto$Storage, SymbolInformation__from_lsproto>(goSliceAddress<SymbolInformation__from_lsproto$Storage>(symbolInfos, i), SymbolInformation__from_lsproto.$fromStorage, SymbolInformation__from_lsproto.$storageOf));
         }
         return [SymbolInformationsOrDocumentSymbolsOrNull__from_lsproto.$fromStorage({
                 SymbolInformations: symbolInfoPtrs$location,
@@ -1381,11 +1370,7 @@ export class LanguageService {
                     let inlayHintState__shadow_1: inlayHintState | undefined = new inlayHintState(ctx, Converters__from_lsconv.FromLSPRange((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(file), Range__from_lsproto.$copy(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlayHintParams__from_lsproto>).value.Range)), InlayHintsPreferences__from_lsutil.$copy(inlayHintPreferences), quotePreference, file, checker__shadow_1, (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<InlayHint__from_lsproto> | undefined>());
                     const __gotots_receiver_26 = inlayHintState__shadow_1;
                     const __gotots_store_13 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_143 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_argument_143 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     inlayHintState.$go$private$ls$visit(__gotots_receiver_26, __gotots_argument_143);
                     const __gotots_store_14 = (inlayHintState__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                     const __gotots_field_14 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "result");
@@ -1450,8 +1435,10 @@ export class LanguageService {
                         LinkedEditingRanges: void 0
                     }), void 0];
             }
-            let openPos = GetStartOfNode__from_astnav(Node__from_ast.AsNode(openFragment), sourceFile, false) + 1 | 0;
-            let closePos = GetStartOfNode__from_astnav(Node__from_ast.AsNode(closeFragment), sourceFile, false) + 2 | 0;
+            let openPos = GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                openFragment), sourceFile, false) + 1 | 0;
+            let closePos = GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                closeFragment), sourceFile, false) + 2 | 0;
             if ((!(position__shadow_1 === openPos)) && (!(position__shadow_1 === closePos))) {
                 return [LinkedEditingRangesOrNull__from_lsproto.$fromStorage({
                         LinkedEditingRanges: void 0
@@ -1460,13 +1447,17 @@ export class LanguageService {
             let openLineChar = Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), openPos);
             let closeLineChar = Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), closePos);
             return [LinkedEditingRangesOrNull__from_lsproto.$fromStorage({
-                    LinkedEditingRanges: { value: new LinkedEditingRanges__from_lsproto(RuntimeSlice.literal<Range__from_lsproto$Storage>([Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage({
-                                Start: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(openLineChar)),
-                                End: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(openLineChar))
-                            })), Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage({
-                                Start: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(closeLineChar)),
-                                End: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(closeLineChar))
-                            }))]), $state.jsxTagWordPattern) }
+                    LinkedEditingRanges: { value: new LinkedEditingRanges__from_lsproto(RuntimeSlice.literal<Range__from_lsproto$Storage>([
+                            (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                                {
+                                    Start: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(openLineChar)),
+                                    End: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(openLineChar))
+                                })), (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                                {
+                                    Start: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(closeLineChar)),
+                                    End: Position__from_lsproto.$storageOf(Position__from_lsproto.$copy(closeLineChar))
+                                })),
+                        ]), $state.jsxTagWordPattern) }
                 }), void 0];
         }
         else {
@@ -1487,11 +1478,15 @@ export class LanguageService {
             } | undefined = Node__from_ast.AsJsxElement(Node__from_ast.$storageOf(((tag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
             let openTag: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (jsxElement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OpeningElement;
             let closeTag: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (jsxElement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClosingElement;
-            let openTagNameStart = GetStartOfNode__from_astnav(Node__from_ast.AsNode(Node__from_ast.TagName(openTag)), sourceFile, false);
+            let openTagNameStart = GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                Node__from_ast.TagName(openTag)), sourceFile, false);
             let openTagNameEnd = Node__from_ast.End(Node__from_ast.TagName(openTag));
-            let closeTagNameStart = GetStartOfNode__from_astnav(Node__from_ast.AsNode(Node__from_ast.TagName(closeTag)), sourceFile, false);
+            let closeTagNameStart = GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                Node__from_ast.TagName(closeTag)), sourceFile, false);
             let closeTagNameEnd = Node__from_ast.End(Node__from_ast.TagName(closeTag));
-            if (openTagNameStart === GetStartOfNode__from_astnav(Node__from_ast.AsNode(openTag), sourceFile, false) || closeTagNameStart === GetStartOfNode__from_astnav(Node__from_ast.AsNode(closeTag), sourceFile, false) || openTagNameEnd === Node__from_ast.End(openTag) || closeTagNameEnd === Node__from_ast.End(closeTag)) {
+            if (openTagNameStart === GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                openTag), sourceFile, false) || closeTagNameStart === GetStartOfNode__from_astnav((void Node__from_ast.AsNode,
+                closeTag), sourceFile, false) || openTagNameEnd === Node__from_ast.End(openTag) || closeTagNameEnd === Node__from_ast.End(closeTag)) {
                 return [LinkedEditingRangesOrNull__from_lsproto.$fromStorage({
                         LinkedEditingRanges: void 0
                     }), void 0];
@@ -1502,20 +1497,26 @@ export class LanguageService {
                         LinkedEditingRanges: void 0
                     }), void 0];
             }
-            let openingTagText = GetTextOfNode__from_scanner(Node__from_ast.AsNode(Node__from_ast.TagName(openTag)));
-            if (openingTagText !== GetTextOfNode__from_scanner(Node__from_ast.AsNode(Node__from_ast.TagName(closeTag)))) {
+            let openingTagText = GetTextOfNode__from_scanner((void Node__from_ast.AsNode,
+                Node__from_ast.TagName(openTag)));
+            if (openingTagText !== GetTextOfNode__from_scanner((void Node__from_ast.AsNode,
+                Node__from_ast.TagName(closeTag)))) {
                 return [LinkedEditingRangesOrNull__from_lsproto.$fromStorage({
                         LinkedEditingRanges: void 0
                     }), void 0];
             }
             return [LinkedEditingRangesOrNull__from_lsproto.$fromStorage({
-                    LinkedEditingRanges: { value: new LinkedEditingRanges__from_lsproto(RuntimeSlice.literal<Range__from_lsproto$Storage>([Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage({
-                                Start: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), openTagNameStart | 0)),
-                                End: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), openTagNameEnd | 0))
-                            })), Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage({
-                                Start: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), closeTagNameStart | 0)),
-                                End: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), closeTagNameEnd | 0))
-                            }))]), $state.jsxTagWordPattern) }
+                    LinkedEditingRanges: { value: new LinkedEditingRanges__from_lsproto(RuntimeSlice.literal<Range__from_lsproto$Storage>([
+                            (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                                {
+                                    Start: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), openTagNameStart | 0)),
+                                    End: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), openTagNameEnd | 0))
+                                })), (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                                {
+                                    Start: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), closeTagNameStart | 0)),
+                                    End: Position__from_lsproto.$storageOf(Converters__from_lsconv.PositionToLineAndCharacter((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(sourceFile), closeTagNameEnd | 0))
+                                })),
+                        ]), $state.jsxTagWordPattern) }
                 }), void 0];
         }
     }
@@ -2057,7 +2058,7 @@ export class LanguageService {
         tsonicTypeScriptRuntime.Location<CodeLens__from_lsproto> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        let uri = (((codeLens ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLens__from_lsproto>).value.Data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri;
+        let uri: CodeLensData__from_lsproto["Uri"] = (((codeLens ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLens__from_lsproto>).value.Data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri;
         let textDoc = new TextDocumentIdentifier__from_lsproto(uri);
         let locale__shadow_1 = FromContext__from_locale(ctx);
         let locs = RuntimeSlice.nil<Location__from_lsproto$Storage>();
@@ -2530,18 +2531,12 @@ export class LanguageService {
         const __gotots_argument_226 = c;
         const __gotots_argument_227 = file;
         const __gotots_argument_228 = program;
-        const __gotots_store_24 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        const __gotots_argument_229 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        }));
-        const __gotots_store_25 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        const __gotots_argument_230 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_store_24 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+            NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+        const __gotots_argument_229 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_store_25 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+            NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+        const __gotots_argument_230 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         return LanguageService.$go$private$ls$collectSemanticTokensInRange(__gotots_receiver_36, __gotots_argument_225, __gotots_argument_226, __gotots_argument_227, __gotots_argument_228, __gotots_argument_229, __gotots_argument_230);
     }
     static $go$private$ls$collectSemanticTokensInRange(l: LanguageService | undefined, ctx: GoInterface | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, program: {
@@ -2637,22 +2632,24 @@ export class LanguageService {
                         let __gotots_slice_build_107 = __gotots_slice_build_106;
                         if (__gotots_slice_build_108 <= __gotots_slice_build_106.capacity) {
                             __gotots_slice_build_107 = __gotots_slice_build_106.$withLength(__gotots_slice_build_108);
-                            __gotots_slice_build_107.set(__gotots_slice_build_106.length + 0, semanticToken.$storageOf(semanticToken.$fromStorage({
-                                node: node,
-                                tokenType: tokenType__shadow_1.$value,
-                                tokenModifier: tokenModifier__shadow_1.$value
-                            })));
+                            __gotots_slice_build_107.set(__gotots_slice_build_106.length + 0, (void semanticToken.$storageOf, (void semanticToken.$fromStorage,
+                                {
+                                    node: node,
+                                    tokenType: tokenType__shadow_1.$value,
+                                    tokenModifier: tokenModifier__shadow_1.$value
+                                })));
                         }
                         else {
                             __gotots_slice_build_107 = goSliceAllocate<semanticToken__from_ls$Storage>(__gotots_slice_build_108, RuntimeSlice.$grownCapacity(__gotots_slice_build_106.capacity, __gotots_slice_build_108));
                             for (let __gotots_slice_build_109 = 0; __gotots_slice_build_109 < __gotots_slice_build_106.length; __gotots_slice_build_109++) {
                                 __gotots_slice_build_107.set(__gotots_slice_build_109, semanticToken.$storageOf(semanticToken.$copy(semanticToken.$fromStorage(__gotots_slice_build_106.get(__gotots_slice_build_109)))));
                             }
-                            __gotots_slice_build_107.set(__gotots_slice_build_106.length + 0, semanticToken.$storageOf(semanticToken.$fromStorage({
-                                node: node,
-                                tokenType: tokenType__shadow_1.$value,
-                                tokenModifier: tokenModifier__shadow_1.$value
-                            })));
+                            __gotots_slice_build_107.set(__gotots_slice_build_106.length + 0, (void semanticToken.$storageOf, (void semanticToken.$fromStorage,
+                                {
+                                    node: node,
+                                    tokenType: tokenType__shadow_1.$value,
+                                    tokenModifier: tokenModifier__shadow_1.$value
+                                })));
                             for (let __gotots_slice_build_109 = __gotots_slice_build_108; __gotots_slice_build_109 < __gotots_slice_build_107.capacity; __gotots_slice_build_109++) {
                                 __gotots_slice_build_107.$initialize(__gotots_slice_build_109, semanticToken.$storageOf(semanticToken.$zero()));
                             }
@@ -2667,11 +2664,7 @@ export class LanguageService {
         };
         const __gotots_callee_83 = visit;
         const __gotots_store_26 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_231 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_231 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         (__gotots_callee_83 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_231);
         const __gotots_receiver_38 = ctx;
         if (!(goInterfaceNonNil<GoInterface>(__gotots_receiver_38).Err() === undefined)) {
@@ -2687,10 +2680,10 @@ export class LanguageService {
         CompletionList | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        let keywordFilters = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.keywordFilters;
-        let isNewIdentifierLocation = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isNewIdentifierLocation;
+        let keywordFilters: completionDataData["keywordFilters"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.keywordFilters;
+        let isNewIdentifierLocation: completionDataData["isNewIdentifierLocation"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isNewIdentifierLocation;
         let contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.contextToken;
-        let literals = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.literals;
+        let literals: completionDataData["literals"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.literals;
         let preferences = LanguageService.UserPreferences(l);
         if (((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.LanguageVariant === LanguageVariantJSX$constant__from_core()) {
             let list: CompletionList | undefined = LanguageService.$go$private$ls$getJsxClosingTagCompletion(l, ctx, (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.location, file, position__shadow_1);
@@ -2952,11 +2945,7 @@ export class LanguageService {
                 const __gotots_field_9 = CompletionKindString$constant();
                 const __gotots_field_10 = (completion__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasIndexSignature;
                 const __gotots_store_5 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                const __gotots_field_11 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                const __gotots_field_11 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 let data: {
                     value: completionDataData;
                 } | undefined = { value: new completionDataData(__gotots_field_8, RuntimeSlice.nil<{
@@ -3230,14 +3219,16 @@ export class LanguageService {
         const locationRanges$location = tsonicTypeScriptRuntime.boundLocation({}, () => locationRanges, locationRanges$next => locationRanges = locationRanges$next);
         if (!(reference === undefined)) {
             let targetRange = Range__from_lsproto.$fromStorage({
-                Start: Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage({
-                    Line: 0,
-                    Character: 0
-                })),
-                End: Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage({
-                    Line: 0,
-                    Character: 0
-                }))
+                Start: (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                    {
+                        Line: 0,
+                        Character: 0
+                    })),
+                End: (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                    {
+                        Line: 0,
+                        Character: 0
+                    }))
             });
             locations = locations.append(void 0, [
                 { value: new LocationLink__from_lsproto(originSelectionRange$location, FileNameToDocumentURI__from_lsconv((reference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fileName), Range__from_lsproto.$copy(targetRange), Range__from_lsproto.$copy(targetRange)) },
@@ -3510,11 +3501,7 @@ export class LanguageService {
                 const __gotots_receiver_39 = c;
                 const __gotots_argument_233 = callTargetSymbol;
                 const __gotots_store_27 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                const __gotots_argument_234 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                const __gotots_argument_234 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_235 = SymbolFlagsNone$constant__from_ast();
                 const __gotots_argument_236 = SymbolFormatFlagsUseAliasDefinedOutsideCurrentScope$constant__from_checker();
                 const __gotots_argument_237 = Checker__from_checker.SymbolToStringEx(__gotots_receiver_39, __gotots_argument_233, __gotots_argument_234, __gotots_argument_235, __gotots_argument_236);
@@ -3753,11 +3740,7 @@ export class LanguageService {
                     return void 0;
                 }
                 const __gotots_store_23 = NodeBase__from_ast.$storageOf(((((def ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tripleSlashFileRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 let loc = LanguageService.$go$private$ls$getLocationOfEntry(l, new ReferenceEntry(entryKindNode$constant(), node, void 0, "", void 0, void 0));
                 return new referencedSymbolDefinitionInfo(node, Location__from_lsproto.$copy(loc), { value: new VSClassifiedTextElement__from_lsproto(RuntimeSlice.literal<{
                         value: VSClassifiedTextRun__from_lsproto;
@@ -3831,7 +3814,7 @@ export class LanguageService {
                 value: InfoCacheEntry__from_packagejson;
             } | undefined = Program__from_compiler.GetPackageJsonInfo((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program, packageJsonPath);
             if (!(packageJsonInfo === undefined) && InfoCacheEntry__from_packagejson.Exists(packageJsonInfo) && !((packageJsonInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents === undefined)) {
-                const __gotots_store_11 = ((packageJsonInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
+                const __gotots_store_11: PackageJson__from_packagejson["Fields"] = ((packageJsonInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
                 DependencyFields__from_packagejson.RangeDependencies(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "DependencyFields"), (name: gostring, version: gostring, dependencyField: gostring): bool => {
                     if (!strings__from_gostdlib.HasPrefix(name, "@types/")) {
                         result = result.append("", [name]);
@@ -3884,11 +3867,7 @@ export class LanguageService {
         };
         const __gotots_callee_87 = visit;
         const __gotots_store_28 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_241 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_241 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         (__gotots_callee_87 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_241);
         return result;
     }
@@ -5000,11 +4979,7 @@ export class LanguageService {
             let scopeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getScopeNode(contextToken, adjustedPosition, file);
             if (scopeNode === undefined) {
                 const __gotots_store_3 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                scopeNode = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                scopeNode = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             }
             isInSnippetScope = isSnippetScope(scopeNode);
             let symbolMeanings = (((IfElse$Named_ast$SymbolFlags(isTypeOnlyLocation, SymbolFlagsNone$constant__from_ast(), SymbolFlagsValue$constant__from_ast()) | SymbolFlagsType$constant__from_ast()) >>> 0 | SymbolFlagsNamespace$constant__from_ast()) >>> 0 | SymbolFlagsAlias$constant__from_ast()) >>> 0;
@@ -5347,8 +5322,10 @@ export class LanguageService {
                 let seenPackageScope = false;
                 let conditions = GetConditions__from___go_module(compilerOptions, mode);
                 let exportsOrImportsLookup: (($0: tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson> | undefined, $1: gostring, $2: gostring, $3: bool, $4: bool) => bool) | undefined = (lookupTable: tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson> | undefined, fragment__shadow_1: gostring, baseDirectory: gostring, isExports: bool, isImports: bool): bool => {
-                    if (lookupTable === undefined || !(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((lookupTable ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson>).value).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson())) {
-                        return !(lookupTable === undefined) && !(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((lookupTable ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson>).value).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson());
+                    if (lookupTable === undefined || !((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                        ExportsOrImports__from_packagejson.$storageOf(((lookupTable ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson>).value).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson())) {
+                        return !(lookupTable === undefined) && !((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                            ExportsOrImports__from_packagejson.$storageOf(((lookupTable ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson>).value).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson());
                     }
                     let keys: iter__from_gostdlib.Seq<gostring> = OrderedMap$Keys$string$Named_packagejson$ExportsOrImports(((lookupTable ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports__from_packagejson>).value.AsObject());
                     LanguageService.$go$private$ls$addCompletionEntriesFromPathsOrExportsOrImports(l, result, program, isExports, isImports, fragment__shadow_1, baseDirectory, extensionOptions__shadow_1, keys, (key: gostring): RuntimeSlice<gostring> => {
@@ -5512,7 +5489,7 @@ export class LanguageService {
         let isMemberCompletion = isMemberCompletionKind((data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.completionKind);
         sortedEntries = Grow$SliceOf_PointerTo_Named_ls$CompletionItem$PointerTo_Named_ls$CompletionItem(sortedEntries, (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbols.length + (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoImports.length);
         let uniques: GoMapValue<gostring, bool> = GoMap__from_gotots_runtime.make<gostring, bool>(false, 0, []);
-        const __gotots_range_32 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbols;
+        const __gotots_range_32: completionDataData["symbols"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbols;
         for (let __gotots_range_index_31 = 0; __gotots_range_index_31 < __gotots_range_32.length; __gotots_range_index_31++) {
             const __gotots_range_value_37 = __gotots_range_index_31;
             const __gotots_range_value_38 = __gotots_range_32.get(__gotots_range_index_31);
@@ -5557,7 +5534,7 @@ export class LanguageService {
                 { value: new CompletionItem(entry, sym) },
             ]);
         }
-        const __gotots_range_33 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoImports;
+        const __gotots_range_33: completionDataData["autoImports"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoImports;
         for (let __gotots_range_index_32 = 0; __gotots_range_index_32 < __gotots_range_33.length; __gotots_range_index_32++) {
             const __gotots_range_value_39 = __gotots_range_33.get(__gotots_range_index_32);
             let autoImport: {
@@ -5939,11 +5916,14 @@ export class LanguageService {
                 if (fragmentDirectory !== "") {
                     name = strings__from_gostdlib.TrimPrefix(name, fragmentDirectory);
                 }
-                return RuntimeSlice.literal<moduleCompletionNameAndKind__from_ls$Storage>([moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                        name: name,
-                        kind: kind.$value,
-                        extension: extension
-                    }))]);
+                return RuntimeSlice.literal<moduleCompletionNameAndKind__from_ls$Storage>([
+                    (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                        {
+                            name: name,
+                            kind: kind.$value,
+                            extension: extension
+                        })),
+                ]);
             }
             return RuntimeSlice.nil<moduleCompletionNameAndKind__from_ls$Storage>();
         };
@@ -5985,8 +5965,11 @@ export class LanguageService {
                 for (let __gotots_range_index_43 = 0; __gotots_range_index_43 < __gotots_range_47.length; __gotots_range_index_43++) {
                     const __gotots_range_value_58 = __gotots_range_index_43;
                     let i = __gotots_range_value_58;
-                    moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).name = remainingDirectoryPrefix + moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).name + IfElse$string(((void moduleCompletionKind,
-                        moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).kind) as number)
+                    (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                        modules.get(i))).name = remainingDirectoryPrefix + (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                        modules.get(i))).name + IfElse$string(((void moduleCompletionKind,
+                        (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                            modules.get(i))).kind) as number)
                         === moduleCompletionKindFile$constant().$value, pathSuffix, "");
                 }
                 const __gotots_slice_build_8 = completions;
@@ -6033,8 +6016,11 @@ export class LanguageService {
             for (let __gotots_range_index_44 = 0; __gotots_range_index_44 < __gotots_range_48.length; __gotots_range_index_44++) {
                 const __gotots_range_value_59 = __gotots_range_index_44;
                 let i = __gotots_range_value_59;
-                moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).name = remainingDirectoryFragment + moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).name + IfElse$string(((void moduleCompletionKind,
-                    moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage(modules.get(i))).kind) as number)
+                (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                    modules.get(i))).name = remainingDirectoryFragment + (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                    modules.get(i))).name + IfElse$string(((void moduleCompletionKind,
+                    (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                        modules.get(i))).kind) as number)
                     === moduleCompletionKindFile$constant().$value, pathSuffix, "");
             }
             return modules;
@@ -6121,11 +6107,7 @@ export class LanguageService {
         const __gotots_receiver_34 = l;
         const __gotots_argument_205 = ctx;
         const __gotots_store_18 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_206 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_206 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_207 = file;
         let docSymbols = LanguageService.$go$private$ls$getDocumentSymbolsForChildren(__gotots_receiver_34, __gotots_argument_205, __gotots_argument_206, __gotots_argument_207);
         let result = RuntimeSlice.nil<SymbolInformation__from_lsproto$Storage>();
@@ -6144,10 +6126,11 @@ export class LanguageService {
                 let info = SymbolInformation__from_lsproto.$fromStorage({
                     Name: (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name,
                     Kind: (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind,
-                    Location: Location__from_lsproto.$storageOf(Location__from_lsproto.$fromStorage({
-                        Uri: documentURI.$value,
-                        Range: Range__from_lsproto.$storageOf(Range__from_lsproto.$copy((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Range))
-                    })),
+                    Location: (void Location__from_lsproto.$storageOf, (void Location__from_lsproto.$fromStorage,
+                        {
+                            Uri: documentURI.$value,
+                            Range: Range__from_lsproto.$storageOf(Range__from_lsproto.$copy((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Range))
+                        })),
                     ContainerName: containerName,
                     Tags: (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Tags,
                     Deprecated: (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Deprecated
@@ -6703,11 +6686,7 @@ export class LanguageService {
         let clauses = NodeList__from_ast.$storageOf((((caseBlock ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Clauses ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
         const __gotots_receiver_8 = c;
         const __gotots_store_7 = NodeBase__from_ast.$storageOf((caseBlock ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_54 = Node__from_ast.Expression(Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        })) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
+        const __gotots_argument_54 = Node__from_ast.Expression(Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
         let switchType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(__gotots_receiver_8, __gotots_argument_54);
         if (!(switchType === undefined) && Type__from_checker.IsUnion(switchType) && Every$PointerTo_Named_checker$Type(Type__from_checker.Types(switchType), isLiteral)) {
             let tracker: caseClauseTracker | undefined = newCaseClauseTracker(c, clauses);
@@ -6752,11 +6731,7 @@ export class LanguageService {
                     const __gotots_argument_58 = importAdder;
                     const __gotots_argument_59 = t;
                     const __gotots_store_8 = NodeBase__from_ast.$storageOf((caseBlock ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                    const __gotots_argument_60 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                        return NodeDefault__from_ast.$storageOf($go$value);
-                    }));
+                    const __gotots_argument_60 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = TypeToAutoImportableTypeNode__from_autoimport(__gotots_argument_57, __gotots_argument_58, __gotots_argument_59, __gotots_argument_60);
                     if (typeNode === undefined) {
                         return [void 0, void 0];
@@ -6910,20 +6885,22 @@ export class LanguageService {
                 let __gotots_slice_build_103 = __gotots_slice_build_102;
                 if (__gotots_slice_build_104 <= __gotots_slice_build_102.capacity) {
                     __gotots_slice_build_103 = __gotots_slice_build_102.$withLength(__gotots_slice_build_104);
-                    __gotots_slice_build_103.set(__gotots_slice_build_102.length + 0, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$fromStorage({
-                        CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto((combined ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, kind$location4, void 0, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
-                        Command: void 0
-                    })));
+                    __gotots_slice_build_103.set(__gotots_slice_build_102.length + 0, (void CommandOrCodeAction__from_lsproto.$storageOf, (void CommandOrCodeAction__from_lsproto.$fromStorage,
+                        {
+                            CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto((combined ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, kind$location4, void 0, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
+                            Command: void 0
+                        })));
                 }
                 else {
                     __gotots_slice_build_103 = goSliceAllocate<CommandOrCodeAction__from_lsproto$Storage>(__gotots_slice_build_104, RuntimeSlice.$grownCapacity(__gotots_slice_build_102.capacity, __gotots_slice_build_104));
                     for (let __gotots_slice_build_105 = 0; __gotots_slice_build_105 < __gotots_slice_build_102.length; __gotots_slice_build_105++) {
                         __gotots_slice_build_103.set(__gotots_slice_build_105, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$copy(CommandOrCodeAction__from_lsproto.$fromStorage(__gotots_slice_build_102.get(__gotots_slice_build_105)))));
                     }
-                    __gotots_slice_build_103.set(__gotots_slice_build_102.length + 0, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$fromStorage({
-                        CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto((combined ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, kind$location4, void 0, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
-                        Command: void 0
-                    })));
+                    __gotots_slice_build_103.set(__gotots_slice_build_102.length + 0, (void CommandOrCodeAction__from_lsproto.$storageOf, (void CommandOrCodeAction__from_lsproto.$fromStorage,
+                        {
+                            CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto((combined ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, kind$location4, void 0, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
+                            Command: void 0
+                        })));
                     for (let __gotots_slice_build_105 = __gotots_slice_build_104; __gotots_slice_build_105 < __gotots_slice_build_103.capacity; __gotots_slice_build_105++) {
                         __gotots_slice_build_103.$initialize(__gotots_slice_build_105, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
                     }
@@ -7345,8 +7322,8 @@ export class LanguageService {
             value: CompilerOptions__from_core;
         } | undefined = Program__from_compiler.Options(program);
         let ignoreCase = !Program__from_compiler.UseCaseSensitiveFileNames(program);
-        let outDir = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
-        let declarationDir = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
+        let outDir: CompilerOptions__from_core["OutDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
+        let declarationDir: CompilerOptions__from_core["DeclarationDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
         let expandedPrefixDirectory = "";
         if (fragmentHasPath) {
             expandedPrefixDirectory = CombinePaths__from_tspath(normalizedPrefixDirectory, RuntimeSlice.literal<gostring>([normalizedPrefixBase + fragmentDirectory]));
@@ -7450,22 +7427,24 @@ export class LanguageService {
                             let __gotots_slice_build_19 = __gotots_slice_build_18;
                             if (__gotots_slice_build_20 <= __gotots_slice_build_18.capacity) {
                                 __gotots_slice_build_19 = __gotots_slice_build_18.$withLength(__gotots_slice_build_20);
-                                __gotots_slice_build_19.set(__gotots_slice_build_18.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                                    name: pathComponents.get(1),
-                                    kind: moduleCompletionKindDirectory$constant().$value,
-                                    extension: ""
-                                })));
+                                __gotots_slice_build_19.set(__gotots_slice_build_18.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                                    {
+                                        name: pathComponents.get(1),
+                                        kind: moduleCompletionKindDirectory$constant().$value,
+                                        extension: ""
+                                    })));
                             }
                             else {
                                 __gotots_slice_build_19 = goSliceAllocate<moduleCompletionNameAndKind__from_ls$Storage>(__gotots_slice_build_20, RuntimeSlice.$grownCapacity(__gotots_slice_build_18.capacity, __gotots_slice_build_20));
                                 for (let __gotots_slice_build_21 = 0; __gotots_slice_build_21 < __gotots_slice_build_18.length; __gotots_slice_build_21++) {
                                     __gotots_slice_build_19.set(__gotots_slice_build_21, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$copy(moduleCompletionNameAndKind.$fromStorage(__gotots_slice_build_18.get(__gotots_slice_build_21)))));
                                 }
-                                __gotots_slice_build_19.set(__gotots_slice_build_18.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                                    name: pathComponents.get(1),
-                                    kind: moduleCompletionKindDirectory$constant().$value,
-                                    extension: ""
-                                })));
+                                __gotots_slice_build_19.set(__gotots_slice_build_18.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                                    {
+                                        name: pathComponents.get(1),
+                                        kind: moduleCompletionKindDirectory$constant().$value,
+                                        extension: ""
+                                    })));
                                 for (let __gotots_slice_build_21 = __gotots_slice_build_20; __gotots_slice_build_21 < __gotots_slice_build_19.capacity; __gotots_slice_build_21++) {
                                     __gotots_slice_build_19.$initialize(__gotots_slice_build_21, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
                                 }
@@ -7485,22 +7464,24 @@ export class LanguageService {
                         let __gotots_slice_build_23 = __gotots_slice_build_22;
                         if (__gotots_slice_build_24 <= __gotots_slice_build_22.capacity) {
                             __gotots_slice_build_23 = __gotots_slice_build_22.$withLength(__gotots_slice_build_24);
-                            __gotots_slice_build_23.set(__gotots_slice_build_22.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                                name: name,
-                                kind: moduleCompletionKindFile$constant().$value,
-                                extension: extension
-                            })));
+                            __gotots_slice_build_23.set(__gotots_slice_build_22.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                                {
+                                    name: name,
+                                    kind: moduleCompletionKindFile$constant().$value,
+                                    extension: extension
+                                })));
                         }
                         else {
                             __gotots_slice_build_23 = goSliceAllocate<moduleCompletionNameAndKind__from_ls$Storage>(__gotots_slice_build_24, RuntimeSlice.$grownCapacity(__gotots_slice_build_22.capacity, __gotots_slice_build_24));
                             for (let __gotots_slice_build_25 = 0; __gotots_slice_build_25 < __gotots_slice_build_22.length; __gotots_slice_build_25++) {
                                 __gotots_slice_build_23.set(__gotots_slice_build_25, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$copy(moduleCompletionNameAndKind.$fromStorage(__gotots_slice_build_22.get(__gotots_slice_build_25)))));
                             }
-                            __gotots_slice_build_23.set(__gotots_slice_build_22.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                                name: name,
-                                kind: moduleCompletionKindFile$constant().$value,
-                                extension: extension
-                            })));
+                            __gotots_slice_build_23.set(__gotots_slice_build_22.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                                {
+                                    name: name,
+                                    kind: moduleCompletionKindFile$constant().$value,
+                                    extension: extension
+                                })));
                             for (let __gotots_slice_build_25 = __gotots_slice_build_24; __gotots_slice_build_25 < __gotots_slice_build_23.capacity; __gotots_slice_build_25++) {
                                 __gotots_slice_build_23.$initialize(__gotots_slice_build_25, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
                             }
@@ -7524,22 +7505,24 @@ export class LanguageService {
                     let __gotots_slice_build_27 = __gotots_slice_build_26;
                     if (__gotots_slice_build_28 <= __gotots_slice_build_26.capacity) {
                         __gotots_slice_build_27 = __gotots_slice_build_26.$withLength(__gotots_slice_build_28);
-                        __gotots_slice_build_27.set(__gotots_slice_build_26.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                            name: dir,
-                            kind: moduleCompletionKindDirectory$constant().$value,
-                            extension: ""
-                        })));
+                        __gotots_slice_build_27.set(__gotots_slice_build_26.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                            {
+                                name: dir,
+                                kind: moduleCompletionKindDirectory$constant().$value,
+                                extension: ""
+                            })));
                     }
                     else {
                         __gotots_slice_build_27 = goSliceAllocate<moduleCompletionNameAndKind__from_ls$Storage>(__gotots_slice_build_28, RuntimeSlice.$grownCapacity(__gotots_slice_build_26.capacity, __gotots_slice_build_28));
                         for (let __gotots_slice_build_29 = 0; __gotots_slice_build_29 < __gotots_slice_build_26.length; __gotots_slice_build_29++) {
                             __gotots_slice_build_27.set(__gotots_slice_build_29, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$copy(moduleCompletionNameAndKind.$fromStorage(__gotots_slice_build_26.get(__gotots_slice_build_29)))));
                         }
-                        __gotots_slice_build_27.set(__gotots_slice_build_26.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$fromStorage({
-                            name: dir,
-                            kind: moduleCompletionKindDirectory$constant().$value,
-                            extension: ""
-                        })));
+                        __gotots_slice_build_27.set(__gotots_slice_build_26.length + 0, (void moduleCompletionNameAndKind.$storageOf, (void moduleCompletionNameAndKind.$fromStorage,
+                            {
+                                name: dir,
+                                kind: moduleCompletionKindDirectory$constant().$value,
+                                extension: ""
+                            })));
                         for (let __gotots_slice_build_29 = __gotots_slice_build_28; __gotots_slice_build_29 < __gotots_slice_build_27.capacity; __gotots_slice_build_29++) {
                             __gotots_slice_build_27.$initialize(__gotots_slice_build_29, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
                         }
@@ -8082,11 +8065,7 @@ export class LanguageService {
                                 let rangeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
                                 if (Node__from_ast.Text(ModuleReference.$storageOf(reference).literal) !== "tslib") {
                                     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((ModuleReference.$storageOf(reference).referencingFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                                    const __gotots_argument_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                                        return NodeDefault__from_ast.$storageOf($go$value);
-                                    }));
+                                    const __gotots_argument_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                     rangeNode = findFirstJsxNode(__gotots_argument_2);
                                 }
                                 if (rangeNode === undefined) {
@@ -8095,11 +8074,7 @@ export class LanguageService {
                                     }
                                     else {
                                         const __gotots_store_1 = NodeBase__from_ast.$storageOf(((ModuleReference.$storageOf(reference).referencingFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                                        rangeNode = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                                            return NodeDefault__from_ast.$fromStorage($go$storage);
-                                        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                                            return NodeDefault__from_ast.$storageOf($go$value);
-                                        }));
+                                        rangeNode = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                     }
                                 }
                                 return newNodeEntry(rangeNode);
@@ -8625,13 +8600,14 @@ export class LanguageService {
             }
             displayPartsWriter.WriteFrom(labelDpw, (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).writer);
             displayPartsWriter.WriteFrom(labelDpw, suffixDpw);
-            result.set(i, signatureInformation.$storageOf(signatureInformation.$fromStorage({
-                Label: displayPartsWriter.String(labelDpw),
-                Documentation: documentation,
-                Parameters: (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).parameters,
-                IsVariadic: (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isVariadic,
-                ColorizedRuns: displayPartsWriter.GetRuns(labelDpw)
-            })));
+            result.set(i, (void signatureInformation.$storageOf, (void signatureInformation.$fromStorage,
+                {
+                    Label: displayPartsWriter.String(labelDpw),
+                    Documentation: documentation,
+                    Parameters: (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).parameters,
+                    IsVariadic: (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isVariadic,
+                    ColorizedRuns: displayPartsWriter.GetRuns(labelDpw)
+                })));
         }
         return result;
     }
@@ -9020,7 +8996,7 @@ export class LanguageService {
         let preferences = LanguageService.UserPreferences(l);
         let literal: literalValue | undefined = void 0;
         const literal$location = tsonicTypeScriptRuntime.boundLocation({}, () => literal, literal$next => literal = literal$next);
-        const __gotots_range_125 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.literals;
+        const __gotots_range_125: completionDataData["literals"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.literals;
         for (let __gotots_range_index_115 = 0; __gotots_range_index_115 < __gotots_range_125.length; __gotots_range_index_115++) {
             const __gotots_range_value_158 = __gotots_range_125.get(__gotots_range_index_115);
             let l__shadow_1: literalValue | undefined = __gotots_range_value_158;
@@ -9032,7 +9008,7 @@ export class LanguageService {
         if (!(literal === undefined)) {
             return new detailsData(void 0, void 0, literal$location, void 0);
         }
-        const __gotots_range_126 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbols;
+        const __gotots_range_126: completionDataData["symbols"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbols;
         for (let __gotots_range_index_116 = 0; __gotots_range_index_116 < __gotots_range_126.length; __gotots_range_index_116++) {
             const __gotots_range_value_159 = __gotots_range_index_116;
             const __gotots_range_value_160 = __gotots_range_126.get(__gotots_range_index_116);
@@ -9220,11 +9196,7 @@ export class LanguageService {
         for (let __gotots_range_index_27 = 0; __gotots_range_index_27 < __gotots_range_28.length; __gotots_range_index_27++) {
             const __gotots_range_value_33 = __gotots_range_index_27;
             let i = __gotots_range_value_33;
-            let commentRange: tsonicTypeScriptRuntime.Location<CommentRange__from_ast> | undefined = tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(goSliceAddress<CommentRange__from_ast$Storage>(commentRanges, i), ($go$storage: CommentRange__from_ast$Storage): CommentRange__from_ast => {
-                return CommentRange__from_ast.$fromStorage($go$storage);
-            }, ($go$value: CommentRange__from_ast): CommentRange__from_ast$Storage => {
-                return CommentRange__from_ast.$storageOf($go$value);
-            });
+            let commentRange: tsonicTypeScriptRuntime.Location<CommentRange__from_ast> | undefined = tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(goSliceAddress<CommentRange__from_ast$Storage>(commentRanges, i), CommentRange__from_ast.$fromStorage, CommentRange__from_ast.$storageOf);
             if (position__shadow_1 >= TextRange__from_core.$fromStorage(CommentRange__from_ast.$storageOf(((commentRange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommentRange__from_ast>).value).TextRange).Pos() && position__shadow_1 <= TextRange__from_core.$fromStorage(CommentRange__from_ast.$storageOf(((commentRange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommentRange__from_ast>).value).TextRange).End()) {
                 foundRange = commentRange;
                 break;
@@ -10820,7 +10792,15 @@ export class LanguageService {
                 linkText = getEntityNameString(name) + goStringSlice(text, 0, prefixLen);
             }
             if (isMarkdown) {
-                let linkUri = fmt__from_gostdlib.Sprintf("%s#%d,%d-%d,%d", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_lsproto$DocumentUri(new DocumentUri__from_lsproto(Location__from_lsproto.$storageOf(loc).Uri)), new $goInterfaceAdapter$uint32(Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage(Location__from_lsproto.$storageOf(loc).Range)).Start)).Line + 1), new $goInterfaceAdapter$uint32(Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage(Location__from_lsproto.$storageOf(loc).Range)).Start)).Character + 1), new $goInterfaceAdapter$uint32(Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage(Location__from_lsproto.$storageOf(loc).Range)).End)).Line + 1), new $goInterfaceAdapter$uint32(Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(Range__from_lsproto.$fromStorage(Location__from_lsproto.$storageOf(loc).Range)).End)).Character + 1)]));
+                let linkUri = fmt__from_gostdlib.Sprintf("%s#%d,%d-%d,%d", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_lsproto$DocumentUri(new DocumentUri__from_lsproto(Location__from_lsproto.$storageOf(loc).Uri)), new $goInterfaceAdapter$uint32((void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                        (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                            Location__from_lsproto.$storageOf(loc).Range)).Start)).Line + 1), new $goInterfaceAdapter$uint32((void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                        (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                            Location__from_lsproto.$storageOf(loc).Range)).Start)).Character + 1), new $goInterfaceAdapter$uint32((void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                        (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                            Location__from_lsproto.$storageOf(loc).Range)).End)).Line + 1), new $goInterfaceAdapter$uint32((void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+                        (void Range__from_lsproto.$storageOf, (void Range__from_lsproto.$fromStorage,
+                            Location__from_lsproto.$storageOf(loc).Range)).End)).Character + 1)]));
                 writeMarkdownLink(b, linkText, linkUri, quote__shadow_1);
             }
             else {

@@ -86,12 +86,14 @@ export function getClassLikeData(parent: tsonicTypeScriptRuntime.Location<Node__
     switch (Node__from_ast.$storageOf(((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindClassDeclaration$constant__from_ast(): {
             const __gotots_store_0 = (Node__from_ast.AsClassDeclaration(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-            __go_class = ClassLikeBase__from_ast.ClassLikeData(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ClassLikeBase"));
+            __go_class =
+                (void ClassLikeBase__from_ast.ClassLikeData, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ClassLikeBase"));
             break;
         }
         case KindClassExpression$constant__from_ast(): {
             const __gotots_store_1 = (Node__from_ast.AsClassExpression(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-            __go_class = ClassLikeBase__from_ast.ClassLikeData(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ClassLikeBase"));
+            __go_class =
+                (void ClassLikeBase__from_ast.ClassLikeData, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ClassLikeBase"));
             break;
         }
     }

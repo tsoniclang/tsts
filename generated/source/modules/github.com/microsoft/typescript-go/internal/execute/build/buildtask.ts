@@ -193,11 +193,11 @@ export class BuildTask {
         else {
             if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors.length > 0) {
                 BuildTask.$go$private$build$reportUpToDateStatus(t, orchestrator);
-                const __gotots_range_1 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors;
+                const __gotots_range_1: BuildTask["errors"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors;
                 for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                     const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
                     let err: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined = __gotots_range_value_1;
-                    const __gotots_callee_0 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReporter;
+                    const __gotots_callee_0: taskResult["diagnosticReporter"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReporter;
                     const __gotots_argument_0 = err;
                     (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
                 }
@@ -290,7 +290,7 @@ export class BuildTask {
     } | undefined, path: Path__from_tspath): void {
         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
         if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Verbose)) {
-            const __gotots_callee_22 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+            const __gotots_callee_22: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
             const __gotots_argument_30 = NewCompilerDiagnostic__from_ast($state__diagnostics.Building_project_0, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
             (__gotots_callee_22 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_30);
         }
@@ -312,8 +312,8 @@ export class BuildTask {
         compileTimes.BuildInfoReadTime = goInterfaceNonNil<System__from_tsc>(__gotots_receiver_7).Now().Sub(named_time.TimeOperations.$copy(buildInfoReadStart));
         const __gotots_receiver_8 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Sys;
         let parseStart = goInterfaceNonNil<System__from_tsc>(__gotots_receiver_8).Now();
-        const __gotots_field_2 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
-        const __gotots_field_0 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_field_2: BuildTask["resolved"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
+        const __gotots_field_0: Orchestrator["host"] = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_store_6 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_31 = new $goInterfaceAdapter$PointerTo_Named_strings$Builder(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "builder"));
         const __gotots_argument_32 = ParsedBuildCommandLine__from_tsoptions.Locale((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command);
@@ -334,7 +334,7 @@ export class BuildTask {
         const __gotots_field_4 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Sys;
         const __gotots_field_5 = new $goInterfaceAdapter$PointerTo_Named_incremental$Program(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program);
         const __gotots_field_6 = program;
-        const __gotots_field_7 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
+        const __gotots_field_7: BuildTask["resolved"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
         const __gotots_receiver_12 = t;
         const __gotots_field_8 = ($argument0: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined): void => {
             BuildTask.$go$private$build$reportDiagnostic(__gotots_receiver_12, $argument0);
@@ -382,7 +382,7 @@ export class BuildTask {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu);
-                    const __gotots_receiver_16 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
+                    const __gotots_receiver_16: BuildTask["buildInfoEntryMu"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_16, $go$recovery);
                     };
@@ -443,7 +443,7 @@ export class BuildTask {
         if (ParsedCommandLine__from_tsoptions.FileNames((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).length === 0 && !ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).isNil()) {
             return { value: new upToDateStatus(upToDateStatusTypeSolution$constant(), void 0) };
         }
-        const __gotots_range_7 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
+        const __gotots_range_7: BuildTask["upStream"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
         for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_7.length; __gotots_range_index_5++) {
             const __gotots_range_value_9 = __gotots_range_7.get(__gotots_range_index_5);
             let upstream: {
@@ -639,7 +639,7 @@ export class BuildTask {
             __gotots_range_state_3 = -2;
         }
         let refDtsUnchanged = false;
-        const __gotots_range_11 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
+        const __gotots_range_11: BuildTask["upStream"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
         for (let __gotots_range_index_7 = 0; __gotots_range_index_7 < __gotots_range_11.length; __gotots_range_index_7++) {
             const __gotots_range_value_13 = __gotots_range_11.get(__gotots_range_index_7);
             let upstream: {
@@ -676,7 +676,7 @@ export class BuildTask {
             return void 0;
         };
         const __gotots_callee_1 = checkInputFileTime;
-        const __gotots_argument_8 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config;
+        const __gotots_argument_8: BuildTask["config"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config;
         let configStatus: {
             value: upToDateStatus;
         } | undefined = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_8);
@@ -706,7 +706,7 @@ export class BuildTask {
         switch (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind) {
             case upToDateStatusTypeUpToDate$constant(): {
                 if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Dry)) {
-                    const __gotots_callee_18 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                    const __gotots_callee_18: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                     const __gotots_argument_26 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_up_to_date, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)]));
                     (__gotots_callee_18 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_26);
                 }
@@ -718,7 +718,7 @@ export class BuildTask {
                     value: upstreamErrors;
                 } | undefined = upToDateStatus.$go$private$build$upstreamErrors((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status);
                 if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Verbose)) {
-                    const __gotots_callee_19 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                    const __gotots_callee_19: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                     const __gotots_argument_27 = NewCompilerDiagnostic__from_ast(IfElse$PointerTo_Named_diagnostics$Message((upstreamStatus ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refHasUpstreamErrors, $state__diagnostics.Skipping_build_of_project_0_because_its_dependency_1_was_not_built, $state__diagnostics.Skipping_build_of_project_0_because_its_dependency_1_has_errors), RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (upstreamStatus ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ref))]));
                     (__gotots_callee_19 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_27);
                 }
@@ -737,7 +737,7 @@ export class BuildTask {
         }
         if (upToDateStatus.$go$private$build$isPseudoBuild((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status)) {
             if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Dry)) {
-                const __gotots_callee_20 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_20: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_28 = NewCompilerDiagnostic__from_ast($state__diagnostics.A_non_dry_build_would_update_timestamps_for_output_of_project_0, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)]));
                 (__gotots_callee_20 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_28);
                 (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status =
@@ -751,7 +751,7 @@ export class BuildTask {
             return true;
         }
         if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Dry)) {
-            const __gotots_callee_21 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+            const __gotots_callee_21: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
             const __gotots_argument_29 = NewCompilerDiagnostic__from_ast($state__diagnostics.A_non_dry_build_would_build_project_0, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)]));
             (__gotots_callee_21 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_29);
             (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status =
@@ -818,12 +818,14 @@ export class BuildTask {
                 (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportDone = GoChannel.make<GoEmptyStruct>(0, (): GoEmptyStruct => {
                     return GoEmptyStruct.$zero();
                 }, (value: GoEmptyStruct): GoEmptyStruct => {
-                    return GoEmptyStruct.$copy(value);
+                    return (void GoEmptyStruct.$copy,
+                        value);
                 });
                 (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.done = GoChannel.make<GoEmptyStruct>(0, (): GoEmptyStruct => {
                     return GoEmptyStruct.$zero();
                 }, (value: GoEmptyStruct): GoEmptyStruct => {
-                    return GoEmptyStruct.$copy(value);
+                    return (void GoEmptyStruct.$copy,
+                        value);
                 });
                 if (!Equal$SliceOf_string$string(ParsedCommandLine__from_tsoptions.FileNames((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved), ParsedCommandLine__from_tsoptions.FileNames(newConfig))) {
                     const __gotots_store_3 = ((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -857,7 +859,7 @@ export class BuildTask {
                 __gotots_return_block_0: {
                     let path = Orchestrator.$go$private$build$toPath(orchestrator, buildInfoFileName);
                     sync__from_gostdlib.Mutex.Lock((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu);
-                    const __gotots_receiver_15 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
+                    const __gotots_receiver_15: BuildTask["buildInfoEntryMu"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_15, $go$recovery);
                     };
@@ -866,7 +868,7 @@ export class BuildTask {
                         break __gotots_return_block_0;
                     }
                     const __gotots_receiver_16 = NewBuildInfoReader__from_incremental(new $goInterfaceAdapter$PointerTo_Named_build$host((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host));
-                    const __gotots_argument_39 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
+                    const __gotots_argument_39: BuildTask["resolved"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved;
                     const __gotots_field_11 = goInterfaceNonNil<BuildInfoReader__from_incremental>(__gotots_receiver_16).ReadBuildInfo(__gotots_argument_39);
                     (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry =
                         { value: new buildInfoEntry(__gotots_field_11, path, named_time.TimeOperations.$zero(), void 0) };
@@ -919,7 +921,7 @@ export class BuildTask {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu);
-                    const __gotots_receiver_20 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
+                    const __gotots_receiver_20: BuildTask["buildInfoEntryMu"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntryMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_20, $go$recovery);
                     };
@@ -992,7 +994,7 @@ export class BuildTask {
             case 2: {
                 if (!((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Testing === undefined)) {
                     const __gotots_receiver_2 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Testing;
-                    const __gotots_argument_6 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program;
+                    const __gotots_argument_6: taskResult["program"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program;
                     goInterfaceNonNil<CommandLineTesting__from_tsc>(__gotots_receiver_2).OnProgram(__gotots_argument_6);
                 }
                 const __gotots_store_1 = (buildResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).statistics;
@@ -1013,7 +1015,7 @@ export class BuildTask {
         value: BuildTask;
     } | undefined, err: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined): void {
         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.errors.append(void 0, [err]);
-        const __gotots_callee_23 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReporter;
+        const __gotots_callee_23: taskResult["diagnosticReporter"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReporter;
         const __gotots_argument_36 = err;
         (__gotots_callee_23 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_36);
     }
@@ -1027,7 +1029,7 @@ export class BuildTask {
         }
         switch (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind) {
             case upToDateStatusTypeConfigFileNotFound$constant(): {
-                const __gotots_callee_3 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_3: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_10 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_config_file_does_not_exist, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_10);
                 break;
@@ -1036,13 +1038,13 @@ export class BuildTask {
                 let upstreamStatus: {
                     value: upstreamErrors;
                 } | undefined = upToDateStatus.$go$private$build$upstreamErrors((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status);
-                const __gotots_callee_4 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_4: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_11 = NewCompilerDiagnostic__from_ast(IfElse$PointerTo_Named_diagnostics$Message((upstreamStatus ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refHasUpstreamErrors, $state__diagnostics.Project_0_can_t_be_built_because_its_dependency_1_was_not_built, $state__diagnostics.Project_0_can_t_be_built_because_its_dependency_1_has_errors), RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (upstreamStatus ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ref))]));
                 (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_11);
                 break;
             }
             case upToDateStatusTypeBuildErrors$constant(): {
-                const __gotots_callee_5 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_5: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_12 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_it_has_errors, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_12);
                 break;
@@ -1053,7 +1055,7 @@ export class BuildTask {
                         value: inputOutputFileAndTime;
                     } | undefined = upToDateStatus.$go$private$build$inputOutputFileAndTime((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status);
                     if (!(inputOutputFileAndTime__shadow_1 === undefined)) {
-                        const __gotots_callee_6 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                        const __gotots_callee_6: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                         const __gotots_argument_13 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_up_to_date_because_newest_input_1_is_older_than_output_2, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutputFileAndTime__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.input.file)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutputFileAndTime__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.output.file))]));
                         (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_13);
                     }
@@ -1061,19 +1063,19 @@ export class BuildTask {
                 break;
             }
             case upToDateStatusTypeUpToDateWithUpstreamTypes$constant(): {
-                const __gotots_callee_7 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_7: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_14 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_up_to_date_with_d_ts_files_from_its_dependencies, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_14);
                 break;
             }
             case upToDateStatusTypeUpToDateWithInputFileText$constant(): {
-                const __gotots_callee_8 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_8: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_15 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_up_to_date_but_needs_to_update_timestamps_of_output_files_that_are_older_than_input_files, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_15);
                 break;
             }
             case upToDateStatusTypeInputFileMissing$constant(): {
-                const __gotots_callee_9 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_9: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_16 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_input_1_does_not_exist, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1084,7 +1086,7 @@ export class BuildTask {
                 break;
             }
             case upToDateStatusTypeOutputMissing$constant(): {
-                const __gotots_callee_10 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_10: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_17 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_output_file_1_does_not_exist, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1098,13 +1100,13 @@ export class BuildTask {
                 let inputOutput: {
                     value: inputOutputName;
                 } | undefined = upToDateStatus.$go$private$build$inputOutputName((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status);
-                const __gotots_callee_11 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_11: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_18 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_output_1_is_older_than_input_2, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutput ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.output)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutput ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.input))]));
                 (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_18);
                 break;
             }
             case upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit$constant(): {
-                const __gotots_callee_12 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_12: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_19 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_some_of_the_changes_were_not_emitted, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1115,7 +1117,7 @@ export class BuildTask {
                 break;
             }
             case upToDateStatusTypeOutOfDateBuildInfoWithErrors$constant(): {
-                const __gotots_callee_13 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_13: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_20 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_program_needs_to_report_errors, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1126,7 +1128,7 @@ export class BuildTask {
                 break;
             }
             case upToDateStatusTypeOutOfDateOptions$constant(): {
-                const __gotots_callee_14 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_14: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_21 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_there_is_change_in_compilerOptions, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1140,13 +1142,13 @@ export class BuildTask {
                 let inputOutput: {
                     value: inputOutputName;
                 } | undefined = upToDateStatus.$go$private$build$inputOutputName((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status);
-                const __gotots_callee_15 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_15: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_22 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_file_2_was_root_file_of_compilation_but_not_any_more, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutput ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.output)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (inputOutput ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.input))]));
                 (__gotots_callee_15 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_22);
                 break;
             }
             case upToDateStatusTypeTsVersionOutputOfDate$constant(): {
-                const __gotots_callee_16 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_16: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_23 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_out_of_date_because_output_for_it_was_generated_with_version_1_that_differs_with_current_version_2, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config)), new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (($value: GoInterface | undefined): gostring => {
                         if (!GoInterfaceAdapter.$is($value)) {
                             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -1157,7 +1159,7 @@ export class BuildTask {
                 break;
             }
             case upToDateStatusTypeForceBuild$constant(): {
-                const __gotots_callee_17 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_17: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_24 = NewCompilerDiagnostic__from_ast($state__diagnostics.Project_0_is_being_forcibly_rebuilt, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_17 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_24);
                 break;
@@ -1213,7 +1215,7 @@ export class BuildTask {
         if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StopBuildOnErrors) && upToDateStatus.$go$private$build$isError((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status)) {
             return;
         }
-        const __gotots_range_13 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.downStream;
+        const __gotots_range_13: BuildTask["downStream"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.downStream;
         for (let __gotots_range_index_9 = 0; __gotots_range_index_9 < __gotots_range_13.length; __gotots_range_index_9++) {
             const __gotots_range_value_15 = __gotots_range_13.get(__gotots_range_index_9);
             let downStream: {
@@ -1222,7 +1224,7 @@ export class BuildTask {
             sync__from_gostdlib.Mutex.Lock((downStream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.downStreamUpdateMu);
             if (!((downStream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status === undefined)) {
                 {
-                    const __gotots_switch_tag_0 = ((downStream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+                    const __gotots_switch_tag_0: upToDateStatus["kind"] = ((downStream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
                     let __gotots_switch_selection_0 = -1;
                     if (__gotots_switch_selection_0 === -1) {
                         let __gotots_switch_match_0 = false;
@@ -1304,7 +1306,7 @@ export class BuildTask {
                 return;
             }
             if (!verboseMessageReported && Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Verbose)) {
-                const __gotots_callee_24 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
+                const __gotots_callee_24: taskResult["reportStatus"] = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportStatus;
                 const __gotots_argument_40 = NewCompilerDiagnostic__from_ast(verboseMessage, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Orchestrator.$go$private$build$relativeFileName(orchestrator, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.config))]));
                 (__gotots_callee_24 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_40);
                 verboseMessageReported = true;
@@ -1409,7 +1411,7 @@ export class BuildTask {
     static $go$private$build$waitOnUpstream(t: {
         value: BuildTask;
     } | undefined): void {
-        const __gotots_range_6 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
+        const __gotots_range_6: BuildTask["upStream"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream;
         for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_6.length; __gotots_range_index_4++) {
             const __gotots_range_value_8 = __gotots_range_6.get(__gotots_range_index_4);
             let upstream: {
@@ -1437,7 +1439,7 @@ export class BuildTask {
                 })((data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).BuildInfo), Program__from_incremental.HasChangedDtsFile(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program));
             }
             else if (BuildTask.$go$private$build$storeOutputTimeStamp(t, orchestrator)) {
-                const __gotots_receiver_19 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_19: Orchestrator["host"] = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_argument_45 = fileName;
                 const __gotots_receiver_18 = (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Sys;
                 const __gotots_argument_46 = goInterfaceNonNil<System__from_tsc>(__gotots_receiver_18).Now();

@@ -22,12 +22,6 @@ export function dynamicQueue$Put$PointerTo_Named_lsproto$Message($argument0: {
         value: Message__from_lsproto;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Message__from_lsproto;
-    } | undefined): {
-        value: Message__from_lsproto;
-    } | undefined => {
-        return $argument0;
     }, (): {
         value: Message__from_lsproto;
     } | undefined => {
@@ -44,12 +38,6 @@ export function dynamicQueue$Put$PointerTo_Named_lsproto$RequestMessage($argumen
     return dynamicQueue__from_lsp.Put$kernel<{
         value: RequestMessage__from_lsproto;
     } | undefined>($argument0, ($argument0: {
-        value: RequestMessage__from_lsproto;
-    } | undefined): {
-        value: RequestMessage__from_lsproto;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: {
         value: RequestMessage__from_lsproto;
     } | undefined): {
         value: RequestMessage__from_lsproto;

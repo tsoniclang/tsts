@@ -1674,738 +1674,920 @@ export function $initialize(): void {
         $state._AddAsTypeOnly_index_1 = GoArray.literal<uint16, 2>(2, 0, [0, 1], [0, 10]);
     }
     {
-        $state.TextDocumentImplementationInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ImplementationParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ImplementationParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>({
-            Method: MethodTextDocumentImplementation$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ImplementationParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentTypeDefinitionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TypeDefinitionParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TypeDefinitionParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>({
-            Method: MethodTextDocumentTypeDefinition$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeDefinitionParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceWorkspaceFoldersInfo = RequestInfo.$storageOf<NoParams, WorkspaceFoldersOrNull>(RequestInfo.$fromStorage<NoParams, WorkspaceFoldersOrNull>({
-            Method: MethodWorkspaceWorkspaceFolders$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<WorkspaceFoldersOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceConfigurationInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ConfigurationParams> | undefined, RuntimeSlice<GoInterface | undefined>>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ConfigurationParams> | undefined, RuntimeSlice<GoInterface | undefined>>({
-            Method: MethodWorkspaceConfiguration$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ConfigurationParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<RuntimeSlice<GoInterface | undefined>, 0>(0, RuntimeSlice.nil<GoInterface | undefined>())
-        }));
-    }
-    {
-        $state.TextDocumentDocumentColorInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentColorParams> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentColorParams> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>>({
-            Method: MethodTextDocumentDocumentColor$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentColorParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>, 0>(0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>())
-        }));
-    }
-    {
-        $state.TextDocumentColorPresentationInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ColorPresentationParams> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ColorPresentationParams> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>>({
-            Method: MethodTextDocumentColorPresentation$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ColorPresentationParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>, 0>(0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>())
-        }));
-    }
-    {
-        $state.TextDocumentFoldingRangeInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<FoldingRangeParams> | undefined, FoldingRangesOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<FoldingRangeParams> | undefined, FoldingRangesOrNull>({
-            Method: MethodTextDocumentFoldingRange$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<FoldingRangeParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<FoldingRangesOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceFoldingRangeRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceFoldingRangeRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDeclarationInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DeclarationParams> | undefined, LocationOrLocationsOrDeclarationLinksOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DeclarationParams> | undefined, LocationOrLocationsOrDeclarationLinksOrNull>({
-            Method: MethodTextDocumentDeclaration$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeclarationParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LocationOrLocationsOrDeclarationLinksOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentSelectionRangeInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<SelectionRangeParams> | undefined, SelectionRangesOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SelectionRangeParams> | undefined, SelectionRangesOrNull>({
-            Method: MethodTextDocumentSelectionRange$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SelectionRangeParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SelectionRangesOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WindowWorkDoneProgressCreateInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<WorkDoneProgressCreateParams> | undefined, Null>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WorkDoneProgressCreateParams> | undefined, Null>({
-            Method: MethodWindowWorkDoneProgressCreate$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkDoneProgressCreateParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentPrepareCallHierarchyInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CallHierarchyPrepareParams> | undefined, CallHierarchyItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CallHierarchyPrepareParams> | undefined, CallHierarchyItemsOrNull>({
-            Method: MethodTextDocumentPrepareCallHierarchy$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyPrepareParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CallHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CallHierarchyIncomingCallsInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CallHierarchyIncomingCallsParams> | undefined, CallHierarchyIncomingCallsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CallHierarchyIncomingCallsParams> | undefined, CallHierarchyIncomingCallsOrNull>({
-            Method: MethodCallHierarchyIncomingCalls$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyIncomingCallsParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CallHierarchyIncomingCallsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CallHierarchyOutgoingCallsInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CallHierarchyOutgoingCallsParams> | undefined, CallHierarchyOutgoingCallsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CallHierarchyOutgoingCallsParams> | undefined, CallHierarchyOutgoingCallsOrNull>({
-            Method: MethodCallHierarchyOutgoingCalls$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyOutgoingCallsParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CallHierarchyOutgoingCallsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentSemanticTokensFullInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<SemanticTokensParams> | undefined, SemanticTokensOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SemanticTokensParams> | undefined, SemanticTokensOrNull>({
-            Method: MethodTextDocumentSemanticTokensFull$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SemanticTokensOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentSemanticTokensFullDeltaInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<SemanticTokensDeltaParams> | undefined, SemanticTokensOrSemanticTokensDeltaOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SemanticTokensDeltaParams> | undefined, SemanticTokensOrSemanticTokensDeltaOrNull>({
-            Method: MethodTextDocumentSemanticTokensFullDelta$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensDeltaParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SemanticTokensOrSemanticTokensDeltaOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentSemanticTokensRangeInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<SemanticTokensRangeParams> | undefined, SemanticTokensOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SemanticTokensRangeParams> | undefined, SemanticTokensOrNull>({
-            Method: MethodTextDocumentSemanticTokensRange$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensRangeParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SemanticTokensOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceSemanticTokensRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceSemanticTokensRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WindowShowDocumentInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ShowDocumentParams> | undefined, tsonicTypeScriptRuntime.Location<ShowDocumentResult> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ShowDocumentParams> | undefined, tsonicTypeScriptRuntime.Location<ShowDocumentResult> | undefined>({
-            Method: MethodWindowShowDocument$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowDocumentParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowDocumentResult> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentLinkedEditingRangeInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<LinkedEditingRangeParams> | undefined, LinkedEditingRangesOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<LinkedEditingRangeParams> | undefined, LinkedEditingRangesOrNull>({
-            Method: MethodTextDocumentLinkedEditingRange$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LinkedEditingRangeParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LinkedEditingRangesOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceWillCreateFilesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, WorkspaceEditOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, WorkspaceEditOrNull>({
-            Method: MethodWorkspaceWillCreateFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceWillRenameFilesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, WorkspaceEditOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, WorkspaceEditOrNull>({
-            Method: MethodWorkspaceWillRenameFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceWillDeleteFilesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, WorkspaceEditOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, WorkspaceEditOrNull>({
-            Method: MethodWorkspaceWillDeleteFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentMonikerInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<MonikerParams> | undefined, MonikersOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<MonikerParams> | undefined, MonikersOrNull>({
-            Method: MethodTextDocumentMoniker$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<MonikerParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<MonikersOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentPrepareTypeHierarchyInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TypeHierarchyPrepareParams> | undefined, TypeHierarchyItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TypeHierarchyPrepareParams> | undefined, TypeHierarchyItemsOrNull>({
-            Method: MethodTextDocumentPrepareTypeHierarchy$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchyPrepareParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TypeHierarchySupertypesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TypeHierarchySupertypesParams> | undefined, TypeHierarchyItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TypeHierarchySupertypesParams> | undefined, TypeHierarchyItemsOrNull>({
-            Method: MethodTypeHierarchySupertypes$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchySupertypesParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TypeHierarchySubtypesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TypeHierarchySubtypesParams> | undefined, TypeHierarchyItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TypeHierarchySubtypesParams> | undefined, TypeHierarchyItemsOrNull>({
-            Method: MethodTypeHierarchySubtypes$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchySubtypesParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentInlineValueInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InlineValueParams> | undefined, InlineValuesOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InlineValueParams> | undefined, InlineValuesOrNull>({
-            Method: MethodTextDocumentInlineValue$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlineValueParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<InlineValuesOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceInlineValueRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceInlineValueRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentInlayHintInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InlayHintParams> | undefined, InlayHintsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InlayHintParams> | undefined, InlayHintsOrNull>({
-            Method: MethodTextDocumentInlayHint$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHintParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<InlayHintsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.InlayHintResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, tsonicTypeScriptRuntime.Location<InlayHint> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, tsonicTypeScriptRuntime.Location<InlayHint> | undefined>({
-            Method: MethodInlayHintResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceInlayHintRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceInlayHintRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDiagnosticInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentDiagnosticParams> | undefined, RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentDiagnosticParams> | undefined, RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport>({
-            Method: MethodTextDocumentDiagnostic$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentDiagnosticParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceDiagnosticInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticParams> | undefined, tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticReport> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticParams> | undefined, tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticReport> | undefined>({
-            Method: MethodWorkspaceDiagnostic$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticReport> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceDiagnosticRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceDiagnosticRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentInlineCompletionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InlineCompletionParams> | undefined, InlineCompletionListOrItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InlineCompletionParams> | undefined, InlineCompletionListOrItemsOrNull>({
-            Method: MethodTextDocumentInlineCompletion$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlineCompletionParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<InlineCompletionListOrItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceTextDocumentContentInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TextDocumentContentParams> | undefined, tsonicTypeScriptRuntime.Location<TextDocumentContentResult> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TextDocumentContentParams> | undefined, tsonicTypeScriptRuntime.Location<TextDocumentContentResult> | undefined>({
-            Method: MethodWorkspaceTextDocumentContent$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentResult> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceTextDocumentContentRefreshInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TextDocumentContentRefreshParams> | undefined, Null>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TextDocumentContentRefreshParams> | undefined, Null>({
-            Method: MethodWorkspaceTextDocumentContentRefresh$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentRefreshParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.ClientRegisterCapabilityInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<RegistrationParams> | undefined, Null>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<RegistrationParams> | undefined, Null>({
-            Method: MethodClientRegisterCapability$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RegistrationParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.ClientUnregisterCapabilityInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<UnregistrationParams> | undefined, Null>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<UnregistrationParams> | undefined, Null>({
-            Method: MethodClientUnregisterCapability$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<UnregistrationParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.InitializeInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InitializeParams> | undefined, {
-            value: InitializeResult;
-        } | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InitializeParams> | undefined, {
-            value: InitializeResult;
-        } | undefined>({
-            Method: MethodInitialize$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializeParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<{
-                value: InitializeResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.ShutdownInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodShutdown$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WindowShowMessageRequestInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ShowMessageRequestParams> | undefined, MessageActionItemOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ShowMessageRequestParams> | undefined, MessageActionItemOrNull>({
-            Method: MethodWindowShowMessageRequest$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowMessageRequestParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<MessageActionItemOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentWillSaveWaitUntilInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, TextEditsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, TextEditsOrNull>({
-            Method: MethodTextDocumentWillSaveWaitUntil$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentCompletionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CompletionParams> | undefined, CompletionItemsOrListOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CompletionParams> | undefined, CompletionItemsOrListOrNull>({
-            Method: MethodTextDocumentCompletion$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CompletionItemsOrListOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CompletionItemResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, tsonicTypeScriptRuntime.Location<CompletionItem> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, tsonicTypeScriptRuntime.Location<CompletionItem> | undefined>({
-            Method: MethodCompletionItemResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentHoverInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<HoverParams> | undefined, HoverOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<HoverParams> | undefined, HoverOrNull>({
-            Method: MethodTextDocumentHover$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<HoverParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<HoverOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentSignatureHelpInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<SignatureHelpParams> | undefined, SignatureHelpOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SignatureHelpParams> | undefined, SignatureHelpOrNull>({
-            Method: MethodTextDocumentSignatureHelp$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SignatureHelpParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SignatureHelpOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDefinitionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DefinitionParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DefinitionParams> | undefined, LocationOrLocationsOrDefinitionLinksOrNull>({
-            Method: MethodTextDocumentDefinition$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DefinitionParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentReferencesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, LocationsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, LocationsOrNull>({
-            Method: MethodTextDocumentReferences$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LocationsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDocumentHighlightInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentHighlightParams> | undefined, DocumentHighlightsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentHighlightParams> | undefined, DocumentHighlightsOrNull>({
-            Method: MethodTextDocumentDocumentHighlight$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentHighlightParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<DocumentHighlightsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDocumentSymbolInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentSymbolParams> | undefined, SymbolInformationsOrDocumentSymbolsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentSymbolParams> | undefined, SymbolInformationsOrDocumentSymbolsOrNull>({
-            Method: MethodTextDocumentDocumentSymbol$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentSymbolParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SymbolInformationsOrDocumentSymbolsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentCodeActionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CodeActionParams> | undefined, CommandOrCodeActionArrayOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CodeActionParams> | undefined, CommandOrCodeActionArrayOrNull>({
-            Method: MethodTextDocumentCodeAction$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeActionParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CommandOrCodeActionArrayOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CodeActionResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, tsonicTypeScriptRuntime.Location<CodeAction> | undefined>({
-            Method: MethodCodeActionResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceSymbolInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<WorkspaceSymbolParams> | undefined, SymbolInformationsOrWorkspaceSymbolsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WorkspaceSymbolParams> | undefined, SymbolInformationsOrWorkspaceSymbolsOrNull>({
-            Method: MethodWorkspaceSymbol$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbolParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<SymbolInformationsOrWorkspaceSymbolsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceSymbolResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined>({
-            Method: MethodWorkspaceSymbolResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentCodeLensInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CodeLensParams> | undefined, CodeLensesOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CodeLensParams> | undefined, CodeLensesOrNull>({
-            Method: MethodTextDocumentCodeLens$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLensParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<CodeLensesOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CodeLensResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, tsonicTypeScriptRuntime.Location<CodeLens> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, tsonicTypeScriptRuntime.Location<CodeLens> | undefined>({
-            Method: MethodCodeLensResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceCodeLensRefreshInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodWorkspaceCodeLensRefresh$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDocumentLinkInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentLinkParams> | undefined, DocumentLinksOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentLinkParams> | undefined, DocumentLinksOrNull>({
-            Method: MethodTextDocumentDocumentLink$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLinkParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<DocumentLinksOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.DocumentLinkResolveInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, tsonicTypeScriptRuntime.Location<DocumentLink> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, tsonicTypeScriptRuntime.Location<DocumentLink> | undefined>({
-            Method: MethodDocumentLinkResolve$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentFormattingInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentFormattingParams> | undefined, TextEditsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentFormattingParams> | undefined, TextEditsOrNull>({
-            Method: MethodTextDocumentFormatting$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentFormattingParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentRangeFormattingInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingParams> | undefined, TextEditsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingParams> | undefined, TextEditsOrNull>({
-            Method: MethodTextDocumentRangeFormatting$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentRangesFormattingInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentRangesFormattingParams> | undefined, TextEditsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentRangesFormattingParams> | undefined, TextEditsOrNull>({
-            Method: MethodTextDocumentRangesFormatting$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentRangesFormattingParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentOnTypeFormattingInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingParams> | undefined, TextEditsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingParams> | undefined, TextEditsOrNull>({
-            Method: MethodTextDocumentOnTypeFormatting$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentRenameInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<RenameParams> | undefined, WorkspaceEditOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<RenameParams> | undefined, WorkspaceEditOrNull>({
-            Method: MethodTextDocumentRename$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentPrepareRenameInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<PrepareRenameParams> | undefined, RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<PrepareRenameParams> | undefined, RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull>({
-            Method: MethodTextDocumentPrepareRename$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<PrepareRenameParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceExecuteCommandInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ExecuteCommandParams> | undefined, LSPAnyOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ExecuteCommandParams> | undefined, LSPAnyOrNull>({
-            Method: MethodWorkspaceExecuteCommand$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ExecuteCommandParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<LSPAnyOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceApplyEditInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditParams> | undefined, tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditResult> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditParams> | undefined, tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditResult> | undefined>({
-            Method: MethodWorkspaceApplyEdit$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditResult> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomRunGCInfo = RequestInfo.$storageOf<NoParams, Null>(RequestInfo.$fromStorage<NoParams, Null>({
-            Method: MethodCustomRunGC$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CustomSaveHeapProfileInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, {
-            value: ProfileResult;
-        } | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, {
-            value: ProfileResult;
-        } | undefined>({
-            Method: MethodCustomSaveHeapProfile$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<{
-                value: ProfileResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomSaveAllocProfileInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, {
-            value: ProfileResult;
-        } | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, {
-            value: ProfileResult;
-        } | undefined>({
-            Method: MethodCustomSaveAllocProfile$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<{
-                value: ProfileResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomStartCPUProfileInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, Null>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, Null>({
-            Method: MethodCustomStartCPUProfile$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.CustomStopCPUProfileInfo = RequestInfo.$storageOf<NoParams, {
-            value: ProfileResult;
-        } | undefined>(RequestInfo.$fromStorage<NoParams, {
-            value: ProfileResult;
-        } | undefined>({
-            Method: MethodCustomStopCPUProfile$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
-            $blank1: GoArray.zero<{
-                value: ProfileResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomInitializeAPISessionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<InitializeAPISessionParams> | undefined, {
-            value: InitializeAPISessionResult;
-        } | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InitializeAPISessionParams> | undefined, {
-            value: InitializeAPISessionResult;
-        } | undefined>({
-            Method: MethodCustomInitializeAPISession$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializeAPISessionParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<{
-                value: InitializeAPISessionResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomProjectInfoInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ProjectInfoParams> | undefined, {
-            value: ProjectInfoResult;
-        } | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ProjectInfoParams> | undefined, {
-            value: ProjectInfoResult;
-        } | undefined>({
-            Method: MethodCustomProjectInfo$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProjectInfoParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<{
-                value: ProjectInfoResult;
-            } | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomTextDocumentSourceDefinitionInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<TextDocumentPositionParams> | undefined, tsonicTypeScriptRuntime.Location<LocationOrLocationsOrDefinitionLinksOrNull> | undefined>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<TextDocumentPositionParams> | undefined, tsonicTypeScriptRuntime.Location<LocationOrLocationsOrDefinitionLinksOrNull> | undefined>({
-            Method: MethodCustomTextDocumentSourceDefinition$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentPositionParams> | undefined, 0>(0, void 0),
-            $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<LocationOrLocationsOrDefinitionLinksOrNull> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomTextDocumentMultiDocumentHighlightInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<MultiDocumentHighlightParams> | undefined, MultiDocumentHighlightsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<MultiDocumentHighlightParams> | undefined, MultiDocumentHighlightsOrNull>({
-            Method: MethodCustomTextDocumentMultiDocumentHighlight$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<MultiDocumentHighlightParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<MultiDocumentHighlightsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentVSOnAutoInsertInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<VSOnAutoInsertParams> | undefined, VSOnAutoInsertResponseItemOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<VSOnAutoInsertParams> | undefined, VSOnAutoInsertResponseItemOrNull>({
-            Method: MethodTextDocumentVSOnAutoInsert$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<VSOnAutoInsertParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<VSOnAutoInsertResponseItemOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentVSReferencesInfo = RequestInfo.$storageOf<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, VSReferenceItemsOrNull>(RequestInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, VSReferenceItemsOrNull>({
-            Method: MethodTextDocumentVSReferences$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, 0>(0, void 0),
-            $blank1: goArrayAllocate<VSReferenceItemsOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceDidChangeWorkspaceFoldersInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidChangeWorkspaceFoldersParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidChangeWorkspaceFoldersParams> | undefined>({
-            Method: MethodWorkspaceDidChangeWorkspaceFolders$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeWorkspaceFoldersParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WindowWorkDoneProgressCancelInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<WorkDoneProgressCancelParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WorkDoneProgressCancelParams> | undefined>({
-            Method: MethodWindowWorkDoneProgressCancel$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkDoneProgressCancelParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceDidCreateFilesInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined>({
-            Method: MethodWorkspaceDidCreateFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceDidRenameFilesInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined>({
-            Method: MethodWorkspaceDidRenameFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceDidDeleteFilesInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined>({
-            Method: MethodWorkspaceDidDeleteFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.InitializedInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<InitializedParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<InitializedParams> | undefined>({
-            Method: MethodInitialized$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializedParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.ExitInfo = NotificationInfo.$storageOf<NoParams>(NotificationInfo.$fromStorage<NoParams>({
-            Method: MethodExit$constant().$value,
-            $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.WorkspaceDidChangeConfigurationInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidChangeConfigurationParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidChangeConfigurationParams> | undefined>({
-            Method: MethodWorkspaceDidChangeConfiguration$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeConfigurationParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WindowShowMessageInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<ShowMessageParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ShowMessageParams> | undefined>({
-            Method: MethodWindowShowMessage$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowMessageParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WindowLogMessageInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<LogMessageParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<LogMessageParams> | undefined>({
-            Method: MethodWindowLogMessage$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LogMessageParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TelemetryEventInfo = NotificationInfo.$storageOf<RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull>(NotificationInfo.$fromStorage<RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull>({
-            Method: MethodTelemetryEvent$constant().$value,
-            $blank0: goArrayAllocate<RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull__from_lsproto$Storage, 0>(0)
-        }));
-    }
-    {
-        $state.TextDocumentDidOpenInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidOpenTextDocumentParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidOpenTextDocumentParams> | undefined>({
-            Method: MethodTextDocumentDidOpen$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidOpenTextDocumentParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentDidChangeInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidChangeTextDocumentParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidChangeTextDocumentParams> | undefined>({
-            Method: MethodTextDocumentDidChange$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeTextDocumentParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentDidCloseInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidCloseTextDocumentParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidCloseTextDocumentParams> | undefined>({
-            Method: MethodTextDocumentDidClose$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidCloseTextDocumentParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentDidSaveInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidSaveTextDocumentParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidSaveTextDocumentParams> | undefined>({
-            Method: MethodTextDocumentDidSave$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidSaveTextDocumentParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentWillSaveInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined>({
-            Method: MethodTextDocumentWillSave$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.WorkspaceDidChangeWatchedFilesInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesParams> | undefined>({
-            Method: MethodWorkspaceDidChangeWatchedFiles$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.TextDocumentPublishDiagnosticsInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<PublishDiagnosticsParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<PublishDiagnosticsParams> | undefined>({
-            Method: MethodTextDocumentPublishDiagnostics$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<PublishDiagnosticsParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.SetTraceInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<SetTraceParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SetTraceParams> | undefined>({
-            Method: MethodSetTrace$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SetTraceParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.LogTraceInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<LogTraceParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<LogTraceParams> | undefined>({
-            Method: MethodLogTrace$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LogTraceParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CancelRequestInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<CancelParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<CancelParams> | undefined>({
-            Method: MethodCancelRequest$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CancelParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.ProgressInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<ProgressParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<ProgressParams> | undefined>({
-            Method: MethodProgress$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProgressParams> | undefined, 0>(0, void 0)
-        }));
-    }
-    {
-        $state.CustomSetLogVerbosityInfo = NotificationInfo.$storageOf<tsonicTypeScriptRuntime.Location<SetLogVerbosityParams> | undefined>(NotificationInfo.$fromStorage<tsonicTypeScriptRuntime.Location<SetLogVerbosityParams> | undefined>({
-            Method: MethodCustomSetLogVerbosity$constant().$value,
-            $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SetLogVerbosityParams> | undefined, 0>(0, void 0)
-        }));
+        $state.TextDocumentImplementationInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentImplementation$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ImplementationParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentTypeDefinitionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentTypeDefinition$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeDefinitionParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceWorkspaceFoldersInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceWorkspaceFolders$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<WorkspaceFoldersOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceConfigurationInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceConfiguration$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ConfigurationParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<RuntimeSlice<GoInterface | undefined>, 0>(0, RuntimeSlice.nil<GoInterface | undefined>())
+                }));
+    }
+    {
+        $state.TextDocumentDocumentColorInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDocumentColor$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentColorParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>, 0>(0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ColorInformation> | undefined>())
+                }));
+    }
+    {
+        $state.TextDocumentColorPresentationInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentColorPresentation$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ColorPresentationParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<RuntimeSlice<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>, 0>(0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ColorPresentation> | undefined>())
+                }));
+    }
+    {
+        $state.TextDocumentFoldingRangeInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentFoldingRange$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<FoldingRangeParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<FoldingRangesOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceFoldingRangeRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceFoldingRangeRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDeclarationInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDeclaration$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeclarationParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LocationOrLocationsOrDeclarationLinksOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentSelectionRangeInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentSelectionRange$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SelectionRangeParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SelectionRangesOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WindowWorkDoneProgressCreateInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWindowWorkDoneProgressCreate$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkDoneProgressCreateParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentPrepareCallHierarchyInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentPrepareCallHierarchy$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyPrepareParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CallHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CallHierarchyIncomingCallsInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCallHierarchyIncomingCalls$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyIncomingCallsParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CallHierarchyIncomingCallsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CallHierarchyOutgoingCallsInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCallHierarchyOutgoingCalls$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CallHierarchyOutgoingCallsParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CallHierarchyOutgoingCallsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentSemanticTokensFullInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentSemanticTokensFull$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SemanticTokensOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentSemanticTokensFullDeltaInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentSemanticTokensFullDelta$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensDeltaParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SemanticTokensOrSemanticTokensDeltaOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentSemanticTokensRangeInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentSemanticTokensRange$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SemanticTokensRangeParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SemanticTokensOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceSemanticTokensRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceSemanticTokensRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WindowShowDocumentInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWindowShowDocument$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowDocumentParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowDocumentResult> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentLinkedEditingRangeInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentLinkedEditingRange$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LinkedEditingRangeParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LinkedEditingRangesOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceWillCreateFilesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceWillCreateFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceWillRenameFilesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceWillRenameFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceWillDeleteFilesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceWillDeleteFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentMonikerInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentMoniker$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<MonikerParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<MonikersOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentPrepareTypeHierarchyInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentPrepareTypeHierarchy$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchyPrepareParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TypeHierarchySupertypesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTypeHierarchySupertypes$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchySupertypesParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TypeHierarchySubtypesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTypeHierarchySubtypes$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TypeHierarchySubtypesParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TypeHierarchyItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentInlineValueInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentInlineValue$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlineValueParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<InlineValuesOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceInlineValueRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceInlineValueRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentInlayHintInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentInlayHint$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHintParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<InlayHintsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.InlayHintResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodInlayHintResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<InlayHint> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceInlayHintRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceInlayHintRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDiagnosticInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDiagnostic$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentDiagnosticParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceDiagnosticInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDiagnostic$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceDiagnosticReport> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceDiagnosticRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDiagnosticRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentInlineCompletionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentInlineCompletion$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InlineCompletionParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<InlineCompletionListOrItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceTextDocumentContentInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceTextDocumentContent$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentResult> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceTextDocumentContentRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceTextDocumentContentRefresh$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentContentRefreshParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.ClientRegisterCapabilityInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodClientRegisterCapability$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RegistrationParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.ClientUnregisterCapabilityInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodClientUnregisterCapability$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<UnregistrationParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.InitializeInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodInitialize$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializeParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<{
+                        value: InitializeResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.ShutdownInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodShutdown$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WindowShowMessageRequestInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWindowShowMessageRequest$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowMessageRequestParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<MessageActionItemOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentWillSaveWaitUntilInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentWillSaveWaitUntil$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentCompletionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentCompletion$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CompletionItemsOrListOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CompletionItemResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCompletionItemResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CompletionItem> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentHoverInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentHover$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<HoverParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<HoverOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentSignatureHelpInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentSignatureHelp$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SignatureHelpParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SignatureHelpOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDefinitionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDefinition$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DefinitionParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentReferencesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentReferences$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LocationsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDocumentHighlightInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDocumentHighlight$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentHighlightParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<DocumentHighlightsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDocumentSymbolInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDocumentSymbol$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentSymbolParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SymbolInformationsOrDocumentSymbolsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentCodeActionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentCodeAction$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeActionParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CommandOrCodeActionArrayOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CodeActionResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCodeActionResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeAction> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceSymbolInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceSymbol$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbolParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<SymbolInformationsOrWorkspaceSymbolsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceSymbolResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceSymbolResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkspaceSymbol> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentCodeLensInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentCodeLens$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLensParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<CodeLensesOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CodeLensResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCodeLensResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<CodeLens> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceCodeLensRefreshInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceCodeLensRefresh$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDocumentLinkInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDocumentLink$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLinkParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<DocumentLinksOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.DocumentLinkResolveInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodDocumentLinkResolve$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentLink> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentFormattingInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentFormatting$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentFormattingParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentRangeFormattingInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentRangeFormatting$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentRangesFormattingInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentRangesFormatting$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentRangesFormattingParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentOnTypeFormattingInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentOnTypeFormatting$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<TextEditsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentRenameInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentRename$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<WorkspaceEditOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentPrepareRenameInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentPrepareRename$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<PrepareRenameParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceExecuteCommandInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceExecuteCommand$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ExecuteCommandParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<LSPAnyOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceApplyEditInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceApplyEdit$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<ApplyWorkspaceEditResult> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomRunGCInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomRunGC$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CustomSaveHeapProfileInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomSaveHeapProfile$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<{
+                        value: ProfileResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomSaveAllocProfileInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomSaveAllocProfile$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<{
+                        value: ProfileResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomStartCPUProfileInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomStartCPUProfile$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProfileParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<Null__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.CustomStopCPUProfileInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomStopCPUProfile$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0),
+                    $blank1: GoArray.zero<{
+                        value: ProfileResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomInitializeAPISessionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomInitializeAPISession$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializeAPISessionParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<{
+                        value: InitializeAPISessionResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomProjectInfoInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomProjectInfo$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProjectInfoParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<{
+                        value: ProjectInfoResult;
+                    } | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomTextDocumentSourceDefinitionInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomTextDocumentSourceDefinition$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<TextDocumentPositionParams> | undefined, 0>(0, void 0),
+                    $blank1: GoArray.zero<tsonicTypeScriptRuntime.Location<LocationOrLocationsOrDefinitionLinksOrNull> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomTextDocumentMultiDocumentHighlightInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodCustomTextDocumentMultiDocumentHighlight$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<MultiDocumentHighlightParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<MultiDocumentHighlightsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentVSOnAutoInsertInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentVSOnAutoInsert$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<VSOnAutoInsertParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<VSOnAutoInsertResponseItemOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentVSReferencesInfo =
+            (void RequestInfo.$storageOf, (void RequestInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentVSReferences$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ReferenceParams> | undefined, 0>(0, void 0),
+                    $blank1: goArrayAllocate<VSReferenceItemsOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceDidChangeWorkspaceFoldersInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidChangeWorkspaceFolders$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeWorkspaceFoldersParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WindowWorkDoneProgressCancelInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWindowWorkDoneProgressCancel$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WorkDoneProgressCancelParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceDidCreateFilesInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidCreateFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CreateFilesParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceDidRenameFilesInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidRenameFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<RenameFilesParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceDidDeleteFilesInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidDeleteFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DeleteFilesParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.InitializedInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodInitialized$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<InitializedParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.ExitInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodExit$constant().$value,
+                    $blank0: goArrayAllocate<NoParams__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.WorkspaceDidChangeConfigurationInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidChangeConfiguration$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeConfigurationParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WindowShowMessageInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWindowShowMessage$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ShowMessageParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WindowLogMessageInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWindowLogMessage$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LogMessageParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TelemetryEventInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTelemetryEvent$constant().$value,
+                    $blank0: goArrayAllocate<RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull__from_lsproto$Storage, 0>(0)
+                }));
+    }
+    {
+        $state.TextDocumentDidOpenInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDidOpen$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidOpenTextDocumentParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentDidChangeInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDidChange$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeTextDocumentParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentDidCloseInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDidClose$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidCloseTextDocumentParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentDidSaveInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentDidSave$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidSaveTextDocumentParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentWillSaveInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentWillSave$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<WillSaveTextDocumentParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.WorkspaceDidChangeWatchedFilesInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodWorkspaceDidChangeWatchedFiles$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.TextDocumentPublishDiagnosticsInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodTextDocumentPublishDiagnostics$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<PublishDiagnosticsParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.SetTraceInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodSetTrace$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SetTraceParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.LogTraceInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodLogTrace$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<LogTraceParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CancelRequestInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodCancelRequest$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<CancelParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.ProgressInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodProgress$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<ProgressParams> | undefined, 0>(0, void 0)
+                }));
+    }
+    {
+        $state.CustomSetLogVerbosityInfo =
+            (void NotificationInfo.$storageOf, (void NotificationInfo.$fromStorage,
+                {
+                    Method: MethodCustomSetLogVerbosity$constant().$value,
+                    $blank0: GoArray.zero<tsonicTypeScriptRuntime.Location<SetLogVerbosityParams> | undefined, 0>(0, void 0)
+                }));
     }
     {
         void 0;

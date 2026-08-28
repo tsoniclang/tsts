@@ -97,13 +97,16 @@ export function normLang(id: Language): [
     AliasType
 ] {
     const __gotots_callee_0 = (i: int): bool => {
-        return FromTo.$storageOf(FromTo.$fromStorage($state.AliasMap.get(i))).From >= id;
+        return (void FromTo.$storageOf, (void FromTo.$fromStorage,
+            $state.AliasMap.get(i))).From >= id;
     };
     let k = globalThis.Number(BigInt.asIntN(64, sort__from_gostdlib.Search(BigInt.asIntN(64, goNumberToBigInt(193)), __gotots_callee_0 === undefined ? undefined : $providerArgument0 => {
         return __gotots_callee_0(globalThis.Number(BigInt.asIntN(64, $providerArgument0)));
     })));
-    if (k < 193 && FromTo.$storageOf(FromTo.$fromStorage($state.AliasMap.get(k))).From === id) {
-        return [FromTo.$storageOf(FromTo.$fromStorage($state.AliasMap.get(k))).To, $state.AliasTypes.get(k)];
+    if (k < 193 && (void FromTo.$storageOf, (void FromTo.$fromStorage,
+        $state.AliasMap.get(k))).From === id) {
+        return [(void FromTo.$storageOf, (void FromTo.$fromStorage,
+                $state.AliasMap.get(k))).To, $state.AliasTypes.get(k)];
     }
     return [id, AliasTypeUnknown$constant()];
 }
@@ -347,13 +350,16 @@ export function normRegion(r: Region): Region {
     }
     let m = __gotots_array_build_1;
     const __gotots_callee_1 = (i: int): bool => {
-        return FromTo.$storageOf(FromTo.$fromStorage(m.get(i))).From >= r;
+        return (void FromTo.$storageOf, (void FromTo.$fromStorage,
+            m.get(i))).From >= r;
     };
     let k = globalThis.Number(BigInt.asIntN(64, sort__from_gostdlib.Search(BigInt.asIntN(64, goNumberToBigInt(20)), __gotots_callee_1 === undefined ? undefined : $providerArgument0 => {
         return __gotots_callee_1(globalThis.Number(BigInt.asIntN(64, $providerArgument0)));
     })));
-    if (k < 20 && FromTo.$storageOf(FromTo.$fromStorage(m.get(k))).From === r) {
-        return FromTo.$storageOf(FromTo.$fromStorage(m.get(k))).To;
+    if (k < 20 && (void FromTo.$storageOf, (void FromTo.$fromStorage,
+        m.get(k))).From === r) {
+        return (void FromTo.$storageOf, (void FromTo.$fromStorage,
+            m.get(k))).To;
     }
     return 0;
 }

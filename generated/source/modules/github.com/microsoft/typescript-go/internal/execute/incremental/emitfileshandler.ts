@@ -236,7 +236,7 @@ export class emitFilesHandler {
             }
             let aTime = named_time.TimeOperations.$zero();
             if (differsOnlyInMap) {
-                const __gotots_receiver_1 = ((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_1: Program["host"] = ((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_argument_0 = fileName;
                 aTime = goInterfaceNonNil<Host>(__gotots_receiver_1).GetMTime(__gotots_argument_0);
             }
@@ -256,7 +256,7 @@ export class emitFilesHandler {
                 err = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_3).WriteFile(__gotots_argument_4, __gotots_argument_5);
             }
             if (err === undefined && differsOnlyInMap) {
-                const __gotots_receiver_4 = ((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_4: Program["host"] = ((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_argument_6 = fileName;
                 const __gotots_argument_7 = named_time.TimeOperations.$copy(aTime);
                 err = goInterfaceNonNil<Host>(__gotots_receiver_4).SetMTime(__gotots_argument_6, __gotots_argument_7);

@@ -9,11 +9,7 @@ import { $goMap$MapOf_Named_tspath$Path_To_string as GoMap } from "../../../../.
 export function Map$Add$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string($argument0: {
     value: Map__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>;
 } | undefined, $argument1: Path__from_tspath, $argument2: CloneableMap__from_dirty<Path__from_tspath, gostring>): void {
-    return Map__from_dirty.Add$kernel<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>($argument0, ($argument0: CloneableMap__from_dirty<Path__from_tspath, gostring>): CloneableMap__from_dirty<Path__from_tspath, gostring> => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: CloneableMap__from_dirty<Path__from_tspath, gostring>): GoMapValue<Path__from_tspath, gostring> => {
+    return Map__from_dirty.Add$kernel<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>($argument0, ($argument0: CloneableMap__from_dirty<Path__from_tspath, gostring>): GoMapValue<Path__from_tspath, gostring> => {
         return $argument0.$value;
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;
@@ -26,10 +22,6 @@ export function Map$Add$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBuc
 } | undefined, $argument1: Path__from_tspath, $argument2: RegistryBucket__from_autoimport | undefined): void {
     return Map__from_dirty.Add$kernel<Path__from_tspath, RegistryBucket__from_autoimport | undefined>($argument0, ($argument0: RegistryBucket__from_autoimport | undefined): RegistryBucket__from_autoimport | undefined => {
         return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: RegistryBucket__from_autoimport | undefined): RegistryBucket__from_autoimport | undefined => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;
     }, (): RegistryBucket__from_autoimport | undefined => {
@@ -41,10 +33,6 @@ export function Map$Add$Named_tspath$Path$PointerTo_Named_autoimport$directory($
 } | undefined, $argument1: Path__from_tspath, $argument2: directory__from_autoimport | undefined): void {
     return Map__from_dirty.Add$kernel<Path__from_tspath, directory__from_autoimport | undefined>($argument0, ($argument0: directory__from_autoimport | undefined): directory__from_autoimport | undefined => {
         return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: directory__from_autoimport | undefined): directory__from_autoimport | undefined => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;
     }, (): directory__from_autoimport | undefined => {
@@ -55,10 +43,6 @@ export function Map$Add$Named_tspath$Path$PointerTo_Named_project$configFileName
     value: Map__from_dirty<Path__from_tspath, configFileNames__from_project | undefined>;
 } | undefined, $argument1: Path__from_tspath, $argument2: configFileNames__from_project | undefined): void {
     return Map__from_dirty.Add$kernel<Path__from_tspath, configFileNames__from_project | undefined>($argument0, ($argument0: configFileNames__from_project | undefined): configFileNames__from_project | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: configFileNames__from_project | undefined): configFileNames__from_project | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;

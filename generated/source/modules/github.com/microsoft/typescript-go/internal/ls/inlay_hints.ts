@@ -146,13 +146,13 @@ export class inlayHintState {
                 }
                 case KindQualifiedName$constant__from_ast(): {
                     const __gotots_callee_1 = visitForDisplayParts;
-                    const __gotots_argument_1 = (Node__from_ast.AsQualifiedName(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Left;
+                    const __gotots_argument_1: QualifiedName__from_ast["Left"] = (Node__from_ast.AsQualifiedName(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Left;
                     (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
                     parts = parts.append(void 0, [
                         { value: new InlayHintLabelPart__from_lsproto(".", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_2 = visitForDisplayParts;
-                    const __gotots_argument_2 = (Node__from_ast.AsQualifiedName(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Right;
+                    const __gotots_argument_2: QualifiedName__from_ast["Right"] = (Node__from_ast.AsQualifiedName(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Right;
                     (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
                     break;
                 }
@@ -163,7 +163,7 @@ export class inlayHintState {
                         ]);
                     }
                     const __gotots_callee_3 = visitForDisplayParts;
-                    const __gotots_argument_3 = (Node__from_ast.AsTypePredicateNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ParameterName;
+                    const __gotots_argument_3: TypePredicateNode__from_ast["ParameterName"] = (Node__from_ast.AsTypePredicateNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ParameterName;
                     (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3);
                     if (!(Node__from_ast.Type(node__shadow_1) === undefined)) {
                         parts = parts.append(void 0, [
@@ -271,7 +271,7 @@ export class inlayHintState {
                         { value: new InlayHintLabelPart__from_lsproto("typeof ", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_16 = visitForDisplayParts;
-                    const __gotots_argument_19 = (Node__from_ast.AsTypeQueryNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExprName;
+                    const __gotots_argument_19: TypeQueryNode__from_ast["ExprName"] = (Node__from_ast.AsTypeQueryNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExprName;
                     (__gotots_callee_16 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_19);
                     if (Node__from_ast.TypeArguments(node__shadow_1).length > 0) {
                         parts = parts.append(void 0, [
@@ -371,18 +371,22 @@ export class inlayHintState {
                     break;
                 }
                 case KindUnionType$constant__from_ast(): {
-                    if (!(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) {
+                    if (!((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                        UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) {
                         const __gotots_callee_25 = visitDisplayPartList;
-                        const __gotots_argument_31 = NodeList__from_ast.$storageOf(((UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
+                        const __gotots_argument_31 = NodeList__from_ast.$storageOf((((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                            UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
                         const __gotots_argument_32 = " | ";
                         (__gotots_callee_25 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_31, __gotots_argument_32);
                     }
                     break;
                 }
                 case KindIntersectionType$constant__from_ast(): {
-                    if (!(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) {
+                    if (!((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                        IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) {
                         const __gotots_callee_26 = visitDisplayPartList;
-                        const __gotots_argument_33 = NodeList__from_ast.$storageOf(((UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
+                        const __gotots_argument_33 = NodeList__from_ast.$storageOf((((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                            IntersectionTypeNode__from_ast.$storageOf(((Node__from_ast.AsIntersectionTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
                         const __gotots_argument_34 = " & ";
                         (__gotots_callee_26 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_33, __gotots_argument_34);
                     }
@@ -390,25 +394,25 @@ export class inlayHintState {
                 }
                 case KindConditionalType$constant__from_ast(): {
                     const __gotots_callee_27 = visitForDisplayParts;
-                    const __gotots_argument_35 = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CheckType;
+                    const __gotots_argument_35: ConditionalTypeNode__from_ast["CheckType"] = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CheckType;
                     (__gotots_callee_27 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_35);
                     parts = parts.append(void 0, [
                         { value: new InlayHintLabelPart__from_lsproto(" extends ", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_28 = visitForDisplayParts;
-                    const __gotots_argument_36 = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendsType;
+                    const __gotots_argument_36: ConditionalTypeNode__from_ast["ExtendsType"] = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendsType;
                     (__gotots_callee_28 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_36);
                     parts = parts.append(void 0, [
                         { value: new InlayHintLabelPart__from_lsproto(" ? ", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_29 = visitForDisplayParts;
-                    const __gotots_argument_37 = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TrueType;
+                    const __gotots_argument_37: ConditionalTypeNode__from_ast["TrueType"] = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TrueType;
                     (__gotots_callee_29 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_37);
                     parts = parts.append(void 0, [
                         { value: new InlayHintLabelPart__from_lsproto(" : ", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_30 = visitForDisplayParts;
-                    const __gotots_argument_38 = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FalseType;
+                    const __gotots_argument_38: ConditionalTypeNode__from_ast["FalseType"] = (Node__from_ast.AsConditionalTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FalseType;
                     (__gotots_callee_30 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_38);
                     break;
                 }
@@ -417,7 +421,7 @@ export class inlayHintState {
                         { value: new InlayHintLabelPart__from_lsproto("infer ", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_31 = visitForDisplayParts;
-                    const __gotots_argument_39 = (Node__from_ast.AsInferTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameter;
+                    const __gotots_argument_39: InferTypeNode__from_ast["TypeParameter"] = (Node__from_ast.AsInferTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameter;
                     (__gotots_callee_31 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_39);
                     break;
                 }
@@ -480,14 +484,14 @@ export class inlayHintState {
                         { value: new InlayHintLabelPart__from_lsproto("[", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_36 = visitForDisplayParts;
-                    const __gotots_argument_44 = (Node__from_ast.AsMappedTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameter;
+                    const __gotots_argument_44: MappedTypeNode__from_ast["TypeParameter"] = (Node__from_ast.AsMappedTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameter;
                     (__gotots_callee_36 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_44);
                     if (!((Node__from_ast.AsMappedTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NameType === undefined)) {
                         parts = parts.append(void 0, [
                             { value: new InlayHintLabelPart__from_lsproto(" as ", void 0, void 0, void 0) },
                         ]);
                         const __gotots_callee_37 = visitForDisplayParts;
-                        const __gotots_argument_45 = (Node__from_ast.AsMappedTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NameType;
+                        const __gotots_argument_45: MappedTypeNode__from_ast["NameType"] = (Node__from_ast.AsMappedTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NameType;
                         (__gotots_callee_37 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_45);
                     }
                     parts = parts.append(void 0, [
@@ -549,7 +553,7 @@ export class inlayHintState {
                         { value: new InlayHintLabelPart__from_lsproto("import(", void 0, void 0, void 0) },
                     ]);
                     const __gotots_callee_42 = visitForDisplayParts;
-                    const __gotots_argument_50 = (Node__from_ast.AsImportTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Argument;
+                    const __gotots_argument_50: ImportTypeNode__from_ast["Argument"] = (Node__from_ast.AsImportTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Argument;
                     (__gotots_callee_42 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_50);
                     parts = parts.append(void 0, [
                         { value: new InlayHintLabelPart__from_lsproto(")", void 0, void 0, void 0) },
@@ -559,7 +563,7 @@ export class inlayHintState {
                             { value: new InlayHintLabelPart__from_lsproto(".", void 0, void 0, void 0) },
                         ]);
                         const __gotots_callee_43 = visitForDisplayParts;
-                        const __gotots_argument_51 = (Node__from_ast.AsImportTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Qualifier;
+                        const __gotots_argument_51: ImportTypeNode__from_ast["Qualifier"] = (Node__from_ast.AsImportTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Qualifier;
                         (__gotots_callee_43 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_51);
                     }
                     if (Node__from_ast.TypeArguments(node__shadow_1).length > 0) {
@@ -738,7 +742,7 @@ export class inlayHintState {
                 }
                 case KindTemplateLiteralType$constant__from_ast(): {
                     const __gotots_callee_62 = visitForDisplayParts;
-                    const __gotots_argument_76 = (Node__from_ast.AsTemplateLiteralTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Head;
+                    const __gotots_argument_76: TemplateLiteralTypeNode__from_ast["Head"] = (Node__from_ast.AsTemplateLiteralTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Head;
                     (__gotots_callee_62 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_76);
                     const __gotots_range_5 = NodeList__from_ast.$storageOf((((Node__from_ast.AsTemplateLiteralTypeNode(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TemplateSpans ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
                     for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_5.length; __gotots_range_index_4++) {
@@ -761,7 +765,7 @@ export class inlayHintState {
                     const __gotots_argument_78 = Node__from_ast.Type(node__shadow_1);
                     (__gotots_callee_64 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_78);
                     const __gotots_callee_65 = visitForDisplayParts;
-                    const __gotots_argument_79 = (Node__from_ast.AsTemplateLiteralTypeSpan(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Literal;
+                    const __gotots_argument_79: TemplateLiteralTypeSpan__from_ast["Literal"] = (Node__from_ast.AsTemplateLiteralTypeSpan(node__shadow_1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Literal;
                     (__gotots_callee_65 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_79);
                     break;
                 }

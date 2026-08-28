@@ -192,7 +192,7 @@ export class Tracing {
                         break __gotots_return_block_0;
                     }
                     sync__from_gostdlib.Mutex.Lock((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_54 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_54: Tracing["mu"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_54, $go$recovery);
                     };
@@ -244,7 +244,7 @@ export class Tracing {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_52 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_52: Tracing["mu"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_52, $go$recovery);
                     };
@@ -253,29 +253,31 @@ export class Tracing {
                         value: typeTracer;
                     } | undefined = { value: new typeTracer((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs, checkerIndex, typesPath, RuntimeSlice.literal<TracedType | undefined>([]), named_sync.SyncMutexOperations.$zero()) };
                     (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracers = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracers.append(void 0, [tracer]);
-                    const __gotots_slice_build_0 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.legend;
+                    const __gotots_slice_build_0: Tracing["legend"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.legend;
                     const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
                     let __gotots_slice_build_1 = __gotots_slice_build_0;
                     if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                         __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, TraceRecord.$storageOf(TraceRecord.$fromStorage({
-                            ConfigFilePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath,
-                            TracePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath,
-                            TypesPath: typesPath,
-                            CheckerID: checkerIndex
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void TraceRecord.$storageOf, (void TraceRecord.$fromStorage,
+                            {
+                                ConfigFilePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath,
+                                TracePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath,
+                                TypesPath: typesPath,
+                                CheckerID: checkerIndex
+                            })));
                     }
                     else {
                         __gotots_slice_build_1 = goSliceAllocate<TraceRecord$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                         for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.set(__gotots_slice_build_3, TraceRecord.$storageOf(TraceRecord.$copy(TraceRecord.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                         }
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, TraceRecord.$storageOf(TraceRecord.$fromStorage({
-                            ConfigFilePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath,
-                            TracePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath,
-                            TypesPath: typesPath,
-                            CheckerID: checkerIndex
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void TraceRecord.$storageOf, (void TraceRecord.$fromStorage,
+                            {
+                                ConfigFilePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath,
+                                TracePath: (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath,
+                                TypesPath: typesPath,
+                                CheckerID: checkerIndex
+                            })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TraceRecord.$storageOf(TraceRecord.$zero()));
                         }
@@ -341,7 +343,7 @@ export class Tracing {
                     try {
                         __gotots_return_block_0: {
                             sync__from_gostdlib.Mutex.Lock((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                            const __gotots_receiver_51 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                            const __gotots_receiver_51: Tracing["mu"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                             __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                                 recovery_sync.SyncMutexUnlock(__gotots_receiver_51, $go$recovery);
                             };
@@ -403,7 +405,7 @@ export class Tracing {
                             break __gotots_return_block_1;
                         }
                         sync__from_gostdlib.Mutex.Lock((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                        const __gotots_receiver_52 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                        const __gotots_receiver_52: Tracing["mu"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                         __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_52, $go$recovery);
                         };
@@ -454,7 +456,7 @@ export class Tracing {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_range_0 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracers;
+                    const __gotots_range_0: Tracing["tracers"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracers;
                     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                         const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
                         let tracer: {
@@ -469,7 +471,7 @@ export class Tracing {
                         }
                     }
                     sync__from_gostdlib.Mutex.Lock((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_1 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_1: Tracing["mu"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                     };
@@ -481,8 +483,8 @@ export class Tracing {
                             break __gotots_return_block_0;
                         }
                         {
-                            const __gotots_receiver_2 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
-                            const __gotots_argument_2 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
+                            const __gotots_receiver_2: Tracing["fs"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                            const __gotots_argument_2: Tracing["tracePath"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
                             const __gotots_argument_3 = strings__from_gostdlib.Builder.String((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.traceContent) + "\n]\n";
                             let err__shadow_1: GoInterface | undefined = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_2).AppendFile(__gotots_argument_2, __gotots_argument_3);
                             if (!(err__shadow_1 === undefined)) {
@@ -505,7 +507,7 @@ export class Tracing {
                         break __gotots_return_block_0;
                     }
                     {
-                        const __gotots_receiver_3 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+                        const __gotots_receiver_3: Tracing["fs"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                         const __gotots_argument_4 = legendPath;
                         const __gotots_conversion_0 = legendData;
                         let __gotots_conversion_1 = "";
@@ -563,8 +565,8 @@ export class Tracing {
             return;
         }
         {
-            const __gotots_receiver_51 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
-            const __gotots_argument_15 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
+            const __gotots_receiver_51: Tracing["fs"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+            const __gotots_argument_15: Tracing["tracePath"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
             const __gotots_argument_16 = strings__from_gostdlib.Builder.String((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.traceContent);
             let err: GoInterface | undefined = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_51).AppendFile(__gotots_argument_15, __gotots_argument_16);
             if (!(err === undefined)) {
@@ -677,8 +679,8 @@ export function StartTracing(fs: FS__from_vfs | undefined, traceDir: gostring, c
     strings__from_gostdlib.Builder.WriteString((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.traceContent, ",\n");
     Tracing.$go$private$tracing$writeEvent(tr, new traceEvent(1, mainThreadID$int, "M", "disabled-by-default-devtools.timeline", metaTs, "TracingStartedInBrowser", "", void 0, $goMap$MapOf_string_To_Interface_void.nil()));
     {
-        const __gotots_receiver_0 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
-        const __gotots_argument_0 = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
+        const __gotots_receiver_0: Tracing["fs"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_argument_0: Tracing["tracePath"] = (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracePath;
         const __gotots_argument_1 = strings__from_gostdlib.Builder.String((tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.traceContent);
         let err: GoInterface | undefined = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_0).WriteFile(__gotots_argument_0, __gotots_argument_1);
         if (!(err === undefined)) {
@@ -853,8 +855,8 @@ export class typeTracer {
             }
         }
         strings__from_gostdlib.Builder.WriteString(sb, "]\n");
-        const __gotots_receiver_4 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
-        const __gotots_argument_12 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typesPath;
+        const __gotots_receiver_4: typeTracer["fs"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_argument_12: typeTracer["typesPath"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typesPath;
         const __gotots_argument_13 = strings__from_gostdlib.Builder.String(sb);
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_4).WriteFile(__gotots_argument_12, __gotots_argument_13);
     }
@@ -867,7 +869,7 @@ export class typeTracer {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_55 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_55: typeTracer["mu"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_2 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_55, $go$recovery);
                     };

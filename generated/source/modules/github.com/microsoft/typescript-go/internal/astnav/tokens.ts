@@ -37,11 +37,7 @@ export function GetTokenAtPosition(sourceFile: tsonicTypeScriptRuntime.Location<
 export function getTokenAtPosition(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position: int, allowPositionInLeadingTrivia: bool, includePrecedingTokenAtEndPosition: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => bool) | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let next: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0, prevSubtree: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    let current: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-        return NodeDefault__from_ast.$fromStorage($go$storage);
-    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-        return NodeDefault__from_ast.$storageOf($go$value);
-    }));
+    let current: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     let left = 0;
     let nodeAfterLeft: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
     let testNode: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => int) | undefined = (node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): int => {
@@ -386,11 +382,7 @@ export function FindPrecedingTokenEx(sourceFile: tsonicTypeScriptRuntime.Locatio
     }
     else {
         const __gotots_store_1 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     const __gotots_callee_8 = find;
     const __gotots_argument_10 = node;
@@ -676,11 +668,7 @@ export function getNodeVisitor(visitNode: (($0: tsonicTypeScriptRuntime.Location
         if (!(modifiers === undefined)) {
             const __gotots_callee_11 = wrappedVisitNodes;
             const __gotots_store_2 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-            const __gotots_argument_16 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                return NodeList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                return NodeList__from_ast.$storageOf($go$value);
-            });
+            const __gotots_argument_16 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             const __gotots_argument_17 = visitor;
             (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_16, __gotots_argument_17);
         }

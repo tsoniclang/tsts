@@ -96,12 +96,16 @@ export function buildRulesMap(): RuntimeSlice<RuntimeSlice<ruleImpl | undefined>
     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
         const __gotots_range_value_2 = ruleSpec.$copy(ruleSpec.$fromStorage(__gotots_range_2.get(__gotots_range_index_2)));
         let rule__shadow_1 = __gotots_range_value_2;
-        let specificRule = tokenRange.$storageOf(tokenRange.$fromStorage(ruleSpec.$storageOf(rule__shadow_1).leftTokenRange)).isSpecific && tokenRange.$storageOf(tokenRange.$fromStorage(ruleSpec.$storageOf(rule__shadow_1).rightTokenRange)).isSpecific;
-        const __gotots_range_3 = tokenRange.$storageOf(tokenRange.$fromStorage(ruleSpec.$storageOf(rule__shadow_1).leftTokenRange)).tokens;
+        let specificRule = (void tokenRange.$storageOf, (void tokenRange.$fromStorage,
+            ruleSpec.$storageOf(rule__shadow_1).leftTokenRange)).isSpecific && (void tokenRange.$storageOf, (void tokenRange.$fromStorage,
+            ruleSpec.$storageOf(rule__shadow_1).rightTokenRange)).isSpecific;
+        const __gotots_range_3 = (void tokenRange.$storageOf, (void tokenRange.$fromStorage,
+            ruleSpec.$storageOf(rule__shadow_1).leftTokenRange)).tokens;
         for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_3.length; __gotots_range_index_3++) {
             const __gotots_range_value_3 = __gotots_range_3.get(__gotots_range_index_3);
             let left = __gotots_range_value_3;
-            const __gotots_range_4 = tokenRange.$storageOf(tokenRange.$fromStorage(ruleSpec.$storageOf(rule__shadow_1).rightTokenRange)).tokens;
+            const __gotots_range_4 = (void tokenRange.$storageOf, (void tokenRange.$fromStorage,
+                ruleSpec.$storageOf(rule__shadow_1).rightTokenRange)).tokens;
             for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
                 const __gotots_range_value_4 = __gotots_range_4.get(__gotots_range_index_4);
                 let right = __gotots_range_value_4;

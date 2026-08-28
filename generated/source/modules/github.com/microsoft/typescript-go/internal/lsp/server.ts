@@ -107,7 +107,8 @@ export function NewServer(opts: ServerOptions | undefined): {
         } | undefined>(), GoMap.make(0, []), named_sync.SyncMutexOperations.$zero(), $goMap$MapOf_Named_jsonrpc$ID_To_ChannelOf_PointerTo_Named_lsproto$ResponseMessage.make(0, []), named_sync.SyncMutexOperations.$zero(), (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Cwd, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FS, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DefaultLibraryPath, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).TypingsLocation, void 0, void 0, ResolvedClientCapabilities__from_lsproto.$zero(), new PositionEncodingKind__from_lsproto(""), Locale__from_locale.$zero(), false, false, named_sync_atomic.SyncAtomicUint32Operations.$zero(), SyncSet__from_collections.$zero<WatcherID__from_project>(), void 0, named_sync_atomic.SyncAtomicInt64Operations.$zero(), void 0, $goMap$MapOf_string_To_PointerTo_Named_api$Session.nil(), named_sync.SyncMutexOperations.$zero(), void 0, GoChannel.make<GoEmptyStruct>(0, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
         }, (value: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy(value);
+            return (void GoEmptyStruct.$copy,
+                value);
         }), void 0, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ParseCache, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NpmInstall, CPUProfiler__from_pprof.$zero(), (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProgressDelay, void 0, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SetParentProcessID) };
     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger = newLogger(s);
     return s;
@@ -286,7 +287,7 @@ export class Server {
         RuntimeSlice<uint8>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_callee_29 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.npmInstall;
+        const __gotots_callee_29: Server["npmInstall"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.npmInstall;
         const __gotots_argument_88 = cwd;
         const __gotots_argument_89 = args;
         return (__gotots_callee_29 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_88, __gotots_argument_89);
@@ -598,7 +599,7 @@ export class Server {
                         value: ID__from_jsonrpc;
                     } | undefined = NewID__from_lsproto(IntegerOrString__from_lsproto.$copy(rawID));
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu);
-                    const __gotots_receiver_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu;
+                    const __gotots_receiver_9: Server["pendingClientRequestsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_9, $go$recovery);
                     };
@@ -740,7 +741,7 @@ export class Server {
                                                 __gotots_deferred_3 === undefined ? (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_3($go$recovery);
                                             });
                                             sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu);
-                                            const __gotots_receiver_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu;
+                                            const __gotots_receiver_3: Server["pendingClientRequestsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingClientRequestsMu;
                                             __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                                                 recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                                             });
@@ -1242,7 +1243,7 @@ export class Server {
         if (!(err === undefined)) {
             return [void 0, err];
         }
-        const __gotots_receiver_8 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_8: Server["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_binary_operand_0 = "Resolved client capabilities: ";
         const __gotots_conversion_0 = capabilitiesJSON;
         let __gotots_conversion_1 = "";
@@ -1263,7 +1264,7 @@ export class Server {
             __gotots_store_2.locale = __gotots_results_16[0];
         }
         if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.startWatchdog === undefined) && !(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InitializeParams__from_lsproto>).value.ProcessId.Integer === undefined)) {
-            const __gotots_callee_14 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.startWatchdog;
+            const __gotots_callee_14: Server["startWatchdog"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.startWatchdog;
             const __gotots_argument_34 = ((((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InitializeParams__from_lsproto>).value.ProcessId.Integer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<int32>).value;
             (__gotots_callee_14 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_34);
         }
@@ -1294,7 +1295,7 @@ export class Server {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu);
-                    const __gotots_receiver_24 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu;
+                    const __gotots_receiver_24: Server["apiSessionsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu;
                     __gotots_deferred_4 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_24, $go$recovery);
                     };
@@ -1344,7 +1345,7 @@ export class Server {
                                         logger.Errorf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger, "API session %s: failed to accept connection: %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(Session__from_api.ID(apiSession)), acceptErr]));
                                         break __gotots_return_block_3;
                                     }
-                                    const __gotots_argument_68 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                                    const __gotots_argument_68: Server["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                                     const __gotots_results_49 = provider_context.ContextWithCancelDirect(GoProviderProfileBridge.$to(__gotots_argument_68));
                                     const __gotots_results_50 = [GoProviderProfileBridge.$from(__gotots_results_49[0]), __gotots_results_49[1]] satisfies [
                                         GoInterface | undefined,
@@ -1362,7 +1363,7 @@ export class Server {
                                             let r: $goInterface$Interface_void | undefined = $go$recovery === undefined ? undefined : $go$recovery.take();
                                             if (!(r === undefined)) {
                                                 let stack = debug__from_gostdlib.Stack();
-                                                const __gotots_receiver_27 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                                const __gotots_receiver_27: Server["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                                 const __gotots_argument_77 = "API session %s: panic: %v\n%s";
                                                 const __gotots_argument_74 = new GoInterfaceAdapter(Session__from_api.ID(apiSession));
                                                 const __gotots_argument_75 = r;
@@ -1523,7 +1524,7 @@ export class Server {
                 logger.Logf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger, "file watching: disabled (client lacks dynamic watch registration and builtin watcher backend is not fast-recursive)", RuntimeSlice.nil<$goInterface$Interface_void | undefined>());
             }
         }
-        let cwd = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cwd;
+        let cwd: Server["cwd"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cwd;
         if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.clientCapabilities.Workspace.WorkspaceFolders && !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.initializeParams ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InitializeParams__from_lsproto>).value.WorkspaceFolders === undefined) && !(WorkspaceFoldersOrNull__from_lsproto.$storageOf((((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.initializeParams ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InitializeParams__from_lsproto>).value.WorkspaceFolders ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<WorkspaceFoldersOrNull__from_lsproto>).value).WorkspaceFolders === undefined) && ((WorkspaceFoldersOrNull__from_lsproto.$storageOf((((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.initializeParams ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InitializeParams__from_lsproto>).value.WorkspaceFolders ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<WorkspaceFoldersOrNull__from_lsproto>).value).WorkspaceFolders ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<{
             value: WorkspaceFolder__from_lsproto;
         } | undefined>>).value.length === 1) {
@@ -1542,7 +1543,7 @@ export class Server {
             cwd = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cwd;
         }
         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.telemetryEnabled = enableTelemetry;
-        const __gotots_argument_65 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+        const __gotots_argument_65: Server["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
         const __gotots_store_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_66 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "clientCapabilities");
         const __gotots_field_4 = WithClientCapabilities__from_lsproto(__gotots_argument_65, __gotots_argument_66);
@@ -1669,12 +1670,15 @@ export class Server {
         let info = LanguageService__from_ls.GetRenameInfo(defaultLs, ctx, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameParams__from_lsproto>).value.NewName, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameParams__from_lsproto>).value.TextDocument.Uri, Position__from_lsproto.$copy(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameParams__from_lsproto>).value.Position));
         if (info.CanRename && info.FileToRename !== "") {
             if (ClientSupportsWillRenameFiles__from_ls(ctx)) {
-                let documentChanges = RuntimeSlice.literal<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>([TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                        RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, FileNameToDocumentURI__from_lsconv(info.FileToRename), FileNameToDocumentURI__from_lsconv(info.NewFileName), void 0) },
-                        TextDocumentEdit: void 0,
-                        CreateFile: void 0,
-                        DeleteFile: void 0
-                    }))]);
+                let documentChanges = RuntimeSlice.literal<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>([
+                    (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                        {
+                            RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, FileNameToDocumentURI__from_lsconv(info.FileToRename), FileNameToDocumentURI__from_lsconv(info.NewFileName), void 0) },
+                            TextDocumentEdit: void 0,
+                            CreateFile: void 0,
+                            DeleteFile: void 0
+                        })),
+                ]);
                 const documentChanges$location = tsonicTypeScriptRuntime.boundLocation({}, () => documentChanges, documentChanges$next => documentChanges = documentChanges$next);
                 return [WorkspaceEditOrNull__from_lsproto.$fromStorage({
                         WorkspaceEdit: { value: new WorkspaceEdit__from_lsproto(void 0, documentChanges$location, void 0) }
@@ -1704,7 +1708,7 @@ export class Server {
         {
             const __gotots_callee_11 = $state.handlers;
             const __gotots_map_0 = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))().$value;
-            const __gotots_map_1 = (req ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Method;
+            const __gotots_map_1: RequestMessage__from_lsproto["Method"] = (req ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Method;
             let handler: (($0: {
                 value: Server;
             } | undefined, $1: GoInterface | undefined, $2: {
@@ -2233,7 +2237,7 @@ export class Server {
                     else if (!(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit === undefined)) {
                         let uri = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument.Uri;
                         let deduped = RuntimeSlice.nil<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage>();
-                        const __gotots_range_5 = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Edits;
+                        const __gotots_range_5: TextDocumentEdit__from_lsproto["Edits"] = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Edits;
                         for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_5.length; __gotots_range_index_5++) {
                             const __gotots_range_value_6 = TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$copy(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage(__gotots_range_5.get(__gotots_range_index_5)));
                             let edit = __gotots_range_value_6;
@@ -2274,24 +2278,26 @@ export class Server {
                             let __gotots_slice_build_9 = __gotots_slice_build_8;
                             if (__gotots_slice_build_10 <= __gotots_slice_build_8.capacity) {
                                 __gotots_slice_build_9 = __gotots_slice_build_8.$withLength(__gotots_slice_build_10);
-                                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                                    TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(OptionalVersionedTextDocumentIdentifier__from_lsproto.$copy((TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument), deduped) },
-                                    CreateFile: void 0,
-                                    RenameFile: void 0,
-                                    DeleteFile: void 0
-                                })));
+                                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                                    {
+                                        TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(OptionalVersionedTextDocumentIdentifier__from_lsproto.$copy((TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument), deduped) },
+                                        CreateFile: void 0,
+                                        RenameFile: void 0,
+                                        DeleteFile: void 0
+                                    })));
                             }
                             else {
                                 __gotots_slice_build_9 = goSliceAllocate<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(__gotots_slice_build_10, RuntimeSlice.$grownCapacity(__gotots_slice_build_8.capacity, __gotots_slice_build_10));
                                 for (let __gotots_slice_build_11 = 0; __gotots_slice_build_11 < __gotots_slice_build_8.length; __gotots_slice_build_11++) {
                                     __gotots_slice_build_9.set(__gotots_slice_build_11, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage(__gotots_slice_build_8.get(__gotots_slice_build_11)))));
                                 }
-                                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                                    TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(OptionalVersionedTextDocumentIdentifier__from_lsproto.$copy((TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument), deduped) },
-                                    CreateFile: void 0,
-                                    RenameFile: void 0,
-                                    DeleteFile: void 0
-                                })));
+                                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                                    {
+                                        TextDocumentEdit: { value: new TextDocumentEdit__from_lsproto(OptionalVersionedTextDocumentIdentifier__from_lsproto.$copy((TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument), deduped) },
+                                        CreateFile: void 0,
+                                        RenameFile: void 0,
+                                        DeleteFile: void 0
+                                    })));
                                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
                                     __gotots_slice_build_9.$initialize(__gotots_slice_build_11, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
                                 }
@@ -2314,24 +2320,26 @@ export class Server {
                 let __gotots_slice_build_13 = __gotots_slice_build_12;
                 if (__gotots_slice_build_14 <= __gotots_slice_build_12.capacity) {
                     __gotots_slice_build_13 = __gotots_slice_build_12.$withLength(__gotots_slice_build_14);
-                    __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                        RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OldUri), new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NewUri), void 0) },
-                        TextDocumentEdit: void 0,
-                        CreateFile: void 0,
-                        DeleteFile: void 0
-                    })));
+                    __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                        {
+                            RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OldUri), new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NewUri), void 0) },
+                            TextDocumentEdit: void 0,
+                            CreateFile: void 0,
+                            DeleteFile: void 0
+                        })));
                 }
                 else {
                     __gotots_slice_build_13 = goSliceAllocate<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(__gotots_slice_build_14, RuntimeSlice.$grownCapacity(__gotots_slice_build_12.capacity, __gotots_slice_build_14));
                     for (let __gotots_slice_build_15 = 0; __gotots_slice_build_15 < __gotots_slice_build_12.length; __gotots_slice_build_15++) {
                         __gotots_slice_build_13.set(__gotots_slice_build_15, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage(__gotots_slice_build_12.get(__gotots_slice_build_15)))));
                     }
-                    __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage({
-                        RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OldUri), new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NewUri), void 0) },
-                        TextDocumentEdit: void 0,
-                        CreateFile: void 0,
-                        DeleteFile: void 0
-                    })));
+                    __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf, (void TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage,
+                        {
+                            RenameFile: { value: new RenameFile__from_lsproto(new StringLiteralRename__from_lsproto, void 0, new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OldUri), new DocumentUri__from_lsproto((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NewUri), void 0) },
+                            TextDocumentEdit: void 0,
+                            CreateFile: void 0,
+                            DeleteFile: void 0
+                        })));
                     for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
                         __gotots_slice_build_13.$initialize(__gotots_slice_build_15, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
                     }
@@ -2358,7 +2366,7 @@ export class Server {
             let change = __gotots_range_value_8;
             if (!(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit === undefined)) {
                 let uri = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocument.Uri;
-                const __gotots_range_8 = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Edits;
+                const __gotots_range_8: TextDocumentEdit__from_lsproto["Edits"] = (TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(change).TextDocumentEdit ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Edits;
                 for (let __gotots_range_index_8 = 0; __gotots_range_index_8 < __gotots_range_8.length; __gotots_range_index_8++) {
                     const __gotots_range_value_9 = TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$copy(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage(__gotots_range_8.get(__gotots_range_index_8)));
                     let edit = __gotots_range_value_9;
@@ -2447,7 +2455,7 @@ export class Server {
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_receiver_7 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+        const __gotots_receiver_7: Server["r"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
         return goInterfaceNonNil<Reader>(__gotots_receiver_7).Read();
     }
     static $go$private$lsp$readLoop(s: {
@@ -2578,7 +2586,7 @@ export class Server {
             let r: $goInterface$Interface_void | undefined = undefined;
             if (!(r === undefined)) {
                 let stack = debug__from_gostdlib.Stack();
-                const __gotots_receiver_27 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_27: Server["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_72 = "panic handling request %s: %v\n%s";
                 const __gotots_argument_69 = new $goInterfaceAdapter$Named_lsproto$Method((req ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Method);
                 const __gotots_argument_70 = r;
@@ -2629,7 +2637,7 @@ export class Server {
             try {
                 __gotots_return_block_4: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu);
-                    const __gotots_receiver_29 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu;
+                    const __gotots_receiver_29: Server["apiSessionsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiSessionsMu;
                     __gotots_deferred_9 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_29, $go$recovery);
                     };
@@ -2729,7 +2737,7 @@ export class Server {
                 return err;
             }
             {
-                const __gotots_receiver_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+                const __gotots_receiver_3: Server["w"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
                 const __gotots_argument_14 = msg;
                 let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Writer>(__gotots_receiver_3).Write(__gotots_argument_14);
                 if (!(err__shadow_1 === undefined)) {
@@ -2778,7 +2786,7 @@ export function sendClientRequest$kernel<Req, Resp>($go$copy$T1_to_T1: ($0: Resp
                         try {
                             __gotots_return_block_3: {
                                 sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingServerRequestsMu);
-                                const __gotots_receiver_24 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingServerRequestsMu;
+                                const __gotots_receiver_24: Server["pendingServerRequestsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingServerRequestsMu;
                                 __gotots_deferred_5 = ($go$recovery: GoRecovery): void => {
                                     recovery_sync.SyncMutexUnlock(__gotots_receiver_24, $go$recovery);
                                 };
@@ -3387,7 +3395,7 @@ export function Server_recover$deferred($go$recovery: GoRecovery, s: {
         let r: $goInterface$Interface_void | undefined = $go$recovery === undefined ? undefined : $go$recovery.take();
         if (!(r === undefined)) {
             let stack = debug__from_gostdlib.Stack();
-            const __gotots_receiver_28 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_28: Server["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_81 = "panic handling request %s: %v\n%s";
             const __gotots_argument_78 = new $goInterfaceAdapter$Named_lsproto$Method((req ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Method);
             const __gotots_argument_79 = r;

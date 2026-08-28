@@ -28,10 +28,10 @@ export class ownerCacheEntry<V> {
     public static $fromStorage<V>($source: ownerCacheEntry$Storage<V>): ownerCacheEntry<V> {
         return new ownerCacheEntry<V>($source);
     }
-    static $copy<V>($go$copy$T0_to_T0: ($0: V) => V, $go$from_storage$T0_to_T0: ($0: GoStorage<V>) => V, $go$to_storage$T0_to_T0: ($0: V) => GoStorage<V>, $source: ownerCacheEntry<V>): ownerCacheEntry<V> {
+    static $copy<V>($go$from_storage$T0_to_T0: ($0: GoStorage<V>) => V, $go$to_storage$T0_to_T0: ($0: V) => GoStorage<V>, $source: ownerCacheEntry<V>): ownerCacheEntry<V> {
         return new ownerCacheEntry<V>({
             mu: named_sync.SyncMutexOperations.$copy($source.$storage.mu),
-            value: $go$to_storage$T0_to_T0($go$copy$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.value))),
+            value: $go$to_storage$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.value)),
             owners: $source.$storage.owners
         });
     }
@@ -74,7 +74,7 @@ export class OwnerCache<K, V, LoadArgs> {
         value: ownerCacheEntry<V>;
     } | undefined) => {
         value: ownerCacheEntry<V>;
-    } | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: ($0: GoInterface | undefined) => {
+    } | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: ($0: GoInterface | undefined) => {
         value: ownerCacheEntry<V>;
     } | undefined, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: () => {
         value: ownerCacheEntry<V>;
@@ -91,23 +91,7 @@ export class OwnerCache<K, V, LoadArgs> {
                         value: ownerCacheEntry<V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: ownerCacheEntry<V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "entries"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, identity);
                     let entry: {
                         value: ownerCacheEntry<V>;
                     } | undefined = __gotots_results_1[0];
@@ -162,7 +146,7 @@ export class OwnerCache<K, V, LoadArgs> {
         value: ownerCacheEntry<V>;
     } | undefined) => {
         value: ownerCacheEntry<V>;
-    } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$interface_adapt$PointerTo_Named_project$ownerCacheEntryOf_T1_to_Interface_void: ($0: {
+    } | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$interface_adapt$PointerTo_Named_project$ownerCacheEntryOf_T1_to_Interface_void: ($0: {
         value: ownerCacheEntry<V>;
     } | undefined) => GoInterface | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: ($0: GoInterface | undefined) => {
         value: ownerCacheEntry<V>;
@@ -190,7 +174,7 @@ export class OwnerCache<K, V, LoadArgs> {
                         if (__gotots_logical_result_0) {
                             const __gotots_callee_0 = OwnerCache.$storageOf((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).isExpired;
                             const __gotots_argument_2 = $go$copy$T0_to_T0(identity);
-                            const __gotots_argument_3 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value));
+                            const __gotots_argument_3 = $go$from_storage$T1_to_T1(ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value);
                             const __gotots_argument_4 = $go$copy$T2_to_T2(loadArgs);
                             __gotots_logical_result_0 = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
                         }
@@ -201,11 +185,11 @@ export class OwnerCache<K, V, LoadArgs> {
                         const __gotots_argument_5 = $go$copy$T0_to_T0(identity);
                         const __gotots_argument_6 = $go$copy$T2_to_T2(loadArgs);
                         const __gotots_argument_7 = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_5, __gotots_argument_6);
-                        const __gotots_argument_8 = $go$copy$T1_to_T1(__gotots_argument_7);
+                        const __gotots_argument_8 = __gotots_argument_7;
                         ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value = $go$to_storage$T1_to_T1(__gotots_argument_8);
                     }
                     ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).owners.store(owner, new GoEmptyStruct);
-                    __gotots_return_0 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value));
+                    __gotots_return_0 = $go$from_storage$T1_to_T1(ownerCacheEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value);
                     break __gotots_return_block_1;
                 }
             }
@@ -244,7 +228,7 @@ export class OwnerCache<K, V, LoadArgs> {
         value: ownerCacheEntry<V>;
     } | undefined) => {
         value: ownerCacheEntry<V>;
-    } | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: ($0: GoInterface | undefined) => {
+    } | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: ($0: GoInterface | undefined) => {
         value: ownerCacheEntry<V>;
     } | undefined, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1: () => {
         value: ownerCacheEntry<V>;
@@ -261,23 +245,7 @@ export class OwnerCache<K, V, LoadArgs> {
                         value: ownerCacheEntry<V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: ownerCacheEntry<V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "entries"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: ownerCacheEntry<V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, identity);
                     let entry: {
                         value: ownerCacheEntry<V>;
                     } | undefined = __gotots_results_0[0];
@@ -299,23 +267,7 @@ export class OwnerCache<K, V, LoadArgs> {
                             value: ownerCacheEntry<V>;
                         } | undefined>, SyncMap__from_collections<K, {
                             value: ownerCacheEntry<V>;
-                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "entries"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>): SyncMap__from_collections<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined> => {
-                            return SyncMap__from_collections.$fromStorage<K, {
-                                value: ownerCacheEntry<V>;
-                            } | undefined>($go$storage);
-                        }, ($go$value: SyncMap__from_collections<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined>): SyncMap__from_collections$Storage<K, {
-                            value: ownerCacheEntry<V>;
-                        } | undefined> => {
-                            return SyncMap__from_collections.$storageOf<K, {
-                                value: ownerCacheEntry<V>;
-                            } | undefined>($go$value);
-                        }), $go$interface_adapt$T0_to_Interface_void, $go$copy$T0_to_T0(identity));
+                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$T0_to_Interface_void, identity);
                     }
                 }
             }
@@ -380,23 +332,7 @@ export class OwnerCache<K, V, LoadArgs> {
             value: ownerCacheEntry<V>;
         } | undefined>, SyncMap__from_collections<K, {
             value: ownerCacheEntry<V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "entries"), ($go$storage: SyncMap__from_collections$Storage<K, {
-            value: ownerCacheEntry<V>;
-        } | undefined>): SyncMap__from_collections<K, {
-            value: ownerCacheEntry<V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<K, {
-                value: ownerCacheEntry<V>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<K, {
-            value: ownerCacheEntry<V>;
-        } | undefined>): SyncMap__from_collections$Storage<K, {
-            value: ownerCacheEntry<V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<K, {
-                value: ownerCacheEntry<V>;
-            } | undefined>($go$value);
-        }), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_project$ownerCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$copy$T0_to_T0(key), entry);
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$ownerCacheEntryOf_T1_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_project$ownerCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$ownerCacheEntryOf_T1, $go$copy$T0_to_T0(key), entry);
         let existing: {
             value: ownerCacheEntry<V>;
         } | undefined = __gotots_results_3[0];

@@ -98,7 +98,7 @@ export class KnownSymlinks {
                 if (!ok) {
                     const __gotots_store_6 = ((cache ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<KnownSymlinks>).value;
                     const __gotots_receiver_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "directoriesByRealpath");
-                    const __gotots_argument_6 = (realDirectory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RealPath;
+                    const __gotots_argument_6: KnownDirectoryLink["RealPath"] = (realDirectory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RealPath;
                     const __gotots_struct_1 = SyncSet__from_collections.$zero<gostring>();
                     const __gotots_argument_7 = tsonicTypeScriptRuntime.location<SyncSet__from_collections<gostring>>(__gotots_struct_1);
                     const __gotots_results_5 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_collections$SyncSetOf_string(__gotots_receiver_1, __gotots_argument_6, __gotots_argument_7);

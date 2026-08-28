@@ -24,8 +24,6 @@ export function OwnerCache$AddOwner$Named_tspath$Path$PointerTo_Named_project$Ex
         } | undefined>;
     } | undefined => {
         return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new GoInterfaceAdapter($argument0);
     }, ($argument0: GoInterfaceValue | undefined): {

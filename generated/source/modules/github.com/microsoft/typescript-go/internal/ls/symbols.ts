@@ -421,22 +421,24 @@ export function ProvideWorkspaceSymbols(ctx: GoInterface | undefined, programs: 
                     let __gotots_slice_build_1 = __gotots_slice_build_0;
                     if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                         __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, DeclarationInfo.$storageOf(DeclarationInfo.$fromStorage({
-                            name: name,
-                            declaration: declaration,
-                            matchScore: score
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void DeclarationInfo.$storageOf, (void DeclarationInfo.$fromStorage,
+                            {
+                                name: name,
+                                declaration: declaration,
+                                matchScore: score
+                            })));
                     }
                     else {
                         __gotots_slice_build_1 = goSliceAllocate<DeclarationInfo$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                         for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.set(__gotots_slice_build_3, DeclarationInfo.$storageOf(DeclarationInfo.$copy(DeclarationInfo.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                         }
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, DeclarationInfo.$storageOf(DeclarationInfo.$fromStorage({
-                            name: name,
-                            declaration: declaration,
-                            matchScore: score
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void DeclarationInfo.$storageOf, (void DeclarationInfo.$fromStorage,
+                            {
+                                name: name,
+                                declaration: declaration,
+                                matchScore: score
+                            })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DeclarationInfo.$storageOf(DeclarationInfo.$zero()));
                         }

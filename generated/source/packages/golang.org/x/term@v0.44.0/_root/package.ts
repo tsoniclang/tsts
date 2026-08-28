@@ -10,17 +10,19 @@ export function $initialize(): void {
     $state.space = RuntimeSlice.nil<int32>();
     $state.vt100EscapeCodes = EscapeCodes.$storageOf(EscapeCodes.$zero());
     {
-        $state.vt100EscapeCodes = EscapeCodes.$storageOf(EscapeCodes.$fromStorage({
-            Black: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 48, 109]),
-            Red: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 49, 109]),
-            Green: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 50, 109]),
-            Yellow: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 51, 109]),
-            Blue: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 52, 109]),
-            Magenta: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 53, 109]),
-            Cyan: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 54, 109]),
-            White: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 55, 109]),
-            Reset: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 48, 109])
-        }));
+        $state.vt100EscapeCodes =
+            (void EscapeCodes.$storageOf, (void EscapeCodes.$fromStorage,
+                {
+                    Black: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 48, 109]),
+                    Red: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 49, 109]),
+                    Green: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 50, 109]),
+                    Yellow: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 51, 109]),
+                    Blue: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 52, 109]),
+                    Magenta: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 53, 109]),
+                    Cyan: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 54, 109]),
+                    White: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 51, 55, 109]),
+                    Reset: RuntimeSlice.literal<uint8>([keyEscape$uint8, 91, 48, 109])
+                }));
     }
     {
         $state.crlf = RuntimeSlice.literal<uint8>([13, 10]);
@@ -35,7 +37,9 @@ export function $initialize(): void {
         $state.space = RuntimeSlice.literal<int32>([32]);
     }
     {
-        $state.ErrPasteIndicator = pasteIndicatorError.$storageOf(pasteIndicatorError.$fromStorage({}));
+        $state.ErrPasteIndicator =
+            (void pasteIndicatorError.$storageOf, (void pasteIndicatorError.$fromStorage,
+                {}));
     }
 }
 export { GetSize, IsTerminal } from "../../../../../modules/golang.org/x/term@v0.44.0/_root/term.js";

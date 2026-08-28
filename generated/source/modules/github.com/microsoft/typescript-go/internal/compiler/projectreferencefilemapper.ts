@@ -179,8 +179,8 @@ export class projectReferenceFileMapper {
                 SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "realpathDtsToSource"), path, void 0);
             }
             else {
-                const __gotots_receiver_8 = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.loader;
-                const __gotots_receiver_6 = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_8: projectReferenceFileMapper["loader"] = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.loader;
+                const __gotots_receiver_6: projectReferenceFileMapper["host"] = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_receiver_7 = goInterfaceNonNil<ResolutionHost__from___go_module>(__gotots_receiver_6).FS();
                 const __gotots_argument_6 = fileName;
                 const __gotots_argument_7 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).Realpath(__gotots_argument_6);

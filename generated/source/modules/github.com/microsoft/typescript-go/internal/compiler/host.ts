@@ -81,7 +81,7 @@ export class compilerHost {
     } | undefined, msg: {
         value: Message__from_diagnostics;
     } | undefined, args: RuntimeSlice<GoInterface | undefined>): void {
-        const __gotots_callee_0 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trace;
+        const __gotots_callee_0: compilerHost["trace"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trace;
         const __gotots_argument_1 = msg;
         const __gotots_argument_2 = args;
         (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1, __gotots_argument_2);

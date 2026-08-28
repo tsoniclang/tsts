@@ -2188,20 +2188,22 @@ export class Scanner {
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
             __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$fromStorage({
-                Loc: TextRange__from_core.$storageOf(NewTextRange__from_core(start, end)),
-                Kind: kind
-            })));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void CommentDirective__from_ast.$storageOf, (void CommentDirective__from_ast.$fromStorage,
+                {
+                    Loc: TextRange__from_core.$storageOf(NewTextRange__from_core(start, end)),
+                    Kind: kind
+                })));
         }
         else {
             __gotots_slice_build_1 = goSliceAllocate<CommentDirective__from_ast$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
             for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.set(__gotots_slice_build_3, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$copy(CommentDirective__from_ast.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
             }
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$fromStorage({
-                Loc: TextRange__from_core.$storageOf(NewTextRange__from_core(start, end)),
-                Kind: kind
-            })));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void CommentDirective__from_ast.$storageOf, (void CommentDirective__from_ast.$fromStorage,
+                {
+                    Loc: TextRange__from_core.$storageOf(NewTextRange__from_core(start, end)),
+                    Kind: kind
+                })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$zero()));
             }

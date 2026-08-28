@@ -144,7 +144,7 @@ export class MessagePackProtocol {
         const __gotots_receiver_0 = p;
         const __gotots_argument_2 = MessageTypeError$constant();
         const __gotots_argument_3 = method;
-        const __gotots_conversion_5 = (respErr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Message;
+        const __gotots_conversion_5: ResponseError__from_jsonrpc["Message"] = (respErr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Message;
         const __gotots_conversion_6 = RuntimeSlice.make<uint8>(__gotots_conversion_5.length, null, 0);
         for (let __gotots_conversion_7 = 0; __gotots_conversion_7 < __gotots_conversion_5.length; __gotots_conversion_7++) {
             __gotots_conversion_6.set(__gotots_conversion_7, __gotots_conversion_5.charCodeAt(__gotots_conversion_7));
@@ -213,7 +213,7 @@ export class MessagePackProtocol {
         RuntimeSlice<uint8>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_receiver_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+        const __gotots_receiver_8: MessagePackProtocol["r"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
         const __gotots_results_12 = GoProviderState.ReadByte(__gotots_receiver_8 === void 0 ? void 0 :
             (__gotots_receiver_8 as tsonicTypeScriptRuntime.Location<GoProviderState>).value);
         const __gotots_results_13 = [__gotots_results_12[0], $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_12[1])] satisfies [
@@ -301,7 +301,7 @@ export class MessagePackProtocol {
         RuntimeSlice<uint8>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_receiver_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+        const __gotots_receiver_1: MessagePackProtocol["r"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
         const __gotots_results_4 = GoProviderState.ReadByte(__gotots_receiver_1 === void 0 ? void 0 :
             (__gotots_receiver_1 as tsonicTypeScriptRuntime.Location<GoProviderState>).value);
         const __gotots_results_5 = [__gotots_results_4[0], $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_4[1])] satisfies [
@@ -316,7 +316,7 @@ export class MessagePackProtocol {
         if (t !== msgpackFixedArray3) {
             return [0, "", RuntimeSlice.nil<uint8>(), GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: expected fixed 3-element array (0x93), received: 0x%02x", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([$state.ErrInvalidRequest, new $goInterfaceAdapter$byte(t)])))];
         }
-        const __gotots_receiver_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+        const __gotots_receiver_2: MessagePackProtocol["r"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
         const __gotots_results_6 = GoProviderState.ReadByte(__gotots_receiver_2 === void 0 ? void 0 :
             (__gotots_receiver_2 as tsonicTypeScriptRuntime.Location<GoProviderState>).value);
         const __gotots_results_7 = [__gotots_results_6[0], $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_6[1])] satisfies [
@@ -333,7 +333,7 @@ export class MessagePackProtocol {
             rawType = t;
         }
         else if (t === msgpackU8) {
-            const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+            const __gotots_receiver_3: MessagePackProtocol["r"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
             const __gotots_results_8 = GoProviderState.ReadByte(__gotots_receiver_3 === void 0 ? void 0 :
                 (__gotots_receiver_3 as tsonicTypeScriptRuntime.Location<GoProviderState>).value);
             const __gotots_results_9 = [__gotots_results_8[0], $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_8[1])] satisfies [
@@ -379,7 +379,7 @@ export class MessagePackProtocol {
         let length = data.length;
         if (length < 256) {
             {
-                const __gotots_receiver_9 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+                const __gotots_receiver_9: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
                 let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_9 === void 0 ? void 0 :
                     (__gotots_receiver_9 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, msgpackBin8));
                 if (!(err__shadow_1 === undefined)) {
@@ -387,7 +387,7 @@ export class MessagePackProtocol {
                 }
             }
             {
-                const __gotots_receiver_10 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+                const __gotots_receiver_10: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
                 let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_10 === void 0 ? void 0 :
                     (__gotots_receiver_10 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, length & 255));
                 if (!(err__shadow_1 === undefined)) {
@@ -397,7 +397,7 @@ export class MessagePackProtocol {
         }
         else if (length < 65536) {
             {
-                const __gotots_receiver_11 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+                const __gotots_receiver_11: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
                 let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_11 === void 0 ? void 0 :
                     (__gotots_receiver_11 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, msgpackBin16));
                 if (!(err__shadow_1 === undefined)) {
@@ -416,7 +416,7 @@ export class MessagePackProtocol {
         }
         else {
             {
-                const __gotots_receiver_12 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+                const __gotots_receiver_12: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
                 let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_12 === void 0 ? void 0 :
                     (__gotots_receiver_12 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, msgpackBin32));
                 if (!(err__shadow_1 === undefined)) {
@@ -433,7 +433,7 @@ export class MessagePackProtocol {
                 }
             }
         }
-        const __gotots_receiver_13 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+        const __gotots_receiver_13: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
         const __gotots_results_16 = $goProviderState$Named_bufio$Writer.Write(__gotots_receiver_13 === void 0 ? void 0 :
             (__gotots_receiver_13 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, data);
         const __gotots_results_17 = [globalThis.Number(BigInt.asIntN(64, __gotots_results_16[0])), $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_16[1])] satisfies [
@@ -447,7 +447,7 @@ export class MessagePackProtocol {
         value: MessagePackProtocol;
     } | undefined, msgType: MessageType, method: gostring, payload: RuntimeSlice<uint8>): $goInterface$Interface_Method_Error_void_to_string | undefined {
         {
-            const __gotots_receiver_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+            const __gotots_receiver_4: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_4 === void 0 ? void 0 :
                 (__gotots_receiver_4 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, msgpackFixedArray3));
             if (!(err === undefined)) {
@@ -455,7 +455,7 @@ export class MessagePackProtocol {
             }
         }
         {
-            const __gotots_receiver_5 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+            const __gotots_receiver_5: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.WriteByte(__gotots_receiver_5 === void 0 ? void 0 :
                 (__gotots_receiver_5 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, msgType));
             if (!(err === undefined)) {
@@ -481,7 +481,7 @@ export class MessagePackProtocol {
                 return err;
             }
         }
-        const __gotots_receiver_7 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+        const __gotots_receiver_7: MessagePackProtocol["w"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
         return $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.Flush(__gotots_receiver_7 === void 0 ? void 0 :
             (__gotots_receiver_7 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value));
     }

@@ -241,7 +241,7 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                    const __gotots_receiver_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                    const __gotots_receiver_2: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_2, $go$recovery);
                     };
@@ -260,8 +260,8 @@ export class Session {
                         __gotots_return_0 = [void 0, newSnapshot, (newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.apiError];
                         break __gotots_return_block_0;
                     }
-                    const __gotots_receiver_3 = (newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection;
-                    const __gotots_callee_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+                    const __gotots_receiver_3: Snapshot["ProjectCollection"] = (newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection;
+                    const __gotots_callee_0: Session["toPath"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
                     const __gotots_argument_2 = configFileName;
                     const __gotots_argument_3 = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
                     let project: {
@@ -318,7 +318,7 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                    const __gotots_receiver_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                    const __gotots_receiver_3: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                     };
@@ -383,7 +383,7 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu);
-                    const __gotots_receiver_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
+                    const __gotots_receiver_9: Session["userConfigRWMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_9, $go$recovery);
                     };
@@ -429,7 +429,7 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
+                    const __gotots_receiver_84: Session["userConfigRWMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
@@ -490,39 +490,41 @@ export class Session {
                     Session.$go$private$project$cancelWarmAutoImportCache(s);
                     Session.$go$private$project$scheduleIdleCacheClean(s);
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
+                    const __gotots_receiver_84: Session["pendingFileChangesMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
-                    const __gotots_slice_build_16 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
+                    const __gotots_slice_build_16: Session["pendingFileChanges"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
                     const __gotots_slice_build_18 = __gotots_slice_build_16.length + 1;
                     let __gotots_slice_build_17 = __gotots_slice_build_16;
                     if (__gotots_slice_build_18 <= __gotots_slice_build_16.capacity) {
                         __gotots_slice_build_17 = __gotots_slice_build_16.$withLength(__gotots_slice_build_18);
-                        __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindChange$constant().$value,
-                            URI: uri.$value,
-                            Version: version,
-                            Changes: changes,
-                            Content: "",
-                            LanguageKind: ((void LanguageKind__from_lsproto,
-                                "") as string)
-                        })));
+                        __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindChange$constant().$value,
+                                URI: uri.$value,
+                                Version: version,
+                                Changes: changes,
+                                Content: "",
+                                LanguageKind: ((void LanguageKind__from_lsproto,
+                                    "") as string)
+                            })));
                     }
                     else {
                         __gotots_slice_build_17 = goSliceAllocate<FileChange__from_project$Storage>(__gotots_slice_build_18, RuntimeSlice.$grownCapacity(__gotots_slice_build_16.capacity, __gotots_slice_build_18));
                         for (let __gotots_slice_build_19 = 0; __gotots_slice_build_19 < __gotots_slice_build_16.length; __gotots_slice_build_19++) {
                             __gotots_slice_build_17.set(__gotots_slice_build_19, FileChange.$storageOf(FileChange.$copy(FileChange.$fromStorage(__gotots_slice_build_16.get(__gotots_slice_build_19)))));
                         }
-                        __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindChange$constant().$value,
-                            URI: uri.$value,
-                            Version: version,
-                            Changes: changes,
-                            Content: "",
-                            LanguageKind: ((void LanguageKind__from_lsproto,
-                                "") as string)
-                        })));
+                        __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindChange$constant().$value,
+                                URI: uri.$value,
+                                Version: version,
+                                Changes: changes,
+                                Content: "",
+                                LanguageKind: ((void LanguageKind__from_lsproto,
+                                    "") as string)
+                            })));
                         for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
                             __gotots_slice_build_17.$initialize(__gotots_slice_build_19, FileChange.$storageOf(FileChange.$zero()));
                         }
@@ -598,30 +600,32 @@ export class Session {
             let __gotots_slice_build_3 = __gotots_slice_build_2;
             if (__gotots_slice_build_4 <= __gotots_slice_build_2.capacity) {
                 __gotots_slice_build_3 = __gotots_slice_build_2.$withLength(__gotots_slice_build_4);
-                __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                    Kind: kind.$value,
-                    URI: (change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri.$value,
-                    Version: 0,
-                    Content: "",
-                    LanguageKind: ((void LanguageKind__from_lsproto,
-                        "") as string),
-                    Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                })));
+                __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                    {
+                        Kind: kind.$value,
+                        URI: (change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri.$value,
+                        Version: 0,
+                        Content: "",
+                        LanguageKind: ((void LanguageKind__from_lsproto,
+                            "") as string),
+                        Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                    })));
             }
             else {
                 __gotots_slice_build_3 = goSliceAllocate<FileChange__from_project$Storage>(__gotots_slice_build_4, RuntimeSlice.$grownCapacity(__gotots_slice_build_2.capacity, __gotots_slice_build_4));
                 for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_2.length; __gotots_slice_build_5++) {
                     __gotots_slice_build_3.set(__gotots_slice_build_5, FileChange.$storageOf(FileChange.$copy(FileChange.$fromStorage(__gotots_slice_build_2.get(__gotots_slice_build_5)))));
                 }
-                __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                    Kind: kind.$value,
-                    URI: (change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri.$value,
-                    Version: 0,
-                    Content: "",
-                    LanguageKind: ((void LanguageKind__from_lsproto,
-                        "") as string),
-                    Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                })));
+                __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                    {
+                        Kind: kind.$value,
+                        URI: (change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Uri.$value,
+                        Version: 0,
+                        Content: "",
+                        LanguageKind: ((void LanguageKind__from_lsproto,
+                            "") as string),
+                        Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                    })));
                 for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
                     __gotots_slice_build_3.$initialize(__gotots_slice_build_5, FileChange.$storageOf(FileChange.$zero()));
                 }
@@ -629,7 +633,7 @@ export class Session {
             fileChanges = __gotots_slice_build_3;
         }
         sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-        const __gotots_slice_build_6 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
+        const __gotots_slice_build_6: Session["pendingFileChanges"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
         const __gotots_slice_build_7 = fileChanges;
         let __gotots_slice_build_8 = __gotots_slice_build_7;
         if (__gotots_slice_build_7.length > 0) {
@@ -670,35 +674,37 @@ export class Session {
         Session.$go$private$project$cancelWarmAutoImportCache(s);
         Session.$go$private$project$scheduleIdleCacheClean(s);
         sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-        const __gotots_slice_build_24 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
+        const __gotots_slice_build_24: Session["pendingFileChanges"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
         const __gotots_slice_build_26 = __gotots_slice_build_24.length + 1;
         let __gotots_slice_build_25 = __gotots_slice_build_24;
         if (__gotots_slice_build_26 <= __gotots_slice_build_24.capacity) {
             __gotots_slice_build_25 = __gotots_slice_build_24.$withLength(__gotots_slice_build_26);
-            __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                Kind: FileChangeKindClose$constant().$value,
-                URI: uri.$value,
-                Version: 0,
-                Content: "",
-                LanguageKind: ((void LanguageKind__from_lsproto,
-                    "") as string),
-                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-            })));
+            __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                {
+                    Kind: FileChangeKindClose$constant().$value,
+                    URI: uri.$value,
+                    Version: 0,
+                    Content: "",
+                    LanguageKind: ((void LanguageKind__from_lsproto,
+                        "") as string),
+                    Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                })));
         }
         else {
             __gotots_slice_build_25 = goSliceAllocate<FileChange__from_project$Storage>(__gotots_slice_build_26, RuntimeSlice.$grownCapacity(__gotots_slice_build_24.capacity, __gotots_slice_build_26));
             for (let __gotots_slice_build_27 = 0; __gotots_slice_build_27 < __gotots_slice_build_24.length; __gotots_slice_build_27++) {
                 __gotots_slice_build_25.set(__gotots_slice_build_27, FileChange.$storageOf(FileChange.$copy(FileChange.$fromStorage(__gotots_slice_build_24.get(__gotots_slice_build_27)))));
             }
-            __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                Kind: FileChangeKindClose$constant().$value,
-                URI: uri.$value,
-                Version: 0,
-                Content: "",
-                LanguageKind: ((void LanguageKind__from_lsproto,
-                    "") as string),
-                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-            })));
+            __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                {
+                    Kind: FileChangeKindClose$constant().$value,
+                    URI: uri.$value,
+                    Version: 0,
+                    Content: "",
+                    LanguageKind: ((void LanguageKind__from_lsproto,
+                        "") as string),
+                    Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                })));
             for (let __gotots_slice_build_27 = __gotots_slice_build_26; __gotots_slice_build_27 < __gotots_slice_build_25.capacity; __gotots_slice_build_27++) {
                 __gotots_slice_build_25.$initialize(__gotots_slice_build_27, FileChange.$storageOf(FileChange.$zero()));
             }
@@ -719,38 +725,40 @@ export class Session {
                     Session.$go$private$project$scheduleIdleCacheClean(s);
                     Session.$go$private$project$cancelScheduledSnapshotUpdate(s);
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                    const __gotots_receiver_84: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-                    const __gotots_slice_build_12 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
+                    const __gotots_slice_build_12: Session["pendingFileChanges"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
                     const __gotots_slice_build_14 = __gotots_slice_build_12.length + 1;
                     let __gotots_slice_build_13 = __gotots_slice_build_12;
                     if (__gotots_slice_build_14 <= __gotots_slice_build_12.capacity) {
                         __gotots_slice_build_13 = __gotots_slice_build_12.$withLength(__gotots_slice_build_14);
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindOpen$constant().$value,
-                            URI: uri.$value,
-                            Version: version,
-                            Content: content,
-                            LanguageKind: languageKind.$value,
-                            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindOpen$constant().$value,
+                                URI: uri.$value,
+                                Version: version,
+                                Content: content,
+                                LanguageKind: languageKind.$value,
+                                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                            })));
                     }
                     else {
                         __gotots_slice_build_13 = goSliceAllocate<FileChange__from_project$Storage>(__gotots_slice_build_14, RuntimeSlice.$grownCapacity(__gotots_slice_build_12.capacity, __gotots_slice_build_14));
                         for (let __gotots_slice_build_15 = 0; __gotots_slice_build_15 < __gotots_slice_build_12.length; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.set(__gotots_slice_build_15, FileChange.$storageOf(FileChange.$copy(FileChange.$fromStorage(__gotots_slice_build_12.get(__gotots_slice_build_15)))));
                         }
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindOpen$constant().$value,
-                            URI: uri.$value,
-                            Version: version,
-                            Content: content,
-                            LanguageKind: languageKind.$value,
-                            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindOpen$constant().$value,
+                                URI: uri.$value,
+                                Version: version,
+                                Content: content,
+                                LanguageKind: languageKind.$value,
+                                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                            })));
                         for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.$initialize(__gotots_slice_build_15, FileChange.$storageOf(FileChange.$zero()));
                         }
@@ -803,39 +811,41 @@ export class Session {
                 __gotots_return_block_2: {
                     Session.$go$private$project$scheduleIdleCacheClean(s);
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
+                    const __gotots_receiver_84: Session["pendingFileChangesMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
-                    const __gotots_slice_build_20 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
+                    const __gotots_slice_build_20: Session["pendingFileChanges"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges;
                     const __gotots_slice_build_22 = __gotots_slice_build_20.length + 1;
                     let __gotots_slice_build_21 = __gotots_slice_build_20;
                     if (__gotots_slice_build_22 <= __gotots_slice_build_20.capacity) {
                         __gotots_slice_build_21 = __gotots_slice_build_20.$withLength(__gotots_slice_build_22);
-                        __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindSave$constant().$value,
-                            URI: uri.$value,
-                            Version: 0,
-                            Content: "",
-                            LanguageKind: ((void LanguageKind__from_lsproto,
-                                "") as string),
-                            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                        })));
+                        __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindSave$constant().$value,
+                                URI: uri.$value,
+                                Version: 0,
+                                Content: "",
+                                LanguageKind: ((void LanguageKind__from_lsproto,
+                                    "") as string),
+                                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                            })));
                     }
                     else {
                         __gotots_slice_build_21 = goSliceAllocate<FileChange__from_project$Storage>(__gotots_slice_build_22, RuntimeSlice.$grownCapacity(__gotots_slice_build_20.capacity, __gotots_slice_build_22));
                         for (let __gotots_slice_build_23 = 0; __gotots_slice_build_23 < __gotots_slice_build_20.length; __gotots_slice_build_23++) {
                             __gotots_slice_build_21.set(__gotots_slice_build_23, FileChange.$storageOf(FileChange.$copy(FileChange.$fromStorage(__gotots_slice_build_20.get(__gotots_slice_build_23)))));
                         }
-                        __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, FileChange.$storageOf(FileChange.$fromStorage({
-                            Kind: FileChangeKindSave$constant().$value,
-                            URI: uri.$value,
-                            Version: 0,
-                            Content: "",
-                            LanguageKind: ((void LanguageKind__from_lsproto,
-                                "") as string),
-                            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-                        })));
+                        __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void FileChange.$storageOf, (void FileChange.$fromStorage,
+                            {
+                                Kind: FileChangeKindSave$constant().$value,
+                                URI: uri.$value,
+                                Version: 0,
+                                Content: "",
+                                LanguageKind: ((void LanguageKind__from_lsproto,
+                                    "") as string),
+                                Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+                            })));
                         for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
                             __gotots_slice_build_21.$initialize(__gotots_slice_build_23, FileChange.$storageOf(FileChange.$zero()));
                         }
@@ -878,8 +888,8 @@ export class Session {
             return;
         }
         if (atomic__from_gostdlib.Bool.CompareAndSwap((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagPublishPending, false, true)) {
-            const __gotots_receiver_81 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundQueue;
-            const __gotots_argument_126 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+            const __gotots_receiver_81: Session["backgroundQueue"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundQueue;
+            const __gotots_argument_126: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
             const __gotots_receiver_80 = s;
             const __gotots_argument_127 = ($argument0: GoInterface | undefined): void => {
                 Session.$go$private$project$publishGlobalDiagnostics(__gotots_receiver_80, $argument0);
@@ -1029,7 +1039,7 @@ export class Session {
         RuntimeSlice<uint8>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_receiver_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.npmExecutor;
+        const __gotots_receiver_1: Session["npmExecutor"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.npmExecutor;
         const __gotots_argument_0 = cwd;
         const __gotots_argument_1 = npmInstallArgs;
         return goInterfaceNonNil<NpmExecutor__from_ata>(__gotots_receiver_1).NpmInstall(__gotots_argument_0, __gotots_argument_1);
@@ -1043,23 +1053,23 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu);
-                    const __gotots_receiver_26 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu;
+                    const __gotots_receiver_26: Session["diagnosticsRefreshMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_26, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel === undefined)) {
-                        const __gotots_callee_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel;
+                        const __gotots_callee_9: Session["diagnosticsRefreshCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel;
                         (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))();
-                        const __gotots_receiver_27 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_27: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_38 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Delaying scheduled diagnostics refresh...")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_27).Log(__gotots_argument_38);
                     }
                     else {
-                        const __gotots_receiver_28 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_28: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_39 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Scheduling new diagnostics refresh...")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_28).Log(__gotots_argument_39);
                     }
-                    const __gotots_argument_40 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                    const __gotots_argument_40: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                     const __gotots_results_9 = provider_context.ContextWithCancelDirect($goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$to(__gotots_argument_40));
                     const __gotots_results_10 = [$goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$from(__gotots_results_9[0]), __gotots_results_9[1]] satisfies [
                         GoInterface | undefined,
@@ -1069,7 +1079,7 @@ export class Session {
                     let cancel: (() => void) | undefined = __gotots_results_10[1];
                     const __gotots_store_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     __gotots_store_3.diagnosticsRefreshGeneration = goUint64(__gotots_store_3.diagnosticsRefreshGeneration + 1n);
-                    let generation = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshGeneration;
+                    let generation: Session["diagnosticsRefreshGeneration"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshGeneration;
                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel = cancel;
                     Queue__from_background.Enqueue((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundQueue, debounceCtx, (ctx: GoInterface | undefined): void => {
                         let __gotots_deferred_1: (($go$recovery: GoRecovery) => void) | undefined = undefined;
@@ -1118,16 +1128,16 @@ export class Session {
                                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel = void 0;
                                     sync__from_gostdlib.Mutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu);
                                     if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                                        const __gotots_receiver_30 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                        const __gotots_receiver_30: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                         const __gotots_argument_41 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Running scheduled diagnostics refresh")]);
                                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_30).Log(__gotots_argument_41);
                                     }
                                     {
-                                        const __gotots_receiver_31 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
-                                        const __gotots_argument_42 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                                        const __gotots_receiver_31: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                                        const __gotots_argument_42: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                                         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_31).RefreshDiagnostics(__gotots_argument_42);
                                         if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                                            const __gotots_receiver_32 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                            const __gotots_receiver_32: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                             const __gotots_argument_43 = "Error refreshing diagnostics: %v";
                                             const __gotots_argument_44 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_32).Logf(__gotots_argument_43, __gotots_argument_44);
@@ -1202,25 +1212,25 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu);
-                    const __gotots_receiver_93 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu;
+                    const __gotots_receiver_93: Session["scheduledSnapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_93, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel === undefined)) {
-                        const __gotots_callee_37 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel;
+                        const __gotots_callee_37: Session["scheduledSnapshotUpdateCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel;
                         (__gotots_callee_37 ?? GoPanic.raiseRuntime("call of nil function"))();
                         if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                            const __gotots_receiver_94 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                            const __gotots_receiver_94: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                             const __gotots_argument_157 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Delaying scheduled snapshot update...")]);
                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_94).Log(__gotots_argument_157);
                         }
                     }
                     else if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                        const __gotots_receiver_95 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_95: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_158 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Scheduling new snapshot update...")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_95).Log(__gotots_argument_158);
                     }
-                    const __gotots_argument_159 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                    const __gotots_argument_159: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                     const __gotots_results_27 = provider_context.ContextWithCancelDirect($goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$to(__gotots_argument_159));
                     const __gotots_results_28 = [$goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$from(__gotots_results_27[0]), __gotots_results_27[1]] satisfies [
                         GoInterface | undefined,
@@ -1230,7 +1240,7 @@ export class Session {
                     let cancel: (() => void) | undefined = __gotots_results_28[1];
                     const __gotots_store_27 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     __gotots_store_27.scheduledSnapshotUpdateGeneration = goUint64(__gotots_store_27.scheduledSnapshotUpdateGeneration + 1n);
-                    let generation = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateGeneration;
+                    let generation: Session["scheduledSnapshotUpdateGeneration"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateGeneration;
                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel = cancel;
                     Queue__from_background.Enqueue((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundQueue, debounceCtx, (ctx: GoInterface | undefined): void => {
                         let __gotots_deferred_4: (($go$recovery: GoRecovery) => void) | undefined = undefined;
@@ -1280,12 +1290,12 @@ export class Session {
                                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel = void 0;
                                     sync__from_gostdlib.Mutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu);
                                     if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                                        const __gotots_receiver_97 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                        const __gotots_receiver_97: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                         const __gotots_argument_160 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Running scheduled snapshot update")]);
                                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_97).Log(__gotots_argument_160);
                                     }
                                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                                    const __gotots_receiver_98 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                                    const __gotots_receiver_98: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                                     __gotots_deferred_5 = ($go$recovery: GoRecovery): void => {
                                         recovery_sync.SyncMutexUnlock(__gotots_receiver_98, $go$recovery);
                                     };
@@ -1381,7 +1391,7 @@ export class Session {
         if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TelemetryEnabled) {
             return;
         }
-        const __gotots_argument_130 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+        const __gotots_argument_130: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
         const __gotots_results_21 = provider_context.ContextWithCancelDirect($goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$to(__gotots_argument_130));
         const __gotots_results_22 = [$goProviderProfileBridge$Named_context$Context$Using$context_Context$Direct$And$Error$Direct.$from(__gotots_results_21[0]), __gotots_results_21[1]] satisfies [
             GoInterface | undefined,
@@ -1436,7 +1446,7 @@ export class Session {
                                 case 1: {
                                     let __gotots_logical_result_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client === undefined;
                                     if (!__gotots_logical_result_1) {
-                                        const __gotots_receiver_85 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                                        const __gotots_receiver_85: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
                                         __gotots_logical_result_1 = !goInterfaceNonNil<Client>(__gotots_receiver_85).IsActive();
                                     }
                                     if (__gotots_logical_result_1) {
@@ -1631,11 +1641,11 @@ export class Session {
             (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshot = newSnapshot;
             sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotMu);
             if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                const __gotots_receiver_74 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_74: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_116 = "Adopted snapshot %d (parent %d) as current session snapshot (replacing %d)";
                 const __gotots_argument_117 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id), new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parentId), new $goInterfaceAdapter$uint64((oldSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id)]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_74).Logf(__gotots_argument_116, __gotots_argument_117);
-                const __gotots_receiver_75 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_75: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_118 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(LogTree__from_logging.String((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.builderLogs))]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_75).Log(__gotots_argument_118);
             }
@@ -1644,21 +1654,21 @@ export class Session {
         else {
             sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotMu);
             if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                const __gotots_receiver_76 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_76: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_119 = "Discarded snapshot %d (parent %d); session has moved on to snapshot %d";
                 const __gotots_argument_120 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id), new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parentId), new $goInterfaceAdapter$uint64((oldSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id)]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_76).Logf(__gotots_argument_119, __gotots_argument_120);
                 {
                     let logs = LogTree__from_logging.String((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.builderLogs);
                     if (logs !== "") {
-                        const __gotots_receiver_77 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_77: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_121 = "--- Discarded snapshot %d builder logs (NOT adopted) ---";
                         const __gotots_argument_122 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id)]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_77).Logf(__gotots_argument_121, __gotots_argument_122);
-                        const __gotots_receiver_78 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_78: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_123 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(logs)]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_78).Log(__gotots_argument_123);
-                        const __gotots_receiver_79 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_79: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_124 = "--- End discarded snapshot %d builder logs ---";
                         const __gotots_argument_125 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id)]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_79).Logf(__gotots_argument_124, __gotots_argument_125);
@@ -1677,14 +1687,14 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu);
-                    const __gotots_receiver_87 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu;
+                    const __gotots_receiver_87: Session["diagnosticsRefreshMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_87, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel === undefined)) {
-                        const __gotots_callee_35 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel;
+                        const __gotots_callee_35: Session["diagnosticsRefreshCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel;
                         (__gotots_callee_35 ?? GoPanic.raiseRuntime("call of nil function"))();
-                        const __gotots_receiver_88 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_88: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_150 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Canceled scheduled diagnostics refresh")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_88).Log(__gotots_argument_150);
                         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticsRefreshCancel = void 0;
@@ -1730,12 +1740,12 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu);
-                    const __gotots_receiver_88 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu;
+                    const __gotots_receiver_88: Session["idleCacheCleanMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_88, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer === undefined)) {
-                        const __gotots_receiver_89 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer;
+                        const __gotots_receiver_89: Session["idleCacheCleanTimer"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer;
                         time__from_gostdlib.Timer.Stop(__gotots_receiver_89 === void 0 ? void 0 :
                             (__gotots_receiver_89 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value);
                         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer = void 0;
@@ -1779,15 +1789,15 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu);
-                    const __gotots_receiver_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu;
+                    const __gotots_receiver_3: Session["scheduledSnapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel === undefined)) {
-                        const __gotots_callee_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel;
+                        const __gotots_callee_1: Session["scheduledSnapshotUpdateCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.scheduledSnapshotUpdateCancel;
                         (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))();
                         if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                            const __gotots_receiver_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                            const __gotots_receiver_4: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                             const __gotots_argument_5 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Canceled scheduled snapshot update")]);
                             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_4).Log(__gotots_argument_5);
                         }
@@ -1834,12 +1844,12 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportMu;
+                    const __gotots_receiver_84: Session["warmAutoImportMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel === undefined)) {
-                        const __gotots_callee_19 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel;
+                        const __gotots_callee_19: Session["warmAutoImportCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel;
                         (__gotots_callee_19 ?? GoPanic.raiseRuntime("call of nil function"))();
                         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel = void 0;
                     }
@@ -1995,12 +2005,12 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu);
-                    const __gotots_receiver_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
+                    const __gotots_receiver_4: Session["pendingFileChangesMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChangesMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_4, $go$recovery);
                     };
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu);
-                    const __gotots_receiver_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu;
+                    const __gotots_receiver_5: Session["pendingATAChangesMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_5, $go$recovery);
                     };
@@ -2012,7 +2022,7 @@ export class Session {
                         value: Overlay;
                     } | undefined> = __gotots_results_2[1];
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu);
-                    const __gotots_receiver_6 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
+                    const __gotots_receiver_6: Session["userConfigRWMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.userConfigRWMu;
                     __gotots_deferred_2 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_6, $go$recovery);
                     };
@@ -2113,7 +2123,7 @@ export class Session {
             value: Overlay;
         } | undefined> = __gotots_results_3[1];
         if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-            const __gotots_receiver_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_4: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_6 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("Processed %d file changes in %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges.length), new $goInterfaceAdapter$Named_time$Duration(time__from_gostdlib.Since(named_time.TimeOperations.$copy(start)))])))]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_4).Log(__gotots_argument_6);
         }
@@ -2134,7 +2144,7 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                    const __gotots_receiver_97 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                    const __gotots_receiver_97: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_97, $go$recovery);
                     };
@@ -2276,30 +2286,14 @@ export class Session {
     } | undefined): void {
         let parseCacheSize = 0;
         let extendedConfigCount = 0;
-        const __gotots_receiver_32 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_32: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         if (goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_32).IsVerbose()) {
             const __gotots_store_4 = RefCountCache.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parseCache ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
             SyncMap$Range$Named_project$ParseCacheKey$PointerTo_Named_project$refCountCacheEntryOf_PointerTo_Named_ast$SourceFile(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<ParseCacheKey, {
                 value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
             } | undefined>, SyncMap__from_collections<ParseCacheKey, {
                 value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "entries"), ($go$storage: SyncMap__from_collections$Storage<ParseCacheKey, {
-                value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>): SyncMap__from_collections<ParseCacheKey, {
-                value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined> => {
-                return SyncMap__from_collections.$fromStorage<ParseCacheKey, {
-                    value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-                } | undefined>($go$storage);
-            }, ($go$value: SyncMap__from_collections<ParseCacheKey, {
-                value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>): SyncMap__from_collections$Storage<ParseCacheKey, {
-                value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined> => {
-                return SyncMap__from_collections.$storageOf<ParseCacheKey, {
-                    value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-                } | undefined>($go$value);
-            }), ($0: ParseCacheKey, $1: {
+            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), ($0: ParseCacheKey, $1: {
                 value: refCountCacheEntry<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
             } | undefined): bool => {
                 parseCacheSize++;
@@ -2314,35 +2308,7 @@ export class Session {
                 value: ownerCacheEntry<{
                     value: ExtendedConfigCacheEntry;
                 } | undefined>;
-            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "entries"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-                value: ownerCacheEntry<{
-                    value: ExtendedConfigCacheEntry;
-                } | undefined>;
-            } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-                value: ownerCacheEntry<{
-                    value: ExtendedConfigCacheEntry;
-                } | undefined>;
-            } | undefined> => {
-                return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                    value: ownerCacheEntry<{
-                        value: ExtendedConfigCacheEntry;
-                    } | undefined>;
-                } | undefined>($go$storage);
-            }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-                value: ownerCacheEntry<{
-                    value: ExtendedConfigCacheEntry;
-                } | undefined>;
-            } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-                value: ownerCacheEntry<{
-                    value: ExtendedConfigCacheEntry;
-                } | undefined>;
-            } | undefined> => {
-                return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                    value: ownerCacheEntry<{
-                        value: ExtendedConfigCacheEntry;
-                    } | undefined>;
-                } | undefined>($go$value);
-            }), ($0: Path__from_tspath, $1: {
+            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), ($0: Path__from_tspath, $1: {
                 value: ownerCacheEntry<{
                     value: ExtendedConfigCacheEntry;
                 } | undefined>;
@@ -2351,82 +2317,82 @@ export class Session {
                 return true;
             });
         }
-        const __gotots_receiver_33 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_33: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_45 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("\n======== Cache Statistics ========")]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_33).Log(__gotots_argument_45);
-        const __gotots_receiver_34 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_34: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_46 = "Open file count:   %6d";
         const __gotots_argument_47 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays.length())]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_34).Logf(__gotots_argument_46, __gotots_argument_47);
-        const __gotots_receiver_35 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_35: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_48 = "Cached disk files: %6d";
         const __gotots_argument_49 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles.length())]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_35).Logf(__gotots_argument_48, __gotots_argument_49);
-        const __gotots_receiver_36 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_36: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_50 = "Realpath aliases:  %6d";
         const __gotots_argument_51 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases.length())]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_36).Logf(__gotots_argument_50, __gotots_argument_51);
-        const __gotots_receiver_37 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_37: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_52 = "Project count:     %6d";
         const __gotots_argument_53 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(ProjectCollection.Projects((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection).length)]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_37).Logf(__gotots_argument_52, __gotots_argument_53);
-        const __gotots_receiver_38 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_38: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_54 = "Config count:      %6d";
         const __gotots_argument_55 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFileRegistry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configs.length())]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_38).Logf(__gotots_argument_54, __gotots_argument_55);
-        const __gotots_receiver_39 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_39: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         if (goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_39).IsVerbose()) {
-            const __gotots_receiver_40 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_40: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_56 = "Parse cache size:           %6d";
             const __gotots_argument_57 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(parseCacheSize)]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_40).Logf(__gotots_argument_56, __gotots_argument_57);
-            const __gotots_receiver_41 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_41: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_58 = "Program count:              %6d";
             const __gotots_argument_59 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(programCounter.Len((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programCounter))]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_41).Logf(__gotots_argument_58, __gotots_argument_59);
-            const __gotots_receiver_42 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_42: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_60 = "Extended config cache size: %6d";
             const __gotots_argument_61 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(extendedConfigCount)]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_42).Logf(__gotots_argument_60, __gotots_argument_61);
-            const __gotots_receiver_43 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_43: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_62 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("Auto Imports:")]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_43).Log(__gotots_argument_62);
             let autoImportStats: CacheStats__from_autoimport | undefined = Registry__from_autoimport.GetCacheStats(Snapshot.AutoImportRegistry(snapshot));
-            const __gotots_receiver_44 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_44: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_63 = "\tUnique packages (by realpath): %d";
             const __gotots_argument_64 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int((autoImportStats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).UniquePackageCount)]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_44).Logf(__gotots_argument_63, __gotots_argument_64);
             if ((autoImportStats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProjectBuckets.length > 0) {
-                const __gotots_receiver_45 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_45: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_65 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("\tProject buckets:")]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_45).Log(__gotots_argument_65);
                 const __gotots_range_6 = (autoImportStats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProjectBuckets;
                 for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_6.length; __gotots_range_index_2++) {
                     const __gotots_range_value_14 = BucketStats__from_autoimport.$copy(BucketStats__from_autoimport.$fromStorage(__gotots_range_6.get(__gotots_range_index_2)));
                     let bucket = __gotots_range_value_14;
-                    const __gotots_receiver_46 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_46: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_66 = "\t\t%s%s:";
                     const __gotots_argument_67 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_tspath$Path(new Path__from_tspath(BucketStats__from_autoimport.$storageOf(bucket).Path)), new $goInterfaceAdapter$string(IfElse$string(BucketState__from_autoimport.$fromStorage(BucketStats__from_autoimport.$storageOf(bucket).State).Dirty(), " (dirty)", ""))]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_46).Logf(__gotots_argument_66, __gotots_argument_67);
-                    const __gotots_receiver_47 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_47: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_68 = "\t\t\tFiles: %d";
                     const __gotots_argument_69 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(BucketStats__from_autoimport.$storageOf(bucket).FileCount)]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_47).Logf(__gotots_argument_68, __gotots_argument_69);
-                    const __gotots_receiver_48 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_48: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_70 = "\t\t\tExports: %d";
                     const __gotots_argument_71 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(BucketStats__from_autoimport.$storageOf(bucket).ExportCount)]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_48).Logf(__gotots_argument_70, __gotots_argument_71);
                 }
             }
             if ((autoImportStats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeModulesBuckets.length > 0) {
-                const __gotots_receiver_49 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_49: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_72 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("\tnode_modules buckets:")]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_49).Log(__gotots_argument_72);
                 const __gotots_range_7 = (autoImportStats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeModulesBuckets;
                 for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_7.length; __gotots_range_index_3++) {
                     const __gotots_range_value_15 = BucketStats__from_autoimport.$copy(BucketStats__from_autoimport.$fromStorage(__gotots_range_7.get(__gotots_range_index_3)));
                     let bucket = __gotots_range_value_15;
-                    const __gotots_receiver_50 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_50: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_73 = "\t\t%s%s:";
                     const __gotots_argument_74 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_tspath$Path(new Path__from_tspath(BucketStats__from_autoimport.$storageOf(bucket).Path)), new $goInterfaceAdapter$string(IfElse$string(BucketState__from_autoimport.$fromStorage(BucketStats__from_autoimport.$storageOf(bucket).State).Dirty(), " (dirty)", ""))]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_50).Logf(__gotots_argument_73, __gotots_argument_74);
@@ -2439,48 +2405,48 @@ export class Session {
                         }
                         const __gotots_range_value_18 = __gotots_range_value_16;
                         let packageName = __gotots_range_value_18;
-                        const __gotots_receiver_51 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_51: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_75 = "\t\t\tNeeds granular update: %s";
                         const __gotots_argument_76 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(packageName)]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_51).Logf(__gotots_argument_75, __gotots_argument_76);
                     }
                     if (!(BucketStats__from_autoimport.$storageOf(bucket).DependencyNames === undefined)) {
-                        const __gotots_receiver_52 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_52: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_77 = "\t\t\tCollected packages: %d";
                         const __gotots_argument_78 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(Set$Len$string(BucketStats__from_autoimport.$storageOf(bucket).DependencyNames))]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_52).Logf(__gotots_argument_77, __gotots_argument_78);
                     }
                     else {
-                        const __gotots_receiver_53 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_53: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_79 = "\t\t\tCollected packages: all, due to no package.json!";
                         const __gotots_argument_80 = RuntimeSlice.nil<$goInterface$Interface_void | undefined>();
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_53).Logf(__gotots_argument_79, __gotots_argument_80);
                     }
-                    const __gotots_receiver_54 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_54: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_81 = "\t\t\tTotal packages: %d";
                     const __gotots_argument_82 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(Set$Len$string(BucketStats__from_autoimport.$storageOf(bucket).PackageNames))]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_54).Logf(__gotots_argument_81, __gotots_argument_82);
-                    const __gotots_receiver_55 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_55: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_83 = "\t\t\tFiles: %d";
                     const __gotots_argument_84 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(BucketStats__from_autoimport.$storageOf(bucket).FileCount)]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_55).Logf(__gotots_argument_83, __gotots_argument_84);
-                    const __gotots_receiver_56 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_56: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_85 = "\t\t\tExports: %d";
                     const __gotots_argument_86 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(BucketStats__from_autoimport.$storageOf(bucket).ExportCount)]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_56).Logf(__gotots_argument_85, __gotots_argument_86);
                     if (BucketState__from_autoimport.$fromStorage(BucketStats__from_autoimport.$storageOf(bucket).State).RecursiveSearchPackages() === undefined) {
-                        const __gotots_receiver_57 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_57: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_87 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("\t\t\tRecursive search: all")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_57).Log(__gotots_argument_87);
                     }
                     else if (Set$Len$string(BucketState__from_autoimport.$fromStorage(BucketStats__from_autoimport.$storageOf(bucket).State).RecursiveSearchPackages()) > 0) {
-                        const __gotots_receiver_58 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_58: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_88 = "\t\t\tRecursive search: %d packages";
                         const __gotots_argument_89 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(Set$Len$string(BucketState__from_autoimport.$fromStorage(BucketStats__from_autoimport.$storageOf(bucket).State).RecursiveSearchPackages()))]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_58).Logf(__gotots_argument_88, __gotots_argument_89);
                     }
                     else {
-                        const __gotots_receiver_59 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_59: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_90 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("\t\t\tRecursive search: none")]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_59).Log(__gotots_argument_90);
                     }
@@ -2504,13 +2470,13 @@ export class Session {
             let builder = named_strings.StringsBuilderOperations.$zero();
             const builder$location = tsonicTypeScriptRuntime.boundLocation({}, () => builder, builder$next => builder = builder$next);
             const __gotots_receiver_15 = project;
-            const __gotots_receiver_13 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_13: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_18 = goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_13).IsVerbose();
-            const __gotots_receiver_14 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_14: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_19 = goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_14).IsVerbose();
             const __gotots_argument_20 = builder$location;
             Project.$go$private$project$print(__gotots_receiver_15, __gotots_argument_18, __gotots_argument_19, __gotots_argument_20);
-            const __gotots_receiver_16 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_16: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_21 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(strings__from_gostdlib.Builder.String(builder))]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_16).Log(__gotots_argument_21);
             loggedProjectChanges = true;
@@ -2524,7 +2490,7 @@ export class Session {
         }, (path: Path__from_tspath, removedProject: {
             value: Project;
         } | undefined): void => {
-            const __gotots_receiver_17 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_17: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_23 = "\nProject '%s' removed\n%s";
             const __gotots_argument_24 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(Project.Name(removedProject)), new $goInterfaceAdapter$string(hr$string)]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_17).Logf(__gotots_argument_23, __gotots_argument_24);
@@ -2541,7 +2507,7 @@ export class Session {
         });
         let __gotots_logical_result_0 = loggedProjectChanges;
         if (!__gotots_logical_result_0) {
-            const __gotots_receiver_18 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_18: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             __gotots_logical_result_0 = goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_18).IsVerbose();
         }
         if (__gotots_logical_result_0) {
@@ -2582,7 +2548,7 @@ export class Session {
                 }
             }
         }
-        const __gotots_receiver_19 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+        const __gotots_receiver_19: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
         const __gotots_argument_33 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(strings__from_gostdlib.Builder.String(builder))]);
         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_19).Log(__gotots_argument_33);
     }
@@ -2595,7 +2561,7 @@ export class Session {
         try {
             try {
                 __gotots_return_block_2: {
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagPublishPending;
+                    const __gotots_receiver_84: Session["globalDiagPublishPending"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagPublishPending;
                     const __gotots_argument_132 = false;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncAtomicBoolStore(__gotots_receiver_84, __gotots_argument_132, $go$recovery);
@@ -2787,12 +2753,12 @@ export class Session {
             lspDiagnostics = lspDiagnostics.append(void 0, [DiagnosticToLSPPush__from_lsconv(ctx, converters, diag)]);
         }
         {
-            const __gotots_receiver_70 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+            const __gotots_receiver_70: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
             const __gotots_argument_108 = ctx;
             const __gotots_argument_109 = tsonicTypeScriptRuntime.location<PublishDiagnosticsParams__from_lsproto>(new PublishDiagnosticsParams__from_lsproto(FileNameToDocumentURI__from_lsconv(configFilePath), void 0, lspDiagnostics));
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_70).PublishDiagnostics(__gotots_argument_108, __gotots_argument_109);
             if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                const __gotots_receiver_71 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_71: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_110 = "Error publishing diagnostics: %v";
                 const __gotots_argument_111 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_71).Logf(__gotots_argument_110, __gotots_argument_111);
@@ -2811,11 +2777,11 @@ export class Session {
     } | undefined, oldPrefs: UserPreferences__from_lsutil, newPrefs: UserPreferences__from_lsutil): void {
         if (!CodeLensUserPreferences__from_lsutil.$equal(oldPrefs.CodeLens, newPrefs.CodeLens)) {
             {
-                const __gotots_receiver_91 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
-                const __gotots_argument_154 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                const __gotots_receiver_91: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                const __gotots_argument_154: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                 let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_91).RefreshCodeLens(__gotots_argument_154);
                 if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                    const __gotots_receiver_92 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_92: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_155 = "Error refreshing code lens: %v";
                     const __gotots_argument_156 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_92).Logf(__gotots_argument_155, __gotots_argument_156);
@@ -2835,11 +2801,11 @@ export class Session {
     } | undefined, oldPrefs: UserPreferences__from_lsutil, newPrefs: UserPreferences__from_lsutil): void {
         if (!InlayHintsPreferences__from_lsutil.$equal(oldPrefs.InlayHints, newPrefs.InlayHints)) {
             {
-                const __gotots_receiver_89 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
-                const __gotots_argument_151 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                const __gotots_receiver_89: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                const __gotots_argument_151: Session["backgroundCtx"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                 let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_89).RefreshInlayHints(__gotots_argument_151);
                 if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                    const __gotots_receiver_90 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_90: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_152 = "Error refreshing inlay hints: %v";
                     const __gotots_argument_153 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_90).Logf(__gotots_argument_152, __gotots_argument_153);
@@ -2856,12 +2822,12 @@ export class Session {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu);
-                    const __gotots_receiver_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu;
+                    const __gotots_receiver_84: Session["idleCacheCleanMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu;
                     __gotots_deferred_3 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_84, $go$recovery);
                     };
                     if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer === undefined)) {
-                        const __gotots_receiver_85 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer;
+                        const __gotots_receiver_85: Session["idleCacheCleanTimer"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer;
                         time__from_gostdlib.Timer.Stop(__gotots_receiver_85 === void 0 ? void 0 :
                             (__gotots_receiver_85 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value);
                     }
@@ -2875,7 +2841,7 @@ export class Session {
                                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanTimer = void 0;
                                     sync__from_gostdlib.Mutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.idleCacheCleanMu);
                                     sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu);
-                                    const __gotots_receiver_86 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
+                                    const __gotots_receiver_86: Session["snapshotUpdateMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotUpdateMu;
                                     __gotots_deferred_4 = ($go$recovery: GoRecovery): void => {
                                         recovery_sync.SyncMutexUnlock(__gotots_receiver_86, $go$recovery);
                                     };
@@ -3112,7 +3078,7 @@ export class Session {
             }
         }
         {
-            const __gotots_receiver_85 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+            const __gotots_receiver_85: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
             const __gotots_argument_146 = ctx;
             const __gotots_argument_147 = RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull__from_lsproto.$fromStorage({
                 PerformanceStatsTelemetryEvent: { value: new PerformanceStatsTelemetryEvent__from_lsproto(StringLiteralLanguageServerPerformanceStats__from_lsproto.$zero(), StringLiteralUsage__from_lsproto.$zero(), measurements) },
@@ -3121,7 +3087,7 @@ export class Session {
             });
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_85).SendTelemetry(__gotots_argument_146, __gotots_argument_147);
             if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                const __gotots_receiver_86 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_86: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_148 = "Error sending performance telemetry: %v";
                 const __gotots_argument_149 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_86).Logf(__gotots_argument_148, __gotots_argument_149);
@@ -3145,13 +3111,13 @@ export class Session {
         }
         let info = Session.$go$private$project$collectProjectInfoTelemetry(s, project);
         {
-            const __gotots_receiver_72 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+            const __gotots_receiver_72: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
             const __gotots_argument_112 = ctx;
             const __gotots_argument_113 = RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull__from_lsproto.$copy(info);
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_72).SendTelemetry(__gotots_argument_112, __gotots_argument_113);
             if (!(err === undefined)) {
                 if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                    const __gotots_receiver_73 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                    const __gotots_receiver_73: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                     const __gotots_argument_114 = "Error sending project info telemetry: %v";
                     const __gotots_argument_115 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                     goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_73).Logf(__gotots_argument_114, __gotots_argument_115);
@@ -3191,7 +3157,7 @@ export class Session {
         value: Session;
     } | undefined): void {
         if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.performanceTelemetryCancel === undefined)) {
-            const __gotots_callee_36 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.performanceTelemetryCancel;
+            const __gotots_callee_36: Session["performanceTelemetryCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.performanceTelemetryCancel;
             (__gotots_callee_36 ?? GoPanic.raiseRuntime("call of nil function"))();
             (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.performanceTelemetryCancel = void 0;
         }
@@ -3227,7 +3193,7 @@ export class Session {
                                 }), (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentDirectory, ParsedCommandLine__from_tsoptions.CompilerOptions((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CommandLine), ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory, GetScriptKindFromFileName__from_core, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs, new $goInterfaceAdapter$PointerTo_Named_logging$LogTree(logTree));
                                 let projectDisplayName = Project.DisplayName(project, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory);
                                 if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client === undefined)) {
-                                    const __gotots_receiver_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                                    const __gotots_receiver_9: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
                                     const __gotots_argument_12 = $state__diagnostics.Installing_types_for_0;
                                     const __gotots_argument_13 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(projectDisplayName)]);
                                     goInterfaceNonNil<Client>(__gotots_receiver_9).ProgressStart(__gotots_argument_12, __gotots_argument_13);
@@ -3236,17 +3202,17 @@ export class Session {
                                 let result: TypingsInstallResult__from_ata | undefined = __gotots_results_4[0];
                                 let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_4[1];
                                 if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client === undefined)) {
-                                    const __gotots_receiver_10 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                                    const __gotots_receiver_10: Session["client"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
                                     const __gotots_argument_14 = $state__diagnostics.Installing_types_for_0;
                                     const __gotots_argument_15 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(projectDisplayName)]);
                                     goInterfaceNonNil<Client>(__gotots_receiver_10).ProgressFinish(__gotots_argument_14, __gotots_argument_15);
                                 }
                                 if (!(err === undefined)) {
                                     if (!(logTree === undefined)) {
-                                        const __gotots_receiver_11 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                        const __gotots_receiver_11: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                         const __gotots_argument_16 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("ATA installation failed for project %s: %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(Project.Name(project)), err])))]);
                                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_11).Log(__gotots_argument_16);
-                                        const __gotots_receiver_12 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                        const __gotots_receiver_12: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                         const __gotots_argument_17 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(LogTree__from_logging.String(logTree))]);
                                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_12).Log(__gotots_argument_17);
                                     }
@@ -3254,7 +3220,7 @@ export class Session {
                                 else {
                                     if (!Equal$SliceOf_string$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).TypingsFiles, (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsFiles)) {
                                         sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu);
-                                        const __gotots_receiver_13 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu;
+                                        const __gotots_receiver_13: Session["pendingATAChangesMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingATAChangesMu;
                                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                                             recovery_sync.SyncMutexUnlock(__gotots_receiver_13, $go$recovery);
                                         });
@@ -3325,16 +3291,16 @@ export class Session {
         }
         Queue__from_background.Enqueue((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundQueue, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx, (ctx__shadow_1: GoInterface | undefined): void => {
             if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                const __gotots_receiver_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_5: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_7 = "Adopted snapshot %d (parent %d) as current session snapshot (replacing %d)";
                 const __gotots_argument_8 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id), new $goInterfaceAdapter$uint64((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parentId), new $goInterfaceAdapter$uint64((oldSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id)]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_5).Logf(__gotots_argument_7, __gotots_argument_8);
-                const __gotots_receiver_6 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_6: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_9 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(LogTree__from_logging.String((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.builderLogs))]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_6).Log(__gotots_argument_9);
                 Session.$go$private$project$logProjectChanges(s, oldSnapshot, newSnapshot);
                 Session.$go$private$project$logRuntimeMetrics(s);
-                const __gotots_receiver_7 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                const __gotots_receiver_7: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                 const __gotots_argument_10 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string("")]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_7).Log(__gotots_argument_10);
             }
@@ -3342,7 +3308,7 @@ export class Session {
                 {
                     let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Session.$go$private$project$updateWatches(s, oldSnapshot, newSnapshot);
                     if (!(err === undefined) && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-                        const __gotots_receiver_8 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                        const __gotots_receiver_8: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                         const __gotots_argument_11 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([err]);
                         goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_8).Log(__gotots_argument_11);
                     }
@@ -3394,7 +3360,7 @@ export class Session {
         } | undefined): void => {
             errors = goSliceAppendSlice<$goInterface$Interface_Method_Error_void_to_string | undefined>(errors, updateWatch$Named_project$PatternsAndIgnored(ctx, s, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger, (oldEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.rootFilesWatch, (newEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.rootFilesWatch), void 0);
         });
-        const __gotots_range_3 = ((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFileRegistry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configs;
+        const __gotots_range_3: ConfigFileRegistry["configs"] = ((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFileRegistry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configs;
         const __gotots_range_keys_1 = __gotots_range_3.keys();
         for (const __gotots_range_value_5 of __gotots_range_keys_1) {
             const __gotots_range_value_6 = __gotots_range_3.lookupOk(__gotots_range_value_5);
@@ -3466,7 +3432,7 @@ export class Session {
             return GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("errors updating watches: %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$SliceOf_Named_error(errors)])));
         }
         else if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LoggingEnabled) {
-            const __gotots_receiver_20 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+            const __gotots_receiver_20: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
             const __gotots_argument_34 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("Updated watches in %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_time$Duration(time__from_gostdlib.Since(named_time.TimeOperations.$copy(start)))])))]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_20).Log(__gotots_argument_34);
         }
@@ -3519,7 +3485,7 @@ export class Session {
                         }
                         sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportMu);
                         if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel === undefined)) {
-                            const __gotots_callee_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel;
+                            const __gotots_callee_5: Session["warmAutoImportCancel"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.warmAutoImportCancel;
                             (__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))();
                         }
                         const __gotots_argument_35 = ctx;
@@ -3537,7 +3503,7 @@ export class Session {
                                 if (!(goInterfaceNonNil<GoInterface>(__gotots_receiver_22).Err() === undefined)) {
                                     return;
                                 }
-                                const __gotots_receiver_23 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
+                                const __gotots_receiver_23: Session["logger"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger;
                                 const __gotots_argument_36 = "Cancelling auto-import warming for file %s";
                                 const __gotots_argument_37 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string(changedFile.FileName())]);
                                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_23).Logf(__gotots_argument_36, __gotots_argument_37);
@@ -3611,7 +3577,7 @@ export class Session {
 export function NewSession(init: SessionInit | undefined): {
     value: Session;
 } | undefined {
-    let currentDirectory = ((init ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
+    let currentDirectory: SessionOptions["CurrentDirectory"] = ((init ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
     const __gotots_receiver_0 = (init ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FS;
     let useCaseSensitiveFileNames = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_0).UseCaseSensitiveFileNames();
     let toPath: (($0: gostring) => Path__from_tspath) | undefined = (fileName: gostring): Path__from_tspath => {
@@ -3691,12 +3657,9 @@ export function countFileStats(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime
     for (let __gotots_range_index_8 = 0; __gotots_range_index_8 < __gotots_range_16.length; __gotots_range_index_8++) {
         const __gotots_range_value_30 = __gotots_range_16.get(__gotots_range_index_8);
         let sf: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_range_value_30;
-        const __gotots_store_10 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        let size = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_store_10 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+            NodeBase__from_ast.$storageOf(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+        let size = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         switch (((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind) {
             case ScriptKindJS$constant__from_core(): {
                 const __gotots_store_11 = stats;
@@ -3810,7 +3773,7 @@ export function updateWatch$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, $go$from_
                 ];
                 let callCtx: GoInterface | undefined = __gotots_results_12[0];
                 let callCancel: (() => void) | undefined = __gotots_results_12[1];
-                const __gotots_receiver_60 = (session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                const __gotots_receiver_60: Session["client"] = (session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
                 const __gotots_argument_93 = callCtx;
                 const __gotots_argument_94 = id;
                 const __gotots_argument_95 = RuntimeSlice.literal<{
@@ -3947,7 +3910,7 @@ export function updateWatch$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, $go$from_
                 ];
                 let callCtx: GoInterface | undefined = __gotots_results_15[0];
                 let callCancel: (() => void) | undefined = __gotots_results_15[1];
-                const __gotots_receiver_68 = (session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
+                const __gotots_receiver_68: Session["client"] = (session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.client;
                 const __gotots_argument_105 = callCtx;
                 const __gotots_argument_106 = id;
                 let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<Client>(__gotots_receiver_68).UnwatchFiles(__gotots_argument_105, __gotots_argument_106);

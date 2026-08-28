@@ -19,10 +19,10 @@ export class Box<T> {
     public static $fromStorage<T>($source: Box$Storage<T>): Box<T> {
         return new Box<T>($source);
     }
-    static $copy<T>($go$copy$T0_to_T0: ($0: T) => T, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, $source: Box<T>): Box<T> {
+    static $copy<T>($go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, $source: Box<T>): Box<T> {
         return new Box<T>({
-            original: $go$to_storage$T0_to_T0($go$copy$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.original))),
-            value: $go$to_storage$T0_to_T0($go$copy$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.value))),
+            original: $go$to_storage$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.original)),
+            value: $go$to_storage$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.value)),
             dirty: $source.$storage.dirty,
             __go_delete: $source.$storage.__go_delete
         });
@@ -90,13 +90,13 @@ export class Box<T> {
     }
     static Original$kernel<T>(b: {
         value: Box<T>;
-    } | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T): T {
-        return $go$copy$T0_to_T0($go$from_storage$T0_to_T0(Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).original));
+    } | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T): T {
+        return $go$from_storage$T0_to_T0(Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).original);
     }
     static Set$kernel<T>(b: {
         value: Box<T>;
-    } | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, value: T): void {
-        Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value = $go$to_storage$T0_to_T0($go$copy$T0_to_T0(value));
+    } | undefined, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, value: T): void {
+        Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).value = $go$to_storage$T0_to_T0(value);
         Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).__go_delete = false;
         Box.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty = true;
     }

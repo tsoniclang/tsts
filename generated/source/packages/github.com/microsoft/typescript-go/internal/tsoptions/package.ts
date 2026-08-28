@@ -517,44 +517,42 @@ export function $initialize(): void {
         $state.commandLineOptionDeprecated = $goMap$MapOf_string_To_PointerTo_Named_collections$SetOf_string.make(3, [["module", NewSetFromItems$string(RuntimeSlice.literal<gostring>(["none", "amd", "system", "umd"]))], ["moduleResolution", NewSetFromItems$string(RuntimeSlice.literal<gostring>(["node", "classic", "node10"]))], ["target", NewSetFromItems$string(RuntimeSlice.literal<gostring>(["es5"]))]]);
     }
     {
-        $state.TscBuildOption = CommandLineOption.$storageOf(CommandLineOption.$fromStorage({
-            Name: "build",
-            Kind: ((void CommandLineOptionKind,
-                "boolean") as string),
-            ShortName: "b",
-            ShowInSimplifiedHelpView: true,
-            Category: $state__diagnostics.Command_line_Options,
-            Description: $state__diagnostics.Build_one_or_more_projects_and_their_dependencies_if_out_of_date,
-            DefaultValueDescription: new $goInterfaceAdapter$bool(false),
-            IsFilePath: false,
-            IsTSConfigOnly: false,
-            IsCommandLineOnly: false,
-            extraValidation: ((void extraValidation,
-                "") as string),
-            minValue: 0,
-            allowConfigDirTemplateSubstitution: false,
-            AffectsDeclarationPath: false,
-            AffectsProgramStructure: false,
-            AffectsSemanticDiagnostics: false,
-            AffectsBuildInfo: false,
-            AffectsBindDiagnostics: false,
-            AffectsSourceFile: false,
-            AffectsModuleResolution: false,
-            AffectsEmit: false,
-            allowJsFlag: false,
-            strictFlag: false,
-            transpileOptionValue: 0,
-            listPreserveFalsyValues: false,
-            ElementOptions: new CommandLineOptionNameMap(GoMap.nil()).$value
-        }));
+        $state.TscBuildOption =
+            (void CommandLineOption.$storageOf, (void CommandLineOption.$fromStorage,
+                {
+                    Name: "build",
+                    Kind: ((void CommandLineOptionKind,
+                        "boolean") as string),
+                    ShortName: "b",
+                    ShowInSimplifiedHelpView: true,
+                    Category: $state__diagnostics.Command_line_Options,
+                    Description: $state__diagnostics.Build_one_or_more_projects_and_their_dependencies_if_out_of_date,
+                    DefaultValueDescription: new $goInterfaceAdapter$bool(false),
+                    IsFilePath: false,
+                    IsTSConfigOnly: false,
+                    IsCommandLineOnly: false,
+                    extraValidation: ((void extraValidation,
+                        "") as string),
+                    minValue: 0,
+                    allowConfigDirTemplateSubstitution: false,
+                    AffectsDeclarationPath: false,
+                    AffectsProgramStructure: false,
+                    AffectsSemanticDiagnostics: false,
+                    AffectsBuildInfo: false,
+                    AffectsBindDiagnostics: false,
+                    AffectsSourceFile: false,
+                    AffectsModuleResolution: false,
+                    AffectsEmit: false,
+                    allowJsFlag: false,
+                    strictFlag: false,
+                    transpileOptionValue: 0,
+                    listPreserveFalsyValues: false,
+                    ElementOptions: new CommandLineOptionNameMap(GoMap.nil()).$value
+                }));
     }
     {
         $state.OptionsForBuild = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined>([
-            tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), ($go$storage: CommandLineOption__from_tsoptions$Storage): CommandLineOption => {
-                return CommandLineOption.$fromStorage($go$storage);
-            }, ($go$value: CommandLineOption): CommandLineOption__from_tsoptions$Storage => {
-                return CommandLineOption.$storageOf($go$value);
-            }), tsonicTypeScriptRuntime.location<CommandLineOption>(CommandLineOption.$fromStorage({
+            tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), CommandLineOption.$fromStorage, CommandLineOption.$storageOf), tsonicTypeScriptRuntime.location<CommandLineOption>(CommandLineOption.$fromStorage({
                 Name: "verbose",
                 ShortName: "v",
                 Category: $state__diagnostics.Command_line_Options,
@@ -4602,328 +4600,437 @@ export function $initialize(): void {
         $state.watchOptionsDidYouMeanDiagnostics = new ParseCommandLineWorkerDiagnostics(new DidYouMeanOptionsDiagnostics(void 0, $state.OptionsForWatch, $state__diagnostics.Unknown_watch_option_0, $state__diagnostics.Unknown_watch_option_0_Did_you_mean_1), void 0, named_sync.SyncOnceOperations.$zero(), $state__diagnostics.Watch_option_0_requires_a_value_of_type_1);
     }
     {
-        $state.LibMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es5",
-                Value: new $goInterfaceAdapter$string("lib.es5.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es6",
-                Value: new $goInterfaceAdapter$string("lib.es2015.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015",
-                Value: new $goInterfaceAdapter$string("lib.es2015.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es7",
-                Value: new $goInterfaceAdapter$string("lib.es2016.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2016",
-                Value: new $goInterfaceAdapter$string("lib.es2016.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017",
-                Value: new $goInterfaceAdapter$string("lib.es2017.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018",
-                Value: new $goInterfaceAdapter$string("lib.es2018.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019",
-                Value: new $goInterfaceAdapter$string("lib.es2019.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020",
-                Value: new $goInterfaceAdapter$string("lib.es2020.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021",
-                Value: new $goInterfaceAdapter$string("lib.es2021.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022",
-                Value: new $goInterfaceAdapter$string("lib.es2022.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2023",
-                Value: new $goInterfaceAdapter$string("lib.es2023.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024",
-                Value: new $goInterfaceAdapter$string("lib.es2024.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025",
-                Value: new $goInterfaceAdapter$string("lib.es2025.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext",
-                Value: new $goInterfaceAdapter$string("lib.esnext.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dom",
-                Value: new $goInterfaceAdapter$string("lib.dom.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dom.iterable",
-                Value: new $goInterfaceAdapter$string("lib.dom.iterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dom.asynciterable",
-                Value: new $goInterfaceAdapter$string("lib.dom.asynciterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "webworker",
-                Value: new $goInterfaceAdapter$string("lib.webworker.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "webworker.importscripts",
-                Value: new $goInterfaceAdapter$string("lib.webworker.importscripts.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "webworker.iterable",
-                Value: new $goInterfaceAdapter$string("lib.webworker.iterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "webworker.asynciterable",
-                Value: new $goInterfaceAdapter$string("lib.webworker.asynciterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "scripthost",
-                Value: new $goInterfaceAdapter$string("lib.scripthost.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.core",
-                Value: new $goInterfaceAdapter$string("lib.es2015.core.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.collection",
-                Value: new $goInterfaceAdapter$string("lib.es2015.collection.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.generator",
-                Value: new $goInterfaceAdapter$string("lib.es2015.generator.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.iterable",
-                Value: new $goInterfaceAdapter$string("lib.es2015.iterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2015.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.proxy",
-                Value: new $goInterfaceAdapter$string("lib.es2015.proxy.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.reflect",
-                Value: new $goInterfaceAdapter$string("lib.es2015.reflect.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.symbol",
-                Value: new $goInterfaceAdapter$string("lib.es2015.symbol.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015.symbol.wellknown",
-                Value: new $goInterfaceAdapter$string("lib.es2015.symbol.wellknown.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2016.array.include",
-                Value: new $goInterfaceAdapter$string("lib.es2016.array.include.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2016.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2016.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.arraybuffer",
-                Value: new $goInterfaceAdapter$string("lib.es2017.arraybuffer.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.date",
-                Value: new $goInterfaceAdapter$string("lib.es2017.date.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.object",
-                Value: new $goInterfaceAdapter$string("lib.es2017.object.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.sharedmemory",
-                Value: new $goInterfaceAdapter$string("lib.es2017.sharedmemory.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.string",
-                Value: new $goInterfaceAdapter$string("lib.es2017.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2017.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017.typedarrays",
-                Value: new $goInterfaceAdapter$string("lib.es2017.typedarrays.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018.asyncgenerator",
-                Value: new $goInterfaceAdapter$string("lib.es2018.asyncgenerator.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018.asynciterable",
-                Value: new $goInterfaceAdapter$string("lib.es2018.asynciterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2018.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2018.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018.regexp",
-                Value: new $goInterfaceAdapter$string("lib.es2018.regexp.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019.array",
-                Value: new $goInterfaceAdapter$string("lib.es2019.array.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019.object",
-                Value: new $goInterfaceAdapter$string("lib.es2019.object.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019.string",
-                Value: new $goInterfaceAdapter$string("lib.es2019.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019.symbol",
-                Value: new $goInterfaceAdapter$string("lib.es2019.symbol.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2019.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.bigint",
-                Value: new $goInterfaceAdapter$string("lib.es2020.bigint.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.date",
-                Value: new $goInterfaceAdapter$string("lib.es2020.date.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2020.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.sharedmemory",
-                Value: new $goInterfaceAdapter$string("lib.es2020.sharedmemory.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.string",
-                Value: new $goInterfaceAdapter$string("lib.es2020.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.symbol.wellknown",
-                Value: new $goInterfaceAdapter$string("lib.es2020.symbol.wellknown.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2020.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020.number",
-                Value: new $goInterfaceAdapter$string("lib.es2020.number.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2021.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021.string",
-                Value: new $goInterfaceAdapter$string("lib.es2021.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021.weakref",
-                Value: new $goInterfaceAdapter$string("lib.es2021.weakref.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2021.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.array",
-                Value: new $goInterfaceAdapter$string("lib.es2022.array.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.error",
-                Value: new $goInterfaceAdapter$string("lib.es2022.error.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2022.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.object",
-                Value: new $goInterfaceAdapter$string("lib.es2022.object.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.string",
-                Value: new $goInterfaceAdapter$string("lib.es2022.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022.regexp",
-                Value: new $goInterfaceAdapter$string("lib.es2022.regexp.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2023.array",
-                Value: new $goInterfaceAdapter$string("lib.es2023.array.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2023.collection",
-                Value: new $goInterfaceAdapter$string("lib.es2023.collection.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2023.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2023.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.arraybuffer",
-                Value: new $goInterfaceAdapter$string("lib.es2024.arraybuffer.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.collection",
-                Value: new $goInterfaceAdapter$string("lib.es2024.collection.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.object",
-                Value: new $goInterfaceAdapter$string("lib.es2024.object.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2024.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.regexp",
-                Value: new $goInterfaceAdapter$string("lib.es2024.regexp.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.sharedmemory",
-                Value: new $goInterfaceAdapter$string("lib.es2024.sharedmemory.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024.string",
-                Value: new $goInterfaceAdapter$string("lib.es2024.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.collection",
-                Value: new $goInterfaceAdapter$string("lib.es2025.collection.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.float16",
-                Value: new $goInterfaceAdapter$string("lib.es2025.float16.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.intl",
-                Value: new $goInterfaceAdapter$string("lib.es2025.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.iterator",
-                Value: new $goInterfaceAdapter$string("lib.es2025.iterator.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2025.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025.regexp",
-                Value: new $goInterfaceAdapter$string("lib.es2025.regexp.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.asynciterable",
-                Value: new $goInterfaceAdapter$string("lib.es2018.asynciterable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.symbol",
-                Value: new $goInterfaceAdapter$string("lib.es2019.symbol.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.bigint",
-                Value: new $goInterfaceAdapter$string("lib.es2020.bigint.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.weakref",
-                Value: new $goInterfaceAdapter$string("lib.es2021.weakref.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.object",
-                Value: new $goInterfaceAdapter$string("lib.es2024.object.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.regexp",
-                Value: new $goInterfaceAdapter$string("lib.es2024.regexp.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.string",
-                Value: new $goInterfaceAdapter$string("lib.es2024.string.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.float16",
-                Value: new $goInterfaceAdapter$string("lib.es2025.float16.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.iterator",
-                Value: new $goInterfaceAdapter$string("lib.es2025.iterator.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.promise",
-                Value: new $goInterfaceAdapter$string("lib.es2025.promise.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.array",
-                Value: new $goInterfaceAdapter$string("lib.esnext.array.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.collection",
-                Value: new $goInterfaceAdapter$string("lib.esnext.collection.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.date",
-                Value: new $goInterfaceAdapter$string("lib.esnext.date.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.decorators",
-                Value: new $goInterfaceAdapter$string("lib.esnext.decorators.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.disposable",
-                Value: new $goInterfaceAdapter$string("lib.esnext.disposable.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.error",
-                Value: new $goInterfaceAdapter$string("lib.esnext.error.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.intl",
-                Value: new $goInterfaceAdapter$string("lib.esnext.intl.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.sharedmemory",
-                Value: new $goInterfaceAdapter$string("lib.esnext.sharedmemory.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.temporal",
-                Value: new $goInterfaceAdapter$string("lib.esnext.temporal.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext.typedarrays",
-                Value: new $goInterfaceAdapter$string("lib.esnext.typedarrays.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "decorators",
-                Value: new $goInterfaceAdapter$string("lib.decorators.d.ts")
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "decorators.legacy",
-                Value: new $goInterfaceAdapter$string("lib.decorators.legacy.d.ts")
-            }))]));
+        $state.LibMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es5",
+                    Value: new $goInterfaceAdapter$string("lib.es5.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es6",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es7",
+                    Value: new $goInterfaceAdapter$string("lib.es2016.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2016",
+                    Value: new $goInterfaceAdapter$string("lib.es2016.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2023",
+                    Value: new $goInterfaceAdapter$string("lib.es2023.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dom",
+                    Value: new $goInterfaceAdapter$string("lib.dom.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dom.iterable",
+                    Value: new $goInterfaceAdapter$string("lib.dom.iterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dom.asynciterable",
+                    Value: new $goInterfaceAdapter$string("lib.dom.asynciterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "webworker",
+                    Value: new $goInterfaceAdapter$string("lib.webworker.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "webworker.importscripts",
+                    Value: new $goInterfaceAdapter$string("lib.webworker.importscripts.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "webworker.iterable",
+                    Value: new $goInterfaceAdapter$string("lib.webworker.iterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "webworker.asynciterable",
+                    Value: new $goInterfaceAdapter$string("lib.webworker.asynciterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "scripthost",
+                    Value: new $goInterfaceAdapter$string("lib.scripthost.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.core",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.core.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.collection",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.collection.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.generator",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.generator.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.iterable",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.iterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.proxy",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.proxy.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.reflect",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.reflect.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.symbol",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.symbol.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015.symbol.wellknown",
+                    Value: new $goInterfaceAdapter$string("lib.es2015.symbol.wellknown.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2016.array.include",
+                    Value: new $goInterfaceAdapter$string("lib.es2016.array.include.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2016.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2016.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.arraybuffer",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.arraybuffer.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.date",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.date.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.object",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.object.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.sharedmemory",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.sharedmemory.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017.typedarrays",
+                    Value: new $goInterfaceAdapter$string("lib.es2017.typedarrays.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018.asyncgenerator",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.asyncgenerator.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018.asynciterable",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.asynciterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018.regexp",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.regexp.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019.array",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.array.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019.object",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.object.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019.symbol",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.symbol.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.bigint",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.bigint.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.date",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.date.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.sharedmemory",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.sharedmemory.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.symbol.wellknown",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.symbol.wellknown.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020.number",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.number.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021.weakref",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.weakref.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.array",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.array.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.error",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.error.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.object",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.object.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022.regexp",
+                    Value: new $goInterfaceAdapter$string("lib.es2022.regexp.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2023.array",
+                    Value: new $goInterfaceAdapter$string("lib.es2023.array.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2023.collection",
+                    Value: new $goInterfaceAdapter$string("lib.es2023.collection.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2023.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2023.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.arraybuffer",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.arraybuffer.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.collection",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.collection.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.object",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.object.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.regexp",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.regexp.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.sharedmemory",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.sharedmemory.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.collection",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.collection.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.float16",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.float16.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.intl",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.iterator",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.iterator.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025.regexp",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.regexp.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.asynciterable",
+                    Value: new $goInterfaceAdapter$string("lib.es2018.asynciterable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.symbol",
+                    Value: new $goInterfaceAdapter$string("lib.es2019.symbol.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.bigint",
+                    Value: new $goInterfaceAdapter$string("lib.es2020.bigint.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.weakref",
+                    Value: new $goInterfaceAdapter$string("lib.es2021.weakref.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.object",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.object.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.regexp",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.regexp.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.string",
+                    Value: new $goInterfaceAdapter$string("lib.es2024.string.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.float16",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.float16.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.iterator",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.iterator.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.promise",
+                    Value: new $goInterfaceAdapter$string("lib.es2025.promise.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.array",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.array.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.collection",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.collection.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.date",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.date.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.decorators",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.decorators.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.disposable",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.disposable.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.error",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.error.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.intl",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.intl.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.sharedmemory",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.sharedmemory.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.temporal",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.temporal.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext.typedarrays",
+                    Value: new $goInterfaceAdapter$string("lib.esnext.typedarrays.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "decorators",
+                    Value: new $goInterfaceAdapter$string("lib.decorators.d.ts")
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "decorators.legacy",
+                    Value: new $goInterfaceAdapter$string("lib.decorators.legacy.d.ts")
+                })),
+        ]));
     }
     {
         $state.Libs = Collect$string(OrderedMap$Keys$string$Interface_void($state.LibMap));
@@ -4939,208 +5046,284 @@ export function $initialize(): void {
         }));
     }
     {
-        $state.moduleResolutionOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node16",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode16$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "nodenext",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNodeNext$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "bundler",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindBundler$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "classic",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindClassic$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode10$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node10",
-                Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode10$constant__from_core())
-            }))]));
+        $state.moduleResolutionOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node16",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode16$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "nodenext",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNodeNext$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "bundler",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindBundler$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "classic",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindClassic$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode10$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node10",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleResolutionKind(ModuleResolutionKindNode10$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.targetOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es5",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES5$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es6",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2015$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2015$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2016",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2016$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2017",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2017$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2018",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2018$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2019",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2019$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2020$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2021",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2021$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2022$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2023",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2023$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2024",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2024$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2025",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2025$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext",
-                Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetESNext$constant__from_core())
-            }))]));
+        $state.targetOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es5",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES5$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es6",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2015$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2015$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2016",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2016$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2017",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2017$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2018",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2018$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2019",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2019$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2020$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2021",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2021$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2022$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2023",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2023$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2024",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2024$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2025",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetES2025$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext",
+                    Value: new $goInterfaceAdapter$Named_core$ScriptTarget(ScriptTargetESNext$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.moduleOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "commonjs",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindCommonJS$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "amd",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindAMD$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "system",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindSystem$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "umd",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindUMD$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es6",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2015$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2015",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2015$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2020",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2020$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "es2022",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2022$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "esnext",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindESNext$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node16",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode16$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node18",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode18$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "node20",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode20$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "nodenext",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNodeNext$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "preserve",
-                Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindPreserve$constant__from_core())
-            }))]));
+        $state.moduleOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "commonjs",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindCommonJS$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "amd",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindAMD$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "system",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindSystem$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "umd",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindUMD$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es6",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2015$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2015",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2015$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2020",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2020$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "es2022",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindES2022$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "esnext",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindESNext$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node16",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode16$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node18",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode18$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "node20",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNode20$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "nodenext",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindNodeNext$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "preserve",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleKind(ModuleKindPreserve$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.moduleDetectionOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "auto",
-                Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindAuto$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "legacy",
-                Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindLegacy$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "force",
-                Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindForce$constant__from_core())
-            }))]));
+        $state.moduleDetectionOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "auto",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindAuto$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "legacy",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindLegacy$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "force",
+                    Value: new $goInterfaceAdapter$Named_core$ModuleDetectionKind(ModuleDetectionKindForce$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.jsxOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "preserve",
-                Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitPreserve$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "react-native",
-                Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactNative$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "react-jsx",
-                Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactJSX$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "react-jsxdev",
-                Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactJSXDev$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "react",
-                Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReact$constant__from_core())
-            }))]));
+        $state.jsxOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "preserve",
+                    Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitPreserve$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "react-native",
+                    Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactNative$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "react-jsx",
+                    Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactJSX$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "react-jsxdev",
+                    Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReactJSXDev$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "react",
+                    Value: new $goInterfaceAdapter$Named_core$JsxEmit(JsxEmitReact$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.newLineOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "crlf",
-                Value: new $goInterfaceAdapter$Named_core$NewLineKind(NewLineKindCRLF$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "lf",
-                Value: new $goInterfaceAdapter$Named_core$NewLineKind(NewLineKindLF$constant__from_core())
-            }))]));
+        $state.newLineOptionMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "crlf",
+                    Value: new $goInterfaceAdapter$Named_core$NewLineKind(NewLineKindCRLF$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "lf",
+                    Value: new $goInterfaceAdapter$Named_core$NewLineKind(NewLineKindLF$constant__from_core())
+                })),
+        ]));
     }
     {
         $state.targetToLibMap = $goMap$MapOf_Named_core$ScriptTarget_To_string.make(12, [[ScriptTargetESNext$constant__from_core(), "lib.esnext.full.d.ts"], [ScriptTargetES2025$constant__from_core(), "lib.es2025.full.d.ts"], [ScriptTargetES2024$constant__from_core(), "lib.es2024.full.d.ts"], [ScriptTargetES2023$constant__from_core(), "lib.es2023.full.d.ts"], [ScriptTargetES2022$constant__from_core(), "lib.es2022.full.d.ts"], [ScriptTargetES2021$constant__from_core(), "lib.es2021.full.d.ts"], [ScriptTargetES2020$constant__from_core(), "lib.es2020.full.d.ts"], [ScriptTargetES2019$constant__from_core(), "lib.es2019.full.d.ts"], [ScriptTargetES2018$constant__from_core(), "lib.es2018.full.d.ts"], [ScriptTargetES2017$constant__from_core(), "lib.es2017.full.d.ts"], [ScriptTargetES2016$constant__from_core(), "lib.es2016.full.d.ts"], [ScriptTargetES2015$constant__from_core(), "lib.es6.d.ts"]]);
     }
     {
-        $state.watchFileEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedpollinginterval",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindFixedPollingInterval$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "prioritypollinginterval",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindPriorityPollingInterval$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dynamicprioritypolling",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindDynamicPriorityPolling$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedchunksizepolling",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindFixedChunkSizePolling$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "usefsevents",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindUseFsEvents$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "usefseventsonparentdirectory",
-                Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindUseFsEventsOnParentDirectory$constant__from_core())
-            }))]));
+        $state.watchFileEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedpollinginterval",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindFixedPollingInterval$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "prioritypollinginterval",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindPriorityPollingInterval$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dynamicprioritypolling",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindDynamicPriorityPolling$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedchunksizepolling",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindFixedChunkSizePolling$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "usefsevents",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindUseFsEvents$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "usefseventsonparentdirectory",
+                    Value: new $goInterfaceAdapter$Named_core$WatchFileKind(WatchFileKindUseFsEventsOnParentDirectory$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.watchDirectoryEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "usefsevents",
-                Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindUseFsEvents$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedpollinginterval",
-                Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindFixedPollingInterval$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dynamicprioritypolling",
-                Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindDynamicPriorityPolling$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedchunksizepolling",
-                Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindFixedChunkSizePolling$constant__from_core())
-            }))]));
+        $state.watchDirectoryEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "usefsevents",
+                    Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindUseFsEvents$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedpollinginterval",
+                    Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindFixedPollingInterval$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dynamicprioritypolling",
+                    Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindDynamicPriorityPolling$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedchunksizepolling",
+                    Value: new $goInterfaceAdapter$Named_core$WatchDirectoryKind(WatchDirectoryKindFixedChunkSizePolling$constant__from_core())
+                })),
+        ]));
     }
     {
-        $state.fallbackEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedinterval",
-                Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindFixedInterval$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "priorityinterval",
-                Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindPriorityInterval$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "dynamicpriority",
-                Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindDynamicPriority$constant__from_core())
-            })), MapEntry__from_collections.$storageOf<gostring, GoInterface | undefined>(MapEntry__from_collections.$fromStorage<gostring, GoInterface | undefined>({
-                Key: "fixedchunksize",
-                Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindFixedChunkSize$constant__from_core())
-            }))]));
+        $state.fallbackEnumMap = NewOrderedMapFromList$string$Interface_void(RuntimeSlice.literal<MapEntry__from_collections$Storage<gostring, GoInterface | undefined>>([
+            (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedinterval",
+                    Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindFixedInterval$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "priorityinterval",
+                    Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindPriorityInterval$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "dynamicpriority",
+                    Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindDynamicPriority$constant__from_core())
+                })), (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+                {
+                    Key: "fixedchunksize",
+                    Value: new $goInterfaceAdapter$Named_core$PollingKind(PollingKindFixedChunkSize$constant__from_core())
+                })),
+        ]));
     }
     {
         $state.commandLineOptionEnumMap = $goMap$MapOf_string_To_PointerTo_Named_collections$OrderedMapOf_string_And_Interface_void.make(10, [["lib", $state.LibMap], ["moduleResolution", $state.moduleResolutionOptionMap], ["module", $state.moduleOptionMap], ["target", $state.targetOptionMap], ["moduleDetection", $state.moduleDetectionOptionMap], ["jsx", $state.jsxOptionMap], ["newLine", $state.newLineOptionMap], ["watchFile", $state.watchFileEnumMap], ["watchDirectory", $state.watchDirectoryEnumMap], ["fallbackPolling", $state.fallbackEnumMap]]);
@@ -5167,119 +5350,135 @@ export function $initialize(): void {
         void 0;
     }
     {
-        $state.impliedOptions = RuntimeSlice.literal<impliedOption__from_tsoptions$Storage>([impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "Module",
-                dependencies: RuntimeSlice.literal<gostring>(["Target"]),
-                compute: computeFn$Named_core$ModuleKind(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): ModuleKind__from_core => {
-                    return CompilerOptions__from_core.GetEmitModuleKind($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "ModuleResolution",
-                dependencies: RuntimeSlice.literal<gostring>(["Module", "Target"]),
-                compute: computeFn$Named_core$ModuleResolutionKind(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): ModuleResolutionKind__from_core => {
-                    return CompilerOptions__from_core.GetModuleResolutionKind($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "ModuleDetection",
-                dependencies: RuntimeSlice.literal<gostring>(["Module", "Target"]),
-                compute: computeFn$Named_core$ModuleDetectionKind(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): ModuleDetectionKind__from_core => {
-                    return CompilerOptions__from_core.GetEmitModuleDetectionKind($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "IsolatedModules",
-                dependencies: RuntimeSlice.literal<gostring>(["VerbatimModuleSyntax"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetIsolatedModules($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "PreserveConstEnums",
-                dependencies: RuntimeSlice.literal<gostring>(["IsolatedModules", "VerbatimModuleSyntax"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.ShouldPreserveConstEnums($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "Declaration",
-                dependencies: RuntimeSlice.literal<gostring>(["Composite"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetEmitDeclarations($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "DeclarationMap",
-                dependencies: RuntimeSlice.literal<gostring>(["Declaration", "Composite"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetAreDeclarationMapsEnabled($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "Incremental",
-                dependencies: RuntimeSlice.literal<gostring>(["Composite"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.IsIncremental($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "UseDefineForClassFields",
-                dependencies: RuntimeSlice.literal<gostring>(["Target", "Module"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetUseDefineForClassFields($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "ResolvePackageJsonExports",
-                dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "Module", "Target"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetResolvePackageJsonExports($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "ResolvePackageJsonImports",
-                dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "ResolvePackageJsonExports", "Module", "Target"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetResolvePackageJsonImports($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "ResolveJsonModule",
-                dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "Module", "Target"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetResolveJsonModule($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "AllowJs",
-                dependencies: RuntimeSlice.literal<gostring>(["CheckJs"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetAllowJS($argument0);
-                })
-            })), impliedOption.$storageOf(impliedOption.$fromStorage({
-                name: "AllowImportingTsExtensions",
-                dependencies: RuntimeSlice.literal<gostring>(["RewriteRelativeImportExtensions"]),
-                compute: computeFn$bool(($argument0: {
-                    value: CompilerOptions__from_core;
-                } | undefined): bool => {
-                    return CompilerOptions__from_core.GetAllowImportingTsExtensions($argument0);
-                })
-            }))]);
+        $state.impliedOptions = RuntimeSlice.literal<impliedOption__from_tsoptions$Storage>([
+            (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "Module",
+                    dependencies: RuntimeSlice.literal<gostring>(["Target"]),
+                    compute: computeFn$Named_core$ModuleKind(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): ModuleKind__from_core => {
+                        return CompilerOptions__from_core.GetEmitModuleKind($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "ModuleResolution",
+                    dependencies: RuntimeSlice.literal<gostring>(["Module", "Target"]),
+                    compute: computeFn$Named_core$ModuleResolutionKind(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): ModuleResolutionKind__from_core => {
+                        return CompilerOptions__from_core.GetModuleResolutionKind($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "ModuleDetection",
+                    dependencies: RuntimeSlice.literal<gostring>(["Module", "Target"]),
+                    compute: computeFn$Named_core$ModuleDetectionKind(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): ModuleDetectionKind__from_core => {
+                        return CompilerOptions__from_core.GetEmitModuleDetectionKind($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "IsolatedModules",
+                    dependencies: RuntimeSlice.literal<gostring>(["VerbatimModuleSyntax"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetIsolatedModules($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "PreserveConstEnums",
+                    dependencies: RuntimeSlice.literal<gostring>(["IsolatedModules", "VerbatimModuleSyntax"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.ShouldPreserveConstEnums($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "Declaration",
+                    dependencies: RuntimeSlice.literal<gostring>(["Composite"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetEmitDeclarations($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "DeclarationMap",
+                    dependencies: RuntimeSlice.literal<gostring>(["Declaration", "Composite"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetAreDeclarationMapsEnabled($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "Incremental",
+                    dependencies: RuntimeSlice.literal<gostring>(["Composite"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.IsIncremental($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "UseDefineForClassFields",
+                    dependencies: RuntimeSlice.literal<gostring>(["Target", "Module"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetUseDefineForClassFields($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "ResolvePackageJsonExports",
+                    dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "Module", "Target"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetResolvePackageJsonExports($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "ResolvePackageJsonImports",
+                    dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "ResolvePackageJsonExports", "Module", "Target"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetResolvePackageJsonImports($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "ResolveJsonModule",
+                    dependencies: RuntimeSlice.literal<gostring>(["ModuleResolution", "Module", "Target"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetResolveJsonModule($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "AllowJs",
+                    dependencies: RuntimeSlice.literal<gostring>(["CheckJs"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetAllowJS($argument0);
+                    })
+                })), (void impliedOption.$storageOf, (void impliedOption.$fromStorage,
+                {
+                    name: "AllowImportingTsExtensions",
+                    dependencies: RuntimeSlice.literal<gostring>(["RewriteRelativeImportExtensions"]),
+                    compute: computeFn$bool(($argument0: {
+                        value: CompilerOptions__from_core;
+                    } | undefined): bool => {
+                        return CompilerOptions__from_core.GetAllowImportingTsExtensions($argument0);
+                    })
+                })),
+        ]);
     }
     {
         $state.compileOnSaveCommandLineOption =

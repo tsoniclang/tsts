@@ -92,14 +92,17 @@ export function organizeImportsWorker(oldImportDecls: RuntimeSlice<tsonicTypeScr
                     });
                 }
                 if (newImportDecls.length === 0) {
-                    Tracker__from_change.DeleteNodeRange(changeTracker, sourceFile, Node__from_ast.AsNode(oldImportDecls.get(0)), Node__from_ast.AsNode(oldImportDecls.get(oldImportDecls.length - 1)), LeadingTriviaOptionExclude$constant__from_change(), TrailingTriviaOptionInclude$constant__from_change());
+                    Tracker__from_change.DeleteNodeRange(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                        oldImportDecls.get(0)), (void Node__from_ast.AsNode,
+                        oldImportDecls.get(oldImportDecls.length - 1)), LeadingTriviaOptionExclude$constant__from_change(), TrailingTriviaOptionInclude$constant__from_change());
                 }
                 else {
                     const __gotots_range_2 = newImportDecls;
                     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
                         const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
                         let imp: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_2;
-                        EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, Node__from_ast.AsNode(imp), EFNoLeadingComments$constant__from_printer());
+                        EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, (void Node__from_ast.AsNode,
+                            imp), EFNoLeadingComments$constant__from_printer());
                     }
                     const __gotots_field_0 = LeadingTriviaOptionExclude$constant__from_change();
                     const __gotots_field_1 = TrailingTriviaOptionInclude$constant__from_change();
@@ -110,12 +113,15 @@ export function organizeImportsWorker(oldImportDecls: RuntimeSlice<tsonicTypeScr
                     __gotots_struct_0.Suffix = __gotots_field_2;
                     let options = __gotots_struct_0;
                     let newNodes = Map$PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(newImportDecls, (s: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
-                        return Node__from_ast.AsNode(s);
+                        return (void Node__from_ast.AsNode,
+                            s);
                     });
-                    Tracker__from_change.ReplaceNodeWithNodes(changeTracker, sourceFile, Node__from_ast.AsNode(oldImportDecls.get(0)), newNodes, options);
+                    Tracker__from_change.ReplaceNodeWithNodes(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                        oldImportDecls.get(0)), newNodes, options);
                     if (oldImportDecls.length > 1) {
                         for (let i = 1; i < oldImportDecls.length; i++) {
-                            Tracker__from_change.Delete(changeTracker, sourceFile, Node__from_ast.AsNode(oldImportDecls.get(i)));
+                            Tracker__from_change.Delete(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                                oldImportDecls.get(i)));
                         }
                     }
                 }
@@ -183,11 +189,7 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
         value: CompilerOptions__from_core;
     } | undefined = Program__from_compiler.Options(program);
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    const __gotots_binary_operand_0 = Node__from_ast.SubtreeFacts(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-        return NodeDefault__from_ast.$fromStorage($go$storage);
-    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-        return NodeDefault__from_ast.$storageOf($go$value);
-    })));
+    const __gotots_binary_operand_0 = Node__from_ast.SubtreeFacts(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
     const __gotots_binary_operand_1 = SubtreeContainsJsx$constant__from_ast();
     let jsxElementsPresent = !(((__gotots_binary_operand_0 & __gotots_binary_operand_1) >>> 0) === 0);
     let jsxModeNeedsExplicitImport__shadow_1 = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx === JsxEmitReact$constant__from_core() || (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx === JsxEmitReactNative$constant__from_core();
@@ -233,9 +235,12 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
                     else if (newElements.length < NodeList__from_ast.$storageOf((((namedImports ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length) {
                         let newList: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeFactory__from_ast.NewNodeList(factory, newElements);
                         let updatedNamedImports: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateNamedImports(factory, namedImports, newList);
-                        namedBindings = Node__from_ast.AsNode(updatedNamedImports);
+                        namedBindings =
+                            (void Node__from_ast.AsNode,
+                                updatedNamedImports);
                     }
-                    if (!(namedBindings === undefined) && !NodeIsSynthesized__from_ast(Node__from_ast.AsNode(originalBindings)) && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((originalBindings ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)), sourceFile)) {
+                    if (!(namedBindings === undefined) && !NodeIsSynthesized__from_ast((void Node__from_ast.AsNode,
+                        originalBindings)) && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((originalBindings ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)), sourceFile)) {
                         EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, namedBindings, EFMultiLine$constant__from_printer());
                     }
                     break;
@@ -251,9 +256,10 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
             const __gotots_argument_0 = importDeclNode;
             const __gotots_store_1 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_1 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ModifiersBase"));
-            const __gotots_argument_2 = Node__from_ast.AsNode(newClause);
-            const __gotots_argument_3 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-            const __gotots_argument_4 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+            const __gotots_argument_2 = (void Node__from_ast.AsNode,
+                newClause);
+            const __gotots_argument_3: ImportDeclaration__from_ast["ModuleSpecifier"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+            const __gotots_argument_4: ImportDeclaration__from_ast["Attributes"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
             let newImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_0, __gotots_argument_0, __gotots_argument_1, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
             usedImports = usedImports.append(void 0, [newImportDecl]);
         }
@@ -269,8 +275,8 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
                     const __gotots_store_2 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     const __gotots_argument_6 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "ModifiersBase"));
                     const __gotots_argument_7 = void 0;
-                    const __gotots_argument_8 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                    const __gotots_argument_9 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                    const __gotots_argument_8: ImportDeclaration__from_ast["ModuleSpecifier"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                    const __gotots_argument_9: ImportDeclaration__from_ast["Attributes"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                     let newImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_1, __gotots_argument_5, __gotots_argument_6, __gotots_argument_7, __gotots_argument_8, __gotots_argument_9);
                     usedImports = usedImports.append(void 0, [newImportDecl]);
                 }
@@ -296,7 +302,8 @@ export function filterUsedImportSpecifiers(elements: RuntimeSlice<tsonicTypeScri
     return result;
 }
 export function hasModuleDeclarationMatchingSpecifier(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, moduleSpecifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
-    if (moduleSpecifier === undefined || !IsStringLiteral__from_ast(Node__from_ast.AsNode(moduleSpecifier))) {
+    if (moduleSpecifier === undefined || !IsStringLiteral__from_ast((void Node__from_ast.AsNode,
+        moduleSpecifier))) {
         return false;
     }
     let moduleSpecifierText = Node__from_ast.Text(moduleSpecifier);
@@ -336,13 +343,15 @@ export function getImportAttributesKey(attributes: tsonicTypeScriptRuntime.Locat
         } | undefined = Node__from_ast.AsImportAttribute(attrNode);
         strings__from_gostdlib.Builder.WriteString(key, Node__from_ast.Text(ImportAttribute__from_ast.Name(attr)));
         strings__from_gostdlib.Builder.WriteString(key, ":");
-        if (IsStringLiteralLike__from_ast(Node__from_ast.AsNode((attr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Value))) {
+        if (IsStringLiteralLike__from_ast((void Node__from_ast.AsNode,
+            (attr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Value))) {
             strings__from_gostdlib.Builder.WriteString(key, "\"");
             strings__from_gostdlib.Builder.WriteString(key, Node__from_ast.Text((attr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Value));
             strings__from_gostdlib.Builder.WriteString(key, "\"");
         }
         else {
-            strings__from_gostdlib.Builder.WriteString(key, Node__from_ast.Text(Node__from_ast.AsNode((attr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Value)));
+            strings__from_gostdlib.Builder.WriteString(key, Node__from_ast.Text((void Node__from_ast.AsNode,
+                (attr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Value)));
         }
         strings__from_gostdlib.Builder.WriteString(key, " ");
     }
@@ -453,8 +462,8 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                 const __gotots_store_3 = (defaultDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_argument_11 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "ModifiersBase"));
                 const __gotots_argument_12 = newClause;
-                const __gotots_argument_13 = (defaultDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                const __gotots_argument_14 = (defaultDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                const __gotots_argument_13: ImportDeclaration__from_ast["ModuleSpecifier"] = (defaultDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                const __gotots_argument_14: ImportDeclaration__from_ast["Attributes"] = (defaultDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                 let newImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_2, __gotots_argument_10, __gotots_argument_11, __gotots_argument_12, __gotots_argument_13, __gotots_argument_14);
                 coalescedImports = coalescedImports.append(void 0, [newImportDecl]);
                 continue;
@@ -483,8 +492,8 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                 const __gotots_store_4 = (nsImportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_argument_18 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "ModifiersBase"));
                 const __gotots_argument_19 = newClause;
-                const __gotots_argument_20 = (nsImportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                const __gotots_argument_21 = (nsImportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                const __gotots_argument_20: ImportDeclaration__from_ast["ModuleSpecifier"] = (nsImportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                const __gotots_argument_21: ImportDeclaration__from_ast["Attributes"] = (nsImportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                 let newImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_3, __gotots_argument_17, __gotots_argument_18, __gotots_argument_19, __gotots_argument_20, __gotots_argument_21);
                 coalescedImports = coalescedImports.append(void 0, [newImportDecl]);
             }
@@ -543,7 +552,9 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                     if (NodeList__from_ast.HasTrailingComma(originalElements)) {
                         NodeList__from_ast.$storageOf(((sortedList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((originalElements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc)));
                     }
-                    newNamedImports = Node__from_ast.AsNode(NodeFactory__from_ast.UpdateNamedImports(factory, firstNamedBindings, sortedList));
+                    newNamedImports =
+                        (void Node__from_ast.AsNode,
+                            NodeFactory__from_ast.UpdateNamedImports(factory, firstNamedBindings, sortedList));
                 }
                 else {
                     newNamedImports = NodeFactory__from_ast.NewNamedImports(factory, sortedList);
@@ -551,8 +562,10 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
             }
             if (!(sourceFile === undefined) && !(newNamedImports === undefined) && !(firstNamedImport === undefined)) {
                 let firstNamedBindings: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (Node__from_ast.AsImportClause((Node__from_ast.AsImportDeclaration(firstNamedImport) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImportClause) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings;
-                if (!NodeIsSynthesized__from_ast(Node__from_ast.AsNode(firstNamedBindings)) && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((firstNamedBindings ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)), sourceFile)) {
-                    EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, Node__from_ast.AsNode(newNamedImports), EFMultiLine$constant__from_printer());
+                if (!NodeIsSynthesized__from_ast((void Node__from_ast.AsNode,
+                    firstNamedBindings)) && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((firstNamedBindings ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)), sourceFile)) {
+                    EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, (void Node__from_ast.AsNode,
+                        newNamedImports), EFMultiLine$constant__from_printer());
                 }
             }
             if (isTypeOnly && !(newDefaultImport === undefined) && !(newNamedImports === undefined)) {
@@ -565,8 +578,8 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                 const __gotots_store_5 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_argument_23 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "ModifiersBase"));
                 const __gotots_argument_24 = defaultClause;
-                const __gotots_argument_25 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                const __gotots_argument_26 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                const __gotots_argument_25: ImportDeclaration__from_ast["ModuleSpecifier"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                const __gotots_argument_26: ImportDeclaration__from_ast["Attributes"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                 let defaultImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_4, __gotots_argument_22, __gotots_argument_23, __gotots_argument_24, __gotots_argument_25, __gotots_argument_26);
                 coalescedImports = coalescedImports.append(void 0, [defaultImportDecl]);
                 let namedDeclNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = firstNamedImport;
@@ -582,8 +595,8 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                 const __gotots_store_6 = (namedImportDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_argument_28 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "ModifiersBase"));
                 const __gotots_argument_29 = namedClause;
-                const __gotots_argument_30 = (namedImportDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                const __gotots_argument_31 = (namedImportDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                const __gotots_argument_30: ImportDeclaration__from_ast["ModuleSpecifier"] = (namedImportDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                const __gotots_argument_31: ImportDeclaration__from_ast["Attributes"] = (namedImportDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                 let namedImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_5, __gotots_argument_27, __gotots_argument_28, __gotots_argument_29, __gotots_argument_30, __gotots_argument_31);
                 coalescedImports = coalescedImports.append(void 0, [namedImportDecl]);
             }
@@ -600,8 +613,8 @@ export function coalesceImportsWorker(importDecls: RuntimeSlice<tsonicTypeScript
                 const __gotots_store_7 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_argument_33 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "ModifiersBase"));
                 const __gotots_argument_34 = newClause;
-                const __gotots_argument_35 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-                const __gotots_argument_36 = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+                const __gotots_argument_35: ImportDeclaration__from_ast["ModuleSpecifier"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+                const __gotots_argument_36: ImportDeclaration__from_ast["Attributes"] = (importDeclNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
                 let newImportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateImportDeclaration(__gotots_receiver_6, __gotots_argument_32, __gotots_argument_33, __gotots_argument_34, __gotots_argument_35, __gotots_argument_36);
                 coalescedImports = coalescedImports.append(void 0, [newImportDecl]);
             }
@@ -684,12 +697,9 @@ export function getCategorizedImports(importDecls: RuntimeSlice<tsonicTypeScript
             value: ImportClause__from_ast;
         } | undefined = Node__from_ast.AsImportClause((Node__from_ast.AsImportDeclaration(importDecl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImportClause);
         let group: importGroup | undefined = regularImports;
-        const __gotots_store_10 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((clause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        }))) {
+        const __gotots_store_10 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+            NodeBase__from_ast.$storageOf((clause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
+        if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
             group = typeOnlyImports;
         }
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ImportClause__from_ast.Name(clause);
@@ -814,14 +824,17 @@ export function organizeExportsWorker(oldExportDecls: RuntimeSlice<tsonicTypeScr
     let newExportDecls = coalesceExportsWorker(oldExportDecls, specifierComparerFunc, comparer.moduleSpecifierComparer, sourceFile, changeTracker);
     if (oldExportDecls.length > 0) {
         if (newExportDecls.length === 0) {
-            Tracker__from_change.DeleteNodeRange(changeTracker, sourceFile, Node__from_ast.AsNode(oldExportDecls.get(0)), Node__from_ast.AsNode(oldExportDecls.get(oldExportDecls.length - 1)), LeadingTriviaOptionExclude$constant__from_change(), TrailingTriviaOptionInclude$constant__from_change());
+            Tracker__from_change.DeleteNodeRange(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                oldExportDecls.get(0)), (void Node__from_ast.AsNode,
+                oldExportDecls.get(oldExportDecls.length - 1)), LeadingTriviaOptionExclude$constant__from_change(), TrailingTriviaOptionInclude$constant__from_change());
         }
         else {
             const __gotots_range_4 = newExportDecls;
             for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
                 const __gotots_range_value_4 = __gotots_range_4.get(__gotots_range_index_4);
                 let exp: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_4;
-                EmitContext__from_printer.AddEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, Node__from_ast.AsNode(exp), EFNoLeadingComments$constant__from_printer());
+                EmitContext__from_printer.AddEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, (void Node__from_ast.AsNode,
+                    exp), EFNoLeadingComments$constant__from_printer());
             }
             const __gotots_field_3 = LeadingTriviaOptionExclude$constant__from_change();
             const __gotots_field_4 = TrailingTriviaOptionInclude$constant__from_change();
@@ -832,12 +845,15 @@ export function organizeExportsWorker(oldExportDecls: RuntimeSlice<tsonicTypeScr
             __gotots_struct_1.Suffix = __gotots_field_5;
             let options = __gotots_struct_1;
             let newNodes = Map$PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(newExportDecls, (s: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
-                return Node__from_ast.AsNode(s);
+                return (void Node__from_ast.AsNode,
+                    s);
             });
-            Tracker__from_change.ReplaceNodeWithNodes(changeTracker, sourceFile, Node__from_ast.AsNode(oldExportDecls.get(0)), newNodes, options);
+            Tracker__from_change.ReplaceNodeWithNodes(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                oldExportDecls.get(0)), newNodes, options);
             if (oldExportDecls.length > 1) {
                 for (let i = 1; i < oldExportDecls.length; i++) {
-                    Tracker__from_change.Delete(changeTracker, sourceFile, Node__from_ast.AsNode(oldExportDecls.get(i)));
+                    Tracker__from_change.Delete(changeTracker, sourceFile, (void Node__from_ast.AsNode,
+                        oldExportDecls.get(i)));
                 }
             }
         }
@@ -927,15 +943,14 @@ export function coalesceExportsWorker(exportGroup: RuntimeSlice<tsonicTypeScript
                     let __gotots_logical_result_0 = !(sourceFile === undefined);
                     if (__gotots_logical_result_0) {
                         const __gotots_store_8 = NodeBase__from_ast.$storageOf((namedExports ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                            return NodeDefault__from_ast.$fromStorage($go$storage);
-                        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                            return NodeDefault__from_ast.$storageOf($go$value);
-                        }));
+                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                         __gotots_logical_result_0 = !NodeIsSynthesized__from_ast(__gotots_argument_39);
                     }
-                    if (__gotots_logical_result_0 && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(Node__from_ast.$fromStorage(NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((namedExports ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault)).Node)).Loc)), sourceFile)) {
-                        EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, Node__from_ast.AsNode(updatedExportClause), EFMultiLine$constant__from_printer());
+                    if (__gotots_logical_result_0 && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
+                        (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                            NodeBase__from_ast.$storageOf((namedExports ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault)).Node)).Loc)), sourceFile)) {
+                        EmitContext__from_printer.SetEmitFlags((changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, (void Node__from_ast.AsNode,
+                            updatedExportClause), EFMultiLine$constant__from_printer());
                     }
                 }
                 else {
@@ -946,10 +961,10 @@ export function coalesceExportsWorker(exportGroup: RuntimeSlice<tsonicTypeScript
             const __gotots_argument_40 = exportDecl;
             const __gotots_store_9 = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_41 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "ModifiersBase"));
-            const __gotots_argument_42 = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly;
+            const __gotots_argument_42: ExportDeclaration__from_ast["IsTypeOnly"] = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly;
             const __gotots_argument_43 = updatedExportClause;
-            const __gotots_argument_44 = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
-            const __gotots_argument_45 = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
+            const __gotots_argument_44: ExportDeclaration__from_ast["ModuleSpecifier"] = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier;
+            const __gotots_argument_45: ExportDeclaration__from_ast["Attributes"] = (exportDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
             let newExportDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.UpdateExportDeclaration(__gotots_receiver_7, __gotots_argument_40, __gotots_argument_41, __gotots_argument_42, __gotots_argument_43, __gotots_argument_44, __gotots_argument_45);
             coalescedExports = coalescedExports.append(void 0, [newExportDecl]);
         }

@@ -43,19 +43,15 @@ export class optionalCatchTransformer {
             const __gotots_argument_5 = void 0;
             const __gotots_argument_7 = NodeFactory__from_ast.NewVariableDeclaration(__gotots_receiver_2, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4, __gotots_argument_5);
             const __gotots_store_7 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_callee_0 = (Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
-            const __gotots_argument_6 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Block;
+            const __gotots_callee_0: NodeVisitor__from_ast["Visit"] = (Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
+            const __gotots_argument_6: CatchClause__from_ast["Block"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Block;
             const __gotots_argument_8 = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_6);
             return NodeFactory__from_ast.NewCatchClause(__gotots_receiver_3, __gotots_argument_7, __gotots_argument_8);
         }
         const __gotots_store_8 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         const __gotots_receiver_4 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "Transformer"));
         const __gotots_store_9 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_4, __gotots_argument_9);
     }
 }

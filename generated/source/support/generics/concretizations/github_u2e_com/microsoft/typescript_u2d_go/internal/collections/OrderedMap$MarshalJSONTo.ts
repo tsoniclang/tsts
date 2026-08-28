@@ -15,10 +15,9 @@ import { GoEmptyStruct } from "@gotots/runtime/struct.js";
 export function OrderedMap$MarshalJSONTo$PointerTo_Named_ast$Node$Struct_void($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.MarshalJSONTo$kernel<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
-        return $argument0;
     }, ($argument0: GoEmptyStruct): GoInterface | undefined => {
-        return new $goInterfaceAdapter$Struct_void(GoEmptyStruct.$copy($argument0));
+        return new $goInterfaceAdapter$Struct_void((void GoEmptyStruct.$copy,
+            $argument0));
     }, ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named_ast$Node($argument0);
     }, ($argument0: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> | undefined): reflect.Type | undefined => {
@@ -36,14 +35,9 @@ export function OrderedMap$MarshalJSONTo$PointerTo_Named_printer$EmitHelper$Stru
         value: EmitHelper__from_printer;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: EmitHelper__from_printer;
-    } | undefined): {
-        value: EmitHelper__from_printer;
-    } | undefined => {
-        return $argument0;
     }, ($argument0: GoEmptyStruct): GoInterface | undefined => {
-        return new $goInterfaceAdapter$Struct_void(GoEmptyStruct.$copy($argument0));
+        return new $goInterfaceAdapter$Struct_void((void GoEmptyStruct.$copy,
+            $argument0));
     }, ($argument0: {
         value: EmitHelper__from_printer;
     } | undefined): GoInterface | undefined => {
@@ -57,8 +51,6 @@ export function OrderedMap$MarshalJSONTo$PointerTo_Named_printer$EmitHelper$Stru
 export function OrderedMap$MarshalJSONTo$string$Interface_void($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, GoInterface | undefined>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.MarshalJSONTo$kernel<gostring, GoInterface | undefined>($argument0, ($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: gostring): gostring => {
-        return $argument0;
     }, ($argument0: GoInterface | undefined): GoInterface | undefined => {
         return $argument0;
     }, ($argument0: gostring): GoInterface | undefined => {
@@ -69,8 +61,6 @@ export function OrderedMap$MarshalJSONTo$string$Interface_void($argument0: tsoni
 }
 export function OrderedMap$MarshalJSONTo$string$Named_packagejson$ExportsOrImports($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, ExportsOrImports__from_packagejson>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.MarshalJSONTo$kernel<gostring, ExportsOrImports__from_packagejson>($argument0, ($argument0: gostring): gostring => {
-        return $argument0;
-    }, ($argument0: gostring): gostring => {
         return $argument0;
     }, ($argument0: ExportsOrImports__from_packagejson): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_packagejson$ExportsOrImports(ExportsOrImports__from_packagejson.$copy($argument0));
@@ -83,8 +73,6 @@ export function OrderedMap$MarshalJSONTo$string$Named_packagejson$ExportsOrImpor
 export function OrderedMap$MarshalJSONTo$string$Named_packagejson$JSONValue($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, JSONValue__from_packagejson>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.MarshalJSONTo$kernel<gostring, JSONValue__from_packagejson>($argument0, ($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: gostring): gostring => {
-        return $argument0;
     }, ($argument0: JSONValue__from_packagejson): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_packagejson$JSONValue(JSONValue__from_packagejson.$copy($argument0));
     }, ($argument0: gostring): GoInterface | undefined => {
@@ -95,8 +83,6 @@ export function OrderedMap$MarshalJSONTo$string$Named_packagejson$JSONValue($arg
 }
 export function OrderedMap$MarshalJSONTo$string$SliceOf_string($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, RuntimeSlice<gostring>>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
     return OrderedMap__from_collections.MarshalJSONTo$kernel<gostring, RuntimeSlice<gostring>>($argument0, ($argument0: gostring): gostring => {
-        return $argument0;
-    }, ($argument0: gostring): gostring => {
         return $argument0;
     }, ($argument0: RuntimeSlice<gostring>): GoInterface | undefined => {
         return new $goInterfaceAdapter$SliceOf_string($argument0);

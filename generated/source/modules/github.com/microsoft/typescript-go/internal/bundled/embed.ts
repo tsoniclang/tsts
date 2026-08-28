@@ -60,7 +60,7 @@ export class wrappedFS {
                 GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
             }
         }
-        const __gotots_receiver_0 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_0: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_1 = path;
         const __gotots_argument_2 = data;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_0).AppendFile(__gotots_argument_1, __gotots_argument_2);
@@ -76,7 +76,7 @@ export class wrappedFS {
                 GoPanic.raise(__gotots_argument_3 === undefined ? GoPanicNilValue.create() : __gotots_argument_3);
             }
         }
-        const __gotots_receiver_1 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_1: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_4 = path;
         const __gotots_argument_5 = named_time.TimeOperations.$copy(aTime);
         const __gotots_argument_6 = named_time.TimeOperations.$copy(mTime);
@@ -93,7 +93,7 @@ export class wrappedFS {
                 return rest === "libs";
             }
         }
-        const __gotots_receiver_2 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_2: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_7 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_2).DirectoryExists(__gotots_argument_7);
     }
@@ -110,7 +110,7 @@ export class wrappedFS {
                 return ok__shadow_1;
             }
         }
-        const __gotots_receiver_3 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_3: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_8 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_3).FileExists(__gotots_argument_8);
     }
@@ -132,7 +132,7 @@ export class wrappedFS {
                 return Entries__from_vfs.$copy(result);
             }
         }
-        const __gotots_receiver_4 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_4: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_9 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_4).GetAccessibleEntries(__gotots_argument_9);
     }
@@ -155,7 +155,7 @@ export class wrappedFS {
                 return [contents, ok__shadow_1];
             }
         }
-        const __gotots_receiver_5 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_5: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_10 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_5).ReadFile(__gotots_argument_10);
     }
@@ -169,7 +169,7 @@ export class wrappedFS {
                 return path;
             }
         }
-        const __gotots_receiver_6 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_6: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_11 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_6).Realpath(__gotots_argument_11);
     }
@@ -184,7 +184,7 @@ export class wrappedFS {
                 GoPanic.raise(__gotots_argument_12 === undefined ? GoPanicNilValue.create() : __gotots_argument_12);
             }
         }
-        const __gotots_receiver_7 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_7: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_13 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).Remove(__gotots_argument_13);
     }
@@ -212,14 +212,14 @@ export class wrappedFS {
                 return void 0;
             }
         }
-        const __gotots_receiver_8 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_8: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_14 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_8).Stat(__gotots_argument_14);
     }
     static UseCaseSensitiveFileNames(vfs__shadow_1: {
         value: wrappedFS;
     } | undefined): bool {
-        const __gotots_receiver_9 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_9: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_9).UseCaseSensitiveFileNames();
     }
     static WalkDir(vfs__shadow_1: {
@@ -242,7 +242,7 @@ export class wrappedFS {
                 return void 0;
             }
         }
-        const __gotots_receiver_10 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_10: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_15 = root;
         const __gotots_argument_16 = walkFn;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_10).WalkDir(__gotots_argument_15, __gotots_argument_16);
@@ -258,7 +258,7 @@ export class wrappedFS {
                 GoPanic.raise(__gotots_argument_17 === undefined ? GoPanicNilValue.create() : __gotots_argument_17);
             }
         }
-        const __gotots_receiver_11 = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_11: wrappedFS["fs"] = (vfs__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_18 = path;
         const __gotots_argument_19 = data;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_11).WriteFile(__gotots_argument_18, __gotots_argument_19);

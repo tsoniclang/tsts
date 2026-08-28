@@ -79,7 +79,7 @@ export function getInferenceInfoForType(n: {
     value: InferenceInfo;
 } | undefined {
     if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTypeVariable$constant()) >>> 0 === 0)) {
-        const __gotots_range_2 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferences;
+        const __gotots_range_2: InferenceState["inferences"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferences;
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
             let inference: {

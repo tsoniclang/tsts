@@ -32,7 +32,7 @@ export function linkStoreGet<K, V>(storePointer: tsonicTypeScriptRuntime.Locatio
     if (store.entries.isNil()) {
         store.entries = constructMap(undefined);
     }
-    value = Arena.New$kernel(tsonicTypeScriptRuntime.projectLocation<Arena$Storage<V>, Arena<V>>(tsonicTypeScriptRuntime.propertyLocation(store, "arena"), (storage) => Arena.$fromStorage(storage), (arena) => Arena.$storageOf(arena)), sliceCapacity, convertSlice, copyValue, fromContainerStorage, indexAddress, sliceLength, toContainerStorage, zeroValue);
+    value = Arena.New$kernel(tsonicTypeScriptRuntime.projectLocation<Arena$Storage<V>, Arena<V>>(tsonicTypeScriptRuntime.propertyLocation(store, "arena"), Arena.$fromStorage, Arena.$storageOf), sliceCapacity, convertSlice, copyValue, fromContainerStorage, indexAddress, sliceLength, toContainerStorage, zeroValue);
     store.entries.store(key, value);
     return value;
 }

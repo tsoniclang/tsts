@@ -8,7 +8,8 @@ import { DiffMapsFunc$kernel } from "../../../../../../../../modules/github.com/
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
 export function DiffMapsFunc$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket$Struct_void($argument0: GoMapValue<Path__from_tspath, RegistryBucket__from_autoimport | undefined>, $argument1: GoMapValue<Path__from_tspath, GoEmptyStruct>, $argument2: (($0: RegistryBucket__from_autoimport | undefined, $1: GoEmptyStruct) => bool) | undefined, $argument3: (($0: Path__from_tspath, $1: GoEmptyStruct) => void) | undefined, $argument4: (($0: Path__from_tspath, $1: RegistryBucket__from_autoimport | undefined) => void) | undefined, $argument5: (($0: Path__from_tspath, $1: RegistryBucket__from_autoimport | undefined, $2: GoEmptyStruct) => void) | undefined): void {
     return DiffMapsFunc$kernel<Path__from_tspath, RegistryBucket__from_autoimport | undefined, GoEmptyStruct>(($argument0: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy($argument0);
+        return (void GoEmptyStruct.$copy,
+            $argument0);
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: RegistryBucket__from_autoimport | undefined): RegistryBucket__from_autoimport | undefined => {

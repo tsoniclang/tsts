@@ -57,7 +57,7 @@ export class projectReferenceParseTask {
                         }
                     }
                     const __gotots_receiver_2 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
-                    const __gotots_argument_1 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configName;
+                    const __gotots_argument_1: projectReferenceParseTask["configName"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configName;
                     const __gotots_argument_2 = fileLoader.$go$private$compiler$toPath(loader, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configName);
                     (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved = goInterfaceNonNil<CompilerHost>(__gotots_receiver_2).GetResolvedProjectReference(__gotots_argument_1, __gotots_argument_2);
                     if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved === undefined) {
@@ -175,7 +175,7 @@ export class projectReferenceParser {
                 Copy$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference(((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.projectReferenceFileMapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.outputDtsToProjectReference, ParsedCommandLine__from_tsoptions.OutputDtsToProjectReference((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved));
                 const __gotots_store_3 = ((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.projectReferenceFileMapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 if (ProgramOptions.$go$private$compiler$canUseProjectReferenceSource(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "opts"))) {
-                    let declDir = (ParsedCommandLine__from_tsoptions.CompilerOptions((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
+                    let declDir: CompilerOptions__from_core["DeclarationDir"] = (ParsedCommandLine__from_tsoptions.CompilerOptions((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
                     if (declDir === "") {
                         declDir = (ParsedCommandLine__from_tsoptions.CompilerOptions((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
                     }

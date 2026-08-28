@@ -439,14 +439,11 @@ export function isDefaultImportName(node: tsonicTypeScriptRuntime.Location<Node_
 }
 export function getSourceDefinitionEntryNode(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     if (NodeList__from_ast.$storageOf(((((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length !== 0) {
-        return Node__from_ast.AsNode(NodeList__from_ast.$storageOf(((((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(0));
+        return (void Node__from_ast.AsNode,
+            NodeList__from_ast.$storageOf(((((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(0));
     }
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-        return NodeDefault__from_ast.$fromStorage($go$storage);
-    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-        return NodeDefault__from_ast.$storageOf($go$value);
-    }));
+    return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
 }
 export function getSourceDefinitionEntryDeclarations(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     return RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([getSourceDefinitionEntryNode(sourceFile)]);
@@ -634,11 +631,7 @@ export function findDeclarationNodesByName(sourceFile: tsonicTypeScriptRuntime.L
         return Node__from_ast.ForEachChild(node, visit);
     });
     const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-        return NodeDefault__from_ast.$fromStorage($go$storage);
-    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-        return NodeDefault__from_ast.$storageOf($go$value);
-    })), visit);
+    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), visit);
     let declarations = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
     const __gotots_range_6 = candidates;
     for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
@@ -770,7 +763,8 @@ export function uniqueDeclarationNodes(nodes: RuntimeSlice<tsonicTypeScriptRunti
             return declarationKey.$copy($key);
         }
         private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-            return GoEmptyStruct.$copy($value);
+            return (void GoEmptyStruct.$copy,
+                $value);
         }
         static nil(): $goMap$MapOf_Named_declarationKey_To_Struct_void {
             return new $goMap$MapOf_Named_declarationKey_To_Struct_void($goMap$MapOf_Named_declarationKey_To_Struct_void.$zeroValue(), undefined, 0);

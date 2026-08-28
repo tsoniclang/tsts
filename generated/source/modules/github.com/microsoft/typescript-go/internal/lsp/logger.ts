@@ -89,7 +89,7 @@ export class logger {
                         break __gotots_return_block_0;
                     }
                     sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: logger["mu"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -140,7 +140,7 @@ export class logger {
                         break __gotots_return_block_1;
                     }
                     sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_1 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_1: logger["mu"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                     };
@@ -205,7 +205,7 @@ export class logger {
                         break __gotots_return_block_1;
                     }
                     sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_1 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_1: logger["mu"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                     };
@@ -257,7 +257,7 @@ export class logger {
                         break __gotots_return_block_0;
                     }
                     sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: logger["mu"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -306,7 +306,7 @@ export class logger {
                         break __gotots_return_block_1;
                     }
                     sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_1 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_1: logger["mu"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                     };
@@ -370,13 +370,13 @@ export class logger {
             return;
         }
         if (!atomic__from_gostdlib.Bool.Load(((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.initStarted)) {
-            const __gotots_argument_0 = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stderr;
+            const __gotots_argument_0: Server["stderr"] = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stderr;
             const __gotots_argument_1 = RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(message)]);
             provider_fmt_writer.FprintlnDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_0), __gotots_argument_1);
             return;
         }
         sync__from_gostdlib.Mutex.Lock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-        let verbosity = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.verbosity;
+        let verbosity: logger["verbosity"] = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.verbosity;
         sync__from_gostdlib.Mutex.Unlock((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
         if (verbosity === LogVerbosityOff$constant__from_lsproto() || verbosity > maxVerbosityForMessageType(msgType)) {
             return;
@@ -387,9 +387,9 @@ export class logger {
         {
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = dynamicQueue$Put$PointerTo_Named_lsproto$Message(((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.outgoingQueue, ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx, RequestMessage__from_lsproto.Message(notification));
             if (!(err === undefined)) {
-                const __gotots_receiver_0 = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
+                const __gotots_receiver_0: Server["backgroundCtx"] = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.backgroundCtx;
                 if (!(goInterfaceNonNil<$goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void>(__gotots_receiver_0).Err() === undefined)) {
-                    const __gotots_argument_2 = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stderr;
+                    const __gotots_argument_2: Server["stderr"] = ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.server ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stderr;
                     const __gotots_argument_3 = RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(message)]);
                     provider_fmt_writer.FprintlnDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_2), __gotots_argument_3);
                 }

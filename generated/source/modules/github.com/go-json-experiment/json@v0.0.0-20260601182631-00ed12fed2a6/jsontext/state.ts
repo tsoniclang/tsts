@@ -580,22 +580,24 @@ export class objectNamespaceStack {
             let __gotots_slice_build_1 = __gotots_slice_build_0;
             if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                 __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, objectNamespace.$storageOf(objectNamespace.$fromStorage({
-                    endOffsets: RuntimeSlice.nil<uint>(),
-                    allUnquotedNames: RuntimeSlice.nil<uint8>(),
-                    mapNames: GoMap.nil()
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void objectNamespace.$storageOf, (void objectNamespace.$fromStorage,
+                    {
+                        endOffsets: RuntimeSlice.nil<uint>(),
+                        allUnquotedNames: RuntimeSlice.nil<uint8>(),
+                        mapNames: GoMap.nil()
+                    })));
             }
             else {
                 __gotots_slice_build_1 = goSliceAllocate<objectNamespace$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                 for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.set(__gotots_slice_build_3, objectNamespace.$storageOf(objectNamespace.$copy(objectNamespace.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                 }
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, objectNamespace.$storageOf(objectNamespace.$fromStorage({
-                    endOffsets: RuntimeSlice.nil<uint>(),
-                    allUnquotedNames: RuntimeSlice.nil<uint8>(),
-                    mapNames: GoMap.nil()
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void objectNamespace.$storageOf, (void objectNamespace.$fromStorage,
+                    {
+                        endOffsets: RuntimeSlice.nil<uint>(),
+                        allUnquotedNames: RuntimeSlice.nil<uint8>(),
+                        mapNames: GoMap.nil()
+                    })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.$initialize(__gotots_slice_build_3, objectNamespace.$storageOf(objectNamespace.$zero()));
                 }
@@ -613,11 +615,7 @@ export class objectNamespaceStack {
             new objectNamespaceStack((((nss ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<objectNamespaceStack>).value).$value.slice(0, 0, null)));
     }
     Last(): tsonicTypeScriptRuntime.Location<objectNamespace> | undefined {
-        return tsonicTypeScriptRuntime.projectLocation<objectNamespace$Storage, objectNamespace>(goSliceAddress<objectNamespace$Storage>(this.$value, this.$value.length - 1), ($go$storage: objectNamespace$Storage): objectNamespace => {
-            return objectNamespace.$fromStorage($go$storage);
-        }, ($go$value: objectNamespace): objectNamespace$Storage => {
-            return objectNamespace.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<objectNamespace$Storage, objectNamespace>(goSliceAddress<objectNamespace$Storage>(this.$value, this.$value.length - 1), objectNamespace.$fromStorage, objectNamespace.$storageOf);
     }
 }
 export type objectNamespace$Storage = {

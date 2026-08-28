@@ -103,18 +103,12 @@ export function getSmartSelectionRange(l: LanguageService | undefined, sourceFil
     };
     const __gotots_receiver_0 = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters;
     const __gotots_argument_8 = new GoInterfaceAdapter(sourceFile);
-    const __gotots_store_0 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_6 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-        return Node__from_ast.$fromStorage($go$storage);
-    }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-        return Node__from_ast.$storageOf($go$value);
-    }));
-    const __gotots_store_1 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_7 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-        return Node__from_ast.$fromStorage($go$storage);
-    }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-        return Node__from_ast.$storageOf($go$value);
-    }));
+    const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+        NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+    const __gotots_argument_6 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_store_1 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+        NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
+    const __gotots_argument_7 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     const __gotots_argument_9 = NewTextRange__from_core(__gotots_argument_6, __gotots_argument_7);
     let fullRange = Converters__from_lsconv.ToLSPRange(__gotots_receiver_0, __gotots_argument_8, __gotots_argument_9);
     let result: {
@@ -123,11 +117,7 @@ export function getSmartSelectionRange(l: LanguageService | undefined, sourceFil
     let current: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
     {
         const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        current = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        current = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         for (; !(current === undefined);) {
             let next: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
             let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = current;

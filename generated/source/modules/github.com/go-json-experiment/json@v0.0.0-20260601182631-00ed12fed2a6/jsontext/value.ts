@@ -167,11 +167,7 @@ export function mustReorderObjects(b: RuntimeSlice<uint8>): void {
                     putBufferedDecoder(__gotots_argument_1);
                 };
                 const __gotots_store_0 = Struct__from_jsonopts.$storageOf(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Decoder>).value.s.Struct);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                    return Flags__from_jsonflags.$fromStorage($go$storage);
-                }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                    return Flags__from_jsonflags.$storageOf($go$value);
-                }), new Bools__from_jsonflags(7n));
+                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(7n));
                 const __gotots_argument_2 = d;
                 const __gotots_store_1 = ((e2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Encoder>).value.s.encodeBuffer;
                 const __gotots_argument_3 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Buf");
@@ -292,11 +288,13 @@ export function mustReorderObjectsFromDecoder(d: tsonicTypeScriptRuntime.Locatio
                             if (isSorted) {
                                 break __gotots_return_block_0;
                             }
-                            let firstBufferBeforeSorting = objectMember.$storageOf(objectMember.$fromStorage((((members ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value).get(0))).buffer;
+                            let firstBufferBeforeSorting = (void objectMember.$storageOf, (void objectMember.$fromStorage,
+                                (((members ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value).get(0))).buffer;
                             SortFunc$SliceOf_Named_jsontext$objectMember$Named_jsontext$objectMember(((members ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value, ($argument0: objectMember, $argument1: objectMember): int => {
                                 return objectMember.$copy($argument0).Compare($argument1);
                             });
-                            let firstBufferAfterSorting = objectMember.$storageOf(objectMember.$fromStorage((((members ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value).get(0))).buffer;
+                            let firstBufferAfterSorting = (void objectMember.$storageOf, (void objectMember.$fromStorage,
+                                (((members ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value).get(0))).buffer;
                             let commaAndWhitespacePrefix: (($0: RuntimeSlice<uint8>) => RuntimeSlice<uint8>) | undefined = (b: RuntimeSlice<uint8>): RuntimeSlice<uint8> => {
                                 return b.slice(0, b.length - bytes__from_gostdlib.TrimLeft(b, commaAndWhitespace$string).length, null);
                             };

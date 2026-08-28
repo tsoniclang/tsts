@@ -30,7 +30,7 @@ export class Index<T> {
         return new Index<T>($source);
     }
     declare private readonly then?: never;
-    static Clone$kernel<T>(idx: Index<T> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, filter: (($0: T) => bool) | undefined): Index<T> | undefined {
+    static Clone$kernel<T>(idx: Index<T> | undefined, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, filter: (($0: T) => bool) | undefined): Index<T> | undefined {
         if (idx === undefined) {
             return void 0;
         }
@@ -47,11 +47,11 @@ export class Index<T> {
         const __gotots_range_5 = Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries;
         for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_5.length; __gotots_range_index_5++) {
             const __gotots_range_value_6 = __gotots_range_index_5;
-            const __gotots_range_value_7 = $go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_range_5.get(__gotots_range_index_5)));
+            const __gotots_range_value_7 = $go$from_container_storage$T0_to_T0(__gotots_range_5.get(__gotots_range_index_5));
             let oldIndex = __gotots_range_value_6;
             let entry: T = __gotots_range_value_7;
             const __gotots_callee_0 = filter;
-            const __gotots_argument_1 = $go$copy$T0_to_T0(entry);
+            const __gotots_argument_1 = entry;
             if ((__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1)) {
                 let newIndex = $go$length$SliceOf_T0_to_int(Index.$storageOf((newIdx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries);
                 const __gotots_slice_build_16 = Index.$storageOf((newIdx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries;
@@ -59,14 +59,14 @@ export class Index<T> {
                 let __gotots_slice_build_17 = __gotots_slice_build_16;
                 if (__gotots_slice_build_18 <= __gotots_slice_build_16.capacity) {
                     __gotots_slice_build_17 = __gotots_slice_build_16.$withLength(__gotots_slice_build_18);
-                    __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                    __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, $go$to_container_storage$T0_to_T0(entry));
                 }
                 else {
                     __gotots_slice_build_17 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_18, RuntimeSlice.$grownCapacity(__gotots_slice_build_16.capacity, __gotots_slice_build_18));
                     for (let __gotots_slice_build_19 = 0; __gotots_slice_build_19 < __gotots_slice_build_16.length; __gotots_slice_build_19++) {
-                        __gotots_slice_build_17.set(__gotots_slice_build_19, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_16.get(__gotots_slice_build_19)))));
+                        __gotots_slice_build_17.set(__gotots_slice_build_19, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_16.get(__gotots_slice_build_19))));
                     }
-                    __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                    __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, $go$to_container_storage$T0_to_T0(entry));
                     for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
                         __gotots_slice_build_17.$initialize(__gotots_slice_build_19, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
                     }
@@ -106,7 +106,7 @@ export class Index<T> {
         }
         return newIdx;
     }
-    static Find$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, name: gostring, caseSensitive: bool): RuntimeSlice<GoContainerStorage<T>> {
+    static Find$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, name: gostring, caseSensitive: bool): RuntimeSlice<GoContainerStorage<T>> {
         if ($go$length$SliceOf_T0_to_int(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries) === 0 || name.length === 0) {
             return RuntimeSlice.nil<GoContainerStorage<T>>();
         }
@@ -131,7 +131,7 @@ export class Index<T> {
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
             let entryIndex = __gotots_range_value_2;
-            let entry: T = $go$copy$T0_to_T0($go$index$SliceOf_T0_int_to_T0(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, entryIndex));
+            let entry: T = $go$index$SliceOf_T0_int_to_T0(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, entryIndex);
             let entryName = $go$constraint_method$autoimport$Name$T0_to_string(entry);
             if ((caseSensitive && entryName === name) || (!caseSensitive && strings__from_gostdlib.EqualFold(entryName, name))) {
                 const __gotots_slice_build_6 = results;
@@ -139,14 +139,14 @@ export class Index<T> {
                 let __gotots_slice_build_7 = __gotots_slice_build_6;
                 if (__gotots_slice_build_8 <= __gotots_slice_build_6.capacity) {
                     __gotots_slice_build_7 = __gotots_slice_build_6.$withLength(__gotots_slice_build_8);
-                    __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                    __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, $go$to_container_storage$T0_to_T0(entry));
                 }
                 else {
                     __gotots_slice_build_7 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_8, RuntimeSlice.$grownCapacity(__gotots_slice_build_6.capacity, __gotots_slice_build_8));
                     for (let __gotots_slice_build_9 = 0; __gotots_slice_build_9 < __gotots_slice_build_6.length; __gotots_slice_build_9++) {
-                        __gotots_slice_build_7.set(__gotots_slice_build_9, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_6.get(__gotots_slice_build_9)))));
+                        __gotots_slice_build_7.set(__gotots_slice_build_9, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_6.get(__gotots_slice_build_9))));
                     }
-                    __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                    __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, $go$to_container_storage$T0_to_T0(entry));
                     for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
                         __gotots_slice_build_7.$initialize(__gotots_slice_build_9, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
                     }
@@ -156,7 +156,7 @@ export class Index<T> {
         }
         return results;
     }
-    static SearchWordPrefix$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, prefix: gostring): RuntimeSlice<GoContainerStorage<T>> {
+    static SearchWordPrefix$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$index$SliceOf_T0_int_to_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, prefix: gostring): RuntimeSlice<GoContainerStorage<T>> {
         if ($go$length$SliceOf_T0_to_int(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries) === 0) {
             return RuntimeSlice.nil<GoContainerStorage<T>>();
         }
@@ -199,21 +199,21 @@ export class Index<T> {
             for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                 const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
                 let i = __gotots_range_value_1;
-                let entry: T = $go$copy$T0_to_T0($go$index$SliceOf_T0_int_to_T0(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, i));
+                let entry: T = $go$index$SliceOf_T0_int_to_T0(Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, i);
                 if (containsCharsInOrder($go$constraint_method$autoimport$Name$T0_to_string(entry), prefix)) {
                     const __gotots_slice_build_2 = results;
                     const __gotots_slice_build_4 = __gotots_slice_build_2.length + 1;
                     let __gotots_slice_build_3 = __gotots_slice_build_2;
                     if (__gotots_slice_build_4 <= __gotots_slice_build_2.capacity) {
                         __gotots_slice_build_3 = __gotots_slice_build_2.$withLength(__gotots_slice_build_4);
-                        __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                        __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, $go$to_container_storage$T0_to_T0(entry));
                     }
                     else {
                         __gotots_slice_build_3 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_4, RuntimeSlice.$grownCapacity(__gotots_slice_build_2.capacity, __gotots_slice_build_4));
                         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_2.length; __gotots_slice_build_5++) {
-                            __gotots_slice_build_3.set(__gotots_slice_build_5, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_2.get(__gotots_slice_build_5)))));
+                            __gotots_slice_build_3.set(__gotots_slice_build_5, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_2.get(__gotots_slice_build_5))));
                         }
-                        __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(entry)));
+                        __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, $go$to_container_storage$T0_to_T0(entry));
                         for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
                             __gotots_slice_build_3.$initialize(__gotots_slice_build_5, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
                         }
@@ -224,7 +224,7 @@ export class Index<T> {
         }
         return results;
     }
-    static $go$private$autoimport$insertAsWords$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, value: T): void {
+    static $go$private$autoimport$insertAsWords$kernel<T>(idx: Index<T> | undefined, $go$constraint_method$autoimport$Name$T0_to_string: ($0: T) => gostring, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, value: T): void {
         if (Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).index.isNil()) {
             Index.$storageOf((idx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).index = GoMap.make(0, []);
         }
@@ -239,14 +239,14 @@ export class Index<T> {
         let __gotots_slice_build_11 = __gotots_slice_build_10;
         if (__gotots_slice_build_12 <= __gotots_slice_build_10.capacity) {
             __gotots_slice_build_11 = __gotots_slice_build_10.$withLength(__gotots_slice_build_12);
-            __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(value)));
+            __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, $go$to_container_storage$T0_to_T0(value));
         }
         else {
             __gotots_slice_build_11 = goSliceAllocate<GoContainerStorage<T>>(__gotots_slice_build_12, RuntimeSlice.$grownCapacity(__gotots_slice_build_10.capacity, __gotots_slice_build_12));
             for (let __gotots_slice_build_13 = 0; __gotots_slice_build_13 < __gotots_slice_build_10.length; __gotots_slice_build_13++) {
-                __gotots_slice_build_11.set(__gotots_slice_build_13, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_10.get(__gotots_slice_build_13)))));
+                __gotots_slice_build_11.set(__gotots_slice_build_13, $go$to_container_storage$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_slice_build_10.get(__gotots_slice_build_13))));
             }
-            __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, $go$to_container_storage$T0_to_T0($go$copy$T0_to_T0(value)));
+            __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, $go$to_container_storage$T0_to_T0(value));
             for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
                 __gotots_slice_build_11.$initialize(__gotots_slice_build_13, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
             }

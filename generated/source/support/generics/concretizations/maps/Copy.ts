@@ -82,7 +82,8 @@ export function Copy$MapOf_Named_tspath$Path_To_Struct_void$MapOf_Named_tspath$P
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy($argument0);
+        return (void GoEmptyStruct.$copy,
+            $argument0);
     }, $argument0, $argument1);
 }
 export function Copy$MapOf_Named_tspath$Path_To_string$MapOf_Named_tspath$Path_To_string$Named_tspath$Path$string($argument0: GoMapValue<Path__from_tspath, gostring>, $argument1: GoMapValue<Path__from_tspath, gostring>): void {

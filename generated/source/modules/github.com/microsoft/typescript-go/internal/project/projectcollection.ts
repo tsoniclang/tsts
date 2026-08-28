@@ -168,7 +168,7 @@ export class ProjectCollection {
                         }
                     }
                 }
-                const __gotots_range_5 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
+                const __gotots_range_5: ProjectCollection["configuredProjects"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
                 const __gotots_range_keys_3 = __gotots_range_5.keys();
                 for (const __gotots_range_value_11 of __gotots_range_keys_3) {
                     const __gotots_range_value_12 = __gotots_range_5.lookupOk(__gotots_range_value_11);
@@ -278,7 +278,7 @@ export class ProjectCollection {
     } | undefined, projects: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
         value: Project;
     } | undefined>> | undefined): void {
-        const __gotots_range_2 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
+        const __gotots_range_2: ProjectCollection["configuredProjects"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
         const __gotots_range_keys_1 = __gotots_range_2.keys();
         for (const __gotots_range_value_4 of __gotots_range_keys_1) {
             const __gotots_range_value_5 = __gotots_range_2.lookupOk(__gotots_range_value_4);
@@ -326,7 +326,7 @@ export class ProjectCollection {
     } | undefined): {
         value: Project;
     } | undefined {
-        const __gotots_callee_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+        const __gotots_callee_0: ProjectCollection["toPath"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
         const __gotots_argument_0 = configFileName;
         let configFilePath = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
         const __gotots_results_2 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects.lookupOk(configFilePath);
@@ -359,8 +359,8 @@ export class ProjectCollection {
             return MapNonNil$string$PointerTo_Named_project$Project(ParsedCommandLine__from_tsoptions.ResolvedProjectReferencePaths((project__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CommandLine), (configFileName__shadow_1: gostring): {
                 value: Project;
             } | undefined => {
-                const __gotots_map_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
-                const __gotots_callee_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+                const __gotots_map_0: ProjectCollection["configuredProjects"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configuredProjects;
+                const __gotots_callee_1: ProjectCollection["toPath"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
                 const __gotots_argument_1 = configFileName__shadow_1;
                 const __gotots_map_1 = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
                 return __gotots_map_0.lookup(__gotots_map_1);

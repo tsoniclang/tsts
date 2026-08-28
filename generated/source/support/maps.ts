@@ -352,7 +352,8 @@ export class $goMap$MapOf_Array2Of_Named_lsproto$DocumentUri_To_Struct_void exte
         return $key.copy();
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Array2Of_Named_lsproto$DocumentUri_To_Struct_void {
         return new $goMap$MapOf_Array2Of_Named_lsproto$DocumentUri_To_Struct_void($goMap$MapOf_Array2Of_Named_lsproto$DocumentUri_To_Struct_void.$zeroValue(), undefined, 0);
@@ -710,7 +711,8 @@ export class $goMap$MapOf_Interface_void_To_Struct_void extends GoMapValue<GoInt
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Interface_void_To_Struct_void {
         return new $goMap$MapOf_Interface_void_To_Struct_void($goMap$MapOf_Interface_void_To_Struct_void.$zeroValue(), undefined, 0);
@@ -3153,7 +3155,8 @@ export class $goMap$MapOf_Named_ast$Kind_To_Struct_void extends GoMapValue<Kind_
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_ast$Kind_To_Struct_void {
         return new $goMap$MapOf_Named_ast$Kind_To_Struct_void($goMap$MapOf_Named_ast$Kind_To_Struct_void.$zeroValue(), undefined, 0);
@@ -5401,7 +5404,8 @@ export class $goMap$MapOf_Named_ast$SymbolId_To_Struct_void extends GoMapValue<S
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: SymbolId__from_ast): uint64 {
         return $key.$value;
@@ -6674,7 +6678,8 @@ export class $goMap$MapOf_Named_checker$CacheHashKey_To_Struct_void extends GoMa
         return CacheHashKey__from_checker.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_checker$CacheHashKey_To_Struct_void {
         return new $goMap$MapOf_Named_checker$CacheHashKey_To_Struct_void($goMap$MapOf_Named_checker$CacheHashKey_To_Struct_void.$zeroValue(), undefined, 0);
@@ -9001,7 +9006,8 @@ export class $goMap$MapOf_Named_checker$NonExistentPropertyKey_To_Struct_void ex
         return NonExistentPropertyKey__from_checker.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_checker$NonExistentPropertyKey_To_Struct_void {
         return new $goMap$MapOf_Named_checker$NonExistentPropertyKey_To_Struct_void($goMap$MapOf_Named_checker$NonExistentPropertyKey_To_Struct_void.$zeroValue(), undefined, 0);
@@ -10075,7 +10081,8 @@ export class $goMap$MapOf_Named_checker$TypeId_To_Struct_void extends GoMapValue
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_checker$TypeId_To_Struct_void {
         return new $goMap$MapOf_Named_checker$TypeId_To_Struct_void($goMap$MapOf_Named_checker$TypeId_To_Struct_void.$zeroValue(), undefined, 0);
@@ -10801,7 +10808,8 @@ export class $goMap$MapOf_Named_checker$symbolTableID_To_Struct_void extends GoM
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: symbolTableID__from_checker): uint64 {
         return $key.$value;
@@ -11905,7 +11913,8 @@ export class $goMap$MapOf_Named_jsnum$Number_To_Struct_void extends GoMapValue<N
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: Number__from_jsnum): float64 {
         return $key.$value;
@@ -12273,7 +12282,8 @@ export class $goMap$MapOf_Named_jsnum$PseudoBigInt_To_Struct_void extends GoMapV
         return PseudoBigInt__from_jsnum.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_jsnum$PseudoBigInt_To_Struct_void {
         return new $goMap$MapOf_Named_jsnum$PseudoBigInt_To_Struct_void($goMap$MapOf_Named_jsnum$PseudoBigInt_To_Struct_void.$zeroValue(), undefined, 0);
@@ -13168,7 +13178,8 @@ export class $goMap$MapOf_Named_ls$fileRange_To_Struct_void extends GoMapValue<f
         return fileRange__from_ls.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_ls$fileRange_To_Struct_void {
         return new $goMap$MapOf_Named_ls$fileRange_To_Struct_void($goMap$MapOf_Named_ls$fileRange_To_Struct_void.$zeroValue(), undefined, 0);
@@ -14328,7 +14339,8 @@ export class $goMap$MapOf_Named_lsproto$DocumentUri_To_Struct_void extends GoMap
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: DocumentUri__from_lsproto): gostring {
         return $key.$value;
@@ -14706,7 +14718,8 @@ export class $goMap$MapOf_Named_lsproto$Location_To_Struct_void extends GoMapVal
         return Location__from_lsproto.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_lsproto$Location_To_Struct_void {
         return new $goMap$MapOf_Named_lsproto$Location_To_Struct_void($goMap$MapOf_Named_lsproto$Location_To_Struct_void.$zeroValue(), undefined, 0);
@@ -15228,7 +15241,8 @@ export class $goMap$MapOf_Named_lsproto$Range_To_Struct_void extends GoMapValue<
         return Range__from_lsproto.$copy($key);
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_Named_lsproto$Range_To_Struct_void {
         return new $goMap$MapOf_Named_lsproto$Range_To_Struct_void($goMap$MapOf_Named_lsproto$Range_To_Struct_void.$zeroValue(), undefined, 0);
@@ -16744,7 +16758,8 @@ export class $goMap$MapOf_Named_project$WatcherID_To_Struct_void extends GoMapVa
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: WatcherID__from_project): gostring {
         return $key.$value;
@@ -26754,7 +26769,8 @@ export class $goMap$MapOf_Named_tspath$Path_To_Struct_void extends GoMapValue<Pa
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     private static $projectKey($key: Path__from_tspath): gostring {
         return $key.$value;
@@ -31661,7 +31677,8 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void extends GoMapV
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void($goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void.$zeroValue(), undefined, 0);
@@ -37747,7 +37764,8 @@ export class $goMap$MapOf_PointerTo_Named_ast$Symbol_To_Struct_void extends GoMa
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_ast$Symbol_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_ast$Symbol_To_Struct_void($goMap$MapOf_PointerTo_Named_ast$Symbol_To_Struct_void.$zeroValue(), undefined, 0);
@@ -38463,7 +38481,8 @@ export class $goMap$MapOf_PointerTo_Named_checker$Signature_To_Struct_void exten
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_checker$Signature_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_checker$Signature_To_Struct_void($goMap$MapOf_PointerTo_Named_checker$Signature_To_Struct_void.$zeroValue(), undefined, 0);
@@ -39179,7 +39198,8 @@ export class $goMap$MapOf_PointerTo_Named_checker$Type_To_Struct_void extends Go
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_checker$Type_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_checker$Type_To_Struct_void($goMap$MapOf_PointerTo_Named_checker$Type_To_Struct_void.$zeroValue(), undefined, 0);
@@ -39553,7 +39573,8 @@ export class $goMap$MapOf_PointerTo_Named_compiler$FileIncludeReason_To_Struct_v
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_compiler$FileIncludeReason_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_compiler$FileIncludeReason_To_Struct_void($goMap$MapOf_PointerTo_Named_compiler$FileIncludeReason_To_Struct_void.$zeroValue(), undefined, 0);
@@ -40258,7 +40279,8 @@ export class $goMap$MapOf_PointerTo_Named_compiler$projectReferenceParseTask_To_
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_compiler$projectReferenceParseTask_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_compiler$projectReferenceParseTask_To_Struct_void($goMap$MapOf_PointerTo_Named_compiler$projectReferenceParseTask_To_Struct_void.$zeroValue(), undefined, 0);
@@ -40479,7 +40501,8 @@ export class $goMap$MapOf_PointerTo_Named_ls$CodeFixProvider_To_Struct_void exte
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_ls$CodeFixProvider_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_ls$CodeFixProvider_To_Struct_void($goMap$MapOf_PointerTo_Named_ls$CodeFixProvider_To_Struct_void.$zeroValue(), undefined, 0);
@@ -40674,7 +40697,8 @@ export class $goMap$MapOf_PointerTo_Named_printer$EmitHelper_To_Struct_void exte
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_printer$EmitHelper_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_printer$EmitHelper_To_Struct_void($goMap$MapOf_PointerTo_Named_printer$EmitHelper_To_Struct_void.$zeroValue(), undefined, 0);
@@ -41188,7 +41212,8 @@ export class $goMap$MapOf_PointerTo_Named_project$Project_To_Struct_void extends
         return $key;
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_PointerTo_Named_project$Project_To_Struct_void {
         return new $goMap$MapOf_PointerTo_Named_project$Project_To_Struct_void($goMap$MapOf_PointerTo_Named_project$Project_To_Struct_void.$zeroValue(), undefined, 0);
@@ -41492,7 +41517,8 @@ export class $goMap$MapOf_int32_To_Struct_void extends GoMapValue<int32, GoEmpty
         return GoEmptyStruct.$zero();
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_int32_To_Struct_void {
         return new $goMap$MapOf_int32_To_Struct_void($goMap$MapOf_int32_To_Struct_void.$zeroValue(), undefined);
@@ -41872,7 +41898,8 @@ export class $goMap$MapOf_int_To_Struct_void extends GoMapValue<int, GoEmptyStru
         return GoEmptyStruct.$zero();
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_int_To_Struct_void {
         return new $goMap$MapOf_int_To_Struct_void($goMap$MapOf_int_To_Struct_void.$zeroValue(), undefined);
@@ -46894,7 +46921,8 @@ export class $goMap$MapOf_string_To_Struct_void extends GoMapValue<gostring, GoE
         return GoEmptyStruct.$zero();
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_string_To_Struct_void {
         return new $goMap$MapOf_string_To_Struct_void($goMap$MapOf_string_To_Struct_void.$zeroValue(), undefined);
@@ -46989,7 +47017,8 @@ export class $goMap$MapOf_uint64_To_Struct_void extends GoMapValue<uint64, GoEmp
         return GoEmptyStruct.$zero();
     }
     private static $copyValue($value: GoEmptyStruct): GoEmptyStruct {
-        return GoEmptyStruct.$copy($value);
+        return (void GoEmptyStruct.$copy,
+            $value);
     }
     static nil(): $goMap$MapOf_uint64_To_Struct_void {
         return new $goMap$MapOf_uint64_To_Struct_void($goMap$MapOf_uint64_To_Struct_void.$zeroValue(), undefined);

@@ -28,11 +28,7 @@ export class exporter {
     }
     declare private readonly then?: never;
     Export(p: tsonicTypeScriptRuntime.Location<NotForPublicUse__from_internal> | undefined): __go_export {
-        if (!tsonicTypeScriptRuntime.sameLocation(p, tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), ($go$storage: NotForPublicUse__from_internal$Storage): NotForPublicUse__from_internal => {
-            return NotForPublicUse__from_internal.$fromStorage($go$storage);
-        }, ($go$value: NotForPublicUse__from_internal): NotForPublicUse__from_internal$Storage => {
-            return NotForPublicUse__from_internal.$storageOf($go$value);
-        }))) {
+        if (!tsonicTypeScriptRuntime.sameLocation(p, tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf))) {
             const __gotots_argument_0 = new $goInterfaceAdapter$string("unauthorized call to Export");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }

@@ -482,7 +482,7 @@ export class affectedFilesHandler {
                         value: updatedSignature;
                     } | undefined = { value: new updatedSignature(named_sync.SyncMutexOperations.$zero(), "", 0) };
                     sync__from_gostdlib.Mutex.Lock((update ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_6 = (update ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_6: updatedSignature["mu"] = (update ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_6, $go$recovery);
                     });
@@ -495,7 +495,7 @@ export class affectedFilesHandler {
                         let ok = __gotots_results_3[1];
                         if (ok) {
                             sync__from_gostdlib.Mutex.Lock((existing ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                            const __gotots_receiver_7 = (existing ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                            const __gotots_receiver_7: updatedSignature["mu"] = (existing ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                             __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                                 recovery_sync.SyncMutexUnlock(__gotots_receiver_7, $go$recovery);
                             });
@@ -508,7 +508,7 @@ export class affectedFilesHandler {
                     let info: {
                         value: FileInfo;
                     } | undefined = __gotots_results_4[0];
-                    let prevSignature = (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.signature;
+                    let prevSignature: FileInfo["signature"] = (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.signature;
                     if (!((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.IsDeclarationFile && !useFileVersionAsSignature) {
                         (update ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.signature = affectedFilesHandler.$go$private$incremental$computeDtsSignature(h, file);
                     }

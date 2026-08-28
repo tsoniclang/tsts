@@ -44,7 +44,7 @@ export class ioError {
         value: ioError;
     } | undefined): gostring {
         const __gotots_binary_operand_0 = errorPrefix$string + (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.action + " error: ";
-        const __gotots_receiver_3 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.err;
+        const __gotots_receiver_3: ioError["err"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.err;
         const __gotots_binary_operand_1 = goInterfaceNonNil<GoInterface>(__gotots_receiver_3).Error();
         return __gotots_binary_operand_0 + __gotots_binary_operand_1;
     }
@@ -68,8 +68,8 @@ export class SyntacticError {
     static Error(e: {
         value: SyntacticError;
     } | undefined): gostring {
-        let pointer = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSONPointer;
-        let offset = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ByteOffset;
+        let pointer: SyntacticError["JSONPointer"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSONPointer;
+        let offset: SyntacticError["ByteOffset"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ByteOffset;
         const __gotots_conversion_15 = errorPrefix$string;
         const __gotots_conversion_16 = RuntimeSlice.make<uint8>(__gotots_conversion_15.length, null, 0);
         for (let __gotots_conversion_17 = 0; __gotots_conversion_17 < __gotots_conversion_15.length; __gotots_conversion_17++) {
@@ -78,7 +78,7 @@ export class SyntacticError {
         let b = __gotots_conversion_16;
         if (!((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err === undefined)) {
             const __gotots_argument_3 = b;
-            const __gotots_receiver_4 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err;
+            const __gotots_receiver_4: SyntacticError["Err"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err;
             const __gotots_argument_4 = goInterfaceNonNil<GoInterface>(__gotots_receiver_4).Error();
             const __gotots_slice_build_0 = __gotots_argument_3;
             const __gotots_slice_build_1 = __gotots_argument_4;
@@ -281,7 +281,7 @@ export class pointerSuffixError {
     static $go$private$jsontext$appendPointer(e: {
         value: pointerSuffixError;
     } | undefined, pointer: RuntimeSlice<uint8>): RuntimeSlice<uint8> {
-        const __gotots_assign_0 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reversePointer;
+        const __gotots_assign_0: pointerSuffixError["reversePointer"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reversePointer;
         const __gotots_assign_1 = pointer;
         let bi = __gotots_assign_0;
         let bo = __gotots_assign_1;

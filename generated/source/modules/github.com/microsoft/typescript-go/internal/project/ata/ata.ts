@@ -165,7 +165,7 @@ export class TypingsInstaller {
         const __gotots_argument_5 = (request ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProjectRootPath;
         const __gotots_store_0 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_6 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "packageNameToTypingLocation");
-        const __gotots_argument_7 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typesRegistry;
+        const __gotots_argument_7: TypingsInstaller["typesRegistry"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typesRegistry;
         const __gotots_results_1 = DiscoverTypings(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4, __gotots_argument_5, __gotots_argument_6, __gotots_argument_7);
         let cachedTypingPaths = __gotots_results_1[0];
         let newTypingNames = __gotots_results_1[1];
@@ -289,8 +289,8 @@ export class TypingsInstaller {
             const __gotots_argument_11 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter("ATA:: Updating types-registry@latest npm package...")]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_5).Log(__gotots_argument_11);
             {
-                const __gotots_receiver_6 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
-                const __gotots_argument_12 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation;
+                const __gotots_receiver_6: TypingsInstaller["host"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_argument_12: TypingsInstaller["typingsLocation"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation;
                 const __gotots_argument_13 = RuntimeSlice.literal<gostring>(["install", "--ignore-scripts", "types-registry@latest"]);
                 const __gotots_results_3 = goInterfaceNonNil<TypingsInstallerHost>(__gotots_receiver_6).NpmInstall(__gotots_argument_12, __gotots_argument_13);
                 let err: GoInterface | undefined = __gotots_results_3[1];
@@ -332,7 +332,7 @@ export class TypingsInstaller {
                 const __gotots_argument_20 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(fmt__from_gostdlib.Sprintf("ATA:: Installed typings %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$SliceOf_string(packageNames)])))]);
                 goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_13).Log(__gotots_argument_20);
                 let installedTypingFiles = RuntimeSlice.nil<gostring>();
-                const __gotots_argument_21 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_argument_21: TypingsInstaller["host"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_field_0 = ModuleResolutionKindNodeNext$constant__from_core();
                 const __gotots_struct_0 = CompilerOptions__from_core.$zero();
                 __gotots_struct_0.ModuleResolution = __gotots_field_0;
@@ -404,8 +404,8 @@ export class TypingsInstaller {
             npmArgs = npmArgs.append("", ["install", "--ignore-scripts"]);
             npmArgs = goSliceAppendSlice<gostring>(npmArgs, packageNames__shadow_1, "");
             npmArgs = npmArgs.append("", ["--save-dev", "--user-agent=\"typesInstaller/" + Version__from_core() + "\""]);
-            const __gotots_receiver_35 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
-            const __gotots_argument_54 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation;
+            const __gotots_receiver_35: TypingsInstaller["host"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_argument_54: TypingsInstaller["typingsLocation"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation;
             const __gotots_argument_55 = npmArgs;
             const __gotots_results_15 = goInterfaceNonNil<TypingsInstallerHost>(__gotots_receiver_35).NpmInstall(__gotots_argument_54, __gotots_argument_55);
             let output = __gotots_results_15[0];
@@ -497,7 +497,7 @@ export class TypingsInstaller {
             const __gotots_receiver_22 = logger;
             const __gotots_argument_33 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter("ATA:: Loaded content of " + packageLockJson + ": " + npmLockContents)]);
             goInterfaceNonNil<Logger__from_logging>(__gotots_receiver_22).Log(__gotots_argument_33);
-            const __gotots_argument_34 = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_argument_34: TypingsInstaller["host"] = (ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_field_1 = ModuleResolutionKindNodeNext$constant__from_core();
             const __gotots_struct_1 = CompilerOptions__from_core.$zero();
             __gotots_struct_1.ModuleResolution = __gotots_field_1;
@@ -593,7 +593,8 @@ export function NewTypingsInstaller(options: TypingsInstallerOptions | undefined
         } | undefined>(), SyncMap__from_collections.$zero<gostring, bool>(), GoMap.nil(), named_sync_atomic.SyncAtomicInt32Operations.$zero(), GoChannel.make<GoEmptyStruct>((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ThrottleLimit, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
         }, (value: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy(value);
+            return (void GoEmptyStruct.$copy,
+                value);
         })) };
 }
 export const tsVersionToUse$string: gostring = "latest";

@@ -29,11 +29,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$ArrayLitera
     }, ($argument0: ArrayLiteralLinks__from_checker$Storage): ArrayLiteralLinks__from_checker => {
         return ArrayLiteralLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ArrayLiteralLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ArrayLiteralLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ArrayLiteralLinks__from_checker$Storage, ArrayLiteralLinks__from_checker>(goSliceAddress<ArrayLiteralLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ArrayLiteralLinks__from_checker$Storage): ArrayLiteralLinks__from_checker => {
-            return ArrayLiteralLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ArrayLiteralLinks__from_checker): ArrayLiteralLinks__from_checker$Storage => {
-            return ArrayLiteralLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ArrayLiteralLinks__from_checker$Storage, ArrayLiteralLinks__from_checker>(goSliceAddress<ArrayLiteralLinks__from_checker$Storage>($argument0, $argument1), ArrayLiteralLinks__from_checker.$fromStorage, ArrayLiteralLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ArrayLiteralLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ArrayLiteralLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ArrayLiteralLinks__from_checker> | undefined> => {
@@ -54,11 +50,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$AssertionLi
     }, ($argument0: AssertionLinks__from_checker$Storage): AssertionLinks__from_checker => {
         return AssertionLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<AssertionLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<AssertionLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<AssertionLinks__from_checker$Storage, AssertionLinks__from_checker>(goSliceAddress<AssertionLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: AssertionLinks__from_checker$Storage): AssertionLinks__from_checker => {
-            return AssertionLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: AssertionLinks__from_checker): AssertionLinks__from_checker$Storage => {
-            return AssertionLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<AssertionLinks__from_checker$Storage, AssertionLinks__from_checker>(goSliceAddress<AssertionLinks__from_checker$Storage>($argument0, $argument1), AssertionLinks__from_checker.$fromStorage, AssertionLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<AssertionLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<AssertionLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AssertionLinks__from_checker> | undefined> => {
@@ -79,11 +71,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$Declaration
     }, ($argument0: DeclarationFileLinks__from_checker$Storage): DeclarationFileLinks__from_checker => {
         return DeclarationFileLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<DeclarationFileLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<DeclarationFileLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<DeclarationFileLinks__from_checker$Storage, DeclarationFileLinks__from_checker>(goSliceAddress<DeclarationFileLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: DeclarationFileLinks__from_checker$Storage): DeclarationFileLinks__from_checker => {
-            return DeclarationFileLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: DeclarationFileLinks__from_checker): DeclarationFileLinks__from_checker$Storage => {
-            return DeclarationFileLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<DeclarationFileLinks__from_checker$Storage, DeclarationFileLinks__from_checker>(goSliceAddress<DeclarationFileLinks__from_checker$Storage>($argument0, $argument1), DeclarationFileLinks__from_checker.$fromStorage, DeclarationFileLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<DeclarationFileLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<DeclarationFileLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<DeclarationFileLinks__from_checker> | undefined> => {
@@ -104,11 +92,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$Declaration
     }, ($argument0: DeclarationLinks__from_checker$Storage): DeclarationLinks__from_checker => {
         return DeclarationLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<DeclarationLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<DeclarationLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<DeclarationLinks__from_checker$Storage, DeclarationLinks__from_checker>(goSliceAddress<DeclarationLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: DeclarationLinks__from_checker$Storage): DeclarationLinks__from_checker => {
-            return DeclarationLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: DeclarationLinks__from_checker): DeclarationLinks__from_checker$Storage => {
-            return DeclarationLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<DeclarationLinks__from_checker$Storage, DeclarationLinks__from_checker>(goSliceAddress<DeclarationLinks__from_checker$Storage>($argument0, $argument1), DeclarationLinks__from_checker.$fromStorage, DeclarationLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<DeclarationLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<DeclarationLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<DeclarationLinks__from_checker> | undefined> => {
@@ -129,11 +113,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$EnumMemberL
     }, ($argument0: EnumMemberLinks__from_checker$Storage): EnumMemberLinks__from_checker => {
         return EnumMemberLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<EnumMemberLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<EnumMemberLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<EnumMemberLinks__from_checker$Storage, EnumMemberLinks__from_checker>(goSliceAddress<EnumMemberLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: EnumMemberLinks__from_checker$Storage): EnumMemberLinks__from_checker => {
-            return EnumMemberLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: EnumMemberLinks__from_checker): EnumMemberLinks__from_checker$Storage => {
-            return EnumMemberLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<EnumMemberLinks__from_checker$Storage, EnumMemberLinks__from_checker>(goSliceAddress<EnumMemberLinks__from_checker$Storage>($argument0, $argument1), EnumMemberLinks__from_checker.$fromStorage, EnumMemberLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<EnumMemberLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<EnumMemberLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<EnumMemberLinks__from_checker> | undefined> => {
@@ -154,11 +134,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$JSXLinks($a
     }, ($argument0: JSXLinks__from_checker$Storage): JSXLinks__from_checker => {
         return JSXLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JSXLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JSXLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JSXLinks__from_checker$Storage, JSXLinks__from_checker>(goSliceAddress<JSXLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: JSXLinks__from_checker$Storage): JSXLinks__from_checker => {
-            return JSXLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: JSXLinks__from_checker): JSXLinks__from_checker$Storage => {
-            return JSXLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JSXLinks__from_checker$Storage, JSXLinks__from_checker>(goSliceAddress<JSXLinks__from_checker$Storage>($argument0, $argument1), JSXLinks__from_checker.$fromStorage, JSXLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<JSXLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<JSXLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<JSXLinks__from_checker> | undefined> => {
@@ -179,11 +155,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$JsxElementL
     }, ($argument0: JsxElementLinks__from_checker$Storage): JsxElementLinks__from_checker => {
         return JsxElementLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JsxElementLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JsxElementLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JsxElementLinks__from_checker$Storage, JsxElementLinks__from_checker>(goSliceAddress<JsxElementLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: JsxElementLinks__from_checker$Storage): JsxElementLinks__from_checker => {
-            return JsxElementLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: JsxElementLinks__from_checker): JsxElementLinks__from_checker$Storage => {
-            return JsxElementLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JsxElementLinks__from_checker$Storage, JsxElementLinks__from_checker>(goSliceAddress<JsxElementLinks__from_checker$Storage>($argument0, $argument1), JsxElementLinks__from_checker.$fromStorage, JsxElementLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<JsxElementLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<JsxElementLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<JsxElementLinks__from_checker> | undefined> => {
@@ -204,11 +176,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$NodeBuilder
     }, ($argument0: NodeBuilderLinks__from_checker$Storage): NodeBuilderLinks__from_checker => {
         return NodeBuilderLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<NodeBuilderLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<NodeBuilderLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<NodeBuilderLinks__from_checker$Storage, NodeBuilderLinks__from_checker>(goSliceAddress<NodeBuilderLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: NodeBuilderLinks__from_checker$Storage): NodeBuilderLinks__from_checker => {
-            return NodeBuilderLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: NodeBuilderLinks__from_checker): NodeBuilderLinks__from_checker$Storage => {
-            return NodeBuilderLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<NodeBuilderLinks__from_checker$Storage, NodeBuilderLinks__from_checker>(goSliceAddress<NodeBuilderLinks__from_checker$Storage>($argument0, $argument1), NodeBuilderLinks__from_checker.$fromStorage, NodeBuilderLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<NodeBuilderLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<NodeBuilderLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<NodeBuilderLinks__from_checker> | undefined> => {
@@ -229,11 +197,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$NodeLinks($
     }, ($argument0: NodeLinks__from_checker$Storage): NodeLinks__from_checker => {
         return NodeLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<NodeLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<NodeLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<NodeLinks__from_checker$Storage, NodeLinks__from_checker>(goSliceAddress<NodeLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: NodeLinks__from_checker$Storage): NodeLinks__from_checker => {
-            return NodeLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: NodeLinks__from_checker): NodeLinks__from_checker$Storage => {
-            return NodeLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<NodeLinks__from_checker$Storage, NodeLinks__from_checker>(goSliceAddress<NodeLinks__from_checker$Storage>($argument0, $argument1), NodeLinks__from_checker.$fromStorage, NodeLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<NodeLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<NodeLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<NodeLinks__from_checker> | undefined> => {
@@ -254,11 +218,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$SignatureLi
     }, ($argument0: SignatureLinks__from_checker$Storage): SignatureLinks__from_checker => {
         return SignatureLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SignatureLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SignatureLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SignatureLinks__from_checker$Storage, SignatureLinks__from_checker>(goSliceAddress<SignatureLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SignatureLinks__from_checker$Storage): SignatureLinks__from_checker => {
-            return SignatureLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SignatureLinks__from_checker): SignatureLinks__from_checker$Storage => {
-            return SignatureLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SignatureLinks__from_checker$Storage, SignatureLinks__from_checker>(goSliceAddress<SignatureLinks__from_checker$Storage>($argument0, $argument1), SignatureLinks__from_checker.$fromStorage, SignatureLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SignatureLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SignatureLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SignatureLinks__from_checker> | undefined> => {
@@ -279,11 +239,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$SwitchState
     }, ($argument0: SwitchStatementLinks__from_checker$Storage): SwitchStatementLinks__from_checker => {
         return SwitchStatementLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SwitchStatementLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SwitchStatementLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SwitchStatementLinks__from_checker$Storage, SwitchStatementLinks__from_checker>(goSliceAddress<SwitchStatementLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SwitchStatementLinks__from_checker$Storage): SwitchStatementLinks__from_checker => {
-            return SwitchStatementLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SwitchStatementLinks__from_checker): SwitchStatementLinks__from_checker$Storage => {
-            return SwitchStatementLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SwitchStatementLinks__from_checker$Storage, SwitchStatementLinks__from_checker>(goSliceAddress<SwitchStatementLinks__from_checker$Storage>($argument0, $argument1), SwitchStatementLinks__from_checker.$fromStorage, SwitchStatementLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SwitchStatementLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SwitchStatementLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SwitchStatementLinks__from_checker> | undefined> => {
@@ -304,11 +260,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$SymbolNodeL
     }, ($argument0: SymbolNodeLinks__from_checker$Storage): SymbolNodeLinks__from_checker => {
         return SymbolNodeLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SymbolNodeLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SymbolNodeLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SymbolNodeLinks__from_checker$Storage, SymbolNodeLinks__from_checker>(goSliceAddress<SymbolNodeLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SymbolNodeLinks__from_checker$Storage): SymbolNodeLinks__from_checker => {
-            return SymbolNodeLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SymbolNodeLinks__from_checker): SymbolNodeLinks__from_checker$Storage => {
-            return SymbolNodeLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SymbolNodeLinks__from_checker$Storage, SymbolNodeLinks__from_checker>(goSliceAddress<SymbolNodeLinks__from_checker$Storage>($argument0, $argument1), SymbolNodeLinks__from_checker.$fromStorage, SymbolNodeLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SymbolNodeLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SymbolNodeLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SymbolNodeLinks__from_checker> | undefined> => {
@@ -329,11 +281,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$TypeNodeLin
     }, ($argument0: TypeNodeLinks__from_checker$Storage): TypeNodeLinks__from_checker => {
         return TypeNodeLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeNodeLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeNodeLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeNodeLinks__from_checker$Storage, TypeNodeLinks__from_checker>(goSliceAddress<TypeNodeLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: TypeNodeLinks__from_checker$Storage): TypeNodeLinks__from_checker => {
-            return TypeNodeLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeLinks__from_checker): TypeNodeLinks__from_checker$Storage => {
-            return TypeNodeLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeNodeLinks__from_checker$Storage, TypeNodeLinks__from_checker>(goSliceAddress<TypeNodeLinks__from_checker$Storage>($argument0, $argument1), TypeNodeLinks__from_checker.$fromStorage, TypeNodeLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<TypeNodeLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<TypeNodeLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<TypeNodeLinks__from_checker> | undefined> => {
@@ -354,11 +302,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Node$Named_printer$emitNode($a
     }, ($argument0: emitNode__from_printer$Storage): emitNode__from_printer => {
         return emitNode__from_printer.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<emitNode__from_printer$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<emitNode__from_printer> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<emitNode__from_printer$Storage, emitNode__from_printer>(goSliceAddress<emitNode__from_printer$Storage>($argument0, $argument1), ($go$storage: emitNode__from_printer$Storage): emitNode__from_printer => {
-            return emitNode__from_printer.$fromStorage($go$storage);
-        }, ($go$value: emitNode__from_printer): emitNode__from_printer$Storage => {
-            return emitNode__from_printer.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<emitNode__from_printer$Storage, emitNode__from_printer>(goSliceAddress<emitNode__from_printer$Storage>($argument0, $argument1), emitNode__from_printer.$fromStorage, emitNode__from_printer.$storageOf);
     }, ($argument0: RuntimeSlice<emitNode__from_printer$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<emitNode__from_printer> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<emitNode__from_printer> | undefined> => {
@@ -379,11 +323,7 @@ export function LinkStore$Get$PointerTo_Named_ast$SourceFile$Named_checker$Sourc
     }, ($argument0: SourceFileLinks__from_checker$Storage): SourceFileLinks__from_checker => {
         return SourceFileLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SourceFileLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SourceFileLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SourceFileLinks__from_checker$Storage, SourceFileLinks__from_checker>(goSliceAddress<SourceFileLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SourceFileLinks__from_checker$Storage): SourceFileLinks__from_checker => {
-            return SourceFileLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SourceFileLinks__from_checker): SourceFileLinks__from_checker$Storage => {
-            return SourceFileLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SourceFileLinks__from_checker$Storage, SourceFileLinks__from_checker>(goSliceAddress<SourceFileLinks__from_checker$Storage>($argument0, $argument1), SourceFileLinks__from_checker.$fromStorage, SourceFileLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SourceFileLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFileLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SourceFileLinks__from_checker> | undefined> => {
@@ -404,11 +344,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$AliasSymb
     }, ($argument0: AliasSymbolLinks__from_checker$Storage): AliasSymbolLinks__from_checker => {
         return AliasSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<AliasSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<AliasSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<AliasSymbolLinks__from_checker$Storage, AliasSymbolLinks__from_checker>(goSliceAddress<AliasSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: AliasSymbolLinks__from_checker$Storage): AliasSymbolLinks__from_checker => {
-            return AliasSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: AliasSymbolLinks__from_checker): AliasSymbolLinks__from_checker$Storage => {
-            return AliasSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<AliasSymbolLinks__from_checker$Storage, AliasSymbolLinks__from_checker>(goSliceAddress<AliasSymbolLinks__from_checker$Storage>($argument0, $argument1), AliasSymbolLinks__from_checker.$fromStorage, AliasSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<AliasSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<AliasSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AliasSymbolLinks__from_checker> | undefined> => {
@@ -429,11 +365,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$Containin
     }, ($argument0: ContainingSymbolLinks__from_checker$Storage): ContainingSymbolLinks__from_checker => {
         return ContainingSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ContainingSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ContainingSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ContainingSymbolLinks__from_checker$Storage, ContainingSymbolLinks__from_checker>(goSliceAddress<ContainingSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ContainingSymbolLinks__from_checker$Storage): ContainingSymbolLinks__from_checker => {
-            return ContainingSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ContainingSymbolLinks__from_checker): ContainingSymbolLinks__from_checker$Storage => {
-            return ContainingSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ContainingSymbolLinks__from_checker$Storage, ContainingSymbolLinks__from_checker>(goSliceAddress<ContainingSymbolLinks__from_checker$Storage>($argument0, $argument1), ContainingSymbolLinks__from_checker.$fromStorage, ContainingSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ContainingSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ContainingSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ContainingSymbolLinks__from_checker> | undefined> => {
@@ -454,11 +386,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$DeclaredT
     }, ($argument0: DeclaredTypeLinks__from_checker$Storage): DeclaredTypeLinks__from_checker => {
         return DeclaredTypeLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<DeclaredTypeLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<DeclaredTypeLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<DeclaredTypeLinks__from_checker$Storage, DeclaredTypeLinks__from_checker>(goSliceAddress<DeclaredTypeLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: DeclaredTypeLinks__from_checker$Storage): DeclaredTypeLinks__from_checker => {
-            return DeclaredTypeLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: DeclaredTypeLinks__from_checker): DeclaredTypeLinks__from_checker$Storage => {
-            return DeclaredTypeLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<DeclaredTypeLinks__from_checker$Storage, DeclaredTypeLinks__from_checker>(goSliceAddress<DeclaredTypeLinks__from_checker$Storage>($argument0, $argument1), DeclaredTypeLinks__from_checker.$fromStorage, DeclaredTypeLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<DeclaredTypeLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<DeclaredTypeLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<DeclaredTypeLinks__from_checker> | undefined> => {
@@ -479,11 +407,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$DeferredS
     }, ($argument0: DeferredSymbolLinks__from_checker$Storage): DeferredSymbolLinks__from_checker => {
         return DeferredSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<DeferredSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<DeferredSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<DeferredSymbolLinks__from_checker$Storage, DeferredSymbolLinks__from_checker>(goSliceAddress<DeferredSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: DeferredSymbolLinks__from_checker$Storage): DeferredSymbolLinks__from_checker => {
-            return DeferredSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: DeferredSymbolLinks__from_checker): DeferredSymbolLinks__from_checker$Storage => {
-            return DeferredSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<DeferredSymbolLinks__from_checker$Storage, DeferredSymbolLinks__from_checker>(goSliceAddress<DeferredSymbolLinks__from_checker$Storage>($argument0, $argument1), DeferredSymbolLinks__from_checker.$fromStorage, DeferredSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<DeferredSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<DeferredSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<DeferredSymbolLinks__from_checker> | undefined> => {
@@ -504,11 +428,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$ExportTyp
     }, ($argument0: ExportTypeLinks__from_checker$Storage): ExportTypeLinks__from_checker => {
         return ExportTypeLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ExportTypeLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ExportTypeLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ExportTypeLinks__from_checker$Storage, ExportTypeLinks__from_checker>(goSliceAddress<ExportTypeLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ExportTypeLinks__from_checker$Storage): ExportTypeLinks__from_checker => {
-            return ExportTypeLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ExportTypeLinks__from_checker): ExportTypeLinks__from_checker$Storage => {
-            return ExportTypeLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ExportTypeLinks__from_checker$Storage, ExportTypeLinks__from_checker>(goSliceAddress<ExportTypeLinks__from_checker$Storage>($argument0, $argument1), ExportTypeLinks__from_checker.$fromStorage, ExportTypeLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ExportTypeLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ExportTypeLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ExportTypeLinks__from_checker> | undefined> => {
@@ -529,11 +449,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$LateBound
     }, ($argument0: LateBoundLinks__from_checker$Storage): LateBoundLinks__from_checker => {
         return LateBoundLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<LateBoundLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<LateBoundLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<LateBoundLinks__from_checker$Storage, LateBoundLinks__from_checker>(goSliceAddress<LateBoundLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: LateBoundLinks__from_checker$Storage): LateBoundLinks__from_checker => {
-            return LateBoundLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: LateBoundLinks__from_checker): LateBoundLinks__from_checker$Storage => {
-            return LateBoundLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<LateBoundLinks__from_checker$Storage, LateBoundLinks__from_checker>(goSliceAddress<LateBoundLinks__from_checker$Storage>($argument0, $argument1), LateBoundLinks__from_checker.$fromStorage, LateBoundLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<LateBoundLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<LateBoundLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<LateBoundLinks__from_checker> | undefined> => {
@@ -554,11 +470,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$MappedSym
     }, ($argument0: MappedSymbolLinks__from_checker$Storage): MappedSymbolLinks__from_checker => {
         return MappedSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<MappedSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<MappedSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<MappedSymbolLinks__from_checker$Storage, MappedSymbolLinks__from_checker>(goSliceAddress<MappedSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: MappedSymbolLinks__from_checker$Storage): MappedSymbolLinks__from_checker => {
-            return MappedSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: MappedSymbolLinks__from_checker): MappedSymbolLinks__from_checker$Storage => {
-            return MappedSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<MappedSymbolLinks__from_checker$Storage, MappedSymbolLinks__from_checker>(goSliceAddress<MappedSymbolLinks__from_checker$Storage>($argument0, $argument1), MappedSymbolLinks__from_checker.$fromStorage, MappedSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<MappedSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<MappedSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<MappedSymbolLinks__from_checker> | undefined> => {
@@ -579,11 +491,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$MarkedAss
     }, ($argument0: MarkedAssignmentSymbolLinks__from_checker$Storage): MarkedAssignmentSymbolLinks__from_checker => {
         return MarkedAssignmentSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<MarkedAssignmentSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<MarkedAssignmentSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<MarkedAssignmentSymbolLinks__from_checker$Storage, MarkedAssignmentSymbolLinks__from_checker>(goSliceAddress<MarkedAssignmentSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: MarkedAssignmentSymbolLinks__from_checker$Storage): MarkedAssignmentSymbolLinks__from_checker => {
-            return MarkedAssignmentSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: MarkedAssignmentSymbolLinks__from_checker): MarkedAssignmentSymbolLinks__from_checker$Storage => {
-            return MarkedAssignmentSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<MarkedAssignmentSymbolLinks__from_checker$Storage, MarkedAssignmentSymbolLinks__from_checker>(goSliceAddress<MarkedAssignmentSymbolLinks__from_checker$Storage>($argument0, $argument1), MarkedAssignmentSymbolLinks__from_checker.$fromStorage, MarkedAssignmentSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<MarkedAssignmentSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<MarkedAssignmentSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<MarkedAssignmentSymbolLinks__from_checker> | undefined> => {
@@ -629,11 +537,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$ModuleSym
     }, ($argument0: ModuleSymbolLinks__from_checker$Storage): ModuleSymbolLinks__from_checker => {
         return ModuleSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ModuleSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ModuleSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ModuleSymbolLinks__from_checker$Storage, ModuleSymbolLinks__from_checker>(goSliceAddress<ModuleSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ModuleSymbolLinks__from_checker$Storage): ModuleSymbolLinks__from_checker => {
-            return ModuleSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ModuleSymbolLinks__from_checker): ModuleSymbolLinks__from_checker$Storage => {
-            return ModuleSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ModuleSymbolLinks__from_checker$Storage, ModuleSymbolLinks__from_checker>(goSliceAddress<ModuleSymbolLinks__from_checker$Storage>($argument0, $argument1), ModuleSymbolLinks__from_checker.$fromStorage, ModuleSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ModuleSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ModuleSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ModuleSymbolLinks__from_checker> | undefined> => {
@@ -654,11 +558,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$NodeBuild
     }, ($argument0: NodeBuilderSymbolLinks__from_checker$Storage): NodeBuilderSymbolLinks__from_checker => {
         return NodeBuilderSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<NodeBuilderSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<NodeBuilderSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<NodeBuilderSymbolLinks__from_checker$Storage, NodeBuilderSymbolLinks__from_checker>(goSliceAddress<NodeBuilderSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: NodeBuilderSymbolLinks__from_checker$Storage): NodeBuilderSymbolLinks__from_checker => {
-            return NodeBuilderSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: NodeBuilderSymbolLinks__from_checker): NodeBuilderSymbolLinks__from_checker$Storage => {
-            return NodeBuilderSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<NodeBuilderSymbolLinks__from_checker$Storage, NodeBuilderSymbolLinks__from_checker>(goSliceAddress<NodeBuilderSymbolLinks__from_checker$Storage>($argument0, $argument1), NodeBuilderSymbolLinks__from_checker.$fromStorage, NodeBuilderSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<NodeBuilderSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<NodeBuilderSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<NodeBuilderSymbolLinks__from_checker> | undefined> => {
@@ -679,11 +579,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$ReverseMa
     }, ($argument0: ReverseMappedSymbolLinks__from_checker$Storage): ReverseMappedSymbolLinks__from_checker => {
         return ReverseMappedSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ReverseMappedSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ReverseMappedSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ReverseMappedSymbolLinks__from_checker$Storage, ReverseMappedSymbolLinks__from_checker>(goSliceAddress<ReverseMappedSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ReverseMappedSymbolLinks__from_checker$Storage): ReverseMappedSymbolLinks__from_checker => {
-            return ReverseMappedSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ReverseMappedSymbolLinks__from_checker): ReverseMappedSymbolLinks__from_checker$Storage => {
-            return ReverseMappedSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ReverseMappedSymbolLinks__from_checker$Storage, ReverseMappedSymbolLinks__from_checker>(goSliceAddress<ReverseMappedSymbolLinks__from_checker$Storage>($argument0, $argument1), ReverseMappedSymbolLinks__from_checker.$fromStorage, ReverseMappedSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ReverseMappedSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ReverseMappedSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ReverseMappedSymbolLinks__from_checker> | undefined> => {
@@ -704,11 +600,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$SpreadLin
     }, ($argument0: SpreadLinks__from_checker$Storage): SpreadLinks__from_checker => {
         return SpreadLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SpreadLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SpreadLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SpreadLinks__from_checker$Storage, SpreadLinks__from_checker>(goSliceAddress<SpreadLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SpreadLinks__from_checker$Storage): SpreadLinks__from_checker => {
-            return SpreadLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SpreadLinks__from_checker): SpreadLinks__from_checker$Storage => {
-            return SpreadLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SpreadLinks__from_checker$Storage, SpreadLinks__from_checker>(goSliceAddress<SpreadLinks__from_checker$Storage>($argument0, $argument1), SpreadLinks__from_checker.$fromStorage, SpreadLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SpreadLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SpreadLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SpreadLinks__from_checker> | undefined> => {
@@ -729,11 +621,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$SymbolRef
     }, ($argument0: SymbolReferenceLinks__from_checker$Storage): SymbolReferenceLinks__from_checker => {
         return SymbolReferenceLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<SymbolReferenceLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<SymbolReferenceLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<SymbolReferenceLinks__from_checker$Storage, SymbolReferenceLinks__from_checker>(goSliceAddress<SymbolReferenceLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: SymbolReferenceLinks__from_checker$Storage): SymbolReferenceLinks__from_checker => {
-            return SymbolReferenceLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: SymbolReferenceLinks__from_checker): SymbolReferenceLinks__from_checker$Storage => {
-            return SymbolReferenceLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<SymbolReferenceLinks__from_checker$Storage, SymbolReferenceLinks__from_checker>(goSliceAddress<SymbolReferenceLinks__from_checker$Storage>($argument0, $argument1), SymbolReferenceLinks__from_checker.$fromStorage, SymbolReferenceLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<SymbolReferenceLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SymbolReferenceLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<SymbolReferenceLinks__from_checker> | undefined> => {
@@ -754,11 +642,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$TypeAlias
     }, ($argument0: TypeAliasLinks__from_checker$Storage): TypeAliasLinks__from_checker => {
         return TypeAliasLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeAliasLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeAliasLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeAliasLinks__from_checker$Storage, TypeAliasLinks__from_checker>(goSliceAddress<TypeAliasLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: TypeAliasLinks__from_checker$Storage): TypeAliasLinks__from_checker => {
-            return TypeAliasLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: TypeAliasLinks__from_checker): TypeAliasLinks__from_checker$Storage => {
-            return TypeAliasLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeAliasLinks__from_checker$Storage, TypeAliasLinks__from_checker>(goSliceAddress<TypeAliasLinks__from_checker$Storage>($argument0, $argument1), TypeAliasLinks__from_checker.$fromStorage, TypeAliasLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<TypeAliasLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<TypeAliasLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<TypeAliasLinks__from_checker> | undefined> => {
@@ -779,11 +663,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$ValueSymb
     }, ($argument0: ValueSymbolLinks__from_checker$Storage): ValueSymbolLinks__from_checker => {
         return ValueSymbolLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ValueSymbolLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ValueSymbolLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ValueSymbolLinks__from_checker$Storage, ValueSymbolLinks__from_checker>(goSliceAddress<ValueSymbolLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: ValueSymbolLinks__from_checker$Storage): ValueSymbolLinks__from_checker => {
-            return ValueSymbolLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: ValueSymbolLinks__from_checker): ValueSymbolLinks__from_checker$Storage => {
-            return ValueSymbolLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ValueSymbolLinks__from_checker$Storage, ValueSymbolLinks__from_checker>(goSliceAddress<ValueSymbolLinks__from_checker$Storage>($argument0, $argument1), ValueSymbolLinks__from_checker.$fromStorage, ValueSymbolLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<ValueSymbolLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<ValueSymbolLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<ValueSymbolLinks__from_checker> | undefined> => {
@@ -804,11 +684,7 @@ export function LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$VarianceL
     }, ($argument0: VarianceLinks__from_checker$Storage): VarianceLinks__from_checker => {
         return VarianceLinks__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<VarianceLinks__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<VarianceLinks__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<VarianceLinks__from_checker$Storage, VarianceLinks__from_checker>(goSliceAddress<VarianceLinks__from_checker$Storage>($argument0, $argument1), ($go$storage: VarianceLinks__from_checker$Storage): VarianceLinks__from_checker => {
-            return VarianceLinks__from_checker.$fromStorage($go$storage);
-        }, ($go$value: VarianceLinks__from_checker): VarianceLinks__from_checker$Storage => {
-            return VarianceLinks__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<VarianceLinks__from_checker$Storage, VarianceLinks__from_checker>(goSliceAddress<VarianceLinks__from_checker$Storage>($argument0, $argument1), VarianceLinks__from_checker.$fromStorage, VarianceLinks__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<VarianceLinks__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: tsonicTypeScriptRuntime.Location<VarianceLinks__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, tsonicTypeScriptRuntime.Location<VarianceLinks__from_checker> | undefined> => {

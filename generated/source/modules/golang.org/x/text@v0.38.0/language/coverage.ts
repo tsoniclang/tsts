@@ -41,9 +41,10 @@ export class allSubtags {
             const __gotots_range_value_1 = __gotots_range_0.get(__gotots_range_index_0);
             let i = __gotots_range_value_0;
             let b = __gotots_range_value_1;
-            base.set(i, Base.$storageOf(Base.$fromStorage({
-                langID: b
-            })));
+            base.set(i, (void Base.$storageOf, (void Base.$fromStorage,
+                {
+                    langID: b
+                })));
         }
         return base;
     }
@@ -57,9 +58,10 @@ export class allSubtags {
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_2 = __gotots_range_index_1;
             let i = __gotots_range_value_2;
-            reg.set(i, Region.$storageOf(Region.$fromStorage({
-                regionID: i + 1 & 65535
-            })));
+            reg.set(i, (void Region.$storageOf, (void Region.$fromStorage,
+                {
+                    regionID: i + 1 & 65535
+                })));
         }
         return reg;
     }
@@ -73,9 +75,10 @@ export class allSubtags {
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_3 = __gotots_range_index_2;
             let i = __gotots_range_value_3;
-            scr.set(i, Script.$storageOf(Script.$fromStorage({
-                scriptID: i + 1 & 65535
-            })));
+            scr.set(i, (void Script.$storageOf, (void Script.$fromStorage,
+                {
+                    scriptID: i + 1 & 65535
+                })));
         }
         return scr;
     }

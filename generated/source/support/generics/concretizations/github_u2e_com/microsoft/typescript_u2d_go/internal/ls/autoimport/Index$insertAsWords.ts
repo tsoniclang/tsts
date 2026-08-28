@@ -16,12 +16,6 @@ export function Index$insertAsWords$PointerTo_Named_autoimport$Export($argument0
         value: Export__from_autoimport;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Export__from_autoimport;
-    } | undefined): {
-        value: Export__from_autoimport;
-    } | undefined => {
-        return $argument0;
     }, ($argument0: RuntimeSlice<{
         value: Export__from_autoimport;
     } | undefined>): int => {

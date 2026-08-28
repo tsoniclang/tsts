@@ -40,7 +40,7 @@ import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function startTracingIfNeeded(sys: System__from_tsc | undefined, config: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined, testing: CommandLineTesting__from_tsc | undefined): {
     value: Tracing__from_tracing;
 } | undefined {
-    let traceDir = (ParsedCommandLine__from_tsoptions.CompilerOptions(config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GenerateTrace;
+    let traceDir: CompilerOptions__from_core["GenerateTrace"] = (ParsedCommandLine__from_tsoptions.CompilerOptions(config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GenerateTrace;
     if (traceDir === "") {
         return void 0;
     }
@@ -112,10 +112,10 @@ export function tscBuildCompilation(ctx: GoInterface | undefined, sys: System__f
                 const __gotots_receiver_0 = sys;
                 const __gotots_argument_1 = goInterfaceNonNil<System__from_tsc>(__gotots_receiver_0).Writer();
                 const __gotots_argument_2 = Locale__from_locale.$copy(locale__shadow_1);
-                const __gotots_argument_3 = (buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions;
+                const __gotots_argument_3: ParsedBuildCommandLine__from_tsoptions["CompilerOptions"] = (buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions;
                 let reportDiagnostic: (($0: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined) => void) | undefined = CreateDiagnosticReporter__from_tsc(__gotots_argument_0, __gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
                 if ((buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Errors.length > 0) {
-                    const __gotots_range_0 = (buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Errors;
+                    const __gotots_range_0: ParsedBuildCommandLine__from_tsoptions["Errors"] = (buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Errors;
                     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                         const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
                         let err: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined = __gotots_range_value_0;
@@ -127,7 +127,7 @@ export function tscBuildCompilation(ctx: GoInterface | undefined, sys: System__f
                     break __gotots_return_block_0;
                 }
                 {
-                    let pprofDir = ((buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PprofDir;
+                    let pprofDir: CompilerOptions__from_core["PprofDir"] = ((buildCommand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PprofDir;
                     if (pprofDir !== "") {
                         const __gotots_argument_5 = pprofDir;
                         const __gotots_receiver_1 = sys;
@@ -212,7 +212,7 @@ export function tscCompilation(ctx: GoInterface | undefined, sys: System__from_t
                     break __gotots_return_block_0;
                 }
                 {
-                    let pprofDir = (ParsedCommandLine__from_tsoptions.CompilerOptions(commandLine) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PprofDir;
+                    let pprofDir: CompilerOptions__from_core["PprofDir"] = (ParsedCommandLine__from_tsoptions.CompilerOptions(commandLine) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PprofDir;
                     if (pprofDir !== "") {
                         const __gotots_argument_12 = pprofDir;
                         const __gotots_receiver_3 = sys;

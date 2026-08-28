@@ -172,7 +172,7 @@ export class CompilerOptions {
     static GetJSXTransformEnabled(options: {
         value: CompilerOptions;
     } | undefined): bool {
-        let jsx = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx;
+        let jsx: CompilerOptions["Jsx"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx;
         return jsx === JsxEmitReact$constant() || jsx === JsxEmitReactJSX$constant() || jsx === JsxEmitReactJSXDev$constant();
     }
     static GetModuleResolutionKind(options: {

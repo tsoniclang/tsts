@@ -44,7 +44,7 @@ export class Reader {
     ] {
         let contentLength = 0n;
         for (;;) {
-            const __gotots_receiver_2 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
+            const __gotots_receiver_2: Reader["r"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.r;
             const __gotots_results_4 = GoProviderState.ReadBytes(__gotots_receiver_2 === void 0 ? void 0 :
                 (__gotots_receiver_2 as tsonicTypeScriptRuntime.Location<GoProviderState>).value, 10);
             const __gotots_results_5 = [__gotots_results_4[0], $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_4[1])] satisfies [
@@ -183,7 +183,7 @@ export class Writer {
             }
         }
         {
-            const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+            const __gotots_receiver_0: Writer["w"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
             const __gotots_results_2 = $goProviderState$Named_bufio$Writer.Write(__gotots_receiver_0 === void 0 ? void 0 :
                 (__gotots_receiver_0 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value, data);
             const __gotots_results_3 = [globalThis.Number(BigInt.asIntN(64, __gotots_results_2[0])), $goProviderProfileBridge$Named_error$Using$Error$Direct.$from(__gotots_results_2[1])] satisfies [
@@ -195,7 +195,7 @@ export class Writer {
                 return err;
             }
         }
-        const __gotots_receiver_1 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
+        const __gotots_receiver_1: Writer["w"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.w;
         return $goProviderProfileBridge$Named_error$Using$Error$Direct.$from($goProviderState$Named_bufio$Writer.Flush(__gotots_receiver_1 === void 0 ? void 0 :
             (__gotots_receiver_1 as tsonicTypeScriptRuntime.Location<$goProviderState$Named_bufio$Writer>).value));
     }

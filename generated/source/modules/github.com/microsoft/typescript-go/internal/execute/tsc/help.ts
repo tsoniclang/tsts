@@ -53,11 +53,7 @@ export function PrintHelp(sys: System | undefined, locale__shadow_1: Locale__fro
 export function getOptionsForHelp(commandLine: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined> {
     let opts = Clone$SliceOf_PointerTo_Named_tsoptions$CommandLineOption$PointerTo_Named_tsoptions$CommandLineOption($state__tsoptions.OptionsDeclarations);
     opts = opts.append(void 0, [
-        tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), ($go$storage: CommandLineOption__from_tsoptions$Storage): CommandLineOption__from_tsoptions => {
-            return CommandLineOption__from_tsoptions.$fromStorage($go$storage);
-        }, ($go$value: CommandLineOption__from_tsoptions): CommandLineOption__from_tsoptions$Storage => {
-            return CommandLineOption__from_tsoptions.$storageOf($go$value);
-        }),
+        tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), CommandLineOption__from_tsoptions.$fromStorage, CommandLineOption__from_tsoptions.$storageOf),
     ]);
     if (Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions(commandLine) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.All)) {
         SortFunc$SliceOf_PointerTo_Named_tsoptions$CommandLineOption$PointerTo_Named_tsoptions$CommandLineOption(opts, (a: tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined, b: tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined): int => {
@@ -182,11 +178,7 @@ export function printAllHelp(sys: System | undefined, locale__shadow_1: Locale__
     let beforeBuildOptions = Message__from_diagnostics.Localize($state__diagnostics.Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("https://aka.ms/tsc-composite-builds")]));
     const beforeBuildOptions$location = tsonicTypeScriptRuntime.boundLocation({}, () => beforeBuildOptions, beforeBuildOptions$next => beforeBuildOptions = beforeBuildOptions$next);
     let buildOptions = Filter$PointerTo_Named_tsoptions$CommandLineOption($state__tsoptions.OptionsForBuild, (option: tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined): bool => {
-        return !tsonicTypeScriptRuntime.sameLocation(option, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), ($go$storage: CommandLineOption__from_tsoptions$Storage): CommandLineOption__from_tsoptions => {
-            return CommandLineOption__from_tsoptions.$fromStorage($go$storage);
-        }, ($go$value: CommandLineOption__from_tsoptions): CommandLineOption__from_tsoptions$Storage => {
-            return CommandLineOption__from_tsoptions.$storageOf($go$value);
-        }));
+        return !tsonicTypeScriptRuntime.sameLocation(option, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), CommandLineOption__from_tsoptions.$fromStorage, CommandLineOption__from_tsoptions.$storageOf));
     });
     output = goSliceAppendSlice<gostring>(output, generateSectionOptionsOutput(sys, Locale__from_locale.$copy(locale__shadow_1), Message__from_diagnostics.Localize($state__diagnostics.BUILD_OPTIONS, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.nil<GoInterface | undefined>()), buildOptions, false, beforeBuildOptions$location, void 0), "");
     const __gotots_range_6 = output;
@@ -205,11 +197,7 @@ export function PrintBuildHelp(sys: System | undefined, locale__shadow_1: Locale
     let before = Message__from_diagnostics.Localize($state__diagnostics.Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("https://aka.ms/tsc-composite-builds")]));
     const before$location = tsonicTypeScriptRuntime.boundLocation({}, () => before, before$next => before = before$next);
     let options = Filter$PointerTo_Named_tsoptions$CommandLineOption(buildOptions, (option: tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined): bool => {
-        return !tsonicTypeScriptRuntime.sameLocation(option, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), ($go$storage: CommandLineOption__from_tsoptions$Storage): CommandLineOption__from_tsoptions => {
-            return CommandLineOption__from_tsoptions.$fromStorage($go$storage);
-        }, ($go$value: CommandLineOption__from_tsoptions): CommandLineOption__from_tsoptions$Storage => {
-            return CommandLineOption__from_tsoptions.$storageOf($go$value);
-        }));
+        return !tsonicTypeScriptRuntime.sameLocation(option, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption__from_tsoptions>(tsonicTypeScriptRuntime.propertyLocation($state__tsoptions, "TscBuildOption"), CommandLineOption__from_tsoptions.$fromStorage, CommandLineOption__from_tsoptions.$storageOf));
     });
     output = goSliceAppendSlice<gostring>(output, generateSectionOptionsOutput(sys, Locale__from_locale.$copy(locale__shadow_1), Message__from_diagnostics.Localize($state__diagnostics.BUILD_OPTIONS, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.nil<GoInterface | undefined>()), options, false, before$location, void 0), "");
     const __gotots_range_0 = output;

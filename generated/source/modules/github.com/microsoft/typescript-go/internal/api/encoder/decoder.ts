@@ -1724,10 +1724,11 @@ export class astDecoder {
             FileName: fileName,
             Path: ((void Path__from_tspath,
                 path) as string),
-            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$fromStorage({
-                JSX: (parseOpts & 1) >>> 0 !== 0,
-                Force: (parseOpts & 2) >>> 0 !== 0
-            }))
+            ExternalModuleIndicatorOptions: (void ExternalModuleIndicatorOptions__from_ast.$storageOf, (void ExternalModuleIndicatorOptions__from_ast.$fromStorage,
+                {
+                    JSX: (parseOpts & 1) >>> 0 !== 0,
+                    Force: (parseOpts & 2) >>> 0 !== 0
+                }))
         });
         let stmts: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = void 0;
         let endOfFile: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
@@ -1792,7 +1793,8 @@ export class astDecoder {
             return void 0;
         }
         let ml: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = NodeFactory__from_ast.NewModifierList((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory, NodeList__from_ast.$storageOf(((nl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);
-        NodeList__from_ast.$storageOf(NodeList__from_ast.$fromStorage(ModifierList__from_ast.$storageOf(((ml ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((nl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc)));
+        (void NodeList__from_ast.$storageOf, (void NodeList__from_ast.$fromStorage,
+            ModifierList__from_ast.$storageOf(((ml ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((nl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc)));
         return ml;
     }
     static $go$private$encoder$getString(d: astDecoder | undefined, idx: uint32): gostring {

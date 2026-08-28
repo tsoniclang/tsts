@@ -17,12 +17,6 @@ export function lockedEntry$Original$Named_tspath$Path$PointerTo_Named_project$P
         value: Project__from_project;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
-        return $argument0;
     });
 }
 export function lockedEntry$Original$Named_tspath$Path$PointerTo_Named_project$diskFile($argument0: lockedEntry__from_dirty<Path__from_tspath, {
@@ -38,12 +32,6 @@ export function lockedEntry$Original$Named_tspath$Path$PointerTo_Named_project$d
         value: diskFile__from_project;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
-        return $argument0;
     });
 }
 export function lockedEntry$Original$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet($argument0: lockedEntry__from_dirty<Path__from_tspath, {
@@ -54,12 +42,6 @@ export function lockedEntry$Original$Named_tspath$Path$PointerTo_Named_project$r
     return lockedEntry__from_dirty.Original$kernel<Path__from_tspath, {
         value: realpathAliasSet__from_project;
     } | undefined>($argument0, ($argument0: {
-        value: realpathAliasSet__from_project;
-    } | undefined): {
-        value: realpathAliasSet__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: {
         value: realpathAliasSet__from_project;
     } | undefined): {
         value: realpathAliasSet__from_project;

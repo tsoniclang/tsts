@@ -308,11 +308,11 @@ export class Session {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.RWMutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-                    const __gotots_receiver_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu;
+                    const __gotots_receiver_0: Session["snapshotsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncRWMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
-                    const __gotots_range_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots;
+                    const __gotots_range_0: Session["snapshots"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots;
                     const __gotots_range_keys_0 = __gotots_range_0.keys();
                     for (const __gotots_range_value_0 of __gotots_range_keys_0) {
                         const __gotots_range_value_1 = __gotots_range_0.lookupOk(__gotots_range_value_0);
@@ -5074,7 +5074,8 @@ export class Session {
                         __gotots_return_0 = [void 0, void 0];
                         break __gotots_return_block_1;
                     }
-                    const __gotots_results_159 = EncodeNode__from_encoder(Node__from_ast.AsNode(node), void 0);
+                    const __gotots_results_159 = EncodeNode__from_encoder((void Node__from_ast.AsNode,
+                        node), void 0);
                     let data = __gotots_results_159[0];
                     err = __gotots_results_159[2];
                     if (!(err === undefined)) {
@@ -5299,7 +5300,8 @@ export class Session {
                         __gotots_return_0 = [void 0, void 0];
                         break __gotots_return_block_1;
                     }
-                    const __gotots_results_153 = EncodeNode__from_encoder(Node__from_ast.AsNode(typeNode), void 0);
+                    const __gotots_results_153 = EncodeNode__from_encoder((void Node__from_ast.AsNode,
+                        typeNode), void 0);
                     let data = __gotots_results_153[0];
                     err = __gotots_results_153[2];
                     if (!(err === undefined)) {

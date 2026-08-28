@@ -22,17 +22,9 @@ export class Collator {
     declare private readonly then?: never;
     static CompareString(c: Collator | undefined, a: gostring, b: gostring): int {
         const __gotots_store_2 = iter.$storageOf(((Collator.$go$private$collate$iter(c, 0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Iter"), ($go$storage: Iter__from_colltab$Storage): Iter__from_colltab => {
-            return Iter__from_colltab.$fromStorage($go$storage);
-        }, ($go$value: Iter__from_colltab): Iter__from_colltab$Storage => {
-            return Iter__from_colltab.$storageOf($go$value);
-        }), a);
+        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), a);
         const __gotots_store_3 = iter.$storageOf(((Collator.$go$private$collate$iter(c, 1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Iter"), ($go$storage: Iter__from_colltab$Storage): Iter__from_colltab => {
-            return Iter__from_colltab.$fromStorage($go$storage);
-        }, ($go$value: Iter__from_colltab): Iter__from_colltab$Storage => {
-            return Iter__from_colltab.$storageOf($go$value);
-        }), b);
+        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), b);
         {
             let res = Collator.$go$private$collate$compare(c);
             if (res !== 0) {
@@ -115,11 +107,7 @@ export class Collator {
         const __gotots_address_3 = __gotots_address_2;
         __gotots_address_3.get(__gotots_address_1);
         const __gotots_address_4 = goArrayLocation(__gotots_address_3);
-        iter.$go$private$collate$init(tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_4, 0), __gotots_address_4[1] + globalThis.Number(__gotots_address_1)), ($go$storage: iter$Storage): iter => {
-            return iter.$fromStorage($go$storage);
-        }, ($go$value: iter): iter$Storage => {
-            return iter.$storageOf($go$value);
-        }), c);
+        iter.$go$private$collate$init(tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_4, 0), __gotots_address_4[1] + globalThis.Number(__gotots_address_1)), iter.$fromStorage, iter.$storageOf), c);
         const __gotots_store_5 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         const __gotots_address_5 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "_iter");
         const __gotots_address_6 = 1;
@@ -127,11 +115,7 @@ export class Collator {
         const __gotots_address_8 = __gotots_address_7;
         __gotots_address_8.get(__gotots_address_6);
         const __gotots_address_9 = goArrayLocation(__gotots_address_8);
-        iter.$go$private$collate$init(tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_9, 0), __gotots_address_9[1] + globalThis.Number(__gotots_address_6)), ($go$storage: iter$Storage): iter => {
-            return iter.$fromStorage($go$storage);
-        }, ($go$value: iter): iter$Storage => {
-            return iter.$storageOf($go$value);
-        }), c);
+        iter.$go$private$collate$init(tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_9, 0), __gotots_address_9[1] + globalThis.Number(__gotots_address_6)), iter.$fromStorage, iter.$storageOf), c);
     }
     static $go$private$collate$iter(c: Collator | undefined, i: int): tsonicTypeScriptRuntime.Location<iter> | undefined {
         const __gotots_store_6 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -141,11 +125,7 @@ export class Collator {
         const __gotots_address_13 = __gotots_address_12;
         __gotots_address_13.get(__gotots_address_11);
         const __gotots_address_14 = goArrayLocation(__gotots_address_13);
-        return tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_14, 0), __gotots_address_14[1] + globalThis.Number(__gotots_address_11)), ($go$storage: iter$Storage): iter => {
-            return iter.$fromStorage($go$storage);
-        }, ($go$value: iter): iter$Storage => {
-            return iter.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_14, 0), __gotots_address_14[1] + globalThis.Number(__gotots_address_11)), iter.$fromStorage, iter.$storageOf);
     }
 }
 export function init(): void {
@@ -244,8 +224,10 @@ export class iter {
     }
     declare private readonly then?: never;
     static $go$private$collate$init(i: tsonicTypeScriptRuntime.Location<iter> | undefined, c: Collator | undefined): void {
-        Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Weighter = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options.t;
-        Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems = goArraySlice(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).wa, 0, 0, null);
+        (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Weighter = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options.t;
+        (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems = goArraySlice(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).wa, 0, 0, null);
     }
     static $go$private$collate$nextPrimary(i: tsonicTypeScriptRuntime.Location<iter> | undefined): int {
         for (;;) {
@@ -259,12 +241,14 @@ export class iter {
                         const __gotots_store_7 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                         __gotots_store_7.pce = __gotots_store_7.pce + 1;
                     }
-                    if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).N)) {
+                    if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                        iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).N)) {
                         break;
                     }
                     {
                         {
-                            let v = Elem_Primary__from_colltab(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
+                            let v = Elem_Primary__from_colltab((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                                iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
                             if (v !== 0) {
                                 const __gotots_store_8 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                                 __gotots_store_8.pce = __gotots_store_8.pce + 1;
@@ -275,11 +259,7 @@ export class iter {
                 }
             }
             const __gotots_store_9 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-            if (!Iter__from_colltab.Next(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "Iter"), ($go$storage: Iter__from_colltab$Storage): Iter__from_colltab => {
-                return Iter__from_colltab.$fromStorage($go$storage);
-            }, ($go$value: Iter__from_colltab): Iter__from_colltab$Storage => {
-                return Iter__from_colltab.$storageOf($go$value);
-            }))) {
+            if (!Iter__from_colltab.Next(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf))) {
                 return 0;
             }
         }
@@ -295,12 +275,14 @@ export class iter {
                     const __gotots_store_16 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                     __gotots_store_16.pce = __gotots_store_16.pce + 1;
                 }
-                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
+                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                    iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
                     break;
                 }
                 {
                     {
-                        let v = Elem_Quaternary__from_colltab(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
+                        let v = Elem_Quaternary__from_colltab((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
                         if (v !== 0) {
                             const __gotots_store_17 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                             __gotots_store_17.pce = __gotots_store_17.pce + 1;
@@ -323,12 +305,14 @@ export class iter {
                     const __gotots_store_10 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                     __gotots_store_10.pce = __gotots_store_10.pce + 1;
                 }
-                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
+                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                    iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
                     break;
                 }
                 {
                     {
-                        let v = Elem_Secondary__from_colltab(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
+                        let v = Elem_Secondary__from_colltab((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
                         if (v !== 0) {
                             const __gotots_store_11 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                             __gotots_store_11.pce = __gotots_store_11.pce + 1;
@@ -351,12 +335,14 @@ export class iter {
                     const __gotots_store_14 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                     __gotots_store_14.pce = __gotots_store_14.pce + 1;
                 }
-                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
+                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                    iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
                     break;
                 }
                 {
                     {
-                        let v = Elem_Tertiary__from_colltab(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
+                        let v = Elem_Tertiary__from_colltab((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce));
                         if (v !== 0) {
                             const __gotots_store_15 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                             __gotots_store_15.pce = __gotots_store_15.pce + 1;
@@ -379,12 +365,15 @@ export class iter {
                     const __gotots_store_12 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                     __gotots_store_12.pce = __gotots_store_12.pce + 1;
                 }
-                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
+                if (!(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce < (void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                    iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length)) {
                     break;
                 }
                 {
                     {
-                        let v = Elem_Secondary__from_colltab(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get(Iter__from_colltab.$storageOf(Iter__from_colltab.$fromStorage(iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length - iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce - 1));
+                        let v = Elem_Secondary__from_colltab((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.get((void Iter__from_colltab.$storageOf, (void Iter__from_colltab.$fromStorage,
+                            iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).Iter)).Elems.length - iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value).pce - 1));
                         if (v !== 0) {
                             const __gotots_store_13 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
                             __gotots_store_13.pce = __gotots_store_13.pce + 1;

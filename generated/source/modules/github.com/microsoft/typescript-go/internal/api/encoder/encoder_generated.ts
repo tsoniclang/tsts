@@ -186,11 +186,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindVariableStatement$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<VariableStatement__from_ast> | undefined = Node__from_ast.AsVariableStatement(node);
             const __gotots_store_0 = VariableStatement__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value);
-            const __gotots_argument_0 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_0 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_1 = hasModifiers(__gotots_argument_0);
             const __gotots_binary_operand_0 = boolToByte(__gotots_argument_1);
             const __gotots_binary_operand_1 = 0;
@@ -220,11 +216,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindParameter$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined = Node__from_ast.AsParameterDeclaration(node);
             const __gotots_store_1 = ParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-            const __gotots_argument_2 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_2 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_3 = hasModifiers(__gotots_argument_2);
             const __gotots_binary_operand_4 = boolToByte(__gotots_argument_3);
             const __gotots_binary_operand_5 = 0;
@@ -263,26 +255,32 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindFunctionDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast> | undefined = Node__from_ast.AsFunctionDeclaration(node);
             const __gotots_store_3 = FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value);
-            const __gotots_argument_6 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_6 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_7 = hasModifiers(__gotots_argument_6);
             const __gotots_binary_operand_18 = boolToByte(__gotots_argument_7);
             const __gotots_binary_operand_19 = 0;
             const __gotots_binary_operand_20 = (__gotots_binary_operand_18 << __gotots_binary_operand_19);
-            const __gotots_binary_operand_21 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).AsteriskToken === undefined)) << 1);
+            const __gotots_binary_operand_21 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).AsteriskToken === undefined)) << 1);
             const __gotots_binary_operand_22 = __gotots_binary_operand_20 | __gotots_binary_operand_21;
             const __gotots_binary_operand_23 = (boolToByte(!(FunctionDeclaration__from_ast.Name(n) === undefined)) << 2);
             const __gotots_binary_operand_24 = __gotots_binary_operand_22 | __gotots_binary_operand_23;
-            const __gotots_binary_operand_25 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).TypeParameters === undefined)) << 3);
+            const __gotots_binary_operand_25 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).TypeParameters === undefined)) << 3);
             const __gotots_binary_operand_26 = __gotots_binary_operand_24 | __gotots_binary_operand_25;
-            const __gotots_binary_operand_27 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Parameters === undefined)) << 4);
+            const __gotots_binary_operand_27 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Parameters === undefined)) << 4);
             const __gotots_binary_operand_28 = __gotots_binary_operand_26 | __gotots_binary_operand_27;
-            const __gotots_binary_operand_29 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Type === undefined)) << 5);
+            const __gotots_binary_operand_29 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).FunctionLikeBase)).Type === undefined)) << 5);
             const __gotots_binary_operand_30 = __gotots_binary_operand_28 | __gotots_binary_operand_29;
-            const __gotots_binary_operand_31 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$fromStorage(FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body === undefined)) << 6);
+            const __gotots_binary_operand_31 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
+                    FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).FunctionLikeWithBodyBase)).BodyBase)).Body === undefined)) << 6);
             return __gotots_binary_operand_30 | __gotots_binary_operand_31;
             break;
         }
@@ -290,7 +288,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             let n: {
                 value: ClassDeclaration__from_ast;
             } | undefined = Node__from_ast.AsClassDeclaration(node);
-            const __gotots_store_4 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
+            const __gotots_store_4: ClassDeclaration__from_ast["ClassLikeBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
             const __gotots_argument_8 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "ModifiersBase"));
             const __gotots_argument_9 = hasModifiers(__gotots_argument_8);
             const __gotots_binary_operand_32 = boolToByte(__gotots_argument_9);
@@ -310,7 +308,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             let n: {
                 value: ClassExpression__from_ast;
             } | undefined = Node__from_ast.AsClassExpression(node);
-            const __gotots_store_5 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
+            const __gotots_store_5: ClassExpression__from_ast["ClassLikeBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
             const __gotots_argument_10 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "ModifiersBase"));
             const __gotots_argument_11 = hasModifiers(__gotots_argument_10);
             const __gotots_binary_operand_42 = boolToByte(__gotots_argument_11);
@@ -334,11 +332,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindInterfaceDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast> | undefined = Node__from_ast.AsInterfaceDeclaration(node);
             const __gotots_store_6 = InterfaceDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value);
-            const __gotots_argument_12 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_12 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_13 = hasModifiers(__gotots_argument_12);
             const __gotots_binary_operand_52 = boolToByte(__gotots_argument_13);
             const __gotots_binary_operand_53 = 0;
@@ -357,11 +351,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindJSTypeAliasDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast> | undefined = Node__from_ast.AsTypeAliasDeclaration(node);
             const __gotots_store_7 = TypeAliasDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value);
-            const __gotots_argument_14 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_14 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_15 = hasModifiers(__gotots_argument_14);
             const __gotots_binary_operand_62 = boolToByte(__gotots_argument_15);
             const __gotots_binary_operand_63 = 0;
@@ -504,7 +494,10 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindConstructSignature$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast> | undefined = Node__from_ast.AsConstructSignatureDeclaration(node);
-            return (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).TypeParameters === undefined)) << 0) | (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Parameters === undefined)) << 1) | (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Type === undefined)) << 2);
+            return (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).TypeParameters === undefined)) << 0) | (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Parameters === undefined)) << 1) | (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                ConstructSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Type === undefined)) << 2);
             break;
         }
         case KindConstructor$constant__from_ast(): {
@@ -517,13 +510,17 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_94 = boolToByte(__gotots_argument_25);
             const __gotots_binary_operand_95 = 0;
             const __gotots_binary_operand_96 = (__gotots_binary_operand_94 << __gotots_binary_operand_95);
-            const __gotots_binary_operand_97 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
+            const __gotots_binary_operand_97 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
             const __gotots_binary_operand_98 = __gotots_binary_operand_96 | __gotots_binary_operand_97;
-            const __gotots_binary_operand_99 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 2);
+            const __gotots_binary_operand_99 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 2);
             const __gotots_binary_operand_100 = __gotots_binary_operand_98 | __gotots_binary_operand_99;
-            const __gotots_binary_operand_101 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 3);
+            const __gotots_binary_operand_101 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 3);
             const __gotots_binary_operand_102 = __gotots_binary_operand_100 | __gotots_binary_operand_101;
-            const __gotots_binary_operand_103 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 4);
+            const __gotots_binary_operand_103 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 4);
             return __gotots_binary_operand_102 | __gotots_binary_operand_103;
             break;
         }
@@ -531,7 +528,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             let n: {
                 value: GetAccessorDeclaration__from_ast;
             } | undefined = Node__from_ast.AsGetAccessorDeclaration(node);
-            const __gotots_store_13 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
+            const __gotots_store_13: GetAccessorDeclaration__from_ast["AccessorDeclarationBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
             const __gotots_argument_26 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NamedMemberBase"));
             const __gotots_argument_27 = hasModifiers(__gotots_argument_26);
             const __gotots_binary_operand_104 = boolToByte(__gotots_argument_27);
@@ -539,13 +536,17 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_106 = (__gotots_binary_operand_104 << __gotots_binary_operand_105);
             const __gotots_binary_operand_107 = (boolToByte(!(GetAccessorDeclaration__from_ast.Name(n) === undefined)) << 1);
             const __gotots_binary_operand_108 = __gotots_binary_operand_106 | __gotots_binary_operand_107;
-            const __gotots_binary_operand_109 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 2);
+            const __gotots_binary_operand_109 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 2);
             const __gotots_binary_operand_110 = __gotots_binary_operand_108 | __gotots_binary_operand_109;
-            const __gotots_binary_operand_111 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 3);
+            const __gotots_binary_operand_111 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 3);
             const __gotots_binary_operand_112 = __gotots_binary_operand_110 | __gotots_binary_operand_111;
-            const __gotots_binary_operand_113 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 4);
+            const __gotots_binary_operand_113 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 4);
             const __gotots_binary_operand_114 = __gotots_binary_operand_112 | __gotots_binary_operand_113;
-            const __gotots_binary_operand_115 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
+            const __gotots_binary_operand_115 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
             return __gotots_binary_operand_114 | __gotots_binary_operand_115;
             break;
         }
@@ -553,7 +554,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             let n: {
                 value: SetAccessorDeclaration__from_ast;
             } | undefined = Node__from_ast.AsSetAccessorDeclaration(node);
-            const __gotots_store_14 = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
+            const __gotots_store_14: SetAccessorDeclaration__from_ast["AccessorDeclarationBase"] = (n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase;
             const __gotots_argument_28 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "NamedMemberBase"));
             const __gotots_argument_29 = hasModifiers(__gotots_argument_28);
             const __gotots_binary_operand_116 = boolToByte(__gotots_argument_29);
@@ -561,13 +562,17 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_118 = (__gotots_binary_operand_116 << __gotots_binary_operand_117);
             const __gotots_binary_operand_119 = (boolToByte(!(SetAccessorDeclaration__from_ast.Name(n) === undefined)) << 1);
             const __gotots_binary_operand_120 = __gotots_binary_operand_118 | __gotots_binary_operand_119;
-            const __gotots_binary_operand_121 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 2);
+            const __gotots_binary_operand_121 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 2);
             const __gotots_binary_operand_122 = __gotots_binary_operand_120 | __gotots_binary_operand_121;
-            const __gotots_binary_operand_123 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 3);
+            const __gotots_binary_operand_123 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 3);
             const __gotots_binary_operand_124 = __gotots_binary_operand_122 | __gotots_binary_operand_123;
-            const __gotots_binary_operand_125 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 4);
+            const __gotots_binary_operand_125 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 4);
             const __gotots_binary_operand_126 = __gotots_binary_operand_124 | __gotots_binary_operand_125;
-            const __gotots_binary_operand_127 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
+            const __gotots_binary_operand_127 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
             return __gotots_binary_operand_126 | __gotots_binary_operand_127;
             break;
         }
@@ -590,24 +595,24 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindMethodSignature$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast> | undefined = Node__from_ast.AsMethodSignatureDeclaration(node);
             const __gotots_store_16 = MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value);
-            const __gotots_argument_32 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-                return NamedMemberBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-                return NamedMemberBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_32 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_33 = hasModifiers(__gotots_argument_32);
             const __gotots_binary_operand_134 = boolToByte(__gotots_argument_33);
             const __gotots_binary_operand_135 = 0;
             const __gotots_binary_operand_136 = (__gotots_binary_operand_134 << __gotots_binary_operand_135);
             const __gotots_binary_operand_137 = (boolToByte(!(MethodSignatureDeclaration__from_ast.Name(n) === undefined)) << 1);
             const __gotots_binary_operand_138 = __gotots_binary_operand_136 | __gotots_binary_operand_137;
-            const __gotots_binary_operand_139 = (boolToByte(!(NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$fromStorage(MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
+            const __gotots_binary_operand_139 = (boolToByte(!((void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
+                MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
             const __gotots_binary_operand_140 = __gotots_binary_operand_138 | __gotots_binary_operand_139;
-            const __gotots_binary_operand_141 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).TypeParameters === undefined)) << 3);
+            const __gotots_binary_operand_141 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).TypeParameters === undefined)) << 3);
             const __gotots_binary_operand_142 = __gotots_binary_operand_140 | __gotots_binary_operand_141;
-            const __gotots_binary_operand_143 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Parameters === undefined)) << 4);
+            const __gotots_binary_operand_143 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Parameters === undefined)) << 4);
             const __gotots_binary_operand_144 = __gotots_binary_operand_142 | __gotots_binary_operand_143;
-            const __gotots_binary_operand_145 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Type === undefined)) << 5);
+            const __gotots_binary_operand_145 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).Type === undefined)) << 5);
             return __gotots_binary_operand_144 | __gotots_binary_operand_145;
             break;
         }
@@ -621,37 +626,39 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_146 = boolToByte(__gotots_argument_35);
             const __gotots_binary_operand_147 = 0;
             const __gotots_binary_operand_148 = (__gotots_binary_operand_146 << __gotots_binary_operand_147);
-            const __gotots_binary_operand_149 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken === undefined)) << 1);
+            const __gotots_binary_operand_149 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken === undefined)) << 1);
             const __gotots_binary_operand_150 = __gotots_binary_operand_148 | __gotots_binary_operand_149;
             const __gotots_binary_operand_151 = (boolToByte(!(MethodDeclaration__from_ast.Name(n) === undefined)) << 2);
             const __gotots_binary_operand_152 = __gotots_binary_operand_150 | __gotots_binary_operand_151;
             const __gotots_binary_operand_153 = (boolToByte(!(NamedMemberBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken === undefined)) << 3);
             const __gotots_binary_operand_154 = __gotots_binary_operand_152 | __gotots_binary_operand_153;
-            const __gotots_binary_operand_155 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 4);
+            const __gotots_binary_operand_155 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 4);
             const __gotots_binary_operand_156 = __gotots_binary_operand_154 | __gotots_binary_operand_155;
-            const __gotots_binary_operand_157 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 5);
+            const __gotots_binary_operand_157 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 5);
             const __gotots_binary_operand_158 = __gotots_binary_operand_156 | __gotots_binary_operand_157;
-            const __gotots_binary_operand_159 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 6);
+            const __gotots_binary_operand_159 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 6);
             const __gotots_binary_operand_160 = __gotots_binary_operand_158 | __gotots_binary_operand_159;
-            const __gotots_binary_operand_161 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 7);
+            const __gotots_binary_operand_161 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 7);
             return __gotots_binary_operand_160 | __gotots_binary_operand_161;
             break;
         }
         case KindPropertySignature$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast> | undefined = Node__from_ast.AsPropertySignatureDeclaration(node);
             const __gotots_store_18 = PropertySignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value);
-            const __gotots_argument_36 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-                return NamedMemberBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-                return NamedMemberBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_36 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_37 = hasModifiers(__gotots_argument_36);
             const __gotots_binary_operand_162 = boolToByte(__gotots_argument_37);
             const __gotots_binary_operand_163 = 0;
             const __gotots_binary_operand_164 = (__gotots_binary_operand_162 << __gotots_binary_operand_163);
             const __gotots_binary_operand_165 = (boolToByte(!(PropertySignatureDeclaration__from_ast.Name(n) === undefined)) << 1);
             const __gotots_binary_operand_166 = __gotots_binary_operand_164 | __gotots_binary_operand_165;
-            const __gotots_binary_operand_167 = (boolToByte(!(NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$fromStorage(PropertySignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
+            const __gotots_binary_operand_167 = (boolToByte(!((void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
+                PropertySignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
             const __gotots_binary_operand_168 = __gotots_binary_operand_166 | __gotots_binary_operand_167;
             const __gotots_binary_operand_169 = (boolToByte(!(PropertySignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).Type === undefined)) << 3);
             const __gotots_binary_operand_170 = __gotots_binary_operand_168 | __gotots_binary_operand_169;
@@ -696,11 +703,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindBinaryExpression$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast> | undefined = Node__from_ast.AsBinaryExpression(node);
             const __gotots_store_21 = BinaryExpression__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value);
-            const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_43 = hasModifiers(__gotots_argument_42);
             const __gotots_binary_operand_186 = boolToByte(__gotots_argument_43);
             const __gotots_binary_operand_187 = 0;
@@ -744,15 +747,19 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_196 = boolToByte(__gotots_argument_45);
             const __gotots_binary_operand_197 = 0;
             const __gotots_binary_operand_198 = (__gotots_binary_operand_196 << __gotots_binary_operand_197);
-            const __gotots_binary_operand_199 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
+            const __gotots_binary_operand_199 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
             const __gotots_binary_operand_200 = __gotots_binary_operand_198 | __gotots_binary_operand_199;
-            const __gotots_binary_operand_201 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 2);
+            const __gotots_binary_operand_201 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 2);
             const __gotots_binary_operand_202 = __gotots_binary_operand_200 | __gotots_binary_operand_201;
-            const __gotots_binary_operand_203 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 3);
+            const __gotots_binary_operand_203 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 3);
             const __gotots_binary_operand_204 = __gotots_binary_operand_202 | __gotots_binary_operand_203;
             const __gotots_binary_operand_205 = (boolToByte(!((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.EqualsGreaterThanToken === undefined)) << 4);
             const __gotots_binary_operand_206 = __gotots_binary_operand_204 | __gotots_binary_operand_205;
-            const __gotots_binary_operand_207 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
+            const __gotots_binary_operand_207 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 5);
             return __gotots_binary_operand_206 | __gotots_binary_operand_207;
             break;
         }
@@ -766,17 +773,22 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
             const __gotots_binary_operand_208 = boolToByte(__gotots_argument_47);
             const __gotots_binary_operand_209 = 0;
             const __gotots_binary_operand_210 = (__gotots_binary_operand_208 << __gotots_binary_operand_209);
-            const __gotots_binary_operand_211 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken === undefined)) << 1);
+            const __gotots_binary_operand_211 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken === undefined)) << 1);
             const __gotots_binary_operand_212 = __gotots_binary_operand_210 | __gotots_binary_operand_211;
             const __gotots_binary_operand_213 = (boolToByte(!(FunctionExpression__from_ast.Name(n) === undefined)) << 2);
             const __gotots_binary_operand_214 = __gotots_binary_operand_212 | __gotots_binary_operand_213;
-            const __gotots_binary_operand_215 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 3);
+            const __gotots_binary_operand_215 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined)) << 3);
             const __gotots_binary_operand_216 = __gotots_binary_operand_214 | __gotots_binary_operand_215;
-            const __gotots_binary_operand_217 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 4);
+            const __gotots_binary_operand_217 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters === undefined)) << 4);
             const __gotots_binary_operand_218 = __gotots_binary_operand_216 | __gotots_binary_operand_217;
-            const __gotots_binary_operand_219 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 5);
+            const __gotots_binary_operand_219 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined)) << 5);
             const __gotots_binary_operand_220 = __gotots_binary_operand_218 | __gotots_binary_operand_219;
-            const __gotots_binary_operand_221 = (boolToByte(!(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 6);
+            const __gotots_binary_operand_221 = (boolToByte(!((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                FunctionLikeWithBodyBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined)) << 6);
             return __gotots_binary_operand_220 | __gotots_binary_operand_221;
             break;
         }
@@ -892,18 +904,15 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindPropertyAssignment$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast> | undefined = Node__from_ast.AsPropertyAssignment(node);
             const __gotots_store_24 = PropertyAssignment__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value);
-            const __gotots_argument_48 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-                return NamedMemberBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-                return NamedMemberBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_48 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_49 = hasModifiers(__gotots_argument_48);
             const __gotots_binary_operand_222 = boolToByte(__gotots_argument_49);
             const __gotots_binary_operand_223 = 0;
             const __gotots_binary_operand_224 = (__gotots_binary_operand_222 << __gotots_binary_operand_223);
             const __gotots_binary_operand_225 = (boolToByte(!(PropertyAssignment__from_ast.Name(n) === undefined)) << 1);
             const __gotots_binary_operand_226 = __gotots_binary_operand_224 | __gotots_binary_operand_225;
-            const __gotots_binary_operand_227 = (boolToByte(!(NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$fromStorage(PropertyAssignment__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
+            const __gotots_binary_operand_227 = (boolToByte(!((void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
+                PropertyAssignment__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NamedMemberBase)).PostfixToken === undefined)) << 2);
             const __gotots_binary_operand_228 = __gotots_binary_operand_226 | __gotots_binary_operand_227;
             const __gotots_binary_operand_229 = (boolToByte(!(PropertyAssignment__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).Type === undefined)) << 3);
             const __gotots_binary_operand_230 = __gotots_binary_operand_228 | __gotots_binary_operand_229;
@@ -970,12 +979,14 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindUnionType$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast> | undefined = Node__from_ast.AsUnionTypeNode(node);
-            return (boolToByte(!(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(UnionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) << 0);
+            return (boolToByte(!((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                UnionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) << 0);
             break;
         }
         case KindIntersectionType$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast> | undefined = Node__from_ast.AsIntersectionTypeNode(node);
-            return (boolToByte(!(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(IntersectionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) << 0);
+            return (boolToByte(!((void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+                IntersectionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types === undefined)) << 0);
             break;
         }
         case KindConditionalType$constant__from_ast(): {
@@ -1009,7 +1020,8 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindTypeReference$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast> | undefined = Node__from_ast.AsTypeReferenceNode(node);
-            return (boolToByte(!(TypeReferenceNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).TypeName === undefined)) << 0) | (boolToByte(!(NodeWithTypeArgumentsBase__from_ast.$storageOf(NodeWithTypeArgumentsBase__from_ast.$fromStorage(TypeReferenceNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments === undefined)) << 1);
+            return (boolToByte(!(TypeReferenceNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).TypeName === undefined)) << 0) | (boolToByte(!((void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
+                TypeReferenceNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments === undefined)) << 1);
             break;
         }
         case KindExpressionWithTypeArguments$constant__from_ast(): {
@@ -1097,7 +1109,13 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindFunctionType$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast> | undefined = Node__from_ast.AsFunctionTypeNode(node);
-            return (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage(FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).TypeParameters === undefined)) << 0) | (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage(FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).Parameters === undefined)) << 1) | (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage(FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).Type === undefined)) << 2);
+            return (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionOrConstructorTypeNodeBase__from_ast.$storageOf, (void FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage,
+                    FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).TypeParameters === undefined)) << 0) | (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionOrConstructorTypeNodeBase__from_ast.$storageOf, (void FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage,
+                    FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).Parameters === undefined)) << 1) | (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                (void FunctionOrConstructorTypeNodeBase__from_ast.$storageOf, (void FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage,
+                    FunctionTypeNode__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).Type === undefined)) << 2);
             break;
         }
         case KindConstructorType$constant__from_ast(): {
@@ -1105,20 +1123,19 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
                 value: ConstructorTypeNode__from_ast;
             } | undefined = Node__from_ast.AsConstructorTypeNode(node);
             const __gotots_store_26 = FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase);
-            const __gotots_argument_52 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_52 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_53 = hasModifiers(__gotots_argument_52);
             const __gotots_binary_operand_244 = boolToByte(__gotots_argument_53);
             const __gotots_binary_operand_245 = 0;
             const __gotots_binary_operand_246 = (__gotots_binary_operand_244 << __gotots_binary_operand_245);
-            const __gotots_binary_operand_247 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
+            const __gotots_binary_operand_247 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).TypeParameters === undefined)) << 1);
             const __gotots_binary_operand_248 = __gotots_binary_operand_246 | __gotots_binary_operand_247;
-            const __gotots_binary_operand_249 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).Parameters === undefined)) << 2);
+            const __gotots_binary_operand_249 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).Parameters === undefined)) << 2);
             const __gotots_binary_operand_250 = __gotots_binary_operand_248 | __gotots_binary_operand_249;
-            const __gotots_binary_operand_251 = (boolToByte(!(FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$fromStorage(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).Type === undefined)) << 3);
+            const __gotots_binary_operand_251 = (boolToByte(!((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
+                FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).Type === undefined)) << 3);
             return __gotots_binary_operand_250 | __gotots_binary_operand_251;
             break;
         }
@@ -1276,7 +1293,9 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindJSDocUnknownTag$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast> | undefined = Node__from_ast.AsJSDocUnknownTag(node);
-            return (boolToByte(!(JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$fromStorage(JSDocUnknownTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast>).value).JSDocTagBase)).TagName === undefined)) << 0) | (boolToByte(!(JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$fromStorage(JSDocUnknownTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast>).value).JSDocTagBase)).Comment === undefined)) << 1);
+            return (boolToByte(!((void JSDocTagBase__from_ast.$storageOf, (void JSDocTagBase__from_ast.$fromStorage,
+                JSDocUnknownTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast>).value).JSDocTagBase)).TagName === undefined)) << 0) | (boolToByte(!((void JSDocTagBase__from_ast.$storageOf, (void JSDocTagBase__from_ast.$fromStorage,
+                JSDocUnknownTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast>).value).JSDocTagBase)).Comment === undefined)) << 1);
             break;
         }
         case KindJSDocTemplateTag$constant__from_ast(): {
@@ -1330,7 +1349,9 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         }
         case KindJSDocDeprecatedTag$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast> | undefined = Node__from_ast.AsJSDocDeprecatedTag(node);
-            return (boolToByte(!(JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$fromStorage(JSDocDeprecatedTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast>).value).JSDocTagBase)).TagName === undefined)) << 0) | (boolToByte(!(JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$fromStorage(JSDocDeprecatedTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast>).value).JSDocTagBase)).Comment === undefined)) << 1);
+            return (boolToByte(!((void JSDocTagBase__from_ast.$storageOf, (void JSDocTagBase__from_ast.$fromStorage,
+                JSDocDeprecatedTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast>).value).JSDocTagBase)).TagName === undefined)) << 0) | (boolToByte(!((void JSDocTagBase__from_ast.$storageOf, (void JSDocTagBase__from_ast.$fromStorage,
+                JSDocDeprecatedTag__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast>).value).JSDocTagBase)).Comment === undefined)) << 1);
             break;
         }
         case KindJSDocSeeTag$constant__from_ast(): {
@@ -1510,11 +1531,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindTypeParameter$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined = Node__from_ast.AsTypeParameterDeclaration(node);
             const __gotots_store_30 = TypeParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value);
-            const __gotots_argument_60 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-                return ModifiersBase__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-                return ModifiersBase__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_60 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_61 = hasModifiers(__gotots_argument_60);
             const __gotots_binary_operand_272 = boolToByte(__gotots_argument_61);
             const __gotots_binary_operand_273 = 0;
@@ -1793,12 +1810,11 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
         }
         case KindJSDocText$constant__from_ast(): {
             const __gotots_receiver_0 = strs;
-            const __gotots_store_31 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(JSDocCommentBase__from_ast.$storageOf(JSDocCommentBase__from_ast.$fromStorage(JSDocText__from_ast.$storageOf(((Node__from_ast.AsJSDocText(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocText__from_ast>).value).JSDocCommentBase)).NodeBase)).NodeDefault));
-            const __gotots_argument_62 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_31 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    (void JSDocCommentBase__from_ast.$storageOf, (void JSDocCommentBase__from_ast.$fromStorage,
+                        JSDocText__from_ast.$storageOf(((Node__from_ast.AsJSDocText(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocText__from_ast>).value).JSDocCommentBase)).NodeBase)).NodeDefault));
+            const __gotots_argument_62 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_63 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_64 = Node__from_ast.Pos(node);
             const __gotots_argument_65 = Node__from_ast.End(node);
@@ -1807,12 +1823,10 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
         }
         case KindJSDocLink$constant__from_ast(): {
             const __gotots_receiver_1 = strs;
-            const __gotots_store_32 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLink(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_66 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_32 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLink(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
+            const __gotots_argument_66 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_67 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_68 = Node__from_ast.Pos(node);
             const __gotots_argument_69 = Node__from_ast.End(node);
@@ -1821,12 +1835,10 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
         }
         case KindJSDocLinkPlain$constant__from_ast(): {
             const __gotots_receiver_2 = strs;
-            const __gotots_store_33 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkPlain(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_70 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_33 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkPlain(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
+            const __gotots_argument_70 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_71 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_72 = Node__from_ast.Pos(node);
             const __gotots_argument_73 = Node__from_ast.End(node);
@@ -1835,12 +1847,10 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
         }
         case KindJSDocLinkCode$constant__from_ast(): {
             const __gotots_receiver_3 = strs;
-            const __gotots_store_34 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkCode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_74 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_34 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkCode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
+            const __gotots_argument_74 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_75 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_76 = Node__from_ast.Pos(node);
             const __gotots_argument_77 = Node__from_ast.End(node);

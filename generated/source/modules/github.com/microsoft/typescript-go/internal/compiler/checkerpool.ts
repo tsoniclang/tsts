@@ -92,9 +92,9 @@ export class checkerPool {
                     if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracing === undefined)) {
                         tracer = NewTracer__from_checker((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracing, i);
                     }
-                    const __gotots_store_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
+                    const __gotots_store_0: checkerPool["checkers"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
                     const __gotots_store_1 = i;
-                    const __gotots_store_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.locks;
+                    const __gotots_store_2: checkerPool["locks"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.locks;
                     const __gotots_store_3 = i;
                     const __gotots_results_0 = NewChecker__from_checker(new GoInterfaceAdapter((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program), tracer);
                     __gotots_store_0.set(__gotots_store_1, __gotots_results_0[0]);
@@ -198,7 +198,7 @@ export class checkerPool {
     } | undefined, cb: (($0: int, $1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) => void) | undefined): void {
         checkerPool.$go$private$compiler$createCheckers(p);
         let wg: WorkGroup__from_core | undefined = NewWorkGroup__from_core(Program.SingleThreaded((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program));
-        const __gotots_range_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
+        const __gotots_range_0: checkerPool["checkers"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_index_0;
             const __gotots_range_value_1 = __gotots_range_0.get(__gotots_range_index_0);

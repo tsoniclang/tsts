@@ -25,14 +25,6 @@ export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$Project($
     return SyncMap__from_dirty.Load$kernel<Path__from_tspath, {
         value: Project__from_project;
     } | undefined>($argument0, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
             value: Project__from_project;
         } | undefined>;
@@ -90,14 +82,6 @@ export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$configFil
     return SyncMap__from_dirty.Load$kernel<Path__from_tspath, {
         value: configFileEntry__from_project;
     } | undefined>($argument0, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
             value: configFileEntry__from_project;
         } | undefined>;
@@ -155,14 +139,6 @@ export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile(
     return SyncMap__from_dirty.Load$kernel<Path__from_tspath, {
         value: diskFile__from_project;
     } | undefined>($argument0, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
             value: diskFile__from_project;
         } | undefined>;
@@ -220,14 +196,6 @@ export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$realpathA
     return SyncMap__from_dirty.Load$kernel<Path__from_tspath, {
         value: realpathAliasSet__from_project;
     } | undefined>($argument0, ($argument0: {
-        value: realpathAliasSet__from_project;
-    } | undefined): {
-        value: realpathAliasSet__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
             value: realpathAliasSet__from_project;
         } | undefined>;

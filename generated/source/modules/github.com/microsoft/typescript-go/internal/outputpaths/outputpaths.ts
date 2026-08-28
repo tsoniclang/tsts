@@ -121,7 +121,7 @@ export function GetOutputJSFileNameWorker(inputFileName: gostring, options: {
 export function GetOutputDeclarationFileNameWorker(inputFileName: gostring, options: {
     value: CompilerOptions__from_core;
 } | undefined, host: OutputPathsHost | undefined): gostring {
-    let dir = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
+    let dir: CompilerOptions__from_core["DeclarationDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
     if (dir.length === 0) {
         dir = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
     }
@@ -222,7 +222,7 @@ export function getOwnEmitOutputFilePath(fileName: gostring, options: {
         const __gotots_receiver_4 = host;
         let currentDirectory = goInterfaceNonNil<OutputPathsHost>(__gotots_receiver_4).GetCurrentDirectory();
         const __gotots_argument_8 = fileName;
-        const __gotots_argument_9 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
+        const __gotots_argument_9: CompilerOptions__from_core["OutDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
         const __gotots_argument_10 = currentDirectory;
         const __gotots_receiver_5 = host;
         const __gotots_argument_11 = goInterfaceNonNil<OutputPathsHost>(__gotots_receiver_5).CommonSourceDirectory();

@@ -143,27 +143,27 @@ export class SemanticError {
             strings__from_gostdlib.Builder.Write(sb, (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSONValue.$value);
         }
         if (!((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType === undefined)) {
-            const __gotots_receiver_4 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+            const __gotots_receiver_4: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
             let typeString = goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_4).String();
             if (typeString.length > 100) {
-                const __gotots_receiver_5 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+                const __gotots_receiver_5: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
                 typeString = goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_5).Kind().String();
-                const __gotots_receiver_6 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+                const __gotots_receiver_6: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
                 let __gotots_logical_result_0 = named_reflect.ReflectKindValueOperations.$project(goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_6).Kind()) === named_reflect.ReflectKindValueOperations.$project(reflect__from_gostdlib.Struct);
                 if (__gotots_logical_result_0) {
-                    const __gotots_receiver_7 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+                    const __gotots_receiver_7: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
                     const __gotots_binary_operand_0 = goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_7).Name();
                     const __gotots_binary_operand_1 = "";
                     __gotots_logical_result_0 = __gotots_binary_operand_0 === __gotots_binary_operand_1;
                 }
                 if (__gotots_logical_result_0) {
-                    const __gotots_receiver_8 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+                    const __gotots_receiver_8: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
                     const __gotots_range_0 = globalThis.Number(BigInt.asIntN(64, goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_8).NumField()));
                     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0; __gotots_range_index_0++) {
                         const __gotots_range_value_0 = __gotots_range_index_0;
                         let i = __gotots_range_value_0;
                         {
-                            const __gotots_receiver_9 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
+                            const __gotots_receiver_9: SemanticError["GoType"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GoType;
                             const __gotots_argument_9 = i;
                             let pkgPath = goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_9).Field(BigInt.asIntN(64, goNumberToBigInt(__gotots_argument_9))).PkgPath;
                             if (pkgPath !== "") {
@@ -230,7 +230,7 @@ export class SemanticError {
             }
         }
         if (!((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err === undefined)) {
-            const __gotots_receiver_12 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err;
+            const __gotots_receiver_12: SemanticError["Err"] = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err;
             let errString = goInterfaceNonNil<GoInterface>(__gotots_receiver_12).Error();
             if (isSyntacticError((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Err)) {
                 errString = strings__from_gostdlib.TrimPrefix(errString, "jsontext: ");
@@ -257,12 +257,13 @@ export function coder$is(value: GoInterfaceValue | undefined): value is coder {
 export function newInvalidFormatError(c: coder | undefined, t: reflect__from_gostdlib.Type | undefined): GoInterface | undefined {
     const __gotots_argument_5 = "invalid format flag %q";
     const __gotots_receiver_1 = c;
-    const __gotots_argument_4 = new $goInterfaceAdapter$string(ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf((((($value: Options__from_jsonopts | undefined): tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined => {
-        if (!$goInterfaceAdapter$PointerTo_Named_jsonopts$Struct.$is($value)) {
-            return GoPanic.raiseRuntime("runtime error: interface conversion failed");
-        }
-        return $value.$go$value;
-    })(goInterfaceNonNil<coder>(__gotots_receiver_1).Options()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format);
+    const __gotots_argument_4 = new $goInterfaceAdapter$string((void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
+        Struct__from_jsonopts.$storageOf((((($value: Options__from_jsonopts | undefined): tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined => {
+            if (!$goInterfaceAdapter$PointerTo_Named_jsonopts$Struct.$is($value)) {
+                return GoPanic.raiseRuntime("runtime error: interface conversion failed");
+            }
+            return $value.$go$value;
+        })(goInterfaceNonNil<coder>(__gotots_receiver_1).Options()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format);
     const __gotots_argument_6 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([__gotots_argument_4]);
     let err: GoInterface | undefined = GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf(__gotots_argument_5, __gotots_argument_6));
     const __gotots_type_switch_1: coder | undefined = c;

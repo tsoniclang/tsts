@@ -276,11 +276,11 @@ export class NodeBuilderImpl {
                 if (!(modFlags === existing)) {
                     const __gotots_store_147 = members;
                     const __gotots_store_148 = i;
-                    const __gotots_argument_172 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                    const __gotots_argument_172: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                     const __gotots_argument_173 = m;
-                    const __gotots_receiver_75 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                    const __gotots_receiver_75: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                     const __gotots_argument_169 = (modFlags | existing) >>> 0;
-                    const __gotots_receiver_74 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                    const __gotots_receiver_74: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                     const __gotots_argument_170 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                         return NodeFactory__from_ast.NewModifier(__gotots_receiver_74, $argument0);
                     };
@@ -321,7 +321,7 @@ export class NodeBuilderImpl {
                 }
             }
             else {
-                const __gotots_receiver_35 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_35: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_112 = Checker.$go$private$checker$symbolToString((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, propertySymbol);
                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_35).ReportNonSerializableProperty(__gotots_argument_112);
             }
@@ -482,8 +482,11 @@ export class NodeBuilderImpl {
         }
         else if (IsTypeReferenceNode__from_ast(root)) {
             let typeRef: tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast> | undefined = Node__from_ast.AsTypeReferenceNode(root);
-            if (!((((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags & FlagsUseInstantiationExpressions$constant__from_nodebuilder()) >>> 0 === 0) && !(NodeWithTypeArgumentsBase__from_ast.$storageOf(NodeWithTypeArgumentsBase__from_ast.$fromStorage(TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments === undefined) && NodeList__from_ast.$storageOf(((NodeWithTypeArgumentsBase__from_ast.$storageOf(NodeWithTypeArgumentsBase__from_ast.$fromStorage(TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length !== 0) {
-                let expr__shadow_1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$createExpressionWithTypeArguments(b, NodeBuilderImpl.$go$private$checker$createAccessExpression(b, TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).TypeName), NodeWithTypeArgumentsBase__from_ast.$storageOf(NodeWithTypeArgumentsBase__from_ast.$fromStorage(TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments);
+            if (!((((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags & FlagsUseInstantiationExpressions$constant__from_nodebuilder()) >>> 0 === 0) && !((void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
+                TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments === undefined) && NodeList__from_ast.$storageOf((((void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
+                TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length !== 0) {
+                let expr__shadow_1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$createExpressionWithTypeArguments(b, NodeBuilderImpl.$go$private$checker$createAccessExpression(b, TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).TypeName), (void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
+                    TypeReferenceNode__from_ast.$storageOf(((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments);
                 const __gotots_range_1 = getAccessStack(ref);
                 for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                     const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
@@ -601,19 +604,22 @@ export class NodeBuilderImpl {
         if (!((((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags & FlagsGenerateNamesForShadowedTypeParams$constant__from_nodebuilder()) >>> 0 === 0) && ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isDistributive && ((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTypeParameter$constant()) >>> 0 === 0) {
             let newParam: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$newTypeParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Checker.$go$private$checker$newSymbol((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, SymbolFlagsTypeParameter$constant__from_ast(), "T"));
             let name: tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeParameterToName(b, newParam);
-            const __gotots_receiver_14 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
-            const __gotots_store_61 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$fromStorage(Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_29 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_receiver_14: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_store_61 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                    (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                        (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                            (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                    (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
+                                        Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+            const __gotots_argument_29 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_30 = void 0;
             let newTypeVariable: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_14, __gotots_argument_29, __gotots_argument_30);
             const __gotots_store_62 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             __gotots_store_62.approximateLength = __gotots_store_62.approximateLength + 37;
             let newMapper: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined = prependTypeMapping(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkType, newParam, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mapper);
-            let saveInferTypeParameters__shadow_1 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
+            let saveInferTypeParameters__shadow_1: NodeBuilderContext["inferTypeParameters"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
             let extendsTypeNode__shadow_1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, Checker.$go$private$checker$instantiateType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.extendsType, newMapper));
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters = saveInferTypeParameters__shadow_1;
@@ -625,7 +631,7 @@ export class NodeBuilderImpl {
             let syntheticTrueNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewConditionalTypeNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, NodeFactory__from_ast.NewTypeReferenceNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, Identifier__from_ast.Clone(name, new $goInterfaceAdapter$PointerTo_Named_ast$NodeFactory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f)), void 0), NodeFactory__from_ast.DeepCloneNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, checkTypeNode), innerCheckConditionalNode, NodeFactory__from_ast.NewKeywordTypeNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, KindNeverKeyword$constant__from_ast()));
             return NodeFactory__from_ast.NewConditionalTypeNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, checkTypeNode, syntheticExtendsNode, syntheticTrueNode, NodeFactory__from_ast.NewKeywordTypeNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, KindNeverKeyword$constant__from_ast()));
         }
-        let saveInferTypeParameters = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
+        let saveInferTypeParameters: NodeBuilderContext["inferTypeParameters"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters;
         let extendsTypeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.extendsType);
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inferTypeParameters = saveInferTypeParameters;
@@ -948,13 +954,16 @@ export class NodeBuilderImpl {
                 let newConstraintParam: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$newTypeParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Checker.$go$private$checker$newSymbol((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, SymbolFlagsTypeParameter$constant__from_ast(), "T"));
                 let name: tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeParameterToName(b, newConstraintParam);
                 let target: tsonicTypeScriptRuntime.Location<Type> | undefined = Type.Target(t);
-                const __gotots_receiver_21 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
-                const __gotots_store_93 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$fromStorage(Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                const __gotots_argument_51 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_93, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                const __gotots_receiver_21: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                const __gotots_store_93 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                        (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                            (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                                (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                    (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                        (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
+                                            Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+                const __gotots_argument_51 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_93, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_52 = void 0;
                 newTypeVariable = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_21, __gotots_argument_51, __gotots_argument_52);
                 templateType = Checker.$go$private$checker$instantiateType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Checker.$go$private$checker$getTemplateTypeFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target), newTypeMapper(RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([Checker.$go$private$checker$getTypeParameterFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target), Checker.$go$private$checker$getModifiersTypeFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target)]), RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([typeParameter, newConstraintParam])));
@@ -968,13 +977,16 @@ export class NodeBuilderImpl {
         else if (needsModifierPreservingWrapper) {
             let newParam: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$newTypeParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Checker.$go$private$checker$newSymbol((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, SymbolFlagsTypeParameter$constant__from_ast(), "T"));
             let name: tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeParameterToName(b, newParam);
-            const __gotots_receiver_22 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
-            const __gotots_store_94 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$fromStorage(Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_53 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_receiver_22: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_store_94 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                    (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                        (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                            (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                    (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
+                                        Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+            const __gotots_argument_53 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_54 = void 0;
             newTypeVariable = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_22, __gotots_argument_53, __gotots_argument_54);
             appropriateConstraintTypeNode = newTypeVariable;
@@ -983,12 +995,9 @@ export class NodeBuilderImpl {
             appropriateConstraintTypeNode = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, Checker.$go$private$checker$getConstraintTypeFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, t));
         }
         const __gotots_receiver_23 = b;
-        const __gotots_store_95 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeNodeBase__from_ast.$storageOf(((mapped ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.declaration ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_95, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_store_95 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+            TypeNodeBase__from_ast.$storageOf(((mapped ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.declaration ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
+        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_95, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_56 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
         const __gotots_argument_57 = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([Checker.$go$private$checker$getTypeParameterFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, t)]);
         const __gotots_argument_58 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
@@ -1169,12 +1178,12 @@ export class NodeBuilderImpl {
                     continue;
                 }
                 if (!((getDeclarationModifierFlagsFromSymbol(propertySymbol) & (6)) >>> 0 === 0)) {
-                    const __gotots_receiver_25 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_25: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_63 = Symbol__from_ast.$storageOf(((propertySymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Name;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_25).ReportPrivateInBaseOfClassExpression(__gotots_argument_63);
                 }
                 if (IsPrivateIdentifierSymbol(propertySymbol)) {
-                    const __gotots_receiver_26 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_26: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_64 = SymbolName__from_ast(propertySymbol);
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_26).ReportPrivateInBaseOfClassExpression(__gotots_argument_64);
                 }
@@ -1260,20 +1269,22 @@ export class NodeBuilderImpl {
                             let __gotots_slice_build_1 = __gotots_slice_build_0;
                             if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                                 __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, localsRecord.$storageOf(localsRecord.$fromStorage({
-                                    name: name,
-                                    oldSymbol: oldSymbol
-                                })));
+                                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void localsRecord.$storageOf, (void localsRecord.$fromStorage,
+                                    {
+                                        name: name,
+                                        oldSymbol: oldSymbol
+                                    })));
                             }
                             else {
                                 __gotots_slice_build_1 = goSliceAllocate<localsRecord__from_checker$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                                 for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                                     __gotots_slice_build_1.set(__gotots_slice_build_3, localsRecord.$storageOf(localsRecord.$copy(localsRecord.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                                 }
-                                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, localsRecord.$storageOf(localsRecord.$fromStorage({
-                                    name: name,
-                                    oldSymbol: oldSymbol
-                                })));
+                                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void localsRecord.$storageOf, (void localsRecord.$fromStorage,
+                                    {
+                                        name: name,
+                                        oldSymbol: oldSymbol
+                                    })));
                                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                                     __gotots_slice_build_1.$initialize(__gotots_slice_build_3, localsRecord.$storageOf(localsRecord.$zero()));
                                 }
@@ -1394,13 +1405,9 @@ export class NodeBuilderImpl {
                                     (__gotots_callee_22 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_96);
                                     return;
                                 }
-                                const __gotots_receiver_32 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                                const __gotots_receiver_32: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                                 const __gotots_store_112 = NodeBase__from_ast.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                                const __gotots_argument_97 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_112, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                                    return NodeDefault__from_ast.$storageOf($go$value);
-                                }));
+                                const __gotots_argument_97 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_112, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                 let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker.$go$private$checker$getSymbolOfDeclaration(__gotots_receiver_32, __gotots_argument_97);
                                 if (!(__go_symbol === undefined)) {
                                     const __gotots_callee_23 = add;
@@ -1681,9 +1688,9 @@ export class NodeBuilderImpl {
         }
         let mods: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = void 0;
         if (!(constModifier === 0)) {
-            const __gotots_receiver_69 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_receiver_69: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
             const __gotots_argument_154 = constModifier;
-            const __gotots_receiver_68 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_receiver_68: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
             const __gotots_argument_155 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                 return NodeFactory__from_ast.NewModifier(__gotots_receiver_68, $argument0);
             };
@@ -1763,7 +1770,7 @@ export class NodeBuilderImpl {
                     Checker.$go$private$checker$sortSymbols((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, members);
                     const __gotots_store_139 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     __gotots_store_139.approximateLength = __gotots_store_139.approximateLength + 14;
-                    let oldFlags = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags;
+                    let oldFlags: NodeBuilderContext["flags"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags;
                     const __gotots_callee_41 = (): void => {
                         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags = oldFlags;
                     };
@@ -2039,11 +2046,11 @@ export class NodeBuilderImpl {
                         }
                         if (CanHaveModifiers__from_ast(hoverStatement.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<hoverStatement>).value).node)) {
                             let mf = (Node__from_ast.ModifierFlags(hoverStatement.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<hoverStatement>).value).node) | ModifierFlagsExport$constant__from_ast()) >>> 0;
-                            const __gotots_argument_160 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                            const __gotots_argument_160: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                             const __gotots_argument_161 = hoverStatement.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<hoverStatement>).value).node;
-                            const __gotots_receiver_71 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                            const __gotots_receiver_71: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                             const __gotots_argument_157 = mf;
-                            const __gotots_receiver_70 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                            const __gotots_receiver_70: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                             const __gotots_argument_158 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                                 return NodeFactory__from_ast.NewModifier(__gotots_receiver_70, $argument0);
                             };
@@ -2074,11 +2081,11 @@ export class NodeBuilderImpl {
                                 let mf = (Node__from_ast.ModifierFlags(stmt) & ~ModifierFlagsExport$constant__from_ast()) >>> 0;
                                 const __gotots_store_144 = bodyStatements;
                                 const __gotots_store_145 = i;
-                                const __gotots_argument_166 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                                const __gotots_argument_166: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                                 const __gotots_argument_167 = stmt;
-                                const __gotots_receiver_73 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                                const __gotots_receiver_73: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                                 const __gotots_argument_163 = mf;
-                                const __gotots_receiver_72 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                                const __gotots_receiver_72: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                                 const __gotots_argument_164 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                                     return NodeFactory__from_ast.NewModifier(__gotots_receiver_72, $argument0);
                                 };
@@ -2216,7 +2223,7 @@ export class NodeBuilderImpl {
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.oldTrackedSymbols;
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.oldEncounteredError;
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.approximateLength = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.oldApproximateLength;
-        const __gotots_range_21 = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.deferredReports;
+        const __gotots_range_21: recoveryBoundary["deferredReports"] = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.deferredReports;
         for (let __gotots_range_index_19 = 0; __gotots_range_index_19 < __gotots_range_21.length; __gotots_range_index_19++) {
             const __gotots_range_value_25 = __gotots_range_21.get(__gotots_range_index_19);
             let f: (() => void) | undefined = __gotots_range_value_25;
@@ -2226,16 +2233,16 @@ export class NodeBuilderImpl {
         if ((bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.hadError) {
             return false;
         }
-        const __gotots_range_22 = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols;
+        const __gotots_range_22: recoveryBoundary["trackedSymbols"] = (bound ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols;
         for (let __gotots_range_index_20 = 0; __gotots_range_index_20 < __gotots_range_22.length; __gotots_range_index_20++) {
             const __gotots_range_value_26 = __gotots_range_22.get(__gotots_range_index_20);
             let a: {
                 value: TrackedSymbolArgs;
             } | undefined = __gotots_range_value_26;
-            const __gotots_receiver_30 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
-            const __gotots_argument_85 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol;
-            const __gotots_argument_86 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
-            const __gotots_argument_87 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.meaning;
+            const __gotots_receiver_30: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+            const __gotots_argument_85: TrackedSymbolArgs["__go_symbol"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol;
+            const __gotots_argument_86: TrackedSymbolArgs["enclosingDeclaration"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
+            const __gotots_argument_87: TrackedSymbolArgs["meaning"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.meaning;
             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_30).TrackSymbol(__gotots_argument_85, __gotots_argument_86, __gotots_argument_87);
         }
         return true;
@@ -2292,7 +2299,7 @@ export class NodeBuilderImpl {
             }
             if (name.length > 0 && strings__from_gostdlib.Contains(name, "/node_modules/")) {
                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError = true;
-                const __gotots_receiver_54 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_54: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_135 = name;
                 const __gotots_argument_136 = "";
                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_54).ReportLikelyUnsafeImportRequiredError(__gotots_argument_135, __gotots_argument_136);
@@ -2722,13 +2729,15 @@ export class NodeBuilderImpl {
             for (let __gotots_range_index_53 = 0; __gotots_range_index_53 < __gotots_range_56.length; __gotots_range_index_53++) {
                 const __gotots_range_value_67 = __gotots_range_56.get(__gotots_range_index_53);
                 let heritageElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_67;
-                extendsTypes = extendsTypes.append(void 0, [NodeFactory__from_ast.DeepCloneNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, Node__from_ast.AsNode(heritageElement))]);
+                extendsTypes = extendsTypes.append(void 0, [NodeFactory__from_ast.DeepCloneNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, (void Node__from_ast.AsNode,
+                        heritageElement))]);
             }
             const __gotots_range_57 = GetImplementsHeritageClauseElements__from_ast(declaration);
             for (let __gotots_range_index_54 = 0; __gotots_range_index_54 < __gotots_range_57.length; __gotots_range_index_54++) {
                 const __gotots_range_value_68 = __gotots_range_57.get(__gotots_range_index_54);
                 let heritageElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_68;
-                implementsTypes = implementsTypes.append(void 0, [NodeFactory__from_ast.DeepCloneNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, Node__from_ast.AsNode(heritageElement))]);
+                implementsTypes = implementsTypes.append(void 0, [NodeFactory__from_ast.DeepCloneNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, (void Node__from_ast.AsNode,
+                        heritageElement))]);
             }
         }
         let heritageClauses = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
@@ -2870,7 +2879,9 @@ export class NodeBuilderImpl {
         value: NodeBuilderImpl;
     } | undefined, d: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = GetNameOfDeclaration__from_ast(d);
-        return !(name === undefined) && IsStringLiteral__from_ast(name) && !((LiteralLikeNodeBase__from_ast.$storageOf(LiteralLikeNodeBase__from_ast.$fromStorage(LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$fromStorage(StringLiteral__from_ast.$storageOf(((Node__from_ast.AsStringLiteral(name) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).TokenFlags & TokenFlagsSingleQuote$constant__from_ast()) === 0);
+        return !(name === undefined) && IsStringLiteral__from_ast(name) && !(((void LiteralLikeNodeBase__from_ast.$storageOf, (void LiteralLikeNodeBase__from_ast.$fromStorage,
+            (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
+                StringLiteral__from_ast.$storageOf(((Node__from_ast.AsStringLiteral(name) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).TokenFlags & TokenFlagsSingleQuote$constant__from_ast()) === 0);
     }
     static $go$private$checker$isStringNamed(b: {
         value: NodeBuilderImpl;
@@ -2967,9 +2978,9 @@ export class NodeBuilderImpl {
     static $go$private$checker$lookupSymbolChain(b: {
         value: NodeBuilderImpl;
     } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, meaning: SymbolFlags__from_ast, yieldModuleSymbol: bool): RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> {
-        const __gotots_receiver_15 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+        const __gotots_receiver_15: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
         const __gotots_argument_31 = __go_symbol;
-        const __gotots_argument_32 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
+        const __gotots_argument_32: NodeBuilderContext["enclosingDeclaration"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
         const __gotots_argument_33 = meaning;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_15).TrackSymbol(__gotots_argument_31, __gotots_argument_32, __gotots_argument_33);
         return NodeBuilderImpl.$go$private$checker$lookupSymbolChainWorker(b, __go_symbol, meaning, yieldModuleSymbol);
@@ -3380,7 +3391,7 @@ export class NodeBuilderImpl {
     } | undefined, params: RuntimeSlice<PseudoParameter__from_pseudochecker | undefined>, targetSig: tsonicTypeScriptRuntime.Location<Signature> | undefined, reportErrors: bool, nonParamErrorLocation: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
         if (!(Signature.$storageOf(((targetSig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).thisParameter === undefined) && params.length === 0) {
             if (reportErrors) {
-                const __gotots_receiver_55 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_55: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_137 = nonParamErrorLocation;
                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_55).ReportInferenceFallback(__gotots_argument_137);
             }
@@ -3391,7 +3402,7 @@ export class NodeBuilderImpl {
             let paramType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getTypeOfParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, targetParam);
             if (!NodeBuilderImpl.$go$private$checker$pseudoTypeEquivalentToType(b, (params.get(0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Type, paramType, (params.get(0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Optional, false)) {
                 if (reportErrors) {
-                    const __gotots_receiver_56 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_56: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_138 = Node__from_ast.$storageOf((((params.get(0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_56).ReportInferenceFallback(__gotots_argument_138);
                 }
@@ -3401,7 +3412,7 @@ export class NodeBuilderImpl {
         }
         else if (!(Signature.$storageOf(((targetSig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).thisParameter === undefined)) {
             if (reportErrors) {
-                const __gotots_receiver_57 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_57: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_139 = nonParamErrorLocation;
                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_57).ReportInferenceFallback(__gotots_argument_139);
             }
@@ -3409,7 +3420,7 @@ export class NodeBuilderImpl {
         }
         if (Signature.$storageOf(((targetSig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).parameters.length !== params.length) {
             if (reportErrors) {
-                const __gotots_receiver_58 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_58: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_140 = nonParamErrorLocation;
                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_58).ReportInferenceFallback(__gotots_argument_140);
             }
@@ -3424,7 +3435,7 @@ export class NodeBuilderImpl {
             let targetParam: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Signature.$storageOf(((targetSig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).parameters.get(i);
             if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Optional !== Checker.$go$private$checker$isOptionalParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Symbol__from_ast.$storageOf(((targetParam ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration)) {
                 if (reportErrors) {
-                    const __gotots_receiver_59 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_59: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_141 = Node__from_ast.$storageOf((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_59).ReportInferenceFallback(__gotots_argument_141);
                 }
@@ -3433,7 +3444,7 @@ export class NodeBuilderImpl {
             let paramType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getTypeOfParameter((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, targetParam);
             if (!NodeBuilderImpl.$go$private$checker$pseudoTypeEquivalentToType(b, (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Type, paramType, (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Optional, false)) {
                 if (reportErrors) {
-                    const __gotots_receiver_60 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_60: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_142 = Node__from_ast.$storageOf((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_60).ReportInferenceFallback(__gotots_argument_142);
                 }
@@ -3541,7 +3552,7 @@ export class NodeBuilderImpl {
                             for (let __gotots_range_index_27 = 0; __gotots_range_index_27 < __gotots_range_29.length; __gotots_range_index_27++) {
                                 const __gotots_range_value_34 = __gotots_range_29.get(__gotots_range_index_27);
                                 let n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_34;
-                                const __gotots_receiver_36 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                const __gotots_receiver_36: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                 const __gotots_argument_115 = n;
                                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_36).ReportInferenceFallback(__gotots_argument_115);
                             }
@@ -3550,7 +3561,7 @@ export class NodeBuilderImpl {
                     }
                 }
                 if (reportErrors) {
-                    const __gotots_receiver_37 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_37: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_116 = (PseudoType__from_pseudochecker.AsPseudoTypeInferred(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Expression;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_37).ReportInferenceFallback(__gotots_argument_116);
                 }
@@ -3595,7 +3606,7 @@ export class NodeBuilderImpl {
                         }
                         if (targetProp === undefined) {
                             if (reportErrors) {
-                                const __gotots_receiver_38 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                const __gotots_receiver_38: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                 const __gotots_argument_117 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                 goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_38).ReportInferenceFallback(__gotots_argument_117);
                             }
@@ -3605,7 +3616,7 @@ export class NodeBuilderImpl {
                     let targetIsOptional = !((Symbol__from_ast.$storageOf(((targetProp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsOptional$constant__from_ast()) >>> 0 === 0);
                     if (((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Optional !== targetIsOptional) {
                         if (reportErrors) {
-                            const __gotots_receiver_39 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_39: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             const __gotots_argument_118 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_39).ReportInferenceFallback(__gotots_argument_118);
                         }
@@ -3623,13 +3634,13 @@ export class NodeBuilderImpl {
                                         for (let __gotots_range_index_31 = 0; __gotots_range_index_31 < __gotots_range_33.length; __gotots_range_index_31++) {
                                             const __gotots_range_value_38 = __gotots_range_33.get(__gotots_range_index_31);
                                             let n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_38;
-                                            const __gotots_receiver_40 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                            const __gotots_receiver_40: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                             const __gotots_argument_119 = n;
                                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_40).ReportInferenceFallback(__gotots_argument_119);
                                         }
                                     }
                                     else if (!isStructuralPseudoType((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Type)) {
-                                        const __gotots_receiver_41 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                        const __gotots_receiver_41: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                         const __gotots_argument_120 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_41).ReportInferenceFallback(__gotots_argument_120);
                                     }
@@ -3654,7 +3665,7 @@ export class NodeBuilderImpl {
                             if (!(targetPredicate === undefined)) {
                                 if (!NodeBuilderImpl.$go$private$checker$pseudoReturnTypeMatchesPredicate(b, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ReturnType, targetPredicate)) {
                                     if (reportErrors) {
-                                        const __gotots_receiver_42 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                        const __gotots_receiver_42: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                         const __gotots_argument_121 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_42).ReportInferenceFallback(__gotots_argument_121);
                                     }
@@ -3663,7 +3674,7 @@ export class NodeBuilderImpl {
                             }
                             else if (!NodeBuilderImpl.$go$private$checker$pseudoTypeEquivalentToType(b, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ReturnType, Checker.$go$private$checker$getReturnTypeOfSignature((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, targetSig), false, false)) {
                                 if (reportErrors) {
-                                    const __gotots_receiver_43 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                    const __gotots_receiver_43: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                     const __gotots_argument_122 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_43).ReportInferenceFallback(__gotots_argument_122);
                                 }
@@ -3675,7 +3686,7 @@ export class NodeBuilderImpl {
                             let d: PseudoGetAccessor__from_pseudochecker | undefined = PseudoObjectElement__from_pseudochecker.AsPseudoGetAccessor(e);
                             if (!NodeBuilderImpl.$go$private$checker$pseudoTypeEquivalentToType(b, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Type, propType, false, false)) {
                                 if (reportErrors) {
-                                    const __gotots_receiver_44 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                    const __gotots_receiver_44: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                     const __gotots_argument_123 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_44).ReportInferenceFallback(__gotots_argument_123);
                                 }
@@ -3688,7 +3699,7 @@ export class NodeBuilderImpl {
                             let writeType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getWriteTypeOfSymbol((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, targetProp);
                             if (!NodeBuilderImpl.$go$private$checker$pseudoTypeEquivalentToType(b, ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Type, writeType, false, false)) {
                                 if (reportErrors) {
-                                    const __gotots_receiver_45 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                    const __gotots_receiver_45: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                     const __gotots_argument_124 = Node__from_ast.$storageOf(((((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker>).value.Name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_45).ReportInferenceFallback(__gotots_argument_124);
                                 }
@@ -3737,7 +3748,7 @@ export class NodeBuilderImpl {
                 let pt: PseudoTypeSingleCallSignature__from_pseudochecker | undefined = PseudoType__from_pseudochecker.AsPseudoTypeSingleCallSignature(t);
                 if (Signature.$storageOf(((targetSig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).typeParameters.length !== (pt ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).TypeParameters.length) {
                     if (reportErrors) {
-                        const __gotots_receiver_46 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                        const __gotots_receiver_46: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                         const __gotots_argument_125 = (pt ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Signature;
                         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_46).ReportInferenceFallback(__gotots_argument_125);
                     }
@@ -3753,7 +3764,7 @@ export class NodeBuilderImpl {
                 if (!(targetPredicate === undefined)) {
                     if (!NodeBuilderImpl.$go$private$checker$pseudoReturnTypeMatchesPredicate(b, (pt ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ReturnType, targetPredicate)) {
                         if (reportErrors) {
-                            const __gotots_receiver_47 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_47: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             const __gotots_argument_126 = (pt ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Signature;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_47).ReportInferenceFallback(__gotots_argument_126);
                         }
@@ -3768,7 +3779,7 @@ export class NodeBuilderImpl {
             }
             case PseudoTypeKindNoResult$constant__from_pseudochecker(): {
                 if (reportErrors) {
-                    const __gotots_receiver_48 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_48: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_127 = (PseudoType__from_pseudochecker.AsPseudoTypeNoResult(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Declaration;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_48).ReportInferenceFallback(__gotots_argument_127);
                 }
@@ -3807,18 +3818,18 @@ export class NodeBuilderImpl {
                                     for (let __gotots_range_index_38 = 0; __gotots_range_index_38 < __gotots_range_40.length; __gotots_range_index_38++) {
                                         const __gotots_range_value_47 = __gotots_range_40.get(__gotots_range_index_38);
                                         let n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_47;
-                                        const __gotots_receiver_61 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                        const __gotots_receiver_61: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                         const __gotots_argument_143 = n;
                                         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_61).ReportInferenceFallback(__gotots_argument_143);
                                     }
                                 }
                                 else if (IsEntityNameExpression__from_ast(node) && IsDeclaration__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent)) {
-                                    const __gotots_receiver_62 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                    const __gotots_receiver_62: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                     const __gotots_argument_144 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
                                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_62).ReportInferenceFallback(__gotots_argument_144);
                                 }
                                 else {
-                                    const __gotots_receiver_63 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                                    const __gotots_receiver_63: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                                     const __gotots_argument_145 = node;
                                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_63).ReportInferenceFallback(__gotots_argument_145);
                                 }
@@ -3833,7 +3844,8 @@ export class NodeBuilderImpl {
                                 break __gotots_return_block_0;
                             }
                             if (IsArrowFunction__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent) &&
-                                tsonicTypeScriptRuntime.sameLocation(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsArrowFunction(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body, node)) {
+                                tsonicTypeScriptRuntime.sameLocation((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+                                    FunctionLikeWithBodyBase__from_ast.$storageOf((Node__from_ast.AsArrowFunction(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body, node)) {
                                 __gotots_return_0 = NodeBuilderImpl.$go$private$checker$serializeReturnTypeForSignature(b, Checker.$go$private$checker$getSignatureFromDeclaration((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent), false);
                                 break __gotots_return_block_0;
                             }
@@ -3848,7 +3860,7 @@ export class NodeBuilderImpl {
                         }
                         case PseudoTypeKindNoResult$constant__from_pseudochecker(): {
                             let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (PseudoType__from_pseudochecker.AsPseudoTypeNoResult(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Declaration;
-                            const __gotots_receiver_64 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_64: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             const __gotots_argument_146 = node;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_64).ReportInferenceFallback(__gotots_argument_146);
                             if (IsFunctionLike__from_ast(node) && !IsAccessor__from_ast(node)) {
@@ -3983,12 +3995,9 @@ export class NodeBuilderImpl {
                                     let tp: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined = __gotots_range_value_49;
                                     const __gotots_argument_148 = res;
                                     const __gotots_receiver_65 = b;
-                                    const __gotots_store_130 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-                                    const __gotots_argument_147 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_130, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                                        return NodeDefault__from_ast.$fromStorage($go$storage);
-                                    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                                        return NodeDefault__from_ast.$storageOf($go$value);
-                                    }));
+                                    const __gotots_store_130 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                                        TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
+                                    const __gotots_argument_147 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_130, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                     const __gotots_argument_149 = NodeBuilderImpl.$go$private$checker$reuseNode(__gotots_receiver_65, __gotots_argument_147);
                                     res = __gotots_argument_148.append(void 0, [__gotots_argument_149]);
                                 }
@@ -4055,12 +4064,9 @@ export class NodeBuilderImpl {
                                                 let tp: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined = __gotots_range_value_52;
                                                 const __gotots_argument_151 = res;
                                                 const __gotots_receiver_66 = b;
-                                                const __gotots_store_132 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-                                                const __gotots_argument_150 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_132, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                                                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                                                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                                                    return NodeDefault__from_ast.$storageOf($go$value);
-                                                }));
+                                                const __gotots_store_132 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                                                    TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
+                                                const __gotots_argument_150 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_132, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                                 const __gotots_argument_152 = NodeBuilderImpl.$go$private$checker$reuseNode(__gotots_receiver_66, __gotots_argument_150);
                                                 res = __gotots_argument_151.append(void 0, [__gotots_argument_152]);
                                             }
@@ -4167,19 +4173,19 @@ export class NodeBuilderImpl {
                         for (let __gotots_range_index_33 = 0; __gotots_range_index_33 < __gotots_range_35.length; __gotots_range_index_33++) {
                             const __gotots_range_value_41 = __gotots_range_35.get(__gotots_range_index_33);
                             let n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_41;
-                            const __gotots_receiver_49 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_49: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             const __gotots_argument_128 = n;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_49).ReportInferenceFallback(__gotots_argument_128);
                         }
                     }
                     else {
-                        const __gotots_receiver_50 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                        const __gotots_receiver_50: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                         const __gotots_argument_129 = (PseudoType__from_pseudochecker.AsPseudoTypeInferred(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Expression;
                         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_50).ReportInferenceFallback(__gotots_argument_129);
                     }
                 }
             }
-            let oldSuppress = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
+            let oldSuppress: NodeBuilderContext["suppressReportInferenceFallback"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = true;
             let result: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, checkerType);
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = oldSuppress;
@@ -4189,11 +4195,11 @@ export class NodeBuilderImpl {
             let existing: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (PseudoType__from_pseudochecker.AsPseudoTypeDirect(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).TypeNode;
             if (!NodeBuilderImpl.$go$private$checker$existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(b, existing, checkerType)) {
                 if (!((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback) {
-                    const __gotots_receiver_51 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_51: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_130 = existing;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_51).ReportInferenceFallback(__gotots_argument_130);
                 }
-                let oldSuppress = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
+                let oldSuppress: NodeBuilderContext["suppressReportInferenceFallback"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = true;
                 let result: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, checkerType);
                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = oldSuppress;
@@ -4376,7 +4382,7 @@ export class NodeBuilderImpl {
             }
             return r;
         }
-        const __gotots_receiver_67 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+        const __gotots_receiver_67: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
         const __gotots_argument_153 = node;
         goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_67).ReportInferenceFallback(__gotots_argument_153);
         let t: tsonicTypeScriptRuntime.Location<Type> | undefined = NodeBuilderImpl.$go$private$checker$getTypeFromTypeNode(b, node, false);
@@ -4396,9 +4402,9 @@ export class NodeBuilderImpl {
     static $go$private$checker$saveRestoreFlags(b: {
         value: NodeBuilderImpl;
     } | undefined): (() => void) | undefined {
-        let flags = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags;
-        let internalFlags = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.internalFlags;
-        let depth = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.depth;
+        let flags: NodeBuilderContext["flags"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags;
+        let internalFlags: NodeBuilderContext["internalFlags"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.internalFlags;
+        let depth: NodeBuilderContext["depth"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.depth;
         return (): void => {
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags = flags;
             ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.internalFlags = internalFlags;
@@ -4413,7 +4419,7 @@ export class NodeBuilderImpl {
             const __gotots_store_149 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             __gotots_store_149.approximateLength = __gotots_store_149.approximateLength + 21;
             const __gotots_argument_175 = ModifierFlagsPrivate$constant__from_ast();
-            const __gotots_receiver_76 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_receiver_76: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
             const __gotots_argument_176 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                 return NodeFactory__from_ast.NewModifier(__gotots_receiver_76, $argument0);
             };
@@ -4434,13 +4440,13 @@ export class NodeBuilderImpl {
                 for (let __gotots_range_index_60 = 0; __gotots_range_index_60 < __gotots_range_63.length; __gotots_range_index_60++) {
                     const __gotots_range_value_76 = __gotots_range_index_60;
                     let i = __gotots_range_value_76;
-                    const __gotots_receiver_78 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                    const __gotots_receiver_78: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                     const __gotots_argument_177 = signatures.get(i);
                     const __gotots_argument_178 = baseSigs.get(i);
                     const __gotots_argument_179 = false;
                     const __gotots_argument_180 = false;
                     const __gotots_argument_181 = true;
-                    const __gotots_receiver_77 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                    const __gotots_receiver_77: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                     const __gotots_argument_182 = ($argument0: tsonicTypeScriptRuntime.Location<Type> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Type> | undefined): Ternary => {
                         return Checker.$go$private$checker$compareTypesIdentical(__gotots_receiver_77, $argument0, $argument1);
                     };
@@ -4463,10 +4469,10 @@ export class NodeBuilderImpl {
                 }
             }
             if (!(privateProtected === 0)) {
-                const __gotots_receiver_81 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
-                const __gotots_receiver_80 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                const __gotots_receiver_81: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                const __gotots_receiver_80: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                 const __gotots_argument_183 = privateProtected;
-                const __gotots_receiver_79 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+                const __gotots_receiver_79: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
                 const __gotots_argument_184 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                     return NodeFactory__from_ast.NewModifier(__gotots_receiver_79, $argument0);
                 };
@@ -4518,7 +4524,7 @@ export class NodeBuilderImpl {
     static $go$private$checker$serializeInferredReturnTypeForSignature(b: {
         value: NodeBuilderImpl;
     } | undefined, signature: tsonicTypeScriptRuntime.Location<Signature> | undefined, returnType: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
-        let oldSuppressReportInferenceFallback = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
+        let oldSuppressReportInferenceFallback: NodeBuilderContext["suppressReportInferenceFallback"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = true;
         let typePredicate: {
             value: TypePredicate;
@@ -4627,7 +4633,7 @@ export class NodeBuilderImpl {
                     } | undefined = Checker.$go$private$checker$getTypePredicateOfSignature((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, signature);
                     if (!(typePredicate === undefined) && !NodeBuilderImpl.$go$private$checker$pseudoReturnTypeMatchesPredicate(b, pt, typePredicate)) {
                         if (!((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback) {
-                            const __gotots_receiver_33 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_33: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             const __gotots_argument_109 = Signature.$storageOf(((signature ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).declaration;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_33).ReportInferenceFallback(__gotots_argument_109);
                         }
@@ -4752,7 +4758,7 @@ export class NodeBuilderImpl {
         }
         if (result === undefined) {
             if (reportedInferenceFallback) {
-                let oldSuppress = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
+                let oldSuppress: NodeBuilderContext["suppressReportInferenceFallback"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback;
                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = true;
                 result = NodeBuilderImpl.$go$private$checker$typeToTypeNode(b, t);
                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.suppressReportInferenceFallback = oldSuppress;
@@ -4894,7 +4900,7 @@ export class NodeBuilderImpl {
         if (propMappedType === undefined || ((propMappedType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol === undefined) {
             return false;
         }
-        const __gotots_range_36 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reverseMappedStack;
+        const __gotots_range_36: NodeBuilderContext["reverseMappedStack"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reverseMappedStack;
         for (let __gotots_range_index_34 = 0; __gotots_range_index_34 < __gotots_range_36.length; __gotots_range_index_34++) {
             const __gotots_range_value_42 = __gotots_range_index_34;
             let i = __gotots_range_value_42;
@@ -5006,7 +5012,7 @@ export class NodeBuilderImpl {
         if ((kind === KindConstructorType$constant__from_ast()) && !((Signature.$storageOf(((signature ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).flags & SignatureFlagsAbstract$constant()) >>> 0 === 0)) {
             let flags = ModifiersToFlags__from_ast(modifiers);
             const __gotots_argument_60 = (flags | ModifierFlagsAbstract$constant__from_ast()) >>> 0;
-            const __gotots_receiver_24 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+            const __gotots_receiver_24: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
             const __gotots_argument_61 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
                 return NodeFactory__from_ast.NewModifier(__gotots_receiver_24, $argument0);
             };
@@ -5257,7 +5263,7 @@ export class NodeBuilderImpl {
                 }
                 if (attributes === undefined) {
                     ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError = true;
-                    const __gotots_receiver_6 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_6: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     const __gotots_argument_6 = oldSpecifier;
                     const __gotots_argument_7 = Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Name;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_6).ReportLikelyUnsafeImportRequiredError(__gotots_argument_6, __gotots_argument_7);
@@ -5309,7 +5315,7 @@ export class NodeBuilderImpl {
         const __gotots_argument_72 = false;
         let name: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = (__gotots_callee_15 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_67, __gotots_argument_68, __gotots_argument_69, __gotots_argument_70, __gotots_argument_71, __gotots_argument_72);
         if (!(name === undefined)) {
-            const __gotots_receiver_28 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+            const __gotots_receiver_28: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
             const __gotots_argument_73 = name;
             const __gotots_argument_74 = enclosingDeclaration;
             const __gotots_argument_75 = SymbolFlagsValue$constant__from_ast();
@@ -5325,7 +5331,7 @@ export class NodeBuilderImpl {
             const __gotots_argument_81 = false;
             let fallback: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = (__gotots_callee_16 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_76, __gotots_argument_77, __gotots_argument_78, __gotots_argument_79, __gotots_argument_80, __gotots_argument_81);
             if (!(fallback === undefined)) {
-                const __gotots_receiver_29 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                const __gotots_receiver_29: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                 const __gotots_argument_82 = fallback;
                 const __gotots_argument_83 = enclosingDeclaration;
                 const __gotots_argument_84 = SymbolFlagsValue$constant__from_ast();
@@ -5401,7 +5407,7 @@ export class NodeBuilderImpl {
         value: NodeBuilderImpl;
     } | undefined, name: gostring, typeParameter: tsonicTypeScriptRuntime.Location<Type> | undefined): bool {
         const __gotots_callee_11 = (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.resolveName;
-        const __gotots_argument_43 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
+        const __gotots_argument_43: NodeBuilderContext["enclosingDeclaration"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
         const __gotots_argument_44 = name;
         const __gotots_argument_45 = SymbolFlagsType$constant__from_ast();
         const __gotots_argument_46 = void 0;
@@ -5430,7 +5436,7 @@ export class NodeBuilderImpl {
         const __gotots_store_52 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         __gotots_store_52.flags = (__gotots_store_52.flags & ~512) >>> 0;
         const __gotots_argument_22 = Checker.$go$private$checker$getTypeParameterModifiers((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, typeParameter);
-        const __gotots_receiver_12 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+        const __gotots_receiver_12: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
         const __gotots_argument_23 = ($argument0: Kind__from_ast): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
             return NodeFactory__from_ast.NewModifier(__gotots_receiver_12, $argument0);
         };
@@ -5447,14 +5453,17 @@ export class NodeBuilderImpl {
         }
         const __gotots_callee_8 = restoreFlags;
         (__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))();
-        const __gotots_receiver_13 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+        const __gotots_receiver_13: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
         const __gotots_argument_24 = modifiersList;
-        const __gotots_store_53 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$fromStorage(Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_25 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_store_53 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+            (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                    (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                        (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                            (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
+                                    Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+        const __gotots_argument_25 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_26 = constraintNode;
         const __gotots_argument_27 = void 0;
         const __gotots_argument_28 = defaultParameterDeclarationNode;
@@ -5610,7 +5619,8 @@ export class NodeBuilderImpl {
             typeArguments = SameMapIndex$PointerTo_Named_checker$Type(typeArguments, (arg: tsonicTypeScriptRuntime.Location<Type> | undefined, i: int): tsonicTypeScriptRuntime.Location<Type> | undefined => {
                 let isOptional = false;
                 if (i < (Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length) {
-                    isOptional = !((TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags & ElementFlagsOptional$constant()) >>> 0 === 0);
+                    isOptional = !(((void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                        (Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags & ElementFlagsOptional$constant()) >>> 0 === 0);
                 }
                 return Checker.$go$private$checker$removeMissingType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, arg, isOptional);
             });
@@ -5619,8 +5629,10 @@ export class NodeBuilderImpl {
                 let tupleConstituentNodes: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeBuilderImpl.$go$private$checker$mapToTypeNodes(b, typeArguments.slice(0, arity, null), false);
                 if (!(tupleConstituentNodes === undefined)) {
                     for (let i = 0; i < NodeList__from_ast.$storageOf(((tupleConstituentNodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length; i++) {
-                        let flags = TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags;
-                        let labeledElementDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = TupleElementInfo.$storageOf(TupleElementInfo.$fromStorage((Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration;
+                        let flags = (void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                            (Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).flags;
+                        let labeledElementDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (void TupleElementInfo.$storageOf, (void TupleElementInfo.$fromStorage,
+                            (Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))).labeledDeclaration;
                         if (!(labeledElementDeclaration === undefined)) {
                             NodeList__from_ast.$storageOf(((tupleConstituentNodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.set(i, NodeFactory__from_ast.NewNamedTupleMember((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, IfElse$PointerTo_Named_ast$Node(!((flags & ElementFlagsVariable$constant()) >>> 0 === 0), NodeFactory__from_ast.NewToken((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, KindDotDotDotToken$constant__from_ast()), void 0), NodeBuilderImpl.$go$private$checker$newIdentifier(b, Checker.$go$private$checker$getTupleElementLabel((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, TupleElementInfo.$copy(TupleElementInfo.$fromStorage((Type.AsTupleType(Type.Target(t)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.get(i))), void 0, i), void 0), IfElse$PointerTo_Named_ast$Node(!((flags & ElementFlagsOptional$constant()) >>> 0 === 0), NodeFactory__from_ast.NewToken((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, KindQuestionToken$constant__from_ast()), void 0), IfElse$PointerTo_Named_ast$Node(!((flags & ElementFlagsRest$constant()) >>> 0 === 0), NodeFactory__from_ast.NewArrayTypeNode((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, NodeList__from_ast.$storageOf(((tupleConstituentNodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(i)), NodeList__from_ast.$storageOf(((tupleConstituentNodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(i))));
                         }
@@ -5697,13 +5709,13 @@ export class NodeBuilderImpl {
                 let typeParams = InterfaceType.TypeParameters(Type.AsInterfaceType(Type.Target(t)));
                 if (!typeParams.isNil()) {
                     typeParameterCount = globalThis.Math.min(typeParams.length, typeArguments.length);
-                    const __gotots_receiver_7 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                    const __gotots_receiver_7: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                     const __gotots_argument_8 = t;
                     const __gotots_callee_2 = (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.getGlobalIterableType;
                     const __gotots_argument_9 = (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))();
                     let __gotots_logical_result_2 = Checker.$go$private$checker$isReferenceToType(__gotots_receiver_7, __gotots_argument_8, __gotots_argument_9);
                     if (!__gotots_logical_result_2) {
-                        const __gotots_receiver_8 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                        const __gotots_receiver_8: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                         const __gotots_argument_10 = t;
                         const __gotots_callee_3 = (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.getGlobalIterableIteratorType;
                         const __gotots_argument_11 = (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))();
@@ -5711,7 +5723,7 @@ export class NodeBuilderImpl {
                     }
                     let __gotots_logical_result_3 = __gotots_logical_result_2;
                     if (!__gotots_logical_result_3) {
-                        const __gotots_receiver_9 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                        const __gotots_receiver_9: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                         const __gotots_argument_12 = t;
                         const __gotots_callee_4 = (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.getGlobalAsyncIterableType;
                         const __gotots_argument_13 = (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))();
@@ -5719,7 +5731,7 @@ export class NodeBuilderImpl {
                     }
                     let __gotots_logical_result_4 = __gotots_logical_result_3;
                     if (!__gotots_logical_result_4) {
-                        const __gotots_receiver_10 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
+                        const __gotots_receiver_10: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                         const __gotots_argument_14 = t;
                         const __gotots_callee_5 = (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.getGlobalAsyncIterableIteratorType;
                         const __gotots_argument_15 = (__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))();
@@ -5935,7 +5947,7 @@ export class NodeBuilderImpl {
                                 __gotots_return_0 = NodeBuilderImpl.$go$private$checker$symbolToTypeNode(b, ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol, SymbolFlagsValue$constant__from_ast(), void 0);
                                 break __gotots_return_block_0;
                             }
-                            const __gotots_receiver_0 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_0: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_0).ReportInaccessibleUniqueSymbolError();
                         }
                         const __gotots_store_13 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -5984,7 +5996,7 @@ export class NodeBuilderImpl {
                             if (!((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError && (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags & FlagsAllowThisInObjectLiteral$constant__from_nodebuilder()) >>> 0 === 0) {
                                 ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError = true;
                             }
-                            const __gotots_receiver_1 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                            const __gotots_receiver_1: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                             goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_1).ReportInaccessibleThisError();
                         }
                         const __gotots_store_20 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -6140,8 +6152,8 @@ export class NodeBuilderImpl {
                         break __gotots_return_block_0;
                     }
                     if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTemplateLiteral$constant()) >>> 0 === 0)) {
-                        let texts = (Type.AsTemplateLiteralType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.texts;
-                        let types = (Type.AsTemplateLiteralType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.types;
+                        let texts: TemplateLiteralType["texts"] = (Type.AsTemplateLiteralType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.texts;
+                        let types: TemplateLiteralType["types"] = (Type.AsTemplateLiteralType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.types;
                         let templateHead: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewTemplateHead((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, texts.get(0), "", TokenFlagsNone$constant__from_ast());
                         EmitContext__from_printer.AddEmitFlags((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.e, templateHead, EFNoAsciiEscaping$constant__from_printer());
                         let templateSpans: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeFactory__from_ast.NewNodeList((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f, MapIndex$PointerTo_Named_checker$Type$PointerTo_Named_ast$Node(types, (t__shadow_1: tsonicTypeScriptRuntime.Location<Type> | undefined, i: int): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
@@ -6255,7 +6267,7 @@ export class NodeBuilderImpl {
             if (Set__from_collections.Has<TypeId>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_78, "visitedTypes"), ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)) {
                 if ((((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.flags & FlagsAllowAnonymousIdentifier$constant__from_nodebuilder()) >>> 0 === 0) {
                     ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.encounteredError = true;
-                    const __gotots_receiver_19 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_receiver_19: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_19).ReportCyclicStructureError();
                 }
                 return NodeBuilderImpl.$go$private$checker$createElidedInformationPlaceholder(b);
@@ -6283,12 +6295,9 @@ export class NodeBuilderImpl {
             else if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsConditional$constant()) >>> 0 === 0)) {
                 const __gotots_field_0 = false;
                 const __gotots_field_1 = new SymbolId__from_ast(0n);
-                const __gotots_store_45 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_45, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                    return NodeDefault__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                    return NodeDefault__from_ast.$storageOf($go$value);
-                }));
+                const __gotots_store_45 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                    TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
+                const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_45, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_field_2 = GetNodeId__from_ast(__gotots_argument_16);
                 id = new CompositeSymbolIdentity(__gotots_field_0, __gotots_field_1, __gotots_field_2);
             }
@@ -6319,10 +6328,10 @@ export class NodeBuilderImpl {
                     let arg: {
                         value: TrackedSymbolArgs;
                     } | undefined = __gotots_range_value_8;
-                    const __gotots_receiver_11 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
-                    const __gotots_argument_17 = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol;
-                    const __gotots_argument_18 = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
-                    const __gotots_argument_19 = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.meaning;
+                    const __gotots_receiver_11: NodeBuilderContext["tracker"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracker;
+                    const __gotots_argument_17: TrackedSymbolArgs["__go_symbol"] = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol;
+                    const __gotots_argument_18: TrackedSymbolArgs["enclosingDeclaration"] = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.enclosingDeclaration;
+                    const __gotots_argument_19: TrackedSymbolArgs["meaning"] = (arg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.meaning;
                     goInterfaceNonNil<SymbolTracker__from_nodebuilder>(__gotots_receiver_11).TrackSymbol(__gotots_argument_17, __gotots_argument_18, __gotots_argument_19);
                 }
                 if ((cachedResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).truncating) {
@@ -6343,11 +6352,11 @@ export class NodeBuilderImpl {
         }
         const __gotots_store_49 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         Set$Add$Named_checker$TypeId(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_49, "visitedTypes"), typeId);
-        let prevTrackedSymbols = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols;
+        let prevTrackedSymbols: NodeBuilderContext["trackedSymbols"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols;
         ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trackedSymbols = RuntimeSlice.nil<{
             value: TrackedSymbolArgs;
         } | undefined>();
-        let startLength = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.approximateLength;
+        let startLength: NodeBuilderContext["approximateLength"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.approximateLength;
         const __gotots_callee_7 = transform;
         const __gotots_argument_20 = b;
         const __gotots_argument_21 = t;
@@ -6401,7 +6410,7 @@ export function newNodeBuilderImpl(ch: tsonicTypeScriptRuntime.Location<Checker>
         idToSymbol = $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_ast$Symbol.make(0, []);
     }
     const __gotots_store_65 = ((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-    const __gotots_field_3 = NodeFactory__from_ast.AsNodeFactory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_65, "NodeFactory"));
+    const __gotots_field_3 = (void NodeFactory__from_ast.AsNodeFactory, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_65, "NodeFactory"));
     let b: {
         value: NodeBuilderImpl;
     } | undefined = { value: new NodeBuilderImpl(__gotots_field_3, ch, e, NewPseudoChecker__from_pseudochecker(((ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictNullChecks, ((ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.exactOptionalPropertyTypes), LinkStore__from_core.$zero<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, NodeBuilderLinks>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<NodeBuilderLinks> | undefined> => {
@@ -6413,7 +6422,7 @@ export function newNodeBuilderImpl(ch: tsonicTypeScriptRuntime.Location<Checker>
     const __gotots_argument_34 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return NodeBuilderImpl.$go$private$checker$cloneBindingName(__gotots_receiver_16, $argument0);
     };
-    const __gotots_argument_35 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
+    const __gotots_argument_35: NodeBuilderImpl["f"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.f;
     const __gotots_argument_36 = new NodeVisitorHooks__from_ast(void 0, void 0, void 0, void 0, void 0, void 0, void 0, void 0, void 0);
     (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cloneBindingNameVisitor = NewNodeVisitor__from_ast(__gotots_argument_34, __gotots_argument_35, __gotots_argument_36);
     return b;

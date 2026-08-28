@@ -202,7 +202,7 @@ export class LogTree {
                     atomic__from_gostdlib.Int32.Add(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stringLength, (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.level + 15 + (log ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.message.length + 1 | 0);
                     atomic__from_gostdlib.Int32.Add(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.count, 1);
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_5 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_5: LogTree["mu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_5, $go$recovery);
                     };
@@ -240,7 +240,7 @@ export class LogTree {
     static $go$private$logging$writeLogsRecursive(c: {
         value: LogTree;
     } | undefined, builder: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, indent: gostring): void {
-        const __gotots_range_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logs;
+        const __gotots_range_0: LogTree["logs"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logs;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
             let log: {

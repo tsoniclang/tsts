@@ -79,11 +79,7 @@ export class structFields {
             const __gotots_range_value_8 = __gotots_range_index_3;
             let i = __gotots_range_value_8;
             const __gotots_callee_12 = reindex;
-            const __gotots_argument_62 = tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structFields>).value.flattened, i), ($go$storage: structField$Storage): structField => {
-                return structField.$fromStorage($go$storage);
-            }, ($go$value: structField): structField$Storage => {
-                return structField.$storageOf($go$value);
-            });
+            const __gotots_argument_62 = tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structFields>).value.flattened, i), structField.$fromStorage, structField.$storageOf);
             (__gotots_callee_12 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_62);
         }
         if (!(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structFields>).value.inlinedFallback === undefined)) {
@@ -188,7 +184,9 @@ export class structField implements GoContainerStoredValue<structField$Storage> 
     }
     declare private readonly then?: never;
     static $go$private$json$matchFoldedName(f: tsonicTypeScriptRuntime.Location<structField> | undefined, name: RuntimeSlice<uint8>, flags: tsonicTypeScriptRuntime.Location<Flags__from_jsonflags> | undefined): bool {
-        if (fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).casing === caseIgnore$int8 || (((flags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Flags__from_jsonflags>).value.Get(MatchCaseInsensitiveNames$constant__from_jsonflags()) && fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).casing !== caseStrict$int8)) {
+        if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).casing === caseIgnore$int8 || (((flags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Flags__from_jsonflags>).value.Get(MatchCaseInsensitiveNames$constant__from_jsonflags()) && (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).casing !== caseStrict$int8)) {
             let __gotots_logical_result_6 = !((flags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Flags__from_jsonflags>).value.Get(MatchCaseSensitiveDelimiter$constant__from_jsonflags());
             if (!__gotots_logical_result_6) {
                 const __gotots_conversion_9 = name;
@@ -197,7 +195,8 @@ export class structField implements GoContainerStoredValue<structField$Storage> 
                     __gotots_conversion_10 += globalThis.String.fromCharCode(globalThis.Number(__gotots_conversion_9.get(__gotots_conversion_11)));
                 }
                 const __gotots_argument_56 = __gotots_conversion_10;
-                const __gotots_argument_57 = fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).name;
+                const __gotots_argument_57 = (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                    structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).name;
                 __gotots_logical_result_6 = strings__from_gostdlib.EqualFold(__gotots_argument_56, __gotots_argument_57);
             }
             if (__gotots_logical_result_6) {
@@ -335,7 +334,8 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                 isZero: void 0,
                 isEmpty: void 0
             });
-            if (sf.Anonymous && !fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).hasName) {
+            if (sf.Anonymous && !(void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(f).fieldOptions)).hasName) {
                 const __gotots_receiver_2 = indirectType(structField.$storageOf(f).typ);
                 if (!(named_reflect.ReflectKindValueOperations.$project(goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_2).Kind()) === named_reflect.ReflectKindValueOperations.$project(reflect__from_gostdlib.Struct))) {
                     const __gotots_callee_0 = orErrorf;
@@ -346,13 +346,17 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                     serr = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
                 }
                 else {
-                    fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).inline = true;
+                    (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).inline = true;
                 }
             }
-            if (fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).inline) {
+            if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(f).fieldOptions)).inline) {
                 if (!fieldOptions.$equal(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions), (fieldOptions.$fromStorage({
-                    name: fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name,
-                    quotedName: fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).quotedName,
+                    name: (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).name,
+                    quotedName: (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).quotedName,
                     inline: true,
                     hasName: false,
                     nameNeedEscape: false,
@@ -368,21 +372,27 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                     const __gotots_argument_7 = "Go struct field %s cannot have any options other than `inline` specified";
                     const __gotots_argument_8 = RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(sf.Name)]);
                     serr = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7, __gotots_argument_8);
-                    if (fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).hasName) {
+                    if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).hasName) {
                         continue;
                     }
-                    structField.$storageOf(f).fieldOptions = fieldOptions.$storageOf(fieldOptions.$fromStorage({
-                        name: fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name,
-                        quotedName: fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).quotedName,
-                        inline: fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).inline,
-                        hasName: false,
-                        nameNeedEscape: false,
-                        casing: 0,
-                        omitzero: false,
-                        omitempty: false,
-                        __go_string: false,
-                        format: ""
-                    }));
+                    structField.$storageOf(f).fieldOptions =
+                        (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                            {
+                                name: (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                                    structField.$storageOf(f).fieldOptions)).name,
+                                quotedName: (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                                    structField.$storageOf(f).fieldOptions)).quotedName,
+                                inline: (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                                    structField.$storageOf(f).fieldOptions)).inline,
+                                hasName: false,
+                                nameNeedEscape: false,
+                                casing: 0,
+                                omitzero: false,
+                                omitempty: false,
+                                __go_string: false,
+                                format: ""
+                            }));
                 }
                 let tf: reflect__from_gostdlib.Type | undefined = indirectType(structField.$storageOf(f).typ);
                 if (implementsAny(tf, $state.allMethodTypes) && !goInterfaceEqual(tf, $state.jsontextValueType)) {
@@ -551,7 +561,8 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                         serr = (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_35, __gotots_argument_36, __gotots_argument_37, __gotots_argument_38);
                         continue;
                     }
-                    if (implementsAny(tf, $state.allMethodTypes) || (fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).omitzero && implementsAny(tf, RuntimeSlice.literal<reflect__from_gostdlib.Type | undefined>([$state.isZeroerType])))) {
+                    if (implementsAny(tf, $state.allMethodTypes) || ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).omitzero && implementsAny(tf, RuntimeSlice.literal<reflect__from_gostdlib.Type | undefined>([$state.isZeroerType])))) {
                         const __gotots_callee_8 = orErrorf;
                         const __gotots_argument_39 = serr;
                         const __gotots_argument_40 = t;
@@ -696,7 +707,8 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                     }
                 }
                 {
-                    const __gotots_results_3 = namesIndex.lookupOk(fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name);
+                    const __gotots_results_3 = namesIndex.lookupOk((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                        structField.$storageOf(f).fieldOptions)).name);
                     let j = __gotots_results_3[0];
                     let ok = __gotots_results_3[1];
                     if (ok) {
@@ -708,12 +720,14 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                         const __gotots_argument_47 = j;
                         const __gotots_argument_48 = new GoInterfaceAdapter(goInterfaceNonNil<reflect__from_gostdlib.Type>(__gotots_receiver_22).Field(BigInt.asIntN(64, goNumberToBigInt(__gotots_argument_47))).Name);
                         const __gotots_argument_49 = new GoInterfaceAdapter(sf.Name);
-                        const __gotots_argument_50 = new GoInterfaceAdapter(fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name);
+                        const __gotots_argument_50 = new GoInterfaceAdapter((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                            structField.$storageOf(f).fieldOptions)).name);
                         const __gotots_argument_54 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_48, __gotots_argument_49, __gotots_argument_50]);
                         serr = (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_51, __gotots_argument_52, __gotots_argument_53, __gotots_argument_54);
                     }
                 }
-                namesIndex.store(fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name, i);
+                namesIndex.store((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                    structField.$storageOf(f).fieldOptions)).name, i);
                 structField.$storageOf(f).id = allFields.length;
                 structField.$storageOf(f).fncs = lookupArshaler(sf.Type);
                 const __gotots_slice_build_8 = allFields;
@@ -749,14 +763,28 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
     }
     let flattened = allFields.slice(0, 0, null);
     SortStableFunc$SliceOf_Named_json$structField$Named_json$structField(allFields, (x: structField, y: structField): int => {
-        return Or$int(RuntimeSlice.literal<int>([globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Compare(fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(x).fieldOptions)).name, fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(y).fieldOptions)).name))), Compare$int(structField.$storageOf(x).index.length, structField.$storageOf(y).index.length), boolsCompare(!fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(x).fieldOptions)).hasName, !fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(y).fieldOptions)).hasName)]));
+        return Or$int(RuntimeSlice.literal<int>([globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Compare((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(x).fieldOptions)).name, (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(y).fieldOptions)).name))), Compare$int(structField.$storageOf(x).index.length, structField.$storageOf(y).index.length), boolsCompare(!(void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(x).fieldOptions)).hasName, !(void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+                structField.$storageOf(y).fieldOptions)).hasName)]));
     });
     for (; allFields.length > 0;) {
         let n = 1;
-        for (; n < allFields.length && fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(structField.$fromStorage(allFields.get(n - 1))).fieldOptions)).name === fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(structField.$fromStorage(allFields.get(n))).fieldOptions)).name;) {
+        for (; n < allFields.length && (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            (void structField.$storageOf, (void structField.$fromStorage,
+                allFields.get(n - 1))).fieldOptions)).name === (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            (void structField.$storageOf, (void structField.$fromStorage,
+                allFields.get(n))).fieldOptions)).name;) {
             n++;
         }
-        if (n === 1 || structField.$storageOf(structField.$fromStorage(allFields.get(0))).index.length !== structField.$storageOf(structField.$fromStorage(allFields.get(1))).index.length || fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(structField.$fromStorage(allFields.get(0))).fieldOptions)).hasName !== fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(structField.$fromStorage(allFields.get(1))).fieldOptions)).hasName) {
+        if (n === 1 || (void structField.$storageOf, (void structField.$fromStorage,
+            allFields.get(0))).index.length !== (void structField.$storageOf, (void structField.$fromStorage,
+            allFields.get(1))).index.length || (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            (void structField.$storageOf, (void structField.$fromStorage,
+                allFields.get(0))).fieldOptions)).hasName !== (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            (void structField.$storageOf, (void structField.$fromStorage,
+                allFields.get(1))).fieldOptions)).hasName) {
             const __gotots_slice_build_12 = flattened;
             const __gotots_slice_build_14 = __gotots_slice_build_12.length + 1;
             let __gotots_slice_build_13 = __gotots_slice_build_12;
@@ -785,7 +813,8 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
         const __gotots_range_value_1 = __gotots_range_index_1;
         let i = __gotots_range_value_1;
-        structField.$storageOf(structField.$fromStorage(flattened.get(i))).id = i;
+        (void structField.$storageOf, (void structField.$fromStorage,
+            flattened.get(i))).id = i;
     }
     SortFunc$SliceOf_Named_json$structField$Named_json$structField(flattened, (x: structField, y: structField): int => {
         return Compare$SliceOf_int$int(structField.$storageOf(x).index, structField.$storageOf(y).index);
@@ -797,7 +826,8 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
         const __gotots_range_value_3 = structField.$copy(structField.$fromStorage(__gotots_range_2.get(__gotots_range_index_2)));
         let i = __gotots_range_value_2;
         let f = __gotots_range_value_3;
-        const __gotots_conversion_0 = fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name;
+        const __gotots_conversion_0 = (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            structField.$storageOf(f).fieldOptions)).name;
         const __gotots_conversion_1 = RuntimeSlice.make<uint8>(__gotots_conversion_0.length, null, 0);
         for (let __gotots_conversion_2 = 0; __gotots_conversion_2 < __gotots_conversion_0.length; __gotots_conversion_2++) {
             __gotots_conversion_1.set(__gotots_conversion_2, __gotots_conversion_0.charCodeAt(__gotots_conversion_2));
@@ -809,17 +839,10 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
             __gotots_conversion_4 += globalThis.String.fromCharCode(globalThis.Number(__gotots_conversion_3.get(__gotots_conversion_5)));
         }
         let foldedName = __gotots_conversion_4;
-        fs.byActualName.store(fieldOptions.$storageOf(fieldOptions.$fromStorage(structField.$storageOf(f).fieldOptions)).name, tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(fs.flattened, i), ($go$storage: structField$Storage): structField => {
-            return structField.$fromStorage($go$storage);
-        }, ($go$value: structField): structField$Storage => {
-            return structField.$storageOf($go$value);
-        }));
+        fs.byActualName.store((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
+            structField.$storageOf(f).fieldOptions)).name, tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(fs.flattened, i), structField.$fromStorage, structField.$storageOf));
         fs.byFoldedName.store(foldedName, fs.byFoldedName.lookup(foldedName).append(void 0, [
-            tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(fs.flattened, i), ($go$storage: structField$Storage): structField => {
-                return structField.$fromStorage($go$storage);
-            }, ($go$value: structField): structField$Storage => {
-                return structField.$storageOf($go$value);
-            }),
+            tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(fs.flattened, i), structField.$fromStorage, structField.$storageOf),
         ]));
     }
     const __gotots_range_3 = fs.byFoldedName;
@@ -842,13 +865,11 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
     }
     {
         let n = inlinedFallbacks.length;
-        if (n === 1 || (n > 1 && structField.$storageOf(structField.$fromStorage(inlinedFallbacks.get(0))).index.length !== structField.$storageOf(structField.$fromStorage(inlinedFallbacks.get(1))).index.length)) {
+        if (n === 1 || (n > 1 && (void structField.$storageOf, (void structField.$fromStorage,
+            inlinedFallbacks.get(0))).index.length !== (void structField.$storageOf, (void structField.$fromStorage,
+            inlinedFallbacks.get(1))).index.length)) {
             fs.inlinedFallback =
-                tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(inlinedFallbacks, 0), ($go$storage: structField$Storage): structField => {
-                    return structField.$fromStorage($go$storage);
-                }, ($go$value: structField): structField$Storage => {
-                    return structField.$storageOf($go$value);
-                });
+                tsonicTypeScriptRuntime.projectLocation<structField$Storage, structField>(goSliceAddress<structField$Storage>(inlinedFallbacks, 0), structField.$fromStorage, structField.$storageOf);
         }
     }
     structFields.$go$private$json$reindex(fs$location);

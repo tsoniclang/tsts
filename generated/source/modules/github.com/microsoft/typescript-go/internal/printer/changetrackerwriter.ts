@@ -60,11 +60,7 @@ export class ChangeTrackerWriter {
             if (!(modifiers === undefined)) {
                 const __gotots_receiver_3 = ct;
                 const __gotots_store_1 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                    return NodeList__from_ast.$fromStorage($go$storage);
-                }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                    return NodeList__from_ast.$storageOf($go$value);
-                });
+                const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_1 = v;
                 let newNodeList: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = ChangeTrackerWriter.$go$private$printer$assignPositionsToNodeArray(__gotots_receiver_3, __gotots_argument_0, __gotots_argument_1);
                 return NodeFactory__from_ast.NewModifierList(factory, NodeList__from_ast.$storageOf(((newNodeList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);

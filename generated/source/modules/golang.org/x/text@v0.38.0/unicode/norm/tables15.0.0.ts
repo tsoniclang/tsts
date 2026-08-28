@@ -158,11 +158,7 @@ export class nfcTrie {
             }
             else {
                 n = n - 46;
-                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfcSparse"), ($go$storage: sparseBlocks__from_norm$Storage): sparseBlocks => {
-                    return sparseBlocks.$fromStorage($go$storage);
-                }, ($go$value: sparseBlocks): sparseBlocks__from_norm$Storage => {
-                    return sparseBlocks.$storageOf($go$value);
-                }), n, b);
+                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfcSparse"), sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
             }
         }
     }
@@ -318,11 +314,7 @@ export class nfkcTrie {
             }
             else {
                 n = n - 95;
-                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfkcSparse"), ($go$storage: sparseBlocks__from_norm$Storage): sparseBlocks => {
-                    return sparseBlocks.$fromStorage($go$storage);
-                }, ($go$value: sparseBlocks): sparseBlocks__from_norm$Storage => {
-                    return sparseBlocks.$storageOf($go$value);
-                }), n, b);
+                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfkcSparse"), sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
             }
         }
     }

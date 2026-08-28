@@ -139,7 +139,7 @@ export function Localize(locale__shadow_1: Locale__from_locale, message: {
         const __gotots_argument_1 = new GoInterfaceAdapter("Unknown diagnostic message: " + key.$value);
         GoPanic.raise(__gotots_argument_1 === undefined ? GoPanicNilValue.create() : __gotots_argument_1);
     }
-    let text = (message ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.text;
+    let text: Message["text"] = (message ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.text;
     {
         const __gotots_results_0 = getLocalizedMessages(Tag__from_language__package_1.$fromStorage(Locale__from_locale.$storageOf(Locale__from_locale.$copy(locale__shadow_1)))).lookupOk((message ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.key);
         let localized = __gotots_results_0[0];

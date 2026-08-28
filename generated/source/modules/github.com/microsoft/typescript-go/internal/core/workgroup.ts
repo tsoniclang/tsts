@@ -66,7 +66,7 @@ export class parallelWorkGroup {
         try {
             try {
                 __gotots_return_block_2: {
-                    const __gotots_receiver_1 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.done;
+                    const __gotots_receiver_1: parallelWorkGroup["done"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.done;
                     const __gotots_argument_3 = true;
                     __gotots_deferred_2 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncAtomicBoolStore(__gotots_receiver_1, __gotots_argument_3, $go$recovery);
@@ -124,7 +124,7 @@ export class singleThreadedWorkGroup {
                         GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
                     }
                     sync__from_gostdlib.Mutex.Lock((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu);
-                    const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu;
+                    const __gotots_receiver_0: singleThreadedWorkGroup["fnsMu"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -167,7 +167,7 @@ export class singleThreadedWorkGroup {
         try {
             try {
                 __gotots_return_block_0: {
-                    const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.done;
+                    const __gotots_receiver_0: singleThreadedWorkGroup["done"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.done;
                     const __gotots_argument_1 = true;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncAtomicBoolStore(__gotots_receiver_0, __gotots_argument_1, $go$recovery);
@@ -220,7 +220,7 @@ export class singleThreadedWorkGroup {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu);
-                    const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu;
+                    const __gotots_receiver_0: singleThreadedWorkGroup["fnsMu"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fnsMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };

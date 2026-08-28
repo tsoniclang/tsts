@@ -699,11 +699,7 @@ export function isSemicolonDeletionContext(context: FormattingContext | undefine
         if (tsonicTypeScriptRuntime.sameLocation((context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nextTokenParent, (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentTokenParent)) {
             const __gotots_argument_5 = (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nextTokenParent;
             const __gotots_store_0 = NodeBase__from_ast.$storageOf((((context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_7 = (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile;
             nextRealToken = FindNextToken__from_astnav(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7);
         }

@@ -152,7 +152,7 @@ export class configFileRegistryBuilder {
                 continue;
             }
             let fileName = uri.FileName();
-            const __gotots_callee_0 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+            const __gotots_callee_0: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
             const __gotots_argument_0 = fileName;
             let path = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
             let baseName = GetBaseFileName__from_tspath(path.$value);
@@ -175,7 +175,7 @@ export class configFileRegistryBuilder {
                 continue;
             }
             let fileName = uri.FileName();
-            const __gotots_callee_1 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+            const __gotots_callee_1: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
             const __gotots_argument_1 = fileName;
             let path = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
             deletedFiles.store(path, fileName);
@@ -199,7 +199,7 @@ export class configFileRegistryBuilder {
                 continue;
             }
             let fileName = uri.FileName();
-            const __gotots_callee_2 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+            const __gotots_callee_2: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
             const __gotots_argument_2 = fileName;
             let path = (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
             createdFiles.store(path, fileName);
@@ -220,7 +220,7 @@ export class configFileRegistryBuilder {
             const __gotots_range_value_11 = __gotots_range_value_9;
             let uri = __gotots_range_value_11;
             let fileName = uri.FileName();
-            const __gotots_callee_3 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+            const __gotots_callee_3: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
             const __gotots_argument_3 = fileName;
             let path = (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3);
             configFileRegistryBuilder.$go$private$project$didCloseFile(c, path);
@@ -248,7 +248,7 @@ export class configFileRegistryBuilder {
                         return configFileRegistryBuilder.$go$private$project$invalidateCache(c, logger);
                     }
                     affectedProjects = CopyMapInto$MapOf_Named_tspath$Path_To_Struct_void$MapOf_Named_tspath$Path_To_Struct_void$Named_tspath$Path$Struct_void(affectedProjects, configFileRegistryBuilder.$go$private$project$handleConfigChange(c, entry, logger));
-                    const __gotots_range_5 = (SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileEntry(entry) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.retainingConfigs;
+                    const __gotots_range_5: configFileEntry["retainingConfigs"] = (SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileEntry(entry) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.retainingConfigs;
                     const __gotots_range_keys_5 = __gotots_range_5.keys();
                     for (const __gotots_range_value_15 of __gotots_range_keys_5) {
                         const __gotots_range_value_16 = __gotots_range_5.lookupOk(__gotots_range_value_15);
@@ -290,22 +290,14 @@ export class configFileRegistryBuilder {
             Map$Range$Named_tspath$Path$PointerTo_Named_project$configFileNames((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileNames, (entry: MapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> | undefined): bool => {
                 const __gotots_receiver_1 = directoryPath;
                 const __gotots_store_8 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                const __gotots_argument_4 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-                }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-                }));
+                const __gotots_argument_4 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                 if (__gotots_receiver_1.ContainsPath(__gotots_argument_4)) {
                     if (affectedFiles.isNil()) {
                         affectedFiles = GoMap.make(0, []);
                     }
                     const __gotots_store_10 = affectedFiles;
                     const __gotots_store_9 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    __gotots_store_10.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                        return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-                    }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                        return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-                    })), new GoEmptyStruct);
+                    __gotots_store_10.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
                     MapEntry$Delete$Named_tspath$Path$PointerTo_Named_project$configFileNames(entry);
                 }
                 return true;
@@ -356,23 +348,7 @@ export class configFileRegistryBuilder {
                         value: configFileEntry;
                     } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
                         value: configFileEntry;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$storage);
-                    }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$value);
-                    })));
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)));
                     const __gotots_argument_7 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_5]);
                     LogTree__from_logging.Logf(__gotots_receiver_2, __gotots_argument_6, __gotots_argument_7);
                     shouldInvalidateCache = hasExcessiveChanges;
@@ -403,23 +379,7 @@ export class configFileRegistryBuilder {
                         value: configFileEntry;
                     } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
                         value: configFileEntry;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$storage);
-                    }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$value);
-                    })));
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)));
                     const __gotots_argument_11 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_8, __gotots_argument_9]);
                     LogTree__from_logging.Logf(__gotots_receiver_3, __gotots_argument_10, __gotots_argument_11);
                     const __gotots_range_8 = createdFiles;
@@ -456,23 +416,7 @@ export class configFileRegistryBuilder {
                         value: configFileEntry;
                     } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
                         value: configFileEntry;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$storage);
-                    }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: configFileEntry;
-                    } | undefined> => {
-                        return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                            value: configFileEntry;
-                        } | undefined>($go$value);
-                    })));
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)));
                     const __gotots_argument_14 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_12]);
                     LogTree__from_logging.Logf(__gotots_receiver_4, __gotots_argument_13, __gotots_argument_14);
                     shouldInvalidateCache = hasExcessiveChanges;
@@ -567,7 +511,7 @@ export class configFileRegistryBuilder {
         SyncMapEntry$ChangeIf$Named_tspath$Path$PointerTo_Named_project$configFileEntry(entry, (config: {
             value: configFileEntry;
         } | undefined): bool => {
-            const __gotots_callee_12 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
+            const __gotots_callee_12: configFileRegistryBuilder["isOpenFile"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
             const __gotots_argument_28 = filePath;
             if ((__gotots_callee_12 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_28)) {
                 const __gotots_results_26 = (config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.retainingOpenFiles.lookupOk(filePath);
@@ -764,22 +708,14 @@ export class configFileRegistryBuilder {
             let ok = __gotots_results_3[1];
             if (ok) {
                 const __gotots_store_14 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                let configFileName = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-                }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-                })) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nearestConfigFileName;
+                let configFileName = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nearestConfigFileName;
                 for (; configFileName !== "";) {
                     const __gotots_callee_4 = cb;
                     const __gotots_argument_15 = configFileName;
                     (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_15);
                     {
                         const __gotots_store_15 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        const __gotots_map_0 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                            return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-                        }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                            return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-                        })) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ancestors;
+                        const __gotots_map_0 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ancestors;
                         const __gotots_map_1 = configFileName;
                         const __gotots_results_4 = __gotots_map_0.lookupOk(__gotots_map_1);
                         let ancestorConfigName = __gotots_results_4[0];
@@ -811,11 +747,7 @@ export class configFileRegistryBuilder {
         }
         {
             const __gotots_store_20 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            const __gotots_map_2 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-            }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-            })) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ancestors;
+            const __gotots_map_2 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ancestors;
             const __gotots_map_3 = configFileName;
             const __gotots_results_15 = __gotots_map_2.lookupOk(__gotots_map_3);
             let ancestorConfigName = __gotots_results_15[0];
@@ -825,7 +757,7 @@ export class configFileRegistryBuilder {
             }
         }
         let result = configFileRegistryBuilder.$go$private$project$computeConfigFileName(c, configFileName, true, logger);
-        const __gotots_callee_9 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
+        const __gotots_callee_9: configFileRegistryBuilder["isOpenFile"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
         const __gotots_argument_21 = path;
         if ((__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_21)) {
             MapEntry$Change$Named_tspath$Path$PointerTo_Named_project$configFileNames(entry, (value: configFileNames | undefined): void => {
@@ -851,15 +783,11 @@ export class configFileRegistryBuilder {
             let ok = __gotots_results_13[1];
             if (ok) {
                 const __gotots_store_19 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                return (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-                }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                    return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-                })) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nearestConfigFileName;
+                return (mapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nearestConfigFileName;
             }
         }
         let configName = configFileRegistryBuilder.$go$private$project$computeConfigFileName(c, fileName, false, logger);
-        const __gotots_callee_8 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
+        const __gotots_callee_8: configFileRegistryBuilder["isOpenFile"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isOpenFile;
         const __gotots_argument_20 = path;
         if ((__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_20)) {
             Map$Add$Named_tspath$Path$PointerTo_Named_project$configFileNames((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileNames, path, new configFileNames(configName, GoMap__from_gotots_runtime.nil<gostring, gostring>("")));
@@ -893,23 +821,7 @@ export class configFileRegistryBuilder {
                 value: configFileEntry;
             } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
                 value: configFileEntry;
-            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-                value: configFileEntry;
-            } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry;
-            } | undefined> => {
-                return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                    value: configFileEntry;
-                } | undefined>($go$storage);
-            }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry;
-            } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-                value: configFileEntry;
-            } | undefined> => {
-                return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                    value: configFileEntry;
-                } | undefined>($go$value);
-            })));
+            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)));
             const __gotots_argument_19 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_17]);
             LogTree__from_logging.Logf(__gotots_receiver_6, __gotots_argument_18, __gotots_argument_19);
             affectedProjects = Clone$MapOf_Named_tspath$Path_To_Struct_void$Named_tspath$Path$Struct_void((SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$configFileEntry(entry) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.retainingProjects);
@@ -930,11 +842,7 @@ export class configFileRegistryBuilder {
             }
             const __gotots_store_17 = affectedFiles;
             const __gotots_store_16 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            __gotots_store_17.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined> => {
-                return mapEntry__from_dirty.$fromStorage<Path__from_tspath, configFileNames | undefined>($go$storage);
-            }, ($go$value: mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined> => {
-                return mapEntry__from_dirty.$storageOf<Path__from_tspath, configFileNames | undefined>($go$value);
-            })), new GoEmptyStruct);
+            __gotots_store_17.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, configFileNames | undefined>, mapEntry__from_dirty<Path__from_tspath, configFileNames | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
             return true;
         });
         Map$Clear$Named_tspath$Path$PointerTo_Named_project$configFileNames((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileNames);
@@ -949,7 +857,7 @@ export class configFileRegistryBuilder {
                 affectedProjects = CopyMapInto$MapOf_Named_tspath$Path_To_Struct_void$MapOf_Named_tspath$Path_To_Struct_void$Named_tspath$Path$Struct_void(affectedProjects, (entry__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.retainingProjects);
                 if (!((entry__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingReload.$value === PendingReloadFull$constant().$value)) {
                     const __gotots_receiver_5 = configFileRegistryBuilder.FS(c);
-                    const __gotots_argument_16 = (entry__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileName;
+                    const __gotots_argument_16: configFileEntry["fileName"] = (entry__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileName;
                     const __gotots_results_8 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_5).ReadFile(__gotots_argument_16);
                     let text = __gotots_results_8[0];
                     let ok = __gotots_results_8[1];
@@ -1039,7 +947,7 @@ export class configFileRegistryBuilder {
             for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_9.length; __gotots_range_index_0++) {
                 const __gotots_range_value_29 = __gotots_range_9.get(__gotots_range_index_0);
                 let extendedConfig = __gotots_range_value_29;
-                const __gotots_callee_10 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+                const __gotots_callee_10: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
                 const __gotots_argument_26 = extendedConfig;
                 let extendedConfigPath = (__gotots_callee_10 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_26);
                 Set$Add$Named_tspath$Path(newExtendedConfigPaths$location, extendedConfigPath);
@@ -1073,7 +981,7 @@ export class configFileRegistryBuilder {
             for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_10.length; __gotots_range_index_1++) {
                 const __gotots_range_value_30 = __gotots_range_10.get(__gotots_range_index_1);
                 let extendedConfig = __gotots_range_value_30;
-                const __gotots_callee_11 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+                const __gotots_callee_11: sourceFS["toPath"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
                 const __gotots_argument_27 = extendedConfig;
                 let extendedConfigPath = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_27);
                 if (Set__from_collections.Has<Path__from_tspath>(newExtendedConfigPaths$location, extendedConfigPath)) {
@@ -1119,7 +1027,7 @@ export class configFileRegistryBuilder {
         let includeTsconfigDir = false;
         let tsconfigDir = GetDirectoryPath__from_tspath(fileName);
         let wildcardDirectories: GoMapValue<gostring, bool> = ParsedCommandLine__from_tsoptions.WildcardDirectories((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine);
-        const __gotots_field_3 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
+        const __gotots_field_3: SessionOptions["CurrentDirectory"] = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
         const __gotots_receiver_10 = configFileRegistryBuilder.FS(c);
         const __gotots_field_4 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_10).UseCaseSensitiveFileNames();
         let comparePathsOptions = new ComparePathsOptions__from_tspath(__gotots_field_4, __gotots_field_3);

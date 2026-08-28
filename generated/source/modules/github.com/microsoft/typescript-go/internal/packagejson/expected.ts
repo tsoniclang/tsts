@@ -34,12 +34,12 @@ export class Expected<T> {
             Value: $go$to_storage$T0_to_T0($go$zero$void_to_T0())
         });
     }
-    static $copy<T>($go$copy$T0_to_T0: ($0: T) => T, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, $source: Expected<T>): Expected<T> {
+    static $copy<T>($go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$to_storage$T0_to_T0: ($0: T) => GoStorage<T>, $source: Expected<T>): Expected<T> {
         return new Expected<T>({
             actualJSONType: $source.$storage.actualJSONType,
             Null: $source.$storage.Null,
             Valid: $source.$storage.Valid,
-            Value: $go$to_storage$T0_to_T0($go$copy$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.Value)))
+            Value: $go$to_storage$T0_to_T0($go$from_storage$T0_to_T0($source.$storage.Value))
         });
     }
     static $equal<T>($go$equal$T0_T0_to_bool: ($0: T, $1: T) => bool, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $left: Expected<T>, $right: Expected<T>): bool {
@@ -96,13 +96,13 @@ export class Expected<T> {
             }
         }
     }
-    static GetValue$kernel<T>(e: tsonicTypeScriptRuntime.Location<Expected<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$zero$void_to_T0: () => T): [
+    static GetValue$kernel<T>(e: tsonicTypeScriptRuntime.Location<Expected<T>> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, $go$zero$void_to_T0: () => T): [
         T,
         bool
     ] {
         let value: T = $go$zero$void_to_T0();
         let ok: bool = false;
-        return [$go$copy$T0_to_T0($go$from_storage$T0_to_T0(Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value).Value)), Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value).Valid];
+        return [$go$from_storage$T0_to_T0(Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value).Value), Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value).Valid];
     }
     static IsPresent<T>(e: tsonicTypeScriptRuntime.Location<Expected<T>> | undefined): bool {
         return Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value).actualJSONType !== "";

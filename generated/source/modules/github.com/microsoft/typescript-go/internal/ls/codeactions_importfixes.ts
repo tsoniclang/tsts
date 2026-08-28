@@ -615,11 +615,7 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
         tsonicTypeScriptRuntime.sameLocation(Node__from_ast.TagName(parent), symbolToken) && jsxModeNeedsExplicitImport((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx)) {
         const __gotots_receiver_3 = ch;
         const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let jsxNamespace = Checker__from_checker.GetJsxNamespace(__gotots_receiver_3, __gotots_argument_1);
         if (needsJsxNamespaceFix(jsxNamespace, symbolToken, ch)) {
             let result = RuntimeSlice.nil<symbolNameInfo$Storage>();

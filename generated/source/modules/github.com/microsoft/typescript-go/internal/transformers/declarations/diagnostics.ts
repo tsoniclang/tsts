@@ -599,12 +599,10 @@ export function createAccessorTypeError(node: tsonicTypeScriptRuntime.Location<N
     if (!(setAccessor === undefined)) {
         const __gotots_receiver_1 = diag;
         const __gotots_store_0 = NodeBase__from_ast.$storageOf((setAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_4 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
-        const __gotots_argument_5 = getRelatedSuggestionByDeclarationKind(Node__from_ast.$storageOf(Node__from_ast.$fromStorage(NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((setAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase).NodeDefault)).Node)).Kind);
+        const __gotots_argument_4 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_5 = getRelatedSuggestionByDeclarationKind((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
+            (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                NodeBase__from_ast.$storageOf((setAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase).NodeDefault)).Node)).Kind);
         const __gotots_argument_6 = RuntimeSlice.nil<GoInterface | undefined>();
         const __gotots_argument_7 = createDiagnosticForNode(__gotots_argument_4, __gotots_argument_5, __gotots_argument_6);
         Diagnostic__from_ast.AddRelatedInfo(__gotots_receiver_1, __gotots_argument_7);
@@ -612,12 +610,10 @@ export function createAccessorTypeError(node: tsonicTypeScriptRuntime.Location<N
     if (!(getAccessor === undefined)) {
         const __gotots_receiver_2 = diag;
         const __gotots_store_1 = NodeBase__from_ast.$storageOf((getAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
-        const __gotots_argument_9 = getRelatedSuggestionByDeclarationKind(Node__from_ast.$storageOf(Node__from_ast.$fromStorage(NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((getAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase).NodeDefault)).Node)).Kind);
+        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_9 = getRelatedSuggestionByDeclarationKind((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
+            (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                NodeBase__from_ast.$storageOf((getAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase).NodeDefault)).Node)).Kind);
         const __gotots_argument_10 = RuntimeSlice.nil<GoInterface | undefined>();
         const __gotots_argument_11 = createDiagnosticForNode(__gotots_argument_8, __gotots_argument_9, __gotots_argument_10);
         Diagnostic__from_ast.AddRelatedInfo(__gotots_receiver_2, __gotots_argument_11);

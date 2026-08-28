@@ -202,11 +202,7 @@ export class matcher {
         }
         if (best.conf.$value <= No$constant().$value) {
             if (want.length !== 0) {
-                return [void 0, Tag.$go$private$language__package_1$tag(tsonicTypeScriptRuntime.projectLocation<Tag__from_language__package_1$Storage, Tag>(goSliceAddress<Tag__from_language__package_1$Storage>(want, 0), ($go$storage: Tag__from_language__package_1$Storage): Tag => {
-                        return Tag.$fromStorage($go$storage);
-                    }, ($go$value: Tag): Tag__from_language__package_1$Storage => {
-                        return Tag.$storageOf($go$value);
-                    })), No$constant()];
+                return [void 0, Tag.$go$private$language__package_1$tag(tsonicTypeScriptRuntime.projectLocation<Tag__from_language__package_1$Storage, Tag>(goSliceAddress<Tag__from_language__package_1$Storage>(want, 0), Tag.$fromStorage, Tag.$storageOf)), No$constant()];
             }
             const __gotots_results_12 = void 0;
             const __gotots_struct_3 = Tag__from_language.$zero();
@@ -331,11 +327,7 @@ export function newMatcher(supported: RuntimeSlice<Tag__from_language__package_1
         matchHeader.$go$private$language__package_1$addIfNew(matcher.$go$private$language__package_1$header(m, Tag__from_language.$storageOf(tt).LangID), haveTag.$copy(pair), true);
         (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).supported = (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).supported.append(void 0, [pair,]);
     }
-    (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).default_ = (matcher.$go$private$language__package_1$header(m, Tag.$go$private$language__package_1$lang(tsonicTypeScriptRuntime.projectLocation<Tag__from_language__package_1$Storage, Tag>(goSliceAddress<Tag__from_language__package_1$Storage>(supported, 0), ($go$storage: Tag__from_language__package_1$Storage): Tag => {
-        return Tag.$fromStorage($go$storage);
-    }, ($go$value: Tag): Tag__from_language__package_1$Storage => {
-        return Tag.$storageOf($go$value);
-    }))) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).haveTags.get(0);
+    (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).default_ = (matcher.$go$private$language__package_1$header(m, Tag.$go$private$language__package_1$lang(tsonicTypeScriptRuntime.projectLocation<Tag__from_language__package_1$Storage, Tag>(goSliceAddress<Tag__from_language__package_1$Storage>(supported, 0), Tag.$fromStorage, Tag.$storageOf))) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).haveTags.get(0);
     const __gotots_range_4 = supported;
     for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
         const __gotots_range_value_6 = __gotots_range_index_4;

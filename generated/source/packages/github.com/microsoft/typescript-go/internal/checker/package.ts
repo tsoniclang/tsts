@@ -489,19 +489,29 @@ export function $initialize(): void {
     $state.typeFlagNames = __gotots_array_build_2;
     $state.typeofNEFacts = GoMap.nil<gostring, TypeFacts>(0);
     {
-        $state.SignatureKeyErased = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("-"))));
+        $state.SignatureKeyErased =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("-"))));
     }
     {
-        $state.SignatureKeyCanonical = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("*"))));
+        $state.SignatureKeyCanonical =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("*"))));
     }
     {
-        $state.SignatureKeyBase = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("#"))));
+        $state.SignatureKeyBase =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("#"))));
     }
     {
-        $state.SignatureKeyInner = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("<"))));
+        $state.SignatureKeyInner =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("<"))));
     }
     {
-        $state.SignatureKeyOuter = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3(">"))));
+        $state.SignatureKeyOuter =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3(">"))));
     }
     {
         $state.intrinsicTypeKinds = GoMap.make<gostring, IntrinsicTypeKind>(0, 5, [["Uppercase", IntrinsicTypeKindUppercase$constant()], ["Lowercase", IntrinsicTypeKindLowercase$constant()], ["Capitalize", IntrinsicTypeKindCapitalize$constant()], ["Uncapitalize", IntrinsicTypeKindUncapitalize$constant()], ["NoInfer", IntrinsicTypeKindNoInfer$constant()]]);
@@ -509,25 +519,33 @@ export function $initialize(): void {
     {
         $state.primitiveTypeAliasSuggestions = sync__from_gostdlib.OnceValue<GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>>((): GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> => {
             let result: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = $goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.make(6, []);
-            const __gotots_range_0 = RuntimeSlice.literal<$goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_$Storage>([$goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "string",
-                    builtin: "String"
-                })), $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "number",
-                    builtin: "Number"
-                })), $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "boolean",
-                    builtin: "Boolean"
-                })), $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "object",
-                    builtin: "Object"
-                })), $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "bigint",
-                    builtin: "BigInt"
-                })), $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage({
-                    primitive: "symbol",
-                    builtin: "Symbol"
-                }))]);
+            const __gotots_range_0 = RuntimeSlice.literal<$goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_$Storage>([
+                (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "string",
+                        builtin: "String"
+                    })), (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "number",
+                        builtin: "Number"
+                    })), (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "boolean",
+                        builtin: "Boolean"
+                    })), (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "object",
+                        builtin: "Object"
+                    })), (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "bigint",
+                        builtin: "BigInt"
+                    })), (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage,
+                    {
+                        primitive: "symbol",
+                        builtin: "Symbol"
+                    })),
+            ]);
             for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                 const __gotots_range_value_0 = $goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$copy($goStruct$Struct_Field_checker_u24_primitive_string_Tag__empty__Field_checker_u24_builtin_string_Tag__empty_.$fromStorage(__gotots_range_0.get(__gotots_range_index_0)));
                 let e = __gotots_range_value_0;
@@ -547,26 +565,32 @@ export function $initialize(): void {
         $state.typeofNEFacts = GoMap.make<gostring, TypeFacts>(0, 8, [["string", TypeFactsTypeofNEString$constant()], ["number", TypeFactsTypeofNENumber$constant()], ["bigint", TypeFactsTypeofNEBigInt$constant()], ["boolean", TypeFactsTypeofNEBoolean$constant()], ["symbol", TypeFactsTypeofNESymbol$constant()], ["undefined", TypeFactsNEUndefined$constant()], ["object", TypeFactsTypeofNEObject$constant()], ["function", TypeFactsTypeofNEFunction$constant()]]);
     }
     {
-        $state.nonDottedNameCacheKey = CacheHashKey.$storageOf(CacheHashKey.$fromStorage(Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("?"))));
+        $state.nonDottedNameCacheKey =
+            (void CacheHashKey.$storageOf, (void CacheHashKey.$fromStorage,
+                Uint128__from_xxh3.$storageOf(HashString128__from_xxh3("?"))));
     }
     {
-        $state.JsxNames = $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_.$storageOf($goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_.$fromStorage({
-            JSX: "JSX",
-            IntrinsicElements: "IntrinsicElements",
-            ElementClass: "ElementClass",
-            ElementAttributesPropertyNameContainer: "ElementAttributesProperty",
-            ElementChildrenAttributeNameContainer: "ElementChildrenAttribute",
-            Element: "Element",
-            ElementType: "ElementType",
-            IntrinsicAttributes: "IntrinsicAttributes",
-            IntrinsicClassAttributes: "IntrinsicClassAttributes",
-            LibraryManagedAttributes: "LibraryManagedAttributes"
-        }));
+        $state.JsxNames =
+            (void $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_.$fromStorage,
+                {
+                    JSX: "JSX",
+                    IntrinsicElements: "IntrinsicElements",
+                    ElementClass: "ElementClass",
+                    ElementAttributesPropertyNameContainer: "ElementAttributesProperty",
+                    ElementChildrenAttributeNameContainer: "ElementChildrenAttribute",
+                    Element: "Element",
+                    ElementType: "ElementType",
+                    IntrinsicAttributes: "IntrinsicAttributes",
+                    IntrinsicClassAttributes: "IntrinsicClassAttributes",
+                    LibraryManagedAttributes: "LibraryManagedAttributes"
+                }));
     }
     {
-        $state.ReactNames = $goStruct$Struct_Field_Fragment_string_Tag__empty_.$storageOf($goStruct$Struct_Field_Fragment_string_Tag__empty_.$fromStorage({
-            Fragment: "Fragment"
-        }));
+        $state.ReactNames =
+            (void $goStruct$Struct_Field_Fragment_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_Fragment_string_Tag__empty_.$fromStorage,
+                {
+                    Fragment: "Fragment"
+                }));
     }
     {
         $state.knownGenericTypeNames = $goMap$MapOf_string_To_Struct_void.make(20, [["Array", new GoEmptyStruct], ["ArrayLike", new GoEmptyStruct], ["ReadonlyArray", new GoEmptyStruct], ["Promise", new GoEmptyStruct], ["PromiseLike", new GoEmptyStruct], ["Iterable", new GoEmptyStruct], ["IterableIterator", new GoEmptyStruct], ["AsyncIterable", new GoEmptyStruct], ["Set", new GoEmptyStruct], ["WeakSet", new GoEmptyStruct], ["ReadonlySet", new GoEmptyStruct], ["Map", new GoEmptyStruct], ["WeakMap", new GoEmptyStruct], ["ReadonlyMap", new GoEmptyStruct], ["Partial", new GoEmptyStruct], ["Required", new GoEmptyStruct], ["Readonly", new GoEmptyStruct], ["Pick", new GoEmptyStruct], ["Omit", new GoEmptyStruct], ["NonNullable", new GoEmptyStruct]]);
@@ -582,457 +606,698 @@ export function $initialize(): void {
         for (let __gotots_array_build_5 = 0; __gotots_array_build_5 < 29; __gotots_array_build_5++) {
             __gotots_array_build_4.set(__gotots_array_build_5, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$zero()));
         }
-        __gotots_array_build_4.set(0, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsAny$constant(),
-            name: "Any"
-        })));
-        __gotots_array_build_4.set(1, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsUnknown$constant(),
-            name: "Unknown"
-        })));
-        __gotots_array_build_4.set(2, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsUndefined$constant(),
-            name: "Undefined"
-        })));
-        __gotots_array_build_4.set(3, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsNull$constant(),
-            name: "Null"
-        })));
-        __gotots_array_build_4.set(4, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsVoid$constant(),
-            name: "Void"
-        })));
-        __gotots_array_build_4.set(5, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsString$constant(),
-            name: "String"
-        })));
-        __gotots_array_build_4.set(6, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsNumber$constant(),
-            name: "Number"
-        })));
-        __gotots_array_build_4.set(7, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsBigInt$constant(),
-            name: "BigInt"
-        })));
-        __gotots_array_build_4.set(8, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsBoolean$constant(),
-            name: "Boolean"
-        })));
-        __gotots_array_build_4.set(9, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsESSymbol$constant(),
-            name: "ESSymbol"
-        })));
-        __gotots_array_build_4.set(10, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsStringLiteral$constant(),
-            name: "StringLiteral"
-        })));
-        __gotots_array_build_4.set(11, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsNumberLiteral$constant(),
-            name: "NumberLiteral"
-        })));
-        __gotots_array_build_4.set(12, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsBigIntLiteral$constant(),
-            name: "BigIntLiteral"
-        })));
-        __gotots_array_build_4.set(13, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsBooleanLiteral$constant(),
-            name: "BooleanLiteral"
-        })));
-        __gotots_array_build_4.set(14, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsUniqueESSymbol$constant(),
-            name: "UniqueESSymbol"
-        })));
-        __gotots_array_build_4.set(15, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsEnumLiteral$constant(),
-            name: "EnumLiteral"
-        })));
-        __gotots_array_build_4.set(16, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsEnum$constant(),
-            name: "Enum"
-        })));
-        __gotots_array_build_4.set(17, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsNonPrimitive$constant(),
-            name: "NonPrimitive"
-        })));
-        __gotots_array_build_4.set(18, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsNever$constant(),
-            name: "Never"
-        })));
-        __gotots_array_build_4.set(19, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsTypeParameter$constant(),
-            name: "TypeParameter"
-        })));
-        __gotots_array_build_4.set(20, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsObject$constant(),
-            name: "Object"
-        })));
-        __gotots_array_build_4.set(21, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsIndex$constant(),
-            name: "Index"
-        })));
-        __gotots_array_build_4.set(22, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsTemplateLiteral$constant(),
-            name: "TemplateLiteral"
-        })));
-        __gotots_array_build_4.set(23, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsStringMapping$constant(),
-            name: "StringMapping"
-        })));
-        __gotots_array_build_4.set(24, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsSubstitution$constant(),
-            name: "Substitution"
-        })));
-        __gotots_array_build_4.set(25, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsIndexedAccess$constant(),
-            name: "IndexedAccess"
-        })));
-        __gotots_array_build_4.set(26, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsConditional$constant(),
-            name: "Conditional"
-        })));
-        __gotots_array_build_4.set(27, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsUnion$constant(),
-            name: "Union"
-        })));
-        __gotots_array_build_4.set(28, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage({
-            flag: TypeFlagsIntersection$constant(),
-            name: "Intersection"
-        })));
+        __gotots_array_build_4.set(0, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsAny$constant(),
+                name: "Any"
+            })));
+        __gotots_array_build_4.set(1, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsUnknown$constant(),
+                name: "Unknown"
+            })));
+        __gotots_array_build_4.set(2, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsUndefined$constant(),
+                name: "Undefined"
+            })));
+        __gotots_array_build_4.set(3, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsNull$constant(),
+                name: "Null"
+            })));
+        __gotots_array_build_4.set(4, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsVoid$constant(),
+                name: "Void"
+            })));
+        __gotots_array_build_4.set(5, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsString$constant(),
+                name: "String"
+            })));
+        __gotots_array_build_4.set(6, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsNumber$constant(),
+                name: "Number"
+            })));
+        __gotots_array_build_4.set(7, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsBigInt$constant(),
+                name: "BigInt"
+            })));
+        __gotots_array_build_4.set(8, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsBoolean$constant(),
+                name: "Boolean"
+            })));
+        __gotots_array_build_4.set(9, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsESSymbol$constant(),
+                name: "ESSymbol"
+            })));
+        __gotots_array_build_4.set(10, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsStringLiteral$constant(),
+                name: "StringLiteral"
+            })));
+        __gotots_array_build_4.set(11, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsNumberLiteral$constant(),
+                name: "NumberLiteral"
+            })));
+        __gotots_array_build_4.set(12, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsBigIntLiteral$constant(),
+                name: "BigIntLiteral"
+            })));
+        __gotots_array_build_4.set(13, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsBooleanLiteral$constant(),
+                name: "BooleanLiteral"
+            })));
+        __gotots_array_build_4.set(14, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsUniqueESSymbol$constant(),
+                name: "UniqueESSymbol"
+            })));
+        __gotots_array_build_4.set(15, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsEnumLiteral$constant(),
+                name: "EnumLiteral"
+            })));
+        __gotots_array_build_4.set(16, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsEnum$constant(),
+                name: "Enum"
+            })));
+        __gotots_array_build_4.set(17, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsNonPrimitive$constant(),
+                name: "NonPrimitive"
+            })));
+        __gotots_array_build_4.set(18, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsNever$constant(),
+                name: "Never"
+            })));
+        __gotots_array_build_4.set(19, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsTypeParameter$constant(),
+                name: "TypeParameter"
+            })));
+        __gotots_array_build_4.set(20, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsObject$constant(),
+                name: "Object"
+            })));
+        __gotots_array_build_4.set(21, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsIndex$constant(),
+                name: "Index"
+            })));
+        __gotots_array_build_4.set(22, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsTemplateLiteral$constant(),
+                name: "TemplateLiteral"
+            })));
+        __gotots_array_build_4.set(23, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsStringMapping$constant(),
+                name: "StringMapping"
+            })));
+        __gotots_array_build_4.set(24, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsSubstitution$constant(),
+                name: "Substitution"
+            })));
+        __gotots_array_build_4.set(25, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsIndexedAccess$constant(),
+                name: "IndexedAccess"
+            })));
+        __gotots_array_build_4.set(26, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsConditional$constant(),
+                name: "Conditional"
+            })));
+        __gotots_array_build_4.set(27, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsUnion$constant(),
+                name: "Union"
+            })));
+        __gotots_array_build_4.set(28, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_.$fromStorage,
+            {
+                flag: TypeFlagsIntersection$constant(),
+                name: "Intersection"
+            })));
         $state.typeFlagNames = __gotots_array_build_4;
     }
     {
-        $state.LanguageFeatureMinimumTarget = LanguageFeatureMinimumTargetMap.$storageOf(LanguageFeatureMinimumTargetMap.$fromStorage({
-            Exponentiation: ScriptTargetES2016$constant__from_core(),
-            AsyncFunctions: ScriptTargetES2017$constant__from_core(),
-            ForAwaitOf: ScriptTargetES2018$constant__from_core(),
-            AsyncGenerators: ScriptTargetES2018$constant__from_core(),
-            AsyncIteration: ScriptTargetES2018$constant__from_core(),
-            ObjectSpreadRest: ScriptTargetES2018$constant__from_core(),
-            RegularExpressionFlagsDotAll: ScriptTargetES2018$constant__from_core(),
-            BindinglessCatch: ScriptTargetES2019$constant__from_core(),
-            BigInt: ScriptTargetES2020$constant__from_core(),
-            NullishCoalesce: ScriptTargetES2020$constant__from_core(),
-            OptionalChaining: ScriptTargetES2020$constant__from_core(),
-            LogicalAssignment: ScriptTargetES2021$constant__from_core(),
-            TopLevelAwait: ScriptTargetES2022$constant__from_core(),
-            ClassFields: ScriptTargetES2022$constant__from_core(),
-            PrivateNamesAndClassStaticBlocks: ScriptTargetES2022$constant__from_core(),
-            RegularExpressionFlagsHasIndices: ScriptTargetES2022$constant__from_core(),
-            ShebangComments: ScriptTargetESNext$constant__from_core(),
-            UsingAndAwaitUsing: ScriptTargetESNext$constant__from_core(),
-            ClassAndClassElementDecorators: ScriptTargetESNext$constant__from_core(),
-            RegularExpressionFlagsUnicodeSets: ScriptTargetESNext$constant__from_core()
-        }));
+        $state.LanguageFeatureMinimumTarget =
+            (void LanguageFeatureMinimumTargetMap.$storageOf, (void LanguageFeatureMinimumTargetMap.$fromStorage,
+                {
+                    Exponentiation: ScriptTargetES2016$constant__from_core(),
+                    AsyncFunctions: ScriptTargetES2017$constant__from_core(),
+                    ForAwaitOf: ScriptTargetES2018$constant__from_core(),
+                    AsyncGenerators: ScriptTargetES2018$constant__from_core(),
+                    AsyncIteration: ScriptTargetES2018$constant__from_core(),
+                    ObjectSpreadRest: ScriptTargetES2018$constant__from_core(),
+                    RegularExpressionFlagsDotAll: ScriptTargetES2018$constant__from_core(),
+                    BindinglessCatch: ScriptTargetES2019$constant__from_core(),
+                    BigInt: ScriptTargetES2020$constant__from_core(),
+                    NullishCoalesce: ScriptTargetES2020$constant__from_core(),
+                    OptionalChaining: ScriptTargetES2020$constant__from_core(),
+                    LogicalAssignment: ScriptTargetES2021$constant__from_core(),
+                    TopLevelAwait: ScriptTargetES2022$constant__from_core(),
+                    ClassFields: ScriptTargetES2022$constant__from_core(),
+                    PrivateNamesAndClassStaticBlocks: ScriptTargetES2022$constant__from_core(),
+                    RegularExpressionFlagsHasIndices: ScriptTargetES2022$constant__from_core(),
+                    ShebangComments: ScriptTargetESNext$constant__from_core(),
+                    UsingAndAwaitUsing: ScriptTargetESNext$constant__from_core(),
+                    ClassAndClassElementDecorators: ScriptTargetESNext$constant__from_core(),
+                    RegularExpressionFlagsUnicodeSets: ScriptTargetESNext$constant__from_core()
+                }));
     }
     {
         $state.getFeatureMap = sync__from_gostdlib.OnceValue<GoMapValue<gostring, RuntimeSlice<FeatureMapEntry__from_checker$Storage>>>((): GoMapValue<gostring, RuntimeSlice<FeatureMapEntry__from_checker$Storage>> => {
-            return $goMap$MapOf_string_To_SliceOf_Named_checker$FeatureMapEntry.make(54, [["Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["find", "findIndex", "fill", "copyWithin", "entries", "keys", "values"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2016",
-                            props: RuntimeSlice.literal<gostring>(["includes"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2019",
-                            props: RuntimeSlice.literal<gostring>(["flat", "flatMap"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Iterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["AsyncIterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["ArrayBuffer", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["maxByteLength", "resizable", "resize", "detached", "transfer", "transferToFixedLength"])
-                        }))])], ["Atomics", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2017",
-                            props: RuntimeSlice.literal<gostring>(["add", "and", "compareExchange", "exchange", "isLockFree", "load", "or", "store", "sub", "wait", "notify", "xor"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["waitAsync"])
-                        }))])], ["SharedArrayBuffer", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2017",
-                            props: RuntimeSlice.literal<gostring>(["byteLength", "slice"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["growable", "maxByteLength", "grow"])
-                        }))])], ["AsyncIterable", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["AsyncIterableIterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["AsyncGenerator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["AsyncGeneratorFunction", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["RegExp", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["flags", "sticky", "unicode"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["dotAll"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["unicodeSets"])
-                        }))])], ["RegExpConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["escape"])
-                        }))])], ["Reflect", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["apply", "construct", "defineProperty", "deleteProperty", "get", "getOwnPropertyDescriptor", "getPrototypeOf", "has", "isExtensible", "ownKeys", "preventExtensions", "set", "setPrototypeOf"])
-                        }))])], ["ArrayConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["from", "of"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["fromAsync"])
-                        }))])], ["ObjectConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["assign", "getOwnPropertySymbols", "keys", "is", "setPrototypeOf"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2017",
-                            props: RuntimeSlice.literal<gostring>(["values", "entries", "getOwnPropertyDescriptors"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2019",
-                            props: RuntimeSlice.literal<gostring>(["fromEntries"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["hasOwn"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["groupBy"])
-                        }))])], ["NumberConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["isFinite", "isInteger", "isNaN", "isSafeInteger", "parseFloat", "parseInt"])
-                        }))])], ["Math", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["clz32", "imul", "sign", "log10", "log2", "log1p", "expm1", "cosh", "sinh", "tanh", "acosh", "asinh", "atanh", "hypot", "trunc", "fround", "cbrt"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["f16round"])
-                        }))])], ["Map", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["entries", "keys", "values"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["getOrInsert", "getOrInsertComputed"])
-                        }))])], ["MapConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["groupBy"])
-                        }))])], ["Set", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["entries", "keys", "values"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["union", "intersection", "difference", "symmetricDifference", "isSubsetOf", "isSupersetOf", "isDisjointFrom"])
-                        }))])], ["PromiseConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["all", "race", "reject", "resolve"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["allSettled"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2021",
-                            props: RuntimeSlice.literal<gostring>(["any"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["withResolvers"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["try"])
-                        }))])], ["Symbol", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["for", "keyFor"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2019",
-                            props: RuntimeSlice.literal<gostring>(["description"])
-                        }))])], ["WeakMap", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>([])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["getOrInsert", "getOrInsertComputed"])
-                        }))])], ["WeakSet", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["String", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["codePointAt", "includes", "endsWith", "normalize", "repeat", "startsWith", "anchor", "big", "blink", "bold", "fixed", "fontcolor", "fontsize", "italics", "link", "small", "strike", "sub", "sup"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2017",
-                            props: RuntimeSlice.literal<gostring>(["padStart", "padEnd"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2019",
-                            props: RuntimeSlice.literal<gostring>(["trimStart", "trimEnd", "trimLeft", "trimRight"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["matchAll"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2021",
-                            props: RuntimeSlice.literal<gostring>(["replaceAll"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2024",
-                            props: RuntimeSlice.literal<gostring>(["isWellFormed", "toWellFormed"])
-                        }))])], ["StringConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>(["fromCodePoint", "raw"])
-                        }))])], ["DateTimeFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2017",
-                            props: RuntimeSlice.literal<gostring>(["formatToParts"])
-                        }))])], ["Promise", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2015",
-                            props: RuntimeSlice.literal<gostring>([])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["finally"])
-                        }))])], ["RegExpMatchArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["groups"])
-                        }))])], ["RegExpExecArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["groups"])
-                        }))])], ["Intl", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["PluralRules"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["RelativeTimeFormat", "Locale", "DisplayNames"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2021",
-                            props: RuntimeSlice.literal<gostring>(["ListFormat", "DateTimeFormat"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["Segmenter"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["DurationFormat"])
-                        }))])], ["NumberFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2018",
-                            props: RuntimeSlice.literal<gostring>(["formatToParts"])
-                        }))])], ["SymbolConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["matchAll"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["metadata", "dispose", "asyncDispose"])
-                        }))])], ["DataView", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["setBigInt64", "setBigUint64", "getBigInt64", "getBigUint64"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>(["setFloat16", "getFloat16"])
-                        }))])], ["BigInt", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["RelativeTimeFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>(["format", "formatToParts", "resolvedOptions"])
-                        }))])], ["Int8Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Uint8Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Uint8ClampedArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Int16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Uint16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Int32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Uint32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Float16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2025",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["Float32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Float64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["BigInt64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>([])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["BigUint64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2020",
-                            props: RuntimeSlice.literal<gostring>([])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["at"])
-                        })), FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2023",
-                            props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
-                        }))])], ["Error", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "es2022",
-                            props: RuntimeSlice.literal<gostring>(["cause"])
-                        }))])], ["ErrorConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["isError"])
-                        }))])], ["Uint8ArrayConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["fromBase64", "fromHex"])
-                        }))])], ["DisposableStack", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["AsyncDisposableStack", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>([])
-                        }))])], ["Date", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([FeatureMapEntry.$storageOf(FeatureMapEntry.$fromStorage({
-                            lib: "esnext",
-                            props: RuntimeSlice.literal<gostring>(["toTemporalInstant"])
-                        }))])]]);
+            return $goMap$MapOf_string_To_SliceOf_Named_checker$FeatureMapEntry.make(54, [["Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["find", "findIndex", "fill", "copyWithin", "entries", "keys", "values"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2016",
+                                props: RuntimeSlice.literal<gostring>(["includes"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2019",
+                                props: RuntimeSlice.literal<gostring>(["flat", "flatMap"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Iterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["AsyncIterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["ArrayBuffer", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["maxByteLength", "resizable", "resize", "detached", "transfer", "transferToFixedLength"])
+                            })),
+                    ])], ["Atomics", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2017",
+                                props: RuntimeSlice.literal<gostring>(["add", "and", "compareExchange", "exchange", "isLockFree", "load", "or", "store", "sub", "wait", "notify", "xor"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["waitAsync"])
+                            })),
+                    ])], ["SharedArrayBuffer", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2017",
+                                props: RuntimeSlice.literal<gostring>(["byteLength", "slice"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["growable", "maxByteLength", "grow"])
+                            })),
+                    ])], ["AsyncIterable", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["AsyncIterableIterator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["AsyncGenerator", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["AsyncGeneratorFunction", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["RegExp", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["flags", "sticky", "unicode"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["dotAll"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["unicodeSets"])
+                            })),
+                    ])], ["RegExpConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["escape"])
+                            })),
+                    ])], ["Reflect", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["apply", "construct", "defineProperty", "deleteProperty", "get", "getOwnPropertyDescriptor", "getPrototypeOf", "has", "isExtensible", "ownKeys", "preventExtensions", "set", "setPrototypeOf"])
+                            })),
+                    ])], ["ArrayConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["from", "of"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["fromAsync"])
+                            })),
+                    ])], ["ObjectConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["assign", "getOwnPropertySymbols", "keys", "is", "setPrototypeOf"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2017",
+                                props: RuntimeSlice.literal<gostring>(["values", "entries", "getOwnPropertyDescriptors"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2019",
+                                props: RuntimeSlice.literal<gostring>(["fromEntries"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["hasOwn"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["groupBy"])
+                            })),
+                    ])], ["NumberConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["isFinite", "isInteger", "isNaN", "isSafeInteger", "parseFloat", "parseInt"])
+                            })),
+                    ])], ["Math", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["clz32", "imul", "sign", "log10", "log2", "log1p", "expm1", "cosh", "sinh", "tanh", "acosh", "asinh", "atanh", "hypot", "trunc", "fround", "cbrt"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["f16round"])
+                            })),
+                    ])], ["Map", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["entries", "keys", "values"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["getOrInsert", "getOrInsertComputed"])
+                            })),
+                    ])], ["MapConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["groupBy"])
+                            })),
+                    ])], ["Set", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["entries", "keys", "values"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["union", "intersection", "difference", "symmetricDifference", "isSubsetOf", "isSupersetOf", "isDisjointFrom"])
+                            })),
+                    ])], ["PromiseConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["all", "race", "reject", "resolve"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["allSettled"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2021",
+                                props: RuntimeSlice.literal<gostring>(["any"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["withResolvers"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["try"])
+                            })),
+                    ])], ["Symbol", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["for", "keyFor"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2019",
+                                props: RuntimeSlice.literal<gostring>(["description"])
+                            })),
+                    ])], ["WeakMap", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["getOrInsert", "getOrInsertComputed"])
+                            })),
+                    ])], ["WeakSet", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["String", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["codePointAt", "includes", "endsWith", "normalize", "repeat", "startsWith", "anchor", "big", "blink", "bold", "fixed", "fontcolor", "fontsize", "italics", "link", "small", "strike", "sub", "sup"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2017",
+                                props: RuntimeSlice.literal<gostring>(["padStart", "padEnd"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2019",
+                                props: RuntimeSlice.literal<gostring>(["trimStart", "trimEnd", "trimLeft", "trimRight"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["matchAll"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2021",
+                                props: RuntimeSlice.literal<gostring>(["replaceAll"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2024",
+                                props: RuntimeSlice.literal<gostring>(["isWellFormed", "toWellFormed"])
+                            })),
+                    ])], ["StringConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>(["fromCodePoint", "raw"])
+                            })),
+                    ])], ["DateTimeFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2017",
+                                props: RuntimeSlice.literal<gostring>(["formatToParts"])
+                            })),
+                    ])], ["Promise", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2015",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["finally"])
+                            })),
+                    ])], ["RegExpMatchArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["groups"])
+                            })),
+                    ])], ["RegExpExecArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["groups"])
+                            })),
+                    ])], ["Intl", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["PluralRules"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["RelativeTimeFormat", "Locale", "DisplayNames"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2021",
+                                props: RuntimeSlice.literal<gostring>(["ListFormat", "DateTimeFormat"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["Segmenter"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["DurationFormat"])
+                            })),
+                    ])], ["NumberFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2018",
+                                props: RuntimeSlice.literal<gostring>(["formatToParts"])
+                            })),
+                    ])], ["SymbolConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["matchAll"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["metadata", "dispose", "asyncDispose"])
+                            })),
+                    ])], ["DataView", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["setBigInt64", "setBigUint64", "getBigInt64", "getBigUint64"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>(["setFloat16", "getFloat16"])
+                            })),
+                    ])], ["BigInt", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["RelativeTimeFormat", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>(["format", "formatToParts", "resolvedOptions"])
+                            })),
+                    ])], ["Int8Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Uint8Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Uint8ClampedArray", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Int16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Uint16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Int32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Uint32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Float16Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2025",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["Float32Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Float64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["BigInt64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["BigUint64Array", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2020",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["at"])
+                            })), (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2023",
+                                props: RuntimeSlice.literal<gostring>(["findLastIndex", "findLast", "toReversed", "toSorted", "toSpliced", "with"])
+                            })),
+                    ])], ["Error", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "es2022",
+                                props: RuntimeSlice.literal<gostring>(["cause"])
+                            })),
+                    ])], ["ErrorConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["isError"])
+                            })),
+                    ])], ["Uint8ArrayConstructor", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["fromBase64", "fromHex"])
+                            })),
+                    ])], ["DisposableStack", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["AsyncDisposableStack", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>([])
+                            })),
+                    ])], ["Date", RuntimeSlice.literal<FeatureMapEntry__from_checker$Storage>([
+                        (void FeatureMapEntry.$storageOf, (void FeatureMapEntry.$fromStorage,
+                            {
+                                lib: "esnext",
+                                props: RuntimeSlice.literal<gostring>(["toTemporalInstant"])
+                            })),
+                    ])]]);
         });
     }
 }

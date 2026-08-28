@@ -215,10 +215,12 @@ export function getFragmentDirectory(fragment: gostring): gostring {
     return GetDirectoryPath__from_tspath(fragment);
 }
 export function getPatternFromFirstMatchingCondition(target: ExportsOrImports__from_packagejson | undefined, conditions: RuntimeSlice<gostring>): gostring {
-    if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).JSONValue)).Type === JSONValueTypeString$constant__from_packagejson()) {
+    if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+        ExportsOrImports__from_packagejson.$storageOf((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).JSONValue)).Type === JSONValueTypeString$constant__from_packagejson()) {
         return JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).JSONValue).AsString();
     }
-    if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson()) {
+    if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+        ExportsOrImports__from_packagejson.$storageOf((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson()) {
         let obj: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, ExportsOrImports__from_packagejson>> | undefined = (target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AsObject();
         const __gotots_range_7 = named_iter.IterSeqValueOperations.$project(OrderedMap$Keys$string$Named_packagejson$ExportsOrImports(obj));
         if (__gotots_range_7 === void 0) {
@@ -851,7 +853,8 @@ export function getStringLiteralTypes(t: tsonicTypeScriptRuntime.Location<Type__
     return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>();
 }
 export function getAlreadyUsedTypesInStringLiteralUnion(union: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, current: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<gostring> {
-    let typesList: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage(UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(union) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types;
+    let typesList: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = (void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
+        UnionTypeNode__from_ast.$storageOf(((Node__from_ast.AsUnionTypeNode(union) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types;
     if (typesList === undefined) {
         return RuntimeSlice.nil<gostring>();
     }

@@ -149,7 +149,8 @@ export function Clone$MapOf_Named_tspath$Path_To_Struct_void$Named_tspath$Path$S
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy($argument0);
+        return (void GoEmptyStruct.$copy,
+            $argument0);
     }, ($argument0: GoEmptyStruct): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
         return $goMap$MapOf_Named_tspath$Path_To_Struct_void.make(0, []);
     }, (): GoEmptyStruct => {

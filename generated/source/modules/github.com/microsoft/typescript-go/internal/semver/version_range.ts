@@ -111,11 +111,7 @@ export function testAlternative(alternative: RuntimeSlice<versionComparator$Stor
 export function testComparator(comparator: versionComparator, version: tsonicTypeScriptRuntime.Location<Version> | undefined): bool {
     const __gotots_receiver_5 = version;
     const __gotots_store_5 = versionComparator.$storageOf(comparator);
-    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "operand"), ($go$storage: Version__from_semver$Storage): Version => {
-        return Version.$fromStorage($go$storage);
-    }, ($go$value: Version): Version__from_semver$Storage => {
-        return Version.$storageOf($go$value);
-    });
+    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "operand"), Version.$fromStorage, Version.$storageOf);
     let cmp = Version.Compare(__gotots_receiver_5, __gotots_argument_1);
     switch (((void comparatorOperator,
         versionComparator.$storageOf(comparator).operator) as gostring)) {

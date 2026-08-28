@@ -62,14 +62,13 @@ export function getDeepCloneVisitor(f: tsonicTypeScriptRuntime.Location<NodeFact
             newList = ModifierList.Clone(nodes, (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory);
         }
         if (syntheticLocation) {
-            NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(NewTextRange__from_core(-1, -1));
+            (void NodeList.$storageOf, (void NodeList.$fromStorage,
+                ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(NewTextRange__from_core(-1, -1));
             const __gotots_store_0 = ModifierList.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value);
-            if (NodeList.HasTrailingComma(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList => {
-                return NodeList.$fromStorage($go$storage);
-            }, ($go$value: NodeList): NodeList__from_ast$Storage => {
-                return NodeList.$storageOf($go$value);
-            }))) {
-                Node.$storageOf(((NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes.get(NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes.length - 1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).Loc = TextRange__from_core.$storageOf(NewTextRange__from_core(-2, -2));
+            if (NodeList.HasTrailingComma(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), NodeList.$fromStorage, NodeList.$storageOf))) {
+                Node.$storageOf((((void NodeList.$storageOf, (void NodeList.$fromStorage,
+                    ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes.get((void NodeList.$storageOf, (void NodeList.$fromStorage,
+                    ModifierList.$storageOf(((newList ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes.length - 1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).Loc = TextRange__from_core.$storageOf(NewTextRange__from_core(-2, -2));
             }
         }
         return newList;

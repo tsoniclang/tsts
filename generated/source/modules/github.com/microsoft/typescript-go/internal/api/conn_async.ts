@@ -67,7 +67,7 @@ export class AsyncConn {
                             try {
                                 __gotots_return_block_1: {
                                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingMu);
-                                    const __gotots_receiver_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingMu;
+                                    const __gotots_receiver_0: AsyncConn["pendingMu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingMu;
                                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                                     };
@@ -114,7 +114,7 @@ export class AsyncConn {
                         __gotots_callee_0();
                     };
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu);
-                    const __gotots_receiver_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+                    const __gotots_receiver_1: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
                     const __gotots_argument_0 = id;
                     const __gotots_argument_1 = method;
                     const __gotots_argument_2 = params;
@@ -207,11 +207,11 @@ export class AsyncConn {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu);
-                    const __gotots_receiver_3 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu;
+                    const __gotots_receiver_3: AsyncConn["writeMu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                     };
-                    const __gotots_receiver_4 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+                    const __gotots_receiver_4: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
                     const __gotots_argument_3 = method;
                     const __gotots_argument_4 = params;
                     __gotots_return_0 = goInterfaceNonNil<Protocol>(__gotots_receiver_4).WriteNotification(__gotots_argument_3, __gotots_argument_4);
@@ -256,7 +256,7 @@ export class AsyncConn {
                 const __gotots_receiver_5 = ctx;
                 return goInterfaceNonNil<$goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void>(__gotots_receiver_5).Err();
             }
-            const __gotots_receiver_6 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+            const __gotots_receiver_6: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
             const __gotots_results_2 = goInterfaceNonNil<Protocol>(__gotots_receiver_6).ReadMessage();
             let msg: tsonicTypeScriptRuntime.Location<Message__from_jsonrpc> | undefined = __gotots_results_2[0];
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_2[1];
@@ -282,7 +282,7 @@ export class AsyncConn {
     static $go$private$api$handleNotification(c: {
         value: AsyncConn;
     } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, msg: tsonicTypeScriptRuntime.Location<Message__from_jsonrpc> | undefined): void {
-        const __gotots_receiver_11 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.handler;
+        const __gotots_receiver_11: AsyncConn["handler"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.handler;
         const __gotots_argument_15 = ctx;
         const __gotots_argument_16 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.Method;
         const __gotots_argument_17 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.Params;
@@ -311,7 +311,7 @@ export class AsyncConn {
                                 let stack = __gotots_conversion_4;
                                 err = GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("panic: %v\n%s", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([r, new $goInterfaceAdapter$string(stack)])));
                                 sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu);
-                                const __gotots_receiver_10 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+                                const __gotots_receiver_10: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
                                 const __gotots_argument_10 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.ID;
                                 const __gotots_field_2 = CodeInternalError__from_jsonrpc;
                                 const __gotots_receiver_9 = err;
@@ -329,7 +329,7 @@ export class AsyncConn {
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         __gotots_callee_0($go$recovery);
                     };
-                    const __gotots_receiver_11 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.handler;
+                    const __gotots_receiver_11: AsyncConn["handler"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.handler;
                     const __gotots_argument_13 = ctx;
                     const __gotots_argument_14 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.Method;
                     const __gotots_argument_15 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.Params;
@@ -337,13 +337,13 @@ export class AsyncConn {
                     result = __gotots_results_4[0];
                     err = __gotots_results_4[1];
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu);
-                    const __gotots_receiver_12 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu;
+                    const __gotots_receiver_12: AsyncConn["writeMu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.writeMu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_12, $go$recovery);
                     };
                     let writeErr: $goInterface$Interface_Method_Error_void_to_string | undefined = void 0;
                     if (!(err === undefined)) {
-                        const __gotots_receiver_14 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+                        const __gotots_receiver_14: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
                         const __gotots_argument_16 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.ID;
                         const __gotots_field_4 = CodeInternalError__from_jsonrpc;
                         const __gotots_receiver_13 = err;
@@ -352,7 +352,7 @@ export class AsyncConn {
                         writeErr = goInterfaceNonNil<Protocol>(__gotots_receiver_14).WriteError(__gotots_argument_16, __gotots_argument_17);
                     }
                     else {
-                        const __gotots_receiver_15 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
+                        const __gotots_receiver_15: AsyncConn["protocol"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.protocol;
                         const __gotots_argument_18 = ((msg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Message__from_jsonrpc>).value.ID;
                         const __gotots_argument_19 = result;
                         writeErr = goInterfaceNonNil<Protocol>(__gotots_receiver_15).WriteResponse(__gotots_argument_18, __gotots_argument_19);

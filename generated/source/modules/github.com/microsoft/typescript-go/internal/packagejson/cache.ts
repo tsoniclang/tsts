@@ -44,25 +44,27 @@ export class PackageJson {
     } | undefined, $1: RuntimeSlice<GoInterface | undefined>) => void) | undefined): VersionPaths {
         sync__from_gostdlib.Once.Do((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.once, (): void => {
             if (JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type === JSONValueTypeNotPresent$constant()) {
-                const __gotots_slice_build_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+                const __gotots_slice_build_0: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
                 const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
                 let __gotots_slice_build_1 = __gotots_slice_build_0;
                 if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                     __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                        message: $state__diagnostics.X_package_json_does_not_have_a_0_field,
-                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
-                    })));
+                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                        {
+                            message: $state__diagnostics.X_package_json_does_not_have_a_0_field,
+                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
+                        })));
                 }
                 else {
                     __gotots_slice_build_1 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                     for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                         __gotots_slice_build_1.set(__gotots_slice_build_3, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                     }
-                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                        message: $state__diagnostics.X_package_json_does_not_have_a_0_field,
-                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
-                    })));
+                    __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                        {
+                            message: $state__diagnostics.X_package_json_does_not_have_a_0_field,
+                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
+                        })));
                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                         __gotots_slice_build_1.$initialize(__gotots_slice_build_3, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                     }
@@ -71,25 +73,27 @@ export class PackageJson {
                 return;
             }
             if (!(JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type === JSONValueTypeObject$constant())) {
-                const __gotots_slice_build_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+                const __gotots_slice_build_4: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
                 const __gotots_slice_build_6 = __gotots_slice_build_4.length + 1;
                 let __gotots_slice_build_5 = __gotots_slice_build_4;
                 if (__gotots_slice_build_6 <= __gotots_slice_build_4.capacity) {
                     __gotots_slice_build_5 = __gotots_slice_build_4.$withLength(__gotots_slice_build_6);
-                    __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                        message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
-                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type))])
-                    })));
+                    __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                        {
+                            message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type))])
+                        })));
                 }
                 else {
                     __gotots_slice_build_5 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_6, RuntimeSlice.$grownCapacity(__gotots_slice_build_4.capacity, __gotots_slice_build_6));
                     for (let __gotots_slice_build_7 = 0; __gotots_slice_build_7 < __gotots_slice_build_4.length; __gotots_slice_build_7++) {
                         __gotots_slice_build_5.set(__gotots_slice_build_7, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_4.get(__gotots_slice_build_7)))));
                     }
-                    __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                        message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
-                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type))])
-                    })));
+                    __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                        {
+                            message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.TypesVersions).Type))])
+                        })));
                     for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
                         __gotots_slice_build_5.$initialize(__gotots_slice_build_7, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                     }
@@ -97,25 +101,27 @@ export class PackageJson {
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces = __gotots_slice_build_5;
                 return;
             }
-            const __gotots_slice_build_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+            const __gotots_slice_build_8: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
             const __gotots_slice_build_10 = __gotots_slice_build_8.length + 1;
             let __gotots_slice_build_9 = __gotots_slice_build_8;
             if (__gotots_slice_build_10 <= __gotots_slice_build_8.capacity) {
                 __gotots_slice_build_9 = __gotots_slice_build_8.$withLength(__gotots_slice_build_10);
-                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                    message: $state__diagnostics.X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
-                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
-                })));
+                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                    {
+                        message: $state__diagnostics.X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
+                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
+                    })));
             }
             else {
                 __gotots_slice_build_9 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_10, RuntimeSlice.$grownCapacity(__gotots_slice_build_8.capacity, __gotots_slice_build_10));
                 for (let __gotots_slice_build_11 = 0; __gotots_slice_build_11 < __gotots_slice_build_8.length; __gotots_slice_build_11++) {
                     __gotots_slice_build_9.set(__gotots_slice_build_11, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_8.get(__gotots_slice_build_11)))));
                 }
-                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                    message: $state__diagnostics.X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
-                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
-                })));
+                __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                    {
+                        message: $state__diagnostics.X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
+                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions")])
+                    })));
                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
                     __gotots_slice_build_9.$initialize(__gotots_slice_build_11, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                 }
@@ -148,25 +154,27 @@ export class PackageJson {
                 let keyRange = __gotots_results_0[0];
                 let ok = __gotots_results_0[1];
                 if (!ok) {
-                    const __gotots_slice_build_12 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+                    const __gotots_slice_build_12: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
                     const __gotots_slice_build_14 = __gotots_slice_build_12.length + 1;
                     let __gotots_slice_build_13 = __gotots_slice_build_12;
                     if (__gotots_slice_build_14 <= __gotots_slice_build_12.capacity) {
                         __gotots_slice_build_13 = __gotots_slice_build_12.$withLength(__gotots_slice_build_14);
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                            message: $state__diagnostics.X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
-                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(key)])
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                            {
+                                message: $state__diagnostics.X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
+                                args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(key)])
+                            })));
                     }
                     else {
                         __gotots_slice_build_13 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_14, RuntimeSlice.$grownCapacity(__gotots_slice_build_12.capacity, __gotots_slice_build_14));
                         for (let __gotots_slice_build_15 = 0; __gotots_slice_build_15 < __gotots_slice_build_12.length; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.set(__gotots_slice_build_15, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_12.get(__gotots_slice_build_15)))));
                         }
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                            message: $state__diagnostics.X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
-                            args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(key)])
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                            {
+                                message: $state__diagnostics.X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
+                                args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(key)])
+                            })));
                         for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.$initialize(__gotots_slice_build_15, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                         }
@@ -175,31 +183,29 @@ export class PackageJson {
                     __gotots_range_state_0 = 1;
                     return true;
                 }
-                if (VersionRange__from_semver.Test(keyRange, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), ($go$storage: Version__from_semver$Storage): Version__from_semver => {
-                    return Version__from_semver.$fromStorage($go$storage);
-                }, ($go$value: Version__from_semver): Version__from_semver$Storage => {
-                    return Version__from_semver.$storageOf($go$value);
-                }))) {
+                if (VersionRange__from_semver.Test(keyRange, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), Version__from_semver.$fromStorage, Version__from_semver.$storageOf))) {
                     if (!(JSONValue.$storageOf(value).Type === JSONValueTypeObject$constant())) {
-                        const __gotots_slice_build_16 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+                        const __gotots_slice_build_16: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
                         const __gotots_slice_build_18 = __gotots_slice_build_16.length + 1;
                         let __gotots_slice_build_17 = __gotots_slice_build_16;
                         if (__gotots_slice_build_18 <= __gotots_slice_build_16.capacity) {
                             __gotots_slice_build_17 = __gotots_slice_build_16.$withLength(__gotots_slice_build_18);
-                            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                                message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
-                                args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions['" + key + "']"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf(value).Type))])
-                            })));
+                            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                                {
+                                    message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+                                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions['" + key + "']"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf(value).Type))])
+                                })));
                         }
                         else {
                             __gotots_slice_build_17 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_18, RuntimeSlice.$grownCapacity(__gotots_slice_build_16.capacity, __gotots_slice_build_18));
                             for (let __gotots_slice_build_19 = 0; __gotots_slice_build_19 < __gotots_slice_build_16.length; __gotots_slice_build_19++) {
                                 __gotots_slice_build_17.set(__gotots_slice_build_19, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_16.get(__gotots_slice_build_19)))));
                             }
-                            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                                message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
-                                args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions['" + key + "']"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf(value).Type))])
-                            })));
+                            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                                {
+                                    message: $state__diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+                                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("typesVersions['" + key + "']"), new GoInterfaceAdapter("object"), new GoInterfaceAdapter(JSONValueType_String(JSONValue.$storageOf(value).Type))])
+                                })));
                             for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
                                 __gotots_slice_build_17.$initialize(__gotots_slice_build_19, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                             }
@@ -222,25 +228,27 @@ export class PackageJson {
                 return;
             }
             __gotots_range_state_0 = -2;
-            const __gotots_slice_build_20 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+            const __gotots_slice_build_20: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
             const __gotots_slice_build_22 = __gotots_slice_build_20.length + 1;
             let __gotots_slice_build_21 = __gotots_slice_build_20;
             if (__gotots_slice_build_22 <= __gotots_slice_build_20.capacity) {
                 __gotots_slice_build_21 = __gotots_slice_build_20.$withLength(__gotots_slice_build_22);
-                __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                    message: $state__diagnostics.X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
-                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(VersionMajorMinor__from_core())])
-                })));
+                __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                    {
+                        message: $state__diagnostics.X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
+                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(VersionMajorMinor__from_core())])
+                    })));
             }
             else {
                 __gotots_slice_build_21 = goSliceAllocate<diagnosticAndArgs$Storage>(__gotots_slice_build_22, RuntimeSlice.$grownCapacity(__gotots_slice_build_20.capacity, __gotots_slice_build_22));
                 for (let __gotots_slice_build_23 = 0; __gotots_slice_build_23 < __gotots_slice_build_20.length; __gotots_slice_build_23++) {
                     __gotots_slice_build_21.set(__gotots_slice_build_23, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_slice_build_20.get(__gotots_slice_build_23)))));
                 }
-                __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$fromStorage({
-                    message: $state__diagnostics.X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
-                    args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(VersionMajorMinor__from_core())])
-                })));
+                __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void diagnosticAndArgs.$storageOf, (void diagnosticAndArgs.$fromStorage,
+                    {
+                        message: $state__diagnostics.X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
+                        args: RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(VersionMajorMinor__from_core())])
+                    })));
                 for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
                     __gotots_slice_build_21.$initialize(__gotots_slice_build_23, diagnosticAndArgs.$storageOf(diagnosticAndArgs.$zero()));
                 }
@@ -248,7 +256,7 @@ export class PackageJson {
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces = __gotots_slice_build_21;
         });
         if (!(trace === undefined)) {
-            const __gotots_range_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
+            const __gotots_range_1: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
             for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_1.length; __gotots_range_index_0++) {
                 const __gotots_range_value_2 = diagnosticAndArgs.$copy(diagnosticAndArgs.$fromStorage(__gotots_range_1.get(__gotots_range_index_0)));
                 let msg = __gotots_range_value_2;

@@ -33,7 +33,7 @@ export class callbackFS {
     static AppendFile(fs: {
         value: callbackFS;
     } | undefined, path: gostring, data: gostring): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_0 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_0: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_1 = path;
         const __gotots_argument_2 = data;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_0).AppendFile(__gotots_argument_1, __gotots_argument_2);
@@ -41,7 +41,7 @@ export class callbackFS {
     static Chtimes(fs: {
         value: callbackFS;
     } | undefined, path: gostring, aTime: time__from_gostdlib.Time, mTime: time__from_gostdlib.Time): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_1 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_1: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_3 = path;
         const __gotots_argument_4 = named_time.TimeOperations.$copy(aTime);
         const __gotots_argument_5 = named_time.TimeOperations.$copy(mTime);
@@ -80,7 +80,7 @@ export class callbackFS {
                 return __gotots_binary_operand_2 === __gotots_binary_operand_3;
             }
         }
-        const __gotots_receiver_2 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_2: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_7 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_2).DirectoryExists(__gotots_argument_7);
     }
@@ -117,7 +117,7 @@ export class callbackFS {
                 return __gotots_binary_operand_6 === __gotots_binary_operand_7;
             }
         }
-        const __gotots_receiver_3 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_3: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_9 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_3).FileExists(__gotots_argument_9);
     }
@@ -151,7 +151,7 @@ export class callbackFS {
                 }
             }
         }
-        const __gotots_receiver_4 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_4: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_12 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_4).GetAccessibleEntries(__gotots_argument_12);
     }
@@ -199,7 +199,7 @@ export class callbackFS {
                     ((wrapper.Content ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value, true];
             }
         }
-        const __gotots_receiver_5 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_5: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_15 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_5).ReadFile(__gotots_argument_15);
     }
@@ -238,14 +238,14 @@ export class callbackFS {
                 return realpath;
             }
         }
-        const __gotots_receiver_6 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_6: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_18 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_6).Realpath(__gotots_argument_18);
     }
     static Remove(fs: {
         value: callbackFS;
     } | undefined, path: gostring): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_7 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_7: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_19 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).Remove(__gotots_argument_19);
     }
@@ -258,20 +258,20 @@ export class callbackFS {
     static Stat(fs: {
         value: callbackFS;
     } | undefined, path: gostring): $goInterface$Interface_Method_fs$IsDir_void_to_bool_Method_fs$ModTime_void_to_Named_time$Time_Method_fs$Mode_void_to_Named_fs$FileMode_Method_fs$Name_void_to_string_Method_fs$Size_void_to_int64_Method_fs$Sys_void_to_Interface_void | undefined {
-        const __gotots_receiver_8 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_8: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_20 = path;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_8).Stat(__gotots_argument_20);
     }
     static UseCaseSensitiveFileNames(fs: {
         value: callbackFS;
     } | undefined): bool {
-        const __gotots_receiver_9 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_9: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_9).UseCaseSensitiveFileNames();
     }
     static WalkDir(fs: {
         value: callbackFS;
     } | undefined, root: gostring, walkFn: (($0: gostring, $1: $goInterface$Interface_Method_fs$Info_void_to_Named_fs$FileInfo_Named_error_Method_fs$IsDir_void_to_bool_Method_fs$Name_void_to_string_Method_fs$Type_void_to_Named_fs$FileMode | undefined, $2: $goInterface$Interface_Method_Error_void_to_string | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_10 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_10: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_21 = root;
         const __gotots_argument_22 = walkFn;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_10).WalkDir(__gotots_argument_21, __gotots_argument_22);
@@ -279,7 +279,7 @@ export class callbackFS {
     static WriteFile(fs: {
         value: callbackFS;
     } | undefined, path: gostring, data: gostring): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_11 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
+        const __gotots_receiver_11: callbackFS["base"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.base;
         const __gotots_argument_23 = path;
         const __gotots_argument_24 = data;
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_11).WriteFile(__gotots_argument_23, __gotots_argument_24);
@@ -293,8 +293,8 @@ export class callbackFS {
         if ((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.conn === undefined) {
             return [RuntimeSlice.nil<uint8>(), GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("CallbackFS: %s called before connection set", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(name)])))];
         }
-        const __gotots_receiver_12 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.conn;
-        const __gotots_argument_25 = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx;
+        const __gotots_receiver_12: callbackFS["conn"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.conn;
+        const __gotots_argument_25: callbackFS["ctx"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx;
         const __gotots_argument_26 = name;
         const __gotots_argument_27 = arg;
         const __gotots_results_5 = goInterfaceNonNil<Conn>(__gotots_receiver_12).Call(__gotots_argument_25, __gotots_argument_26, __gotots_argument_27);

@@ -323,7 +323,8 @@ export function getInheritedMembers(typeChecker: tsonicTypeScriptRuntime.Locatio
     if (typeNode === undefined) {
         return new SymbolTable__from_ast($goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.make(0, []));
     }
-    let baseType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(typeChecker, Node__from_ast.AsNode(typeNode));
+    let baseType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(typeChecker, (void Node__from_ast.AsNode,
+        typeNode));
     if (baseType === undefined) {
         return new SymbolTable__from_ast($goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.make(0, []));
     }

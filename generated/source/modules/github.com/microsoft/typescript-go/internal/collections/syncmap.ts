@@ -57,11 +57,11 @@ export class SyncMap<K, V> {
     static Delete$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<SyncMap<K, V>> | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => GoInterface | undefined, key: K): void {
         sync__from_gostdlib.Map.Delete(SyncMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMap<K, V>>).value).m, $go$interface_adapt$T0_to_Interface_void(key));
     }
-    static Keys$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<SyncMap<K, V>> | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => K): iter__from_gostdlib.Seq<K> {
+    static Keys$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<SyncMap<K, V>> | undefined, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => K): iter__from_gostdlib.Seq<K> {
         return named_iter.IterSeqValueOperations.$wrap((__go_yield: (($0: K) => bool) | undefined): void => {
             sync__from_gostdlib.Map.Range(SyncMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMap<K, V>>).value).m, (key: GoInterface | undefined, value: GoInterface | undefined): bool => {
                 const __gotots_callee_4 = __go_yield;
-                const __gotots_argument_2 = $go$copy$T0_to_T0($go$interface_assert$Interface_void_to_T0(key));
+                const __gotots_argument_2 = $go$interface_assert$Interface_void_to_T0(key);
                 if (!(__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2)) {
                     return false;
                 }

@@ -132,20 +132,22 @@ export class tracer {
             let __gotots_slice_build_1 = __gotots_slice_build_0;
             if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                 __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, DiagAndArgs.$storageOf(DiagAndArgs.$fromStorage({
-                    Message: diag,
-                    Args: args
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void DiagAndArgs.$storageOf, (void DiagAndArgs.$fromStorage,
+                    {
+                        Message: diag,
+                        Args: args
+                    })));
             }
             else {
                 __gotots_slice_build_1 = goSliceAllocate<DiagAndArgs$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                 for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.set(__gotots_slice_build_3, DiagAndArgs.$storageOf(DiagAndArgs.$copy(DiagAndArgs.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                 }
-                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, DiagAndArgs.$storageOf(DiagAndArgs.$fromStorage({
-                    Message: diag,
-                    Args: args
-                })));
+                __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void DiagAndArgs.$storageOf, (void DiagAndArgs.$fromStorage,
+                    {
+                        Message: diag,
+                        Args: args
+                    })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                     __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DiagAndArgs.$storageOf(DiagAndArgs.$zero()));
                 }
@@ -302,10 +304,10 @@ export class resolutionState {
         gostring
     ] {
         let resolvedFileName = resolutionState.$go$private$__go_module$realPath(r, fileName);
-        const __gotots_receiver_39 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_39: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_40 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_39).FS();
         const __gotots_field_3 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_40).UseCaseSensitiveFileNames();
-        const __gotots_receiver_41 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_41: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_field_4 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_41).GetCurrentDirectory();
         let comparePathsOptions = new ComparePathsOptions__from_tspath(__gotots_field_3, __gotots_field_4);
         if (ComparePaths__from_tspath(fileName, resolvedFileName, ComparePathsOptions__from_tspath.$copy(comparePathsOptions)) === 0) {
@@ -315,7 +317,7 @@ export class resolutionState {
     }
     static $go$private$__go_module$getOutputDirectoriesForBaseDirectory(r: resolutionState | undefined, commonSourceDirGuess: gostring): RuntimeSlice<gostring> {
         const __gotots_argument_98 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFilePath !== "";
-        const __gotots_receiver_78 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_78: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_99 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_78).GetCurrentDirectory();
         const __gotots_argument_100 = commonSourceDirGuess;
         let currentDir = IfElse$string(__gotots_argument_98, __gotots_argument_99, __gotots_argument_100);
@@ -323,7 +325,7 @@ export class resolutionState {
         if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir !== "") {
             const __gotots_argument_103 = candidateDirectories;
             const __gotots_argument_101 = CombinePaths__from_tspath(currentDir, RuntimeSlice.literal<gostring>([((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir]));
-            const __gotots_receiver_79 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_79: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_argument_102 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_79).GetCurrentDirectory();
             const __gotots_argument_104 = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_101, __gotots_argument_102);
             candidateDirectories = __gotots_argument_103.append("", [__gotots_argument_104]);
@@ -331,7 +333,7 @@ export class resolutionState {
         if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir !== "" && ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir !== ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir) {
             const __gotots_argument_107 = candidateDirectories;
             const __gotots_argument_105 = CombinePaths__from_tspath(currentDir, RuntimeSlice.literal<gostring>([((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir]));
-            const __gotots_receiver_80 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_80: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_argument_106 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_80).GetCurrentDirectory();
             const __gotots_argument_108 = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_105, __gotots_argument_106);
             candidateDirectories = __gotots_argument_107.append("", [__gotots_argument_108]);
@@ -352,7 +354,7 @@ export class resolutionState {
             const __gotots_argument_69 = "tsconfig";
             const __gotots_store_15 = ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields;
             const __gotots_argument_70 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "TSConfig");
-            const __gotots_argument_71 = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+            const __gotots_argument_71: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
             return resolutionState.$go$private$__go_module$getPackageJSONPathField(__gotots_receiver_59, __gotots_argument_69, __gotots_argument_70, __gotots_argument_71);
         }
         if (!((extensions__shadow_1 & extensionsDeclaration$constant()) === 0)) {
@@ -361,7 +363,7 @@ export class resolutionState {
                 const __gotots_argument_72 = "typings";
                 const __gotots_store_16 = ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields;
                 const __gotots_argument_73 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "Typings");
-                const __gotots_argument_74 = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+                const __gotots_argument_74: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
                 const __gotots_results_26 = resolutionState.$go$private$__go_module$getPackageJSONPathField(__gotots_receiver_60, __gotots_argument_72, __gotots_argument_73, __gotots_argument_74);
                 let packageFile = __gotots_results_26[0];
                 let ok = __gotots_results_26[1];
@@ -374,7 +376,7 @@ export class resolutionState {
                 const __gotots_argument_75 = "types";
                 const __gotots_store_17 = ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields;
                 const __gotots_argument_76 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "Types");
-                const __gotots_argument_77 = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+                const __gotots_argument_77: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
                 const __gotots_results_27 = resolutionState.$go$private$__go_module$getPackageJSONPathField(__gotots_receiver_61, __gotots_argument_75, __gotots_argument_76, __gotots_argument_77);
                 let packageFile = __gotots_results_27[0];
                 let ok = __gotots_results_27[1];
@@ -388,7 +390,7 @@ export class resolutionState {
             const __gotots_argument_78 = "main";
             const __gotots_store_18 = ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields;
             const __gotots_argument_79 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "Main");
-            const __gotots_argument_80 = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+            const __gotots_argument_80: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
             return resolutionState.$go$private$__go_module$getPackageJSONPathField(__gotots_receiver_62, __gotots_argument_78, __gotots_argument_79, __gotots_argument_80);
         }
         return ["", false];
@@ -476,19 +478,19 @@ export class resolutionState {
                 }
             }
         }
-        const __gotots_receiver_42 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_42: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_43 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_42).FS();
         const __gotots_argument_47 = packageDirectory;
         let directoryExists = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_43).DirectoryExists(__gotots_argument_47);
         let __gotots_logical_result_4 = directoryExists;
         if (__gotots_logical_result_4) {
-            const __gotots_receiver_44 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_44: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_45 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_44).FS();
             const __gotots_argument_48 = packageJsonPath;
             __gotots_logical_result_4 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_45).FileExists(__gotots_argument_48);
         }
         if (__gotots_logical_result_4) {
-            const __gotots_receiver_46 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_46: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_47 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_46).FS();
             const __gotots_argument_49 = packageJsonPath;
             const __gotots_results_15 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_47).ReadFile(__gotots_argument_49);
@@ -582,7 +584,8 @@ export class resolutionState {
         let loadEntrypointsFromTargetExports: (($0: gostring, $1: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, $2: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, $3: ExportsOrImports__from_packagejson) => void) | undefined;
         let entrypoints = RuntimeSlice.nil<ResolvedEntrypoint | undefined>();
         loadEntrypointsFromTargetExports = (subpath: gostring, includeConditions: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, excludeConditions: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, exports__shadow_1: ExportsOrImports__from_packagejson): void => {
-            if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeString$constant__from_packagejson() && strings__from_gostdlib.HasPrefix(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), "./")) {
+            if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeString$constant__from_packagejson() && strings__from_gostdlib.HasPrefix(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), "./")) {
                 if (strings__from_gostdlib.ContainsRune(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), 42)) {
                     if (globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), 42))) !== globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.LastIndexByte(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), 42)))) {
                         return;
@@ -591,14 +594,14 @@ export class resolutionState {
                     const __gotots_results_32 = strings__from_gostdlib.Cut(patternPath, "*");
                     let leadingSlice = __gotots_results_32[0];
                     let trailingSlice = __gotots_results_32[1];
-                    const __gotots_receiver_88 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                    const __gotots_receiver_88: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                     const __gotots_receiver_89 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_88).FS();
                     let caseSensitive = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_89).UseCaseSensitiveFileNames();
-                    const __gotots_receiver_90 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                    const __gotots_receiver_90: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                     const __gotots_argument_119 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_90).FS();
-                    const __gotots_receiver_91 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                    const __gotots_receiver_91: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                     const __gotots_argument_120 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_91).GetCurrentDirectory();
-                    const __gotots_argument_121 = (packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+                    const __gotots_argument_121: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
                     const __gotots_argument_122 = extensions_Array((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extensions);
                     const __gotots_argument_123 = RuntimeSlice.nil<gostring>();
                     const __gotots_argument_124 = RuntimeSlice.literal<gostring>([ChangeFullExtension__from_tspath(strings__from_gostdlib.Replace(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue).AsString(), "*", "**/*", BigInt.asIntN(64, goNumberToBigInt(1))), ".*")]);
@@ -632,7 +635,8 @@ export class resolutionState {
                     }
                 }
             }
-            else if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeArray$constant__from_packagejson()) {
+            else if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeArray$constant__from_packagejson()) {
                 const __gotots_range_21 = exports__shadow_1.AsArray();
                 for (let __gotots_range_index_17 = 0; __gotots_range_index_17 < __gotots_range_21.length; __gotots_range_index_17++) {
                     const __gotots_range_value_21 = ExportsOrImports__from_packagejson.$copy(ExportsOrImports__from_packagejson.$fromStorage(__gotots_range_21.get(__gotots_range_index_17)));
@@ -645,7 +649,8 @@ export class resolutionState {
                     (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_126, __gotots_argument_127, __gotots_argument_128, __gotots_argument_129);
                 }
             }
-            else if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson()) {
+            else if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(exports__shadow_1).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson()) {
                 let prevConditions = RuntimeSlice.nil<gostring>();
                 const __gotots_range_22 = named_iter.IterSeq2ValueOperations.$project(OrderedMap$Entries$string$Named_packagejson$ExportsOrImports(exports__shadow_1.AsObject()));
                 if (__gotots_range_22 === void 0) {
@@ -719,7 +724,8 @@ export class resolutionState {
                 __gotots_range_state_4 = -2;
             }
         };
-        switch (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Type) {
+        switch ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+            ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Type) {
             case JSONValueTypeArray$constant__from_packagejson(): {
                 const __gotots_range_24 = exports.AsArray();
                 for (let __gotots_range_index_19 = 0; __gotots_range_index_19 < __gotots_range_24.length; __gotots_range_index_19++) {
@@ -827,18 +833,15 @@ export class resolutionState {
         let __gotots_logical_result_3 = !InfoCacheEntry__from_packagejson.Exists(packageInfo);
         if (!__gotots_logical_result_3) {
             const __gotots_store_10 = ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_3 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                return JSONValue__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                return JSONValue__from_packagejson.$storageOf($go$value);
-            }));
+            __gotots_logical_result_3 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_3) {
             return continueSearching();
         }
         if (subpath === ".") {
             let mainExport = ExportsOrImports__from_packagejson.$zero();
-            switch (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type) {
+            switch ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type) {
                 case JSONValueTypeString$constant__from_packagejson():
                 case JSONValueTypeArray$constant__from_packagejson(): {
                     mainExport = ExportsOrImports__from_packagejson.$copy(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
@@ -859,11 +862,13 @@ export class resolutionState {
                     break;
                 }
             }
-            if (!(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(mainExport).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
+            if (!((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(mainExport).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
                 return resolutionState.$go$private$__go_module$loadModuleFromTargetExportOrImport(r, ext, subpath, packageInfo, false, ExportsOrImports__from_packagejson.$copy(mainExport), "", false, ".");
             }
         }
-        else if (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson() && ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports.IsSubpaths()) {
+        else if ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+            ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson() && ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports.IsSubpaths()) {
             {
                 let result: resolved | undefined = resolutionState.$go$private$__go_module$loadModuleFromExportsOrImports(r, ext, subpath, ((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports.AsObject(), packageInfo, false);
                 if (!resolved.$go$private$__go_module$shouldContinueSearching(result)) {
@@ -975,7 +980,7 @@ export class resolutionState {
     }
     static $go$private$__go_module$loadModuleFromImmediateNodeModulesDirectory(r: resolutionState | undefined, extensions__shadow_1: extensions, directory: gostring, typesScopeOnly: bool): resolved | undefined {
         let nodeModulesFolder = CombinePaths__from_tspath(directory, RuntimeSlice.literal<gostring>(["node_modules"]));
-        const __gotots_receiver_8 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_8: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_9 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_8).FS();
         const __gotots_argument_16 = nodeModulesFolder;
         if (!goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_9).DirectoryExists(__gotots_argument_16)) {
@@ -994,7 +999,7 @@ export class resolutionState {
         }
         if (!((extensions__shadow_1 & extensionsDeclaration$constant()) === 0)) {
             let nodeModulesAtTypes = CombinePaths__from_tspath(nodeModulesFolder, RuntimeSlice.literal<gostring>(["@types"]));
-            const __gotots_receiver_10 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_10: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_11 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_10).FS();
             const __gotots_argument_17 = nodeModulesAtTypes;
             if (!goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_11).DirectoryExists(__gotots_argument_17)) {
@@ -1015,7 +1020,7 @@ export class resolutionState {
             return continueSearching();
         }
         const __gotots_argument_19 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containingDirectory;
-        const __gotots_receiver_14 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_14: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_20 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_14).GetCurrentDirectory();
         let directoryPath = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_19, __gotots_argument_20);
         let scope: {
@@ -1027,7 +1032,8 @@ export class resolutionState {
             }
             return continueSearching();
         }
-        if (!(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Imports).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson())) {
+        if (!((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+            ExportsOrImports__from_packagejson.$storageOf(((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Imports).JSONValue)).Type === JSONValueTypeObject$constant__from_packagejson())) {
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
                 tracer.$go$private$__go_module$write((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer, $state__diagnostics.X_package_json_scope_0_has_no_imports_defined, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory)]));
             }
@@ -1088,7 +1094,7 @@ export class resolutionState {
     }
     static $go$private$__go_module$loadModuleFromSelfNameReference(r: resolutionState | undefined): resolved | undefined {
         const __gotots_argument_21 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containingDirectory;
-        const __gotots_receiver_15 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_15: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_22 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_15).GetCurrentDirectory();
         let directoryPath = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_21, __gotots_argument_22);
         let scope: {
@@ -1097,11 +1103,7 @@ export class resolutionState {
         let __gotots_logical_result_1 = !InfoCacheEntry__from_packagejson.Exists(scope);
         if (!__gotots_logical_result_1) {
             const __gotots_store_6 = ExportsOrImports__from_packagejson.$storageOf(((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_1 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                return JSONValue__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                return JSONValue__from_packagejson.$storageOf($go$value);
-            }));
+            __gotots_logical_result_1 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_1) {
             return continueSearching();
@@ -1149,7 +1151,7 @@ export class resolutionState {
             packageDirectory = candidate;
         }
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolvePackageDirectoryOnly) {
-            const __gotots_receiver_22 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_22: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_23 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_22).FS();
             const __gotots_argument_26 = packageDirectory;
             if (goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_23).DirectoryExists(__gotots_argument_26)) {
@@ -1167,7 +1169,8 @@ export class resolutionState {
             if (!(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).features & NodeResolutionFeaturesExports$constant()) === 0)) {
                 rootPackageInfo = resolutionState.$go$private$__go_module$getPackageJsonInfo(r, packageDirectory);
             }
-            if (!InfoCacheEntry__from_packagejson.Exists(rootPackageInfo) || JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((rootPackageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson()) {
+            if (!InfoCacheEntry__from_packagejson.Exists(rootPackageInfo) || (void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(((rootPackageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson()) {
                 {
                     let fromFile: resolved | undefined = resolutionState.$go$private$__go_module$loadModuleFromFile(r, ext, candidate);
                     if (!resolved.$go$private$__go_module$shouldContinueSearching(fromFile)) {
@@ -1200,7 +1203,9 @@ export class resolutionState {
                     return fromDirectory;
                 }
             }
-            if (rest === "" && InfoCacheEntry__from_packagejson.Exists(packageInfo) && (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson() || JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNull$constant__from_packagejson()) && (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).esmMode) {
+            if (rest === "" && InfoCacheEntry__from_packagejson.Exists(packageInfo) && ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson() || (void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNull$constant__from_packagejson()) && (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).esmMode) {
                 {
                     let indexResult: resolved | undefined = resolutionState.$go$private$__go_module$loadModuleFromFile(r, extensions__shadow_1, CombinePaths__from_tspath(candidate__shadow_1, RuntimeSlice.literal<gostring>(["index.js"])));
                     if (!resolved.$go$private$__go_module$shouldContinueSearching(indexResult)) {
@@ -1222,11 +1227,7 @@ export class resolutionState {
             let __gotots_logical_result_2 = !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).features & NodeResolutionFeaturesExports$constant()) === 0) && InfoCacheEntry__from_packagejson.Exists(packageInfo);
             if (__gotots_logical_result_2) {
                 const __gotots_store_8 = ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-                __gotots_logical_result_2 = !JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                    return JSONValue__from_packagejson.$fromStorage($go$storage);
-                }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                    return JSONValue__from_packagejson.$storageOf($go$value);
-                }));
+                __gotots_logical_result_2 = !JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
             }
             if (__gotots_logical_result_2) {
                 return resolutionState.$go$private$__go_module$loadModuleFromExports(r, packageInfo, ext, CombinePaths__from_tspath(".", RuntimeSlice.literal<gostring>([rest])));
@@ -1264,7 +1265,8 @@ export class resolutionState {
         try {
             try {
                 __gotots_return_block_0: {
-                    switch (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(target).JSONValue)).Type) {
+                    switch ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                        ExportsOrImports__from_packagejson.$storageOf(target).JSONValue)).Type) {
                         case JSONValueTypeString$constant__from_packagejson(): {
                             const __gotots_results_24 = (($value: GoInterface | undefined): [
                                 gostring,
@@ -1274,7 +1276,8 @@ export class resolutionState {
                                     return ["", false];
                                 }
                                 return [$value.$go$value, true];
-                            })(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(target).JSONValue)).Value);
+                            })((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                                ExportsOrImports__from_packagejson.$storageOf(target).JSONValue)).Value);
                             let targetString = __gotots_results_24[0];
                             if (!isPattern && subpath.length > 0 && !strings__from_gostdlib.HasSuffix(targetString, "/")) {
                                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
@@ -1368,13 +1371,13 @@ export class resolutionState {
                             let finalPath = "";
                             if (isPattern) {
                                 const __gotots_argument_64 = strings__from_gostdlib.ReplaceAll(resolvedTarget, "*", subpath);
-                                const __gotots_receiver_55 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                                const __gotots_receiver_55: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                                 const __gotots_argument_65 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_55).GetCurrentDirectory();
                                 finalPath = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_64, __gotots_argument_65);
                             }
                             else {
                                 const __gotots_argument_66 = resolvedTarget + subpath;
-                                const __gotots_receiver_56 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                                const __gotots_receiver_56: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                                 const __gotots_argument_67 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_56).GetCurrentDirectory();
                                 finalPath = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_66, __gotots_argument_67);
                             }
@@ -1557,8 +1560,8 @@ export class resolutionState {
         if (InfoCacheEntry__from_packagejson.Exists(packageInfo)) {
             versionPaths = PackageJson__from_packagejson.GetVersionPaths((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents, resolutionState.$go$private$__go_module$getTraceFunc(r));
             const __gotots_argument_51 = candidate;
-            const __gotots_argument_52 = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
-            const __gotots_receiver_48 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_argument_52: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+            const __gotots_receiver_48: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_49 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_48).FS();
             const __gotots_field_10 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_49).UseCaseSensitiveFileNames();
             const __gotots_argument_53 = new ComparePathsOptions__from_tspath(__gotots_field_10, "");
@@ -1645,7 +1648,7 @@ export class resolutionState {
             }
         }
         if (!(r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).esmMode) {
-            const __gotots_receiver_50 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_50: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_51 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_50).FS();
             const __gotots_argument_58 = candidate;
             if (!goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_51).DirectoryExists(__gotots_argument_58)) {
@@ -1668,7 +1671,7 @@ export class resolutionState {
         }
         if (!HasTrailingDirectorySeparator__from_tspath(candidate)) {
             let parentOfCandidate = GetDirectoryPath__from_tspath(candidate);
-            const __gotots_receiver_18 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_18: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_19 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_18).FS();
             const __gotots_argument_24 = parentOfCandidate;
             if (!goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_19).DirectoryExists(__gotots_argument_24)) {
@@ -1690,7 +1693,7 @@ export class resolutionState {
                 return resolvedFromFile;
             }
         }
-        const __gotots_receiver_20 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_20: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_21 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_20).FS();
         const __gotots_argument_25 = candidate;
         if (!goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_21).DirectoryExists(__gotots_argument_25)) {
@@ -1708,8 +1711,6 @@ export class resolutionState {
         value: InfoCacheEntry__from_packagejson;
     } | undefined): gostring {
         let peerDependencies = Expected__from_packagejson.$copy<GoMapValue<gostring, gostring>>(($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-            return $argument0;
-        }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
         }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
@@ -1756,7 +1757,7 @@ export class resolutionState {
         return strings__from_gostdlib.Builder.String(builder);
     }
     static $go$private$__go_module$realPath(r: resolutionState | undefined, path: gostring): gostring {
-        const __gotots_receiver_53 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_53: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_54 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_53).FS();
         const __gotots_argument_62 = path;
         const __gotots_argument_63 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_54).Realpath(__gotots_argument_62);
@@ -1770,12 +1771,12 @@ export class resolutionState {
         if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeRoots.isNil()) {
             return void 0;
         }
-        const __gotots_range_0 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeRoots;
+        const __gotots_range_0: CompilerOptions__from_core["TypeRoots"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeRoots;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
             let typeRoot = __gotots_range_value_0;
             let candidate = resolutionState.$go$private$__go_module$getCandidateFromTypeRoot(r, typeRoot);
-            const __gotots_receiver_16 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_16: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_17 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_16).FS();
             const __gotots_argument_23 = typeRoot;
             let directoryExists = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_17).DirectoryExists(__gotots_argument_23);
@@ -1899,7 +1900,7 @@ export class resolutionState {
                 const __gotots_range_value_4 = __gotots_range_4.get(__gotots_range_index_4);
                 let typeRoot = __gotots_range_value_4;
                 let candidate = resolutionState.$go$private$__go_module$getCandidateFromTypeRoot(r, typeRoot);
-                const __gotots_receiver_34 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_34: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_receiver_35 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_34).FS();
                 const __gotots_argument_35 = typeRoot;
                 let directoryExists = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_35).DirectoryExists(__gotots_argument_35);
@@ -1954,7 +1955,7 @@ export class resolutionState {
         let directory = GetDirectoryPath__from_tspath(extensionless);
         let __gotots_logical_result_5 = directory !== "";
         if (__gotots_logical_result_5) {
-            const __gotots_receiver_57 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_57: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_58 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_57).FS();
             const __gotots_argument_68 = directory;
             __gotots_logical_result_5 = !goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_58).DirectoryExists(__gotots_argument_68);
@@ -2170,7 +2171,7 @@ export class resolutionState {
         }
         let ext = TryGetExtensionFromPath__from_tspath(fileName);
         let fileNameNoExtension = RemoveExtension__from_tspath(fileName, ext);
-        const __gotots_range_15 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSuffixes;
+        const __gotots_range_15: CompilerOptions__from_core["ModuleSuffixes"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSuffixes;
         for (let __gotots_range_index_11 = 0; __gotots_range_index_11 < __gotots_range_15.length; __gotots_range_index_11++) {
             const __gotots_range_value_15 = __gotots_range_15.get(__gotots_range_index_11);
             let suffix = __gotots_range_value_15;
@@ -2182,7 +2183,7 @@ export class resolutionState {
         return [fileName, false];
     }
     static $go$private$__go_module$tryFileLookup(r: resolutionState | undefined, fileName: gostring): bool {
-        const __gotots_receiver_76 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_76: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_77 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_76).FS();
         const __gotots_argument_97 = fileName;
         if (goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_77).FileExists(__gotots_argument_97)) {
@@ -2202,11 +2203,11 @@ export class resolutionState {
             let __gotots_logical_result_6 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFilePath === "";
             if (!__gotots_logical_result_6) {
                 const __gotots_argument_81 = GetDirectoryPath__from_tspath(packagePath);
-                const __gotots_argument_82 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFilePath;
-                const __gotots_receiver_63 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_argument_82: CompilerOptions__from_core["ConfigFilePath"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFilePath;
+                const __gotots_receiver_63: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_receiver_64 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_63).FS();
                 const __gotots_field_11 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_64).UseCaseSensitiveFileNames();
-                const __gotots_receiver_65 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_65: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_field_12 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_65).GetCurrentDirectory();
                 const __gotots_argument_83 = new ComparePathsOptions__from_tspath(__gotots_field_11, __gotots_field_12);
                 __gotots_logical_result_6 = ContainsPath__from_tspath(__gotots_argument_81, __gotots_argument_82, __gotots_argument_83);
@@ -2238,10 +2239,10 @@ export class resolutionState {
                 let candidateDir = __gotots_range_value_16;
                 const __gotots_argument_88 = candidateDir;
                 const __gotots_argument_89 = finalPath;
-                const __gotots_receiver_66 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_66: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_receiver_67 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_66).FS();
                 const __gotots_field_13 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_67).UseCaseSensitiveFileNames();
-                const __gotots_receiver_68 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                const __gotots_receiver_68: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                 const __gotots_field_14 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_68).GetCurrentDirectory();
                 const __gotots_argument_90 = new ComparePathsOptions__from_tspath(__gotots_field_13, __gotots_field_14);
                 if (ContainsPath__from_tspath(__gotots_argument_88, __gotots_argument_89, __gotots_argument_90)) {
@@ -2265,7 +2266,7 @@ export class resolutionState {
                                     continue;
                                 }
                                 let possibleInputWithInputExtension = ChangeExtension__from_tspath(possibleInputBase, possibleExt);
-                                const __gotots_receiver_69 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+                                const __gotots_receiver_69: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
                                 const __gotots_receiver_70 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_69).FS();
                                 const __gotots_argument_91 = possibleInputWithInputExtension;
                                 if (goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_70).FileExists(__gotots_argument_91)) {
@@ -2353,7 +2354,7 @@ export class resolutionState {
             return continueSearching();
         }
         const __gotots_receiver_38 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions;
-        const __gotots_receiver_37 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_37: Resolver["host"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_42 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_37).GetCurrentDirectory();
         let baseDirectory = CompilerOptions__from_core.GetPathsBasePath(__gotots_receiver_38, __gotots_argument_42);
         let pathPatterns: {
@@ -2373,7 +2374,7 @@ export class resolutionState {
         let candidate = NormalizePath__from_tspath(CombinePaths__from_tspath((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containingDirectory, RuntimeSlice.literal<gostring>([(r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name])));
         let matchedRootDir = "";
         let matchedNormalizedPrefix = "";
-        const __gotots_range_5 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
+        const __gotots_range_5: CompilerOptions__from_core["RootDirs"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
         for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_5.length; __gotots_range_index_5++) {
             const __gotots_range_value_5 = __gotots_range_5.get(__gotots_range_index_5);
             let rootDir = __gotots_range_value_5;
@@ -2413,7 +2414,7 @@ export class resolutionState {
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
                 tracer.$go$private$__go_module$write((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer, $state__diagnostics.Trying_other_entries_in_rootDirs, RuntimeSlice.nil<GoInterface | undefined>());
             }
-            const __gotots_range_6 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
+            const __gotots_range_6: CompilerOptions__from_core["RootDirs"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
             for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
                 const __gotots_range_value_6 = __gotots_range_6.get(__gotots_range_index_6);
                 let rootDir = __gotots_range_value_6;
@@ -2545,11 +2546,7 @@ export class Resolver {
         let __gotots_logical_result_8 = InfoCacheEntry__from_packagejson.Exists(packageJson);
         if (__gotots_logical_result_8) {
             const __gotots_store_20 = ExportsOrImports__from_packagejson.$storageOf(((packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_8 = JSONValue__from_packagejson.IsPresent(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                return JSONValue__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                return JSONValue__from_packagejson.$storageOf($go$value);
-            }));
+            __gotots_logical_result_8 = JSONValue__from_packagejson.IsPresent(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_8) {
             let entrypoints = resolutionState.$go$private$__go_module$loadEntrypointsFromExportMap(state, packageJson, packageName, ExportsOrImports__from_packagejson.$copy(((packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports));
@@ -2561,17 +2558,17 @@ export class Resolver {
             result = result.append(void 0, [Resolver.$go$private$__go_module$createResolvedEntrypointHandlingSymlink(r, (mainResolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).path, packageName, void 0, void 0, EndingFixed$constant())]);
         }
         if (enableDirectorySearch) {
-            const __gotots_receiver_84 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_84: Resolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_argument_112 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_84).FS();
-            const __gotots_receiver_85 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_85: Resolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_argument_113 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_85).GetCurrentDirectory();
-            const __gotots_argument_114 = (packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
+            const __gotots_argument_114: InfoCacheEntry__from_packagejson["PackageDirectory"] = (packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageDirectory;
             const __gotots_argument_115 = extensions_Array(extensions__shadow_1);
             const __gotots_argument_116 = RuntimeSlice.literal<gostring>(["node_modules"]);
             const __gotots_argument_117 = RuntimeSlice.literal<gostring>(["**/*"]);
             const __gotots_argument_118 = UnlimitedDepth$int__from_vfsmatch;
             let otherFiles = ReadDirectory__from_vfsmatch(__gotots_argument_112, __gotots_argument_113, __gotots_argument_114, __gotots_argument_115, __gotots_argument_116, __gotots_argument_117, __gotots_argument_118);
-            const __gotots_receiver_86 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_86: Resolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_87 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_86).FS();
             const __gotots_field_15 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_87).UseCaseSensitiveFileNames();
             let comparePathsOptions = new ComparePathsOptions__from_tspath(__gotots_field_15, "");
@@ -2613,7 +2610,7 @@ export class Resolver {
         });
         if (traceBuilder === undefined) {
             {
-                const __gotots_store_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
+                const __gotots_store_0: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
                 const __gotots_results_0 = moduleResolutionCache.Get(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "moduleResolutionCache"), moduleResolutionCacheKey.$copy(cacheKey));
                 let cached: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = __gotots_results_0[0];
                 let ok = __gotots_results_0[1];
@@ -2676,7 +2673,7 @@ export class Resolver {
             }
         }
         let finalResult: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = Resolver.$go$private$__go_module$tryResolveFromTypingsLocation(r, moduleName, containingDirectory, result, traceBuilder);
-        const __gotots_store_2 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
+        const __gotots_store_2: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
         moduleResolutionCache.Set(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "moduleResolutionCache"), moduleResolutionCacheKey.$copy(cacheKey), finalResult);
         return [finalResult, tracer.$go$private$__go_module$getTraces(traceBuilder)];
     }
@@ -2715,7 +2712,7 @@ export class Resolver {
         });
         if (traceBuilder === undefined) {
             {
-                const __gotots_store_4 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
+                const __gotots_store_4: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
                 const __gotots_results_1 = typeRefDirectiveResolutionCache.Get(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "typeRefDirectiveResolutionCache"), typeRefDirectiveResolutionCacheKey.$copy(cacheKey));
                 let cached: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined = __gotots_results_1[0];
                 let ok = __gotots_results_1[1];
@@ -2728,7 +2725,7 @@ export class Resolver {
             value: CompilerOptions__from_core;
         } | undefined = GetCompilerOptionsWithRedirect((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerOptions, redirectedReference);
         const __gotots_receiver_13 = compilerOptions;
-        const __gotots_receiver_12 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_12: Resolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_18 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_12).GetCurrentDirectory();
         const __gotots_results_2 = CompilerOptions__from_core.GetEffectiveTypeRoots(__gotots_receiver_13, __gotots_argument_18);
         let typeRoots = __gotots_results_2[0];
@@ -2742,7 +2739,7 @@ export class Resolver {
         if (!(traceBuilder === undefined)) {
             tracer.$go$private$__go_module$traceTypeReferenceDirectiveResult(traceBuilder, typeReferenceDirectiveName, result);
         }
-        const __gotots_store_5 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
+        const __gotots_store_5: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
         typeRefDirectiveResolutionCache.Set(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "typeRefDirectiveResolutionCache"), typeRefDirectiveResolutionCacheKey.$copy(cacheKey), result);
         return [result, tracer.$go$private$__go_module$getTraces(traceBuilder)];
     }
@@ -2752,7 +2749,7 @@ export class Resolver {
         let originalFileName = "";
         let resolvedFileName = fileName;
         {
-            const __gotots_receiver_92 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+            const __gotots_receiver_92: Resolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
             const __gotots_receiver_93 = goInterfaceNonNil<ResolutionHost>(__gotots_receiver_92).FS();
             const __gotots_argument_150 = fileName;
             let realPath = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_93).Realpath(__gotots_argument_150);
@@ -3168,7 +3165,7 @@ export function GetAutomaticTypeDirectiveNames(options: {
         }
     }
     let result = RuntimeSlice.nil<gostring>();
-    const __gotots_range_3 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Types;
+    const __gotots_range_3: CompilerOptions__from_core["Types"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Types;
     for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_3.length; __gotots_range_index_3++) {
         const __gotots_range_value_3 = __gotots_range_3.get(__gotots_range_index_3);
         let t = __gotots_range_value_3;

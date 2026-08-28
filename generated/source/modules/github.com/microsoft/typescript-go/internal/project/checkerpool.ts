@@ -69,19 +69,19 @@ export class checkerPool {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
                     if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.discarded) {
                         break __gotots_return_block_0;
                     }
-                    const __gotots_callee_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                    const __gotots_callee_0: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                     const __gotots_argument_0 = "checkerpool: Discarding pool, stopping idle cleanup";
                     (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
                     (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.discarded = true;
                     if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer === undefined)) {
-                        const __gotots_receiver_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
+                        const __gotots_receiver_1: checkerPool["cleanupTimer"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
                         time__from_gostdlib.Timer.Stop(__gotots_receiver_1 === void 0 ? void 0 :
                             (__gotots_receiver_1 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value);
                         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer = void 0;
@@ -153,7 +153,7 @@ export class checkerPool {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_1: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                     };
@@ -200,11 +200,11 @@ export class checkerPool {
             try {
                 __gotots_return_block_2: {
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_7 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_7: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_2 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_7, $go$recovery);
                     };
-                    let changed = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagChanged;
+                    let changed: checkerPool["globalDiagChanged"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagChanged;
                     (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagChanged = false;
                     __gotots_return_2 = changed;
                     break __gotots_return_block_2;
@@ -248,7 +248,7 @@ export class checkerPool {
             try {
                 __gotots_return_block_1: {
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_6 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_6: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_6, $go$recovery);
                     };
@@ -256,7 +256,7 @@ export class checkerPool {
                         break __gotots_return_block_1;
                     }
                     let now = time__from_gostdlib.Now();
-                    const __gotots_range_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
+                    const __gotots_range_3: checkerPool["checkers"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
                     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_3.length; __gotots_range_index_1++) {
                         const __gotots_range_value_9 = __gotots_range_index_1;
                         let i = __gotots_range_value_9;
@@ -269,7 +269,7 @@ export class checkerPool {
                         }
                         let idle = now.Sub(named_time.TimeOperations.$copy((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.lastReleased.get(i)));
                         if (named_time.TimeDurationValueOperations.$project(idle) >= named_time.TimeDurationValueOperations.$project((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.IdleTimeout)) {
-                            const __gotots_callee_14 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                            const __gotots_callee_14: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                             const __gotots_argument_13 = fmt__from_gostdlib.Sprintf("checkerpool: Disposing idle checker %d (idle %v)", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(i), new $goInterfaceAdapter$Named_time$Duration(idle)]));
                             (__gotots_callee_14 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_13);
                             checkerPool.$go$private$project$disposeCheckerLocked(p, i, c);
@@ -312,7 +312,7 @@ export class checkerPool {
         return sync__from_gostdlib.OnceFunc((): void => {
             sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
             if (Checker__from_checker.WasCanceled(c)) {
-                const __gotots_callee_9 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                const __gotots_callee_9: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                 const __gotots_argument_8 = fmt__from_gostdlib.Sprintf("checkerpool: Checker %d for request %s was canceled, disposing", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(index), new $goInterfaceAdapter$string(holdTag(requestID))]));
                 (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_8);
                 checkerPool.$go$private$project$disposeCheckerLocked(p, index, c);
@@ -341,11 +341,11 @@ export class checkerPool {
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.set(index, void 0);
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.heldBy.set(index, "");
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalDiagCheckerCount.set(index, 0);
-        const __gotots_store_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.lastReleased;
+        const __gotots_store_0: checkerPool["lastReleased"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.lastReleased;
         const __gotots_store_1 = index;
         const __gotots_struct_0 = named_time.TimeOperations.$zero();
         __gotots_store_0.set(__gotots_store_1, __gotots_struct_0);
-        const __gotots_range_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations;
+        const __gotots_range_0: checkerPool["fileAssociations"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations;
         const __gotots_range_keys_0 = __gotots_range_0.keys();
         for (const __gotots_range_value_0 of __gotots_range_keys_0) {
             const __gotots_range_value_1 = __gotots_range_0.lookupOk(__gotots_range_value_0);
@@ -360,7 +360,7 @@ export class checkerPool {
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations.delete(file);
             }
         }
-        const __gotots_range_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.requestAssociations;
+        const __gotots_range_1: checkerPool["requestAssociations"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.requestAssociations;
         const __gotots_range_keys_1 = __gotots_range_1.keys();
         for (const __gotots_range_value_4 of __gotots_range_keys_1) {
             const __gotots_range_value_5 = __gotots_range_1.lookupOk(__gotots_range_value_4);
@@ -392,7 +392,7 @@ export class checkerPool {
         }
         for (let i = 1; i < (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.length; i++) {
             if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(i) === undefined) {
-                const __gotots_callee_12 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                const __gotots_callee_12: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                 const __gotots_argument_9 = fmt__from_gostdlib.Sprintf("checkerpool: Creating query checker %d", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(i)]));
                 (__gotots_callee_12 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_9);
                 const __gotots_results_10 = NewChecker__from_checker(new GoInterfaceAdapter((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program), void 0);
@@ -432,12 +432,12 @@ export class checkerPool {
                         }
                     }
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_3: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                     };
                     if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(diagIndex$int) === undefined) {
-                        const __gotots_callee_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                        const __gotots_callee_1: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                         const __gotots_argument_1 = "checkerpool: Creating diagnostics checker";
                         (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
                         const __gotots_results_1 = NewChecker__from_checker(new GoInterfaceAdapter((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program), void 0);
@@ -446,7 +446,7 @@ export class checkerPool {
                     }
                     let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(diagIndex$int);
                     (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.heldBy.set(diagIndex$int, holdTag(requestID));
-                    const __gotots_callee_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                    const __gotots_callee_2: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                     const __gotots_argument_2 = "checkerpool: Acquired diagnostics checker for request " + holdTag(requestID);
                     (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
                     if (requestID !== "") {
@@ -501,7 +501,7 @@ export class checkerPool {
         GoChannel.send((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.persistentSem, new GoEmptyStruct);
         sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
         if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.persistentChecker === undefined) {
-            const __gotots_callee_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+            const __gotots_callee_3: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
             const __gotots_argument_3 = "checkerpool: Creating persistent checker";
             (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3);
             const __gotots_results_3 = NewChecker__from_checker(new GoInterfaceAdapter((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program), void 0);
@@ -515,7 +515,7 @@ export class checkerPool {
                 sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.persistentHeld = false;
                 if (Checker__from_checker.WasCanceled(c)) {
-                    const __gotots_callee_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                    const __gotots_callee_4: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                     const __gotots_argument_4 = "checkerpool: Persistent checker was canceled, disposing";
                     (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
                     if (tsonicTypeScriptRuntime.sameLocation((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.persistentChecker, c)) {
@@ -552,7 +552,7 @@ export class checkerPool {
                         }
                     }
                     sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_3: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                     };
@@ -587,7 +587,7 @@ export class checkerPool {
                     let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_7[0];
                     let index = __gotots_results_7[1];
                     (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.heldBy.set(index, holdTag(requestID));
-                    const __gotots_callee_7 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
+                    const __gotots_callee_7: checkerPool["log"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log;
                     const __gotots_argument_5 = fmt__from_gostdlib.Sprintf("checkerpool: Acquired query checker %d for request %s", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$int(index), new $goInterfaceAdapter$string(holdTag(requestID))]));
                     (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_5);
                     if (requestID !== "") {
@@ -661,7 +661,7 @@ export class checkerPool {
                 try {
                     __gotots_return_block_1: {
                         sync__from_gostdlib.Mutex.Lock((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                        const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                        const __gotots_receiver_3: checkerPool["mu"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                         __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_3, $go$recovery);
                         };
@@ -702,7 +702,7 @@ export class checkerPool {
         value: checkerPool;
     } | undefined): void {
         let earliestDeadline = named_time.TimeOperations.$zero();
-        const __gotots_range_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
+        const __gotots_range_2: checkerPool["checkers"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_2.length; __gotots_range_index_0++) {
             const __gotots_range_value_8 = __gotots_range_index_0;
             let i = __gotots_range_value_8;
@@ -716,7 +716,7 @@ export class checkerPool {
         }
         if (earliestDeadline.IsZero()) {
             if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer === undefined)) {
-                const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
+                const __gotots_receiver_3: checkerPool["cleanupTimer"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
                 time__from_gostdlib.Timer.Stop(__gotots_receiver_3 === void 0 ? void 0 :
                     (__gotots_receiver_3 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value);
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer = void 0;
@@ -728,7 +728,7 @@ export class checkerPool {
             delay = time__from_gostdlib.Millisecond;
         }
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer === undefined)) {
-            const __gotots_receiver_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
+            const __gotots_receiver_4: checkerPool["cleanupTimer"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cleanupTimer;
             time__from_gostdlib.Timer.Reset(__gotots_receiver_4 === void 0 ? void 0 :
                 (__gotots_receiver_4 as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Timer>).value, delay);
         }
@@ -837,15 +837,18 @@ export function newCheckerPool(opts: CheckerPoolOptions, program: {
     } | undefined = { value: new checkerPool(__gotots_field_1, __gotots_field_0, named_sync.SyncMutexOperations.$zero(), false, __gotots_field_2, __gotots_field_3, __gotots_field_4, __gotots_field_5, __gotots_field_6, void 0, void 0, false, GoChannel.make<GoEmptyStruct>(1, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
         }, (value: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy(value);
+            return (void GoEmptyStruct.$copy,
+                value);
         }), GoChannel.make<GoEmptyStruct>(querySlots, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
         }, (value: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy(value);
+            return (void GoEmptyStruct.$copy,
+                value);
         }), GoChannel.make<GoEmptyStruct>(1, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
         }, (value: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy(value);
+            return (void GoEmptyStruct.$copy,
+                value);
         }), log, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), false, RuntimeSlice.make<int>(opts.MaxCheckers, null, 0)) };
     if ((pool ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log === undefined) {
         (pool ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.log = (msg: gostring): void => {

@@ -346,13 +346,14 @@ export function BreadthFirstSearchParallelEx$kernel<K, N>($go$copy$PointerTo_Nam
     const __gotots_argument_14 = (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_13);
     const __gotots_argument_15 = $go$copy$T0_to_T0(__gotots_argument_14);
     const __gotots_field_0 = $go$to_storage$T0_to_T0(__gotots_argument_15);
-    const __gotots_slice_element_0 = MapEntry__from_collections.$storageOf<K, breadthFirstSearchJob<N> | undefined>(MapEntry__from_collections.$fromStorage<K, breadthFirstSearchJob<N> | undefined>({
-        Key: __gotots_field_0,
-        Value: breadthFirstSearchJob.$fromStorage<N>({
-            node: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(start)),
-            parent: void 0
-        })
-    }));
+    const __gotots_slice_element_0 = (void MapEntry__from_collections.$storageOf, (void MapEntry__from_collections.$fromStorage,
+        {
+            Key: __gotots_field_0,
+            Value: breadthFirstSearchJob.$fromStorage<N>({
+                node: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(start)),
+                parent: void 0
+            })
+        }));
     const __gotots_argument_16 = RuntimeSlice.literal<MapEntry__from_collections$Storage<K, breadthFirstSearchJob<N> | undefined>>([__gotots_slice_element_0]);
     let level: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<K, breadthFirstSearchJob<N> | undefined>> | undefined = NewOrderedMapFromList$kernel<K, breadthFirstSearchJob<N> | undefined>($go$copy$T0_to_T0, $go$copy$PointerTo_Named_core$breadthFirstSearchJobOf_T1_to_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$from_container_storage$T0_to_T0, $go$from_storage$T0_to_T0, $go$from_storage$PointerTo_Named_core$breadthFirstSearchJobOf_T1_to_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$length$SliceOf_Named_collections$MapEntryOf_T0_And_PointerTo_Named_core$breadthFirstSearchJobOf_T1_to_int, $go$map_construct$PointerTo_Named_core$breadthFirstSearchJobOf_T1_to_MapOf_T0_To_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$map_construct$PointerTo_Named_core$breadthFirstSearchJobOf_T1_int_to_MapOf_T0_To_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$to_container_storage$T0_to_T0, $go$to_storage$T0_to_T0, $go$to_storage$PointerTo_Named_core$breadthFirstSearchJobOf_T1_to_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$zero$void_to_PointerTo_Named_core$breadthFirstSearchJobOf_T1, $go$zero$void_to_T0, __gotots_argument_16);
     for (; OrderedMap__from_collections.Size$kernel<K, breadthFirstSearchJob<N> | undefined>(level, $go$length$SliceOf_T0_to_int) > 0;) {

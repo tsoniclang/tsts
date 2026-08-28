@@ -159,7 +159,7 @@ export class processingDiagnostic {
         }
         if (!((diag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReason === undefined)) {
             const __gotots_callee_2 = processInclude;
-            const __gotots_argument_4 = (diag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReason;
+            const __gotots_argument_4: includeExplainingDiagnostic["diagnosticReason"] = (diag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnosticReason;
             (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
         }
         let chain = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();

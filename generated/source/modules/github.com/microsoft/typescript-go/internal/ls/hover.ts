@@ -1060,7 +1060,8 @@ export function getJSDocParameterTagByPosition(c: tsonicTypeScriptRuntime.Locati
         const __gotots_range_value_8 = __gotots_range_7.get(__gotots_range_index_7);
         let i = __gotots_range_value_7;
         let p: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_8;
-        if (tsonicTypeScriptRuntime.sameLocation(Node__from_ast.AsNode(p), param)) {
+        if (tsonicTypeScriptRuntime.sameLocation((void Node__from_ast.AsNode,
+            p), param)) {
             paramIndex = i;
             break;
         }

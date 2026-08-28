@@ -40,20 +40,19 @@ export class SyncSet<T> {
     }
     static AddIfAbsent$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_adapt$T0_to_Interface_void: ($0: T) => GoInterface | undefined, key: T): bool {
         const __gotots_store_2 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        const __gotots_results_0 = SyncMap.LoadOrStore$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        const __gotots_results_0 = SyncMap.LoadOrStore$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, ($argument0: GoEmptyStruct): GoInterface | undefined => {
-            return new GoInterfaceAdapter(GoEmptyStruct.$copy($argument0));
+            return new GoInterfaceAdapter((void GoEmptyStruct.$copy,
+                $argument0));
         }, $go$interface_adapt$T0_to_Interface_void, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
@@ -61,50 +60,42 @@ export class SyncSet<T> {
         let loaded = __gotots_results_0[1];
         return !loaded;
     }
-    static Delete$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_adapt$T0_to_Interface_void: ($0: T) => GoInterface | undefined, key: T): void {
+    static Delete$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: T) => GoInterface | undefined, key: T): void {
         const __gotots_store_8 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        SyncMap.Delete$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), $go$interface_adapt$T0_to_Interface_void, $go$copy$T0_to_T0(key));
+        SyncMap.Delete$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), $go$interface_adapt$T0_to_Interface_void, key);
     }
-    static Has$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_adapt$T0_to_Interface_void: ($0: T) => GoInterface | undefined, key: T): bool {
+    static Has$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: T) => GoInterface | undefined, key: T): bool {
         const __gotots_store_3 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        const __gotots_results_1 = SyncMap.Load$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        const __gotots_results_1 = SyncMap.Load$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, $go$interface_adapt$T0_to_Interface_void, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
-        }, $go$copy$T0_to_T0(key));
+        }, key);
         let ok = __gotots_results_1[1];
         return ok;
     }
     static IsEmpty$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => T, $go$zero$void_to_T0: () => T): bool {
         let empty = true;
         const __gotots_store_7 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, $go$copy$T0_to_T0, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
@@ -117,18 +108,16 @@ export class SyncSet<T> {
     static Keys$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => T, $go$zero$void_to_T0: () => T): iter__from_gostdlib.Seq<T> {
         return named_iter.IterSeqValueOperations.$wrap((__go_yield: (($0: T) => bool) | undefined): void => {
             const __gotots_store_6 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-            SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-                return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-            }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-                return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-            }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-                return GoEmptyStruct.$copy($argument0);
+            SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+                return (void GoEmptyStruct.$copy,
+                    $argument0);
             }, $go$copy$T0_to_T0, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
                 return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                     if (!GoInterfaceAdapter.$is($value)) {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
-                    return GoEmptyStruct.$copy($value.$go$value);
+                    return (void GoEmptyStruct.$copy,
+                        $value.$go$value);
                 })($argument0);
             }, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, (): GoEmptyStruct => {
                 return GoEmptyStruct.$zero();
@@ -144,18 +133,16 @@ export class SyncSet<T> {
     }
     static Range$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => T, $go$zero$void_to_T0: () => T, fn: (($0: T) => bool) | undefined): void {
         const __gotots_store_4 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, $go$copy$T0_to_T0, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
@@ -168,18 +155,16 @@ export class SyncSet<T> {
     static Size$kernel<T>(s: tsonicTypeScriptRuntime.Location<SyncSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$interface_assert$Interface_void_to_T0: ($0: GoInterface | undefined) => T, $go$zero$void_to_T0: () => T): int {
         let count = 0;
         const __gotots_store_5 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, $go$copy$T0_to_T0, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();
@@ -193,29 +178,23 @@ export class SyncSet<T> {
         let arr = RuntimeSlice.nil<GoContainerStorage<T>>();
         const __gotots_argument_0 = 0;
         const __gotots_store_0 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        const __gotots_argument_1 = SyncMap.Size<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }));
+        const __gotots_argument_1 = SyncMap.Size<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "m"), SyncMap.$fromStorage, SyncMap.$storageOf));
         const __gotots_slice_build_0 = goSliceAllocate<GoContainerStorage<T>>(__gotots_argument_0, __gotots_argument_1);
         for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
             __gotots_slice_build_0.$initialize(__gotots_slice_build_1, $go$to_container_storage$T0_to_T0($go$zero$void_to_T0()));
         }
         arr = __gotots_slice_build_0;
         const __gotots_store_1 = SyncSet.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncSet<T>>).value);
-        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "m"), ($go$storage: SyncMap__from_collections$Storage<T, GoEmptyStruct>): SyncMap<T, GoEmptyStruct> => {
-            return SyncMap.$fromStorage<T, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap<T, GoEmptyStruct>): SyncMap__from_collections$Storage<T, GoEmptyStruct> => {
-            return SyncMap.$storageOf<T, GoEmptyStruct>($go$value);
-        }), ($argument0: GoEmptyStruct): GoEmptyStruct => {
-            return GoEmptyStruct.$copy($argument0);
+        SyncMap.Range$kernel<T, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<T, GoEmptyStruct>, SyncMap<T, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "m"), SyncMap.$fromStorage, SyncMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+            return (void GoEmptyStruct.$copy,
+                $argument0);
         }, $go$copy$T0_to_T0, ($argument0: GoInterfaceValue | undefined): GoEmptyStruct => {
             return (($value: GoInterfaceValue | undefined): GoEmptyStruct => {
                 if (!GoInterfaceAdapter.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
-                return GoEmptyStruct.$copy($value.$go$value);
+                return (void GoEmptyStruct.$copy,
+                    $value.$go$value);
             })($argument0);
         }, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, (): GoEmptyStruct => {
             return GoEmptyStruct.$zero();

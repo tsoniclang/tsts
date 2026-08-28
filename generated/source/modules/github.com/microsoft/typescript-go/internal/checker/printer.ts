@@ -51,70 +51,70 @@ export class semicolonRemoverWriter {
     static Clear(s: {
         value: semicolonRemoverWriter;
     } | undefined): void {
-        const __gotots_receiver_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_0: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_0).Clear();
     }
     static DecreaseIndent(s: {
         value: semicolonRemoverWriter;
     } | undefined): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_1: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_1).DecreaseIndent();
     }
     static GetColumn(s: {
         value: semicolonRemoverWriter;
     } | undefined): UTF16Offset__from_core {
-        const __gotots_receiver_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_2: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_2).GetColumn();
     }
     static GetIndent(s: {
         value: semicolonRemoverWriter;
     } | undefined): int {
-        const __gotots_receiver_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_3: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_3).GetIndent();
     }
     static GetLine(s: {
         value: semicolonRemoverWriter;
     } | undefined): int {
-        const __gotots_receiver_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_4: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_4).GetLine();
     }
     static GetTextPos(s: {
         value: semicolonRemoverWriter;
     } | undefined): int {
-        const __gotots_receiver_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_5: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_5).GetTextPos();
     }
     static HasTrailingComment(s: {
         value: semicolonRemoverWriter;
     } | undefined): bool {
-        const __gotots_receiver_6 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_6: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_6).HasTrailingComment();
     }
     static HasTrailingWhitespace(s: {
         value: semicolonRemoverWriter;
     } | undefined): bool {
-        const __gotots_receiver_7 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_7: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_7).HasTrailingWhitespace();
     }
     static IncreaseIndent(s: {
         value: semicolonRemoverWriter;
     } | undefined): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_8 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_8: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_8).IncreaseIndent();
     }
     static IsAtStartOfLine(s: {
         value: semicolonRemoverWriter;
     } | undefined): bool {
-        const __gotots_receiver_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_9: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_9).IsAtStartOfLine();
     }
     static RawWrite(s: {
         value: semicolonRemoverWriter;
     } | undefined, s1: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_10 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_10: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_0 = s1;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_10).RawWrite(__gotots_argument_0);
     }
@@ -122,14 +122,14 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined): gostring {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_11 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_11: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         return goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_11).String();
     }
     static Write(s: {
         value: semicolonRemoverWriter;
     } | undefined, s1: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_12 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_12: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_1 = s1;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_12).Write(__gotots_argument_1);
     }
@@ -137,7 +137,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_13 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_13: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_2 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_13).WriteComment(__gotots_argument_2);
     }
@@ -145,7 +145,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_14 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_14: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_3 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_14).WriteKeyword(__gotots_argument_3);
     }
@@ -153,14 +153,14 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_15 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_15: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_15).WriteLine();
     }
     static WriteLineForce(s: {
         value: semicolonRemoverWriter;
     } | undefined, force: bool): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_16 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_16: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_4 = force;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_16).WriteLineForce(__gotots_argument_4);
     }
@@ -168,7 +168,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, s1: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_17 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_17: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_5 = s1;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_17).WriteLiteral(__gotots_argument_5);
     }
@@ -176,7 +176,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_18 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_18: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_6 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_18).WriteOperator(__gotots_argument_6);
     }
@@ -184,7 +184,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_19 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_19: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_7 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_19).WriteParameter(__gotots_argument_7);
     }
@@ -192,7 +192,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_20 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_20: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_8 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_20).WriteProperty(__gotots_argument_8);
     }
@@ -200,7 +200,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_21 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_21: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_9 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_21).WritePunctuation(__gotots_argument_9);
     }
@@ -208,7 +208,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_22 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_22: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_10 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_22).WriteSpace(__gotots_argument_10);
     }
@@ -216,7 +216,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_23 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_23: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_11 = text;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_23).WriteStringLiteral(__gotots_argument_11);
     }
@@ -224,7 +224,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined, text: gostring, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): void {
         semicolonRemoverWriter.$go$private$checker$commitSemicolon(s);
-        const __gotots_receiver_24 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+        const __gotots_receiver_24: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
         const __gotots_argument_12 = text;
         const __gotots_argument_13 = __go_symbol;
         goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_24).WriteSymbol(__gotots_argument_12, __gotots_argument_13);
@@ -238,7 +238,7 @@ export class semicolonRemoverWriter {
         value: semicolonRemoverWriter;
     } | undefined): void {
         if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.hasPendingSemicolon) {
-            const __gotots_receiver_25 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+            const __gotots_receiver_25: semicolonRemoverWriter["inner"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
             const __gotots_argument_14 = ";";
             goInterfaceNonNil<EmitTextWriter__from_printer>(__gotots_receiver_25).WriteTrailingSemicolon(__gotots_argument_14);
             (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.hasPendingSemicolon = false;

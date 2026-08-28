@@ -73,13 +73,15 @@ export function $initialize(): void {
             });
     }
     {
-        $state.versionZero = Version.$storageOf(Version.$fromStorage({
-            prerelease: RuntimeSlice.literal<gostring>(["0"]),
-            major: 0,
-            minor: 0,
-            patch: 0,
-            build: RuntimeSlice.nil<gostring>()
-        }));
+        $state.versionZero =
+            (void Version.$storageOf, (void Version.$fromStorage,
+                {
+                    prerelease: RuntimeSlice.literal<gostring>(["0"]),
+                    major: 0,
+                    minor: 0,
+                    patch: 0,
+                    build: RuntimeSlice.nil<gostring>()
+                }));
     }
     {
         const __gotots_conversion_6 = regexp__from_gostdlib.MustCompile("\\|\\|");

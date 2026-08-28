@@ -81,7 +81,8 @@ export class Token {
                 let __gotots_switch_match_0 = false;
                 if (!__gotots_switch_match_0) {
                     __gotots_switch_match_0 =
-                        tsonicTypeScriptRuntime.sameLocation(__gotots_switch_tag_0, Token.$storageOf(Token.$fromStorage($state.True)).raw);
+                        tsonicTypeScriptRuntime.sameLocation(__gotots_switch_tag_0, (void Token.$storageOf, (void Token.$fromStorage,
+                            $state.True)).raw);
                 }
                 if (__gotots_switch_match_0) {
                     __gotots_switch_selection_0 = 0;
@@ -91,7 +92,8 @@ export class Token {
                 let __gotots_switch_match_1 = false;
                 if (!__gotots_switch_match_1) {
                     __gotots_switch_match_1 =
-                        tsonicTypeScriptRuntime.sameLocation(__gotots_switch_tag_0, Token.$storageOf(Token.$fromStorage($state.False)).raw);
+                        tsonicTypeScriptRuntime.sameLocation(__gotots_switch_tag_0, (void Token.$storageOf, (void Token.$fromStorage,
+                            $state.False)).raw);
                 }
                 if (__gotots_switch_match_1) {
                     __gotots_switch_selection_0 = 1;

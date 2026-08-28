@@ -123,11 +123,7 @@ export function propagateModifierListSubtreeFacts(children: tsonicTypeScriptRunt
         return SubtreeFactsNone$constant();
     }
     const __gotots_store_0 = ModifierList.$storageOf(((children ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value);
-    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList => {
-        return NodeList.$fromStorage($go$storage);
-    }, ($go$value: NodeList): NodeList__from_ast$Storage => {
-        return NodeList.$storageOf($go$value);
-    });
+    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), NodeList.$fromStorage, NodeList.$storageOf);
     const __gotots_argument_2 = propagateSubtreeFacts;
     return propagateNodeListSubtreeFacts(__gotots_argument_1, __gotots_argument_2);
 }

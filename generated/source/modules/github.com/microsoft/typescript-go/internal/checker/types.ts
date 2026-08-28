@@ -2837,7 +2837,7 @@ export class TupleType {
         value: TupleType;
     } | undefined): RuntimeSlice<ElementFlags> {
         let elementFlags = RuntimeSlice.make<ElementFlags>((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos.length, null, 0);
-        const __gotots_range_1 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
+        const __gotots_range_1: TupleType["elementInfos"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elementInfos;
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_1 = __gotots_range_index_1;
             const __gotots_range_value_2 = TupleElementInfo.$copy(TupleElementInfo.$fromStorage(__gotots_range_1.get(__gotots_range_index_1)));

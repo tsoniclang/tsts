@@ -257,11 +257,7 @@ export function forEachImport(program: {
     }
     else {
         const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_9 = (node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {
             switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
                 case KindExportDeclaration$constant__from_ast():
@@ -309,11 +305,7 @@ export function forEachPossibleImportOrExportStatement(sourceFileLike: tsonicTyp
 export function getSourceFileLikeForImportDeclaration(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     if (IsCallExpression__from_ast(node) || IsJSDocImportTag__from_ast(node)) {
         const __gotots_store_3 = NodeBase__from_ast.$storageOf(((GetSourceFileOfNode__from_ast(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        }));
+        return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
     if (IsSourceFile__from_ast(parent)) {
@@ -395,11 +387,7 @@ export function getImportersForExport(sourceFiles: RuntimeSlice<tsonicTypeScript
         let top: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(importCall, isAmbientModuleDeclaration);
         if (top === undefined) {
             const __gotots_store_1 = NodeBase__from_ast.$storageOf(((GetSourceFileOfNode__from_ast(importCall) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            top = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            top = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         const __gotots_callee_9 = addIndirectUser;
         const __gotots_argument_17 = top;
@@ -526,11 +514,7 @@ export function getImportersForExport(sourceFiles: RuntimeSlice<tsonicTypeScript
                     if (__gotots_logical_result_0) {
                         const __gotots_callee_20 = addIndirectUser;
                         const __gotots_store_2 = NodeBase__from_ast.$storageOf(((GetSourceFileOfNode__from_ast(direct) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                            return NodeDefault__from_ast.$fromStorage($go$storage);
-                        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                            return NodeDefault__from_ast.$storageOf($go$value);
-                        }));
+                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                         const __gotots_argument_40 = true;
                         (__gotots_callee_20 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_39, __gotots_argument_40);
                     }
@@ -597,20 +581,22 @@ export function getSearchesFromDirectImports(directImports: RuntimeSlice<tsonicT
         let __gotots_slice_build_17 = __gotots_slice_build_16;
         if (__gotots_slice_build_18 <= __gotots_slice_build_16.capacity) {
             __gotots_slice_build_17 = __gotots_slice_build_16.$withLength(__gotots_slice_build_18);
-            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, LocationAndSymbol.$storageOf(LocationAndSymbol.$fromStorage({
-                importLocation: location,
-                importSymbol: __go_symbol
-            })));
+            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void LocationAndSymbol.$storageOf, (void LocationAndSymbol.$fromStorage,
+                {
+                    importLocation: location,
+                    importSymbol: __go_symbol
+                })));
         }
         else {
             __gotots_slice_build_17 = goSliceAllocate<LocationAndSymbol$Storage>(__gotots_slice_build_18, RuntimeSlice.$grownCapacity(__gotots_slice_build_16.capacity, __gotots_slice_build_18));
             for (let __gotots_slice_build_19 = 0; __gotots_slice_build_19 < __gotots_slice_build_16.length; __gotots_slice_build_19++) {
                 __gotots_slice_build_17.set(__gotots_slice_build_19, LocationAndSymbol.$storageOf(LocationAndSymbol.$copy(LocationAndSymbol.$fromStorage(__gotots_slice_build_16.get(__gotots_slice_build_19)))));
             }
-            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, LocationAndSymbol.$storageOf(LocationAndSymbol.$fromStorage({
-                importLocation: location,
-                importSymbol: __go_symbol
-            })));
+            __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, (void LocationAndSymbol.$storageOf, (void LocationAndSymbol.$fromStorage,
+                {
+                    importLocation: location,
+                    importSymbol: __go_symbol
+                })));
             for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
                 __gotots_slice_build_17.$initialize(__gotots_slice_build_19, LocationAndSymbol.$storageOf(LocationAndSymbol.$zero()));
             }
@@ -1066,24 +1052,26 @@ export function findModuleReferences(program: {
                     let __gotots_slice_build_1 = __gotots_slice_build_0;
                     if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
                         __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindReference$constant(),
-                            referencingFile: referencingFile,
-                            ref: ref,
-                            literal: void 0
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindReference$constant(),
+                                referencingFile: referencingFile,
+                                ref: ref,
+                                literal: void 0
+                            })));
                     }
                     else {
                         __gotots_slice_build_1 = goSliceAllocate<ModuleReference$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
                         for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.set(__gotots_slice_build_3, ModuleReference.$storageOf(ModuleReference.$copy(ModuleReference.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
                         }
-                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindReference$constant(),
-                            referencingFile: referencingFile,
-                            ref: ref,
-                            literal: void 0
-                        })));
+                        __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindReference$constant(),
+                                referencingFile: referencingFile,
+                                ref: ref,
+                                literal: void 0
+                            })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                             __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ModuleReference.$storageOf(ModuleReference.$zero()));
                         }
@@ -1104,24 +1092,26 @@ export function findModuleReferences(program: {
                     let __gotots_slice_build_5 = __gotots_slice_build_4;
                     if (__gotots_slice_build_6 <= __gotots_slice_build_4.capacity) {
                         __gotots_slice_build_5 = __gotots_slice_build_4.$withLength(__gotots_slice_build_6);
-                        __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindReference$constant(),
-                            referencingFile: referencingFile,
-                            ref: ref,
-                            literal: void 0
-                        })));
+                        __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindReference$constant(),
+                                referencingFile: referencingFile,
+                                ref: ref,
+                                literal: void 0
+                            })));
                     }
                     else {
                         __gotots_slice_build_5 = goSliceAllocate<ModuleReference$Storage>(__gotots_slice_build_6, RuntimeSlice.$grownCapacity(__gotots_slice_build_4.capacity, __gotots_slice_build_6));
                         for (let __gotots_slice_build_7 = 0; __gotots_slice_build_7 < __gotots_slice_build_4.length; __gotots_slice_build_7++) {
                             __gotots_slice_build_5.set(__gotots_slice_build_7, ModuleReference.$storageOf(ModuleReference.$copy(ModuleReference.$fromStorage(__gotots_slice_build_4.get(__gotots_slice_build_7)))));
                         }
-                        __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindReference$constant(),
-                            referencingFile: referencingFile,
-                            ref: ref,
-                            literal: void 0
-                        })));
+                        __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindReference$constant(),
+                                referencingFile: referencingFile,
+                                ref: ref,
+                                literal: void 0
+                            })));
                         for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
                             __gotots_slice_build_5.$initialize(__gotots_slice_build_7, ModuleReference.$storageOf(ModuleReference.$zero()));
                         }
@@ -1139,24 +1129,26 @@ export function findModuleReferences(program: {
                     let __gotots_slice_build_9 = __gotots_slice_build_8;
                     if (__gotots_slice_build_10 <= __gotots_slice_build_8.capacity) {
                         __gotots_slice_build_9 = __gotots_slice_build_8.$withLength(__gotots_slice_build_10);
-                        __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindImplicit$constant(),
-                            literal: moduleSpecifier,
-                            referencingFile: referencingFile,
-                            ref: void 0
-                        })));
+                        __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindImplicit$constant(),
+                                literal: moduleSpecifier,
+                                referencingFile: referencingFile,
+                                ref: void 0
+                            })));
                     }
                     else {
                         __gotots_slice_build_9 = goSliceAllocate<ModuleReference$Storage>(__gotots_slice_build_10, RuntimeSlice.$grownCapacity(__gotots_slice_build_8.capacity, __gotots_slice_build_10));
                         for (let __gotots_slice_build_11 = 0; __gotots_slice_build_11 < __gotots_slice_build_8.length; __gotots_slice_build_11++) {
                             __gotots_slice_build_9.set(__gotots_slice_build_11, ModuleReference.$storageOf(ModuleReference.$copy(ModuleReference.$fromStorage(__gotots_slice_build_8.get(__gotots_slice_build_11)))));
                         }
-                        __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindImplicit$constant(),
-                            literal: moduleSpecifier,
-                            referencingFile: referencingFile,
-                            ref: void 0
-                        })));
+                        __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindImplicit$constant(),
+                                literal: moduleSpecifier,
+                                referencingFile: referencingFile,
+                                ref: void 0
+                            })));
                         for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
                             __gotots_slice_build_9.$initialize(__gotots_slice_build_11, ModuleReference.$storageOf(ModuleReference.$zero()));
                         }
@@ -1169,24 +1161,26 @@ export function findModuleReferences(program: {
                     let __gotots_slice_build_13 = __gotots_slice_build_12;
                     if (__gotots_slice_build_14 <= __gotots_slice_build_12.capacity) {
                         __gotots_slice_build_13 = __gotots_slice_build_12.$withLength(__gotots_slice_build_14);
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindImport$constant(),
-                            literal: moduleSpecifier,
-                            referencingFile: void 0,
-                            ref: void 0
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindImport$constant(),
+                                literal: moduleSpecifier,
+                                referencingFile: void 0,
+                                ref: void 0
+                            })));
                     }
                     else {
                         __gotots_slice_build_13 = goSliceAllocate<ModuleReference$Storage>(__gotots_slice_build_14, RuntimeSlice.$grownCapacity(__gotots_slice_build_12.capacity, __gotots_slice_build_14));
                         for (let __gotots_slice_build_15 = 0; __gotots_slice_build_15 < __gotots_slice_build_12.length; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.set(__gotots_slice_build_15, ModuleReference.$storageOf(ModuleReference.$copy(ModuleReference.$fromStorage(__gotots_slice_build_12.get(__gotots_slice_build_15)))));
                         }
-                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, ModuleReference.$storageOf(ModuleReference.$fromStorage({
-                            kind: ModuleReferenceKindImport$constant(),
-                            literal: moduleSpecifier,
-                            referencingFile: void 0,
-                            ref: void 0
-                        })));
+                        __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, (void ModuleReference.$storageOf, (void ModuleReference.$fromStorage,
+                            {
+                                kind: ModuleReferenceKindImport$constant(),
+                                literal: moduleSpecifier,
+                                referencingFile: void 0,
+                                ref: void 0
+                            })));
                         for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
                             __gotots_slice_build_13.$initialize(__gotots_slice_build_15, ModuleReference.$storageOf(ModuleReference.$zero()));
                         }

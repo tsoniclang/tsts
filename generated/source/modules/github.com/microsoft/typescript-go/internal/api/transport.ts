@@ -94,9 +94,9 @@ export class stdioConn {
     static Close(c: {
         value: stdioConn;
     } | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
-        const __gotots_receiver_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stdin;
+        const __gotots_receiver_1: stdioConn["stdin"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stdin;
         let err1: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<$goInterface$Interface_Method_io$Close_void_to_Named_error_Method_io$Read_SliceOf_byte_to_int_Named_error>(__gotots_receiver_1).Close();
-        const __gotots_receiver_2 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stdout;
+        const __gotots_receiver_2: stdioConn["stdout"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stdout;
         let err2: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<$goInterface$Interface_Method_io$Close_void_to_Named_error_Method_io$Write_SliceOf_byte_to_int_Named_error>(__gotots_receiver_2).Close();
         if (!(err1 === undefined)) {
             return err1;

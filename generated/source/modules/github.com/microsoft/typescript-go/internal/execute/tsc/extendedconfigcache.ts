@@ -45,7 +45,7 @@ export class ExtendedConfigCache {
                         value: extendedConfigCacheEntry;
                     } | undefined = __gotots_results_0[0];
                     let loaded = __gotots_results_0[1];
-                    const __gotots_receiver_0 = (entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: extendedConfigCacheEntry["mu"] = (entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };

@@ -77,15 +77,17 @@ export class lockedEntry<K, V> {
         SyncMapEntry.$go$private$dirty$deleteLocked$kernel<K, V>(lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e, $go$copy$T1_to_T1, $go$copy$T0_to_T0, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$from_storage$T1_to_T1, $go$from_storage$T0_to_T0, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$to_storage$T1_to_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1);
     }
     static Dirty<K, V>(e: lockedEntry<K, V> | undefined): bool {
-        return mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
+        return (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+            SyncMapEntry.$storageOf((lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
     }
     static Locked$kernel<K, V>(e: lockedEntry<K, V> | undefined, $go$interface_adapt$PointerTo_Named_dirty$lockedEntryOf_T0_And_T1_to_Named_dirty$ValueOf_T1: ($0: lockedEntry<K, V> | undefined) => Value<V> | undefined, fn: (($0: Value<V> | undefined) => void) | undefined): void {
         const __gotots_callee_13 = fn;
         const __gotots_argument_15 = $go$interface_adapt$PointerTo_Named_dirty$lockedEntryOf_T0_And_T1_to_Named_dirty$ValueOf_T1(e);
         (__gotots_callee_13 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_15);
     }
-    static Original$kernel<K, V>(e: lockedEntry<K, V> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V): V {
-        return $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).original));
+    static Original$kernel<K, V>(e: lockedEntry<K, V> | undefined, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V): V {
+        return $go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+            SyncMapEntry.$storageOf((lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).original);
     }
     static Value$kernel<K, V>(e: lockedEntry<K, V> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$zero$void_to_T1: () => V): V {
         return $go$copy$T1_to_T1(SyncMapEntry.$go$private$dirty$valueLocked$kernel<K, V>(lockedEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).e, $go$copy$T1_to_T1, $go$from_storage$T1_to_T1, $go$zero$void_to_T1));
@@ -230,7 +232,8 @@ export class SyncMapEntry<K, V> {
                         break __gotots_return_block_0;
                     }
                     const __gotots_callee_5 = cond;
-                    const __gotots_argument_5 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                    const __gotots_argument_5 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                     if ((__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_5)) {
                         SyncMapEntry.$go$private$dirty$changeLocked$kernel<K, V>(e, $go$constraint_method$dirty$Clone$T1_to_T1, $go$copy$T1_to_T1, $go$copy$T0_to_T0, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$from_storage$T1_to_T1, $go$from_storage$T0_to_T0, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$to_storage$T1_to_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, apply);
                         __gotots_return_0 = true;
@@ -296,8 +299,10 @@ export class SyncMapEntry<K, V> {
                         SyncMapEntry.Delete$kernel<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).proxyFor, $go$copy$T0_to_T0, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$from_storage$T0_to_T0, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1);
                         break __gotots_return_block_0;
                     }
-                    if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                    if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
                         break __gotots_return_block_0;
                     }
                     const __gotots_store_0 = SyncMap.$storageOf((SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
@@ -307,23 +312,8 @@ export class SyncMapEntry<K, V> {
                         value: SyncMapEntry<K, V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: SyncMapEntry<K, V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
                     let entry: {
                         value: SyncMapEntry<K, V>;
                     } | undefined = __gotots_results_0[0];
@@ -334,10 +324,12 @@ export class SyncMapEntry<K, V> {
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                         });
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
                     }
                     else {
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
                     }
                 }
             }
@@ -398,7 +390,8 @@ export class SyncMapEntry<K, V> {
                         break __gotots_return_block_0;
                     }
                     const __gotots_callee_6 = cond;
-                    const __gotots_argument_6 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                    const __gotots_argument_6 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                     if ((__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_6)) {
                         SyncMapEntry.$go$private$dirty$deleteLocked$kernel<K, V>(e, $go$copy$T1_to_T1, $go$copy$T0_to_T0, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$from_storage$T1_to_T1, $go$from_storage$T0_to_T0, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$to_storage$T1_to_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1);
                     }
@@ -450,7 +443,8 @@ export class SyncMapEntry<K, V> {
                         __gotots_return_1 = SyncMapEntry.Dirty<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).proxyFor);
                         break __gotots_return_block_1;
                     }
-                    __gotots_return_1 = mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
+                    __gotots_return_1 = (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
                     break __gotots_return_block_1;
                 }
             }
@@ -604,9 +598,11 @@ export class SyncMapEntry<K, V> {
         try {
             try {
                 __gotots_return_block_0: {
-                    if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
+                    if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
                         const __gotots_callee_3 = apply;
-                        const __gotots_argument_3 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                        const __gotots_argument_3 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                         (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3);
                         break __gotots_return_block_0;
                     }
@@ -617,23 +613,8 @@ export class SyncMapEntry<K, V> {
                         value: SyncMapEntry<K, V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: SyncMapEntry<K, V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
                     let entry: {
                         value: SyncMapEntry<K, V>;
                     } | undefined = __gotots_results_4[0];
@@ -645,18 +626,28 @@ export class SyncMapEntry<K, V> {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                         });
                     }
-                    if (!mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$constraint_method$dirty$Clone$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value))));
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = true;
+                    if (!(void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$constraint_method$dirty$Clone$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value))));
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = true;
                     }
                     if (loaded) {
                         SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).proxyFor = entry;
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value)));
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = true;
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value)));
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = true;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete;
                     }
                     const __gotots_callee_4 = apply;
-                    const __gotots_argument_4 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                    const __gotots_argument_4 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                     (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
                 }
             }
@@ -707,8 +698,10 @@ export class SyncMapEntry<K, V> {
         try {
             try {
                 __gotots_return_block_0: {
-                    if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                    if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
                         break __gotots_return_block_0;
                     }
                     const __gotots_store_7 = SyncMap.$storageOf((SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
@@ -718,23 +711,8 @@ export class SyncMapEntry<K, V> {
                         value: SyncMapEntry<K, V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: SyncMapEntry<K, V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).key)), e);
                     let entry: {
                         value: SyncMapEntry<K, V>;
                     } | undefined = __gotots_results_9[0];
@@ -746,11 +724,17 @@ export class SyncMapEntry<K, V> {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                         });
                         SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).proxyFor = entry;
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value)));
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
-                        mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value)));
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                        (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty = (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty;
                     }
-                    mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
+                    (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete = true;
                 }
             }
             catch (__gotots_caught_0) {
@@ -785,11 +769,13 @@ export class SyncMapEntry<K, V> {
     static $go$private$dirty$valueLocked$kernel<K, V>(e: {
         value: SyncMapEntry<K, V>;
     } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$zero$void_to_T1: () => V): V {
-        if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
+        if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
             let zero: V = $go$zero$void_to_T1();
             return $go$copy$T1_to_T1(zero);
         }
-        return $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+        return $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+            SyncMapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
     }
 }
 export type SyncMap$Storage<K, V> = {
@@ -859,7 +845,7 @@ export class SyncMap<K, V> {
     }
     static Load$kernel<K, V>(m: {
         value: SyncMap<K, V>;
-    } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
+    } | undefined, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
         value: SyncMapEntry<K, V>;
     } | undefined) => {
         value: SyncMapEntry<K, V>;
@@ -892,23 +878,7 @@ export class SyncMap<K, V> {
                             value: SyncMapEntry<K, V>;
                         } | undefined>, SyncMap__from_collections<K, {
                             value: SyncMapEntry<K, V>;
-                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>): SyncMap__from_collections<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined> => {
-                            return SyncMap__from_collections.$fromStorage<K, {
-                                value: SyncMapEntry<K, V>;
-                            } | undefined>($go$storage);
-                        }, ($go$value: SyncMap__from_collections<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>): SyncMap__from_collections$Storage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined> => {
-                            return SyncMap__from_collections.$storageOf<K, {
-                                value: SyncMapEntry<K, V>;
-                            } | undefined>($go$value);
-                        }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0(key));
+                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, key);
                         let entry: {
                             value: SyncMapEntry<K, V>;
                         } | undefined = __gotots_results_2[0];
@@ -919,7 +889,8 @@ export class SyncMap<K, V> {
                             __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                                 recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                             });
-                            if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
+                            if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
                                 __gotots_return_0 = [void 0, false];
                                 break __gotots_return_block_0;
                             }
@@ -929,19 +900,20 @@ export class SyncMap<K, V> {
                     }
                     {
                         const __gotots_results_3 = SyncMap.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).base.lookupOk(key);
-                        let val: V = $go$copy$T1_to_T1(__gotots_results_3[0]);
+                        let val: V = __gotots_results_3[0];
                         let ok = __gotots_results_3[1];
                         if (ok) {
                             __gotots_return_0 = [
                                 { value: SyncMapEntry.$fromStorage<K, V>({
                                         m: m,
-                                        mapEntry: mapEntry.$storageOf<K, V>(mapEntry.$fromStorage<K, V>({
-                                            key: $go$to_storage$T0_to_T0($go$copy$T0_to_T0(key)),
-                                            original: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(val)),
-                                            value: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(val)),
-                                            dirty: false,
-                                            __go_delete: false
-                                        })),
+                                        mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                            {
+                                                key: $go$to_storage$T0_to_T0(key),
+                                                original: $go$to_storage$T1_to_T1(val),
+                                                value: $go$to_storage$T1_to_T1(val),
+                                                dirty: false,
+                                                __go_delete: false
+                                            })),
                                         mu: named_sync.SyncMutexOperations.$zero(),
                                         proxyFor: void 0
                                     }) }, true];
@@ -984,7 +956,7 @@ export class SyncMap<K, V> {
     }
     static LoadOrStore$kernel<K, V>(m: {
         value: SyncMap<K, V>;
-    } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
+    } | undefined, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
         value: SyncMapEntry<K, V>;
     } | undefined) => {
         value: SyncMapEntry<K, V>;
@@ -1013,7 +985,7 @@ export class SyncMap<K, V> {
                 __gotots_return_block_0: {
                     {
                         const __gotots_results_5 = SyncMap.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).base.lookupOk(key);
-                        let baseValue: V = $go$copy$T1_to_T1(__gotots_results_5[0]);
+                        let baseValue: V = __gotots_results_5[0];
                         let ok = __gotots_results_5[1];
                         if (ok) {
                             {
@@ -1024,23 +996,7 @@ export class SyncMap<K, V> {
                                     value: SyncMapEntry<K, V>;
                                 } | undefined>, SyncMap__from_collections<K, {
                                     value: SyncMapEntry<K, V>;
-                                } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                                    value: SyncMapEntry<K, V>;
-                                } | undefined>): SyncMap__from_collections<K, {
-                                    value: SyncMapEntry<K, V>;
-                                } | undefined> => {
-                                    return SyncMap__from_collections.$fromStorage<K, {
-                                        value: SyncMapEntry<K, V>;
-                                    } | undefined>($go$storage);
-                                }, ($go$value: SyncMap__from_collections<K, {
-                                    value: SyncMapEntry<K, V>;
-                                } | undefined>): SyncMap__from_collections$Storage<K, {
-                                    value: SyncMapEntry<K, V>;
-                                } | undefined> => {
-                                    return SyncMap__from_collections.$storageOf<K, {
-                                        value: SyncMapEntry<K, V>;
-                                    } | undefined>($go$value);
-                                }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0(key));
+                                } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, key);
                                 let dirty: {
                                     value: SyncMapEntry<K, V>;
                                 } | undefined = __gotots_results_6[0];
@@ -1051,7 +1007,8 @@ export class SyncMap<K, V> {
                                     __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                                     });
-                                    if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((dirty ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
+                                    if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                        SyncMapEntry.$storageOf((dirty ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
                                         __gotots_return_0 = [void 0, false];
                                         break __gotots_return_block_0;
                                     }
@@ -1062,13 +1019,14 @@ export class SyncMap<K, V> {
                             __gotots_return_0 = [
                                 { value: SyncMapEntry.$fromStorage<K, V>({
                                         m: m,
-                                        mapEntry: mapEntry.$storageOf<K, V>(mapEntry.$fromStorage<K, V>({
-                                            key: $go$to_storage$T0_to_T0($go$copy$T0_to_T0(key)),
-                                            original: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(baseValue)),
-                                            value: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(baseValue)),
-                                            dirty: false,
-                                            __go_delete: false
-                                        })),
+                                        mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                            {
+                                                key: $go$to_storage$T0_to_T0(key),
+                                                original: $go$to_storage$T1_to_T1(baseValue),
+                                                value: $go$to_storage$T1_to_T1(baseValue),
+                                                dirty: false,
+                                                __go_delete: false
+                                            })),
                                         mu: named_sync.SyncMutexOperations.$zero(),
                                         proxyFor: void 0
                                     }) }, true];
@@ -1082,31 +1040,16 @@ export class SyncMap<K, V> {
                         value: SyncMapEntry<K, V>;
                     } | undefined>, SyncMap__from_collections<K, {
                         value: SyncMapEntry<K, V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$fromStorage<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$storage);
-                    }, ($go$value: SyncMap__from_collections<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined>): SyncMap__from_collections$Storage<K, {
-                        value: SyncMapEntry<K, V>;
-                    } | undefined> => {
-                        return SyncMap__from_collections.$storageOf<K, {
-                            value: SyncMapEntry<K, V>;
-                        } | undefined>($go$value);
-                    }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0(key), { value: SyncMapEntry.$fromStorage<K, V>({
+                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_adapt$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, key, { value: SyncMapEntry.$fromStorage<K, V>({
                             m: m,
-                            mapEntry: mapEntry.$storageOf<K, V>(mapEntry.$fromStorage<K, V>({
-                                key: $go$to_storage$T0_to_T0($go$copy$T0_to_T0(key)),
-                                value: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(value)),
-                                dirty: true,
-                                original: $go$to_storage$T1_to_T1($go$zero$void_to_T1()),
-                                __go_delete: false
-                            })),
+                            mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                {
+                                    key: $go$to_storage$T0_to_T0(key),
+                                    value: $go$to_storage$T1_to_T1(value),
+                                    dirty: true,
+                                    original: $go$to_storage$T1_to_T1($go$zero$void_to_T1()),
+                                    __go_delete: false
+                                })),
                             mu: named_sync.SyncMutexOperations.$zero(),
                             proxyFor: void 0
                         }) });
@@ -1120,7 +1063,8 @@ export class SyncMap<K, V> {
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_1, $go$recovery);
                         });
-                        if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
+                        if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
                             __gotots_return_0 = [void 0, false];
                             break __gotots_return_block_0;
                         }
@@ -1161,7 +1105,7 @@ export class SyncMap<K, V> {
     }
     static Range$kernel<K, V>(m: {
         value: SyncMap<K, V>;
-    } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
+    } | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1: ($0: {
         value: SyncMapEntry<K, V>;
     } | undefined) => {
         value: SyncMapEntry<K, V>;
@@ -1180,28 +1124,13 @@ export class SyncMap<K, V> {
             value: SyncMapEntry<K, V>;
         } | undefined>, SyncMap__from_collections<K, {
             value: SyncMapEntry<K, V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined>): SyncMap__from_collections<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<K, {
-                value: SyncMapEntry<K, V>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined>): SyncMap__from_collections$Storage<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<K, {
-                value: SyncMapEntry<K, V>;
-            } | undefined>($go$value);
-        }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, (key: K, entry: {
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, (key: K, entry: {
             value: SyncMapEntry<K, V>;
         } | undefined): bool => {
             seenInDirty.store(key, new GoEmptyStruct);
             sync__from_gostdlib.Mutex.Lock(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mu);
-            let deleted = mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete;
+            let deleted = (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete;
             sync__from_gostdlib.Mutex.Unlock(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mu);
             let __gotots_logical_result_0 = !deleted;
             if (__gotots_logical_result_0) {
@@ -1235,13 +1164,14 @@ export class SyncMap<K, V> {
             const __gotots_callee_1 = fn;
             const __gotots_argument_1 = { value: SyncMapEntry.$fromStorage<K, V>({
                     m: m,
-                    mapEntry: mapEntry.$storageOf<K, V>(mapEntry.$fromStorage<K, V>({
-                        key: $go$to_storage$T0_to_T0($go$copy$T0_to_T0(key)),
-                        original: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(value)),
-                        value: $go$to_storage$T1_to_T1($go$copy$T1_to_T1(value)),
-                        dirty: false,
-                        __go_delete: false
-                    })),
+                    mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                        {
+                            key: $go$to_storage$T0_to_T0($go$copy$T0_to_T0(key)),
+                            original: $go$to_storage$T1_to_T1(value),
+                            value: $go$to_storage$T1_to_T1(value),
+                            dirty: false,
+                            __go_delete: false
+                        })),
                     mu: named_sync.SyncMutexOperations.$zero(),
                     proxyFor: void 0
                 }) };
@@ -1284,23 +1214,7 @@ export class SyncMap<K, V> {
             value: SyncMapEntry<K, V>;
         } | undefined>, SyncMap__from_collections<K, {
             value: SyncMapEntry<K, V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "dirty"), ($go$storage: SyncMap__from_collections$Storage<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined>): SyncMap__from_collections<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<K, {
-                value: SyncMapEntry<K, V>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined>): SyncMap__from_collections$Storage<K, {
-            value: SyncMapEntry<K, V>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<K, {
-                value: SyncMapEntry<K, V>;
-            } | undefined>($go$value);
-        }), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, (key: K, entry: {
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$copy$T0_to_T0, $go$interface_assert$Interface_void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, $go$interface_assert$Interface_void_to_T0, $go$zero$void_to_T0, $go$zero$void_to_PointerTo_Named_dirty$SyncMapEntryOf_T0_And_T1, (key: K, entry: {
             value: SyncMapEntry<K, V>;
         } | undefined): bool => {
             let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
@@ -1314,18 +1228,21 @@ export class SyncMap<K, V> {
                         __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                             recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                         };
-                        if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
+                        if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).__go_delete) {
                             const __gotots_callee_7 = ensureCloned;
                             (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))();
                             if (!(FinalizationHooks.$storageOf(hooks).OnDelete === undefined)) {
                                 const __gotots_callee_8 = FinalizationHooks.$storageOf(hooks).OnDelete;
                                 const __gotots_argument_7 = $go$copy$T0_to_T0(key);
-                                const __gotots_argument_8 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                                const __gotots_argument_8 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                    SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                                 (__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_7, __gotots_argument_8);
                             }
                             result.delete(key);
                         }
-                        else if (mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
+                        else if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).dirty) {
                             const __gotots_callee_9 = ensureCloned;
                             (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))();
                             if (!(FinalizationHooks.$storageOf(hooks).OnChange === undefined) || !(FinalizationHooks.$storageOf(hooks).OnAdd === undefined)) {
@@ -1336,20 +1253,24 @@ export class SyncMap<K, V> {
                                         if (!(FinalizationHooks.$storageOf(hooks).OnChange === undefined)) {
                                             const __gotots_callee_10 = FinalizationHooks.$storageOf(hooks).OnChange;
                                             const __gotots_argument_9 = $go$copy$T0_to_T0(key);
-                                            const __gotots_argument_10 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).original));
-                                            const __gotots_argument_11 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                                            const __gotots_argument_10 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                                SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).original));
+                                            const __gotots_argument_11 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                                SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                                             (__gotots_callee_10 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_9, __gotots_argument_10, __gotots_argument_11);
                                         }
                                     }
                                     else if (!(FinalizationHooks.$storageOf(hooks).OnAdd === undefined)) {
                                         const __gotots_callee_11 = FinalizationHooks.$storageOf(hooks).OnAdd;
                                         const __gotots_argument_12 = $go$copy$T0_to_T0(key);
-                                        const __gotots_argument_13 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                                        const __gotots_argument_13 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                            SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                                         (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_12, __gotots_argument_13);
                                     }
                                 }
                             }
-                            result.store(key, $go$from_storage$T1_to_T1(mapEntry.$storageOf(mapEntry.$fromStorage<K, V>(SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
+                            result.store(key, $go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                                SyncMapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).mapEntry)).value));
                         }
                         __gotots_return_0 = true;
                         break __gotots_return_block_0;

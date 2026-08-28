@@ -476,7 +476,9 @@ export class exportExtractor {
             let decl: {
                 value: ModuleDeclaration__from_ast;
             } | undefined = __gotots_range_value_7;
-            let name = LiteralLikeNodeBase__from_ast.$storageOf(LiteralLikeNodeBase__from_ast.$fromStorage(LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$fromStorage(StringLiteral__from_ast.$storageOf(((Node__from_ast.AsStringLiteral(ModuleDeclaration__from_ast.Name(decl)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
+            let name = (void LiteralLikeNodeBase__from_ast.$storageOf, (void LiteralLikeNodeBase__from_ast.$fromStorage,
+                (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
+                    StringLiteral__from_ast.$storageOf(((Node__from_ast.AsStringLiteral(ModuleDeclaration__from_ast.Name(decl)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
             let moduleID__shadow_1 = new ModuleID(name);
             let moduleFileName = "";
             if (IsExternalModuleNameRelative__from_tspath(name)) {

@@ -24,11 +24,7 @@ export function IsApplicableVersionedTypesKey(key: gostring): bool {
     if (!ok) {
         return false;
     }
-    return VersionRange__from_semver.Test(range_, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), ($go$storage: Version__from_semver$Storage): Version__from_semver => {
-        return Version__from_semver.$fromStorage($go$storage);
-    }, ($go$value: Version__from_semver): Version__from_semver$Storage => {
-        return Version__from_semver.$storageOf($go$value);
-    }));
+    return VersionRange__from_semver.Test(range_, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), Version__from_semver.$fromStorage, Version__from_semver.$storageOf));
 }
 export function ParseNodeModuleFromPath(resolved__shadow_1: gostring, isFolder: bool): gostring {
     let path = NormalizePath__from_tspath(resolved__shadow_1);

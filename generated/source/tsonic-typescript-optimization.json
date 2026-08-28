@@ -2486,8 +2486,8 @@
     ],
     "projectionCallables": {
       "candidateCount": 12388,
-      "optimizedCount": 16,
-      "retainedCount": 12372,
+      "optimizedCount": 12386,
+      "retainedCount": 2,
       "fallbackReasons": [
         {
           "reason": "open-call",
@@ -2505,68 +2505,6 @@
               "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/packagejson/expected.ts",
               "start": 7907,
               "end": 8005,
-              "syntaxKind": "KindArrowFunction"
-            }
-          ]
-        },
-        {
-          "reason": "unstable-binding",
-          "count": 12370,
-          "examples": [
-            {
-              "kind": "authored",
-              "documentIdentity": "implementations/tsts/core-hotpaths.ts",
-              "start": 3388,
-              "end": 3428,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "implementations/tsts/core-hotpaths.ts",
-              "start": 3430,
-              "end": 3464,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
-              "start": 6565,
-              "end": 6731,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
-              "start": 6733,
-              "end": 6893,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
-              "start": 11624,
-              "end": 11790,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
-              "start": 11792,
-              "end": 11952,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-              "start": 31505,
-              "end": 31663,
-              "syntaxKind": "KindArrowFunction"
-            },
-            {
-              "kind": "authored",
-              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-              "start": 31665,
-              "end": 31817,
               "syntaxKind": "KindArrowFunction"
             }
           ]
@@ -2906,12 +2844,74 @@
     "profile": "closed-direct",
     "identityCandidateCount": 1771,
     "inverseCandidateCount": 54031,
-    "optimizedCount": 71,
-    "retainedCount": 55731,
+    "optimizedCount": 19142,
+    "retainedCount": 36660,
     "fallbackReasons": [
       {
         "reason": "unstable-binding",
-        "count": 55476,
+        "count": 1708,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 1203393,
+            "end": 1203464,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 391127,
+            "end": 391199,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 391373,
+            "end": 391478,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 391836,
+            "end": 391908,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 392138,
+            "end": 392210,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 392262,
+            "end": 392328,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+            "start": 392725,
+            "end": 392788,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/view.ts",
+            "start": 20239,
+            "end": 20380,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "unpaired-projection",
+        "count": 34952,
         "examples": [
           {
             "kind": "authored",
@@ -2970,83 +2970,21 @@
             "syntaxKind": "KindCallExpression"
           }
         ]
-      },
-      {
-        "reason": "unpaired-projection",
-        "count": 255,
-        "examples": [
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 139047,
-            "end": 139076,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 139821,
-            "end": 139854,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 149828,
-            "end": 149848,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 149855,
-            "end": 149875,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 150567,
-            "end": 150602,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
-            "start": 151251,
-            "end": 151286,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
-            "start": 18169,
-            "end": 18194,
-            "syntaxKind": "KindCallExpression"
-          },
-          {
-            "kind": "authored",
-            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
-            "start": 20223,
-            "end": 20248,
-            "syntaxKind": "KindCallExpression"
-          }
-        ]
       }
     ],
     "storedFlows": {
-      "flowCount": 0,
-      "constructionCount": 0,
-      "projectionCount": 0
+      "flowCount": 2,
+      "constructionCount": 2,
+      "projectionCount": 4
     },
     "identityCallables": {
-      "candidateCount": 429,
-      "optimizedCount": 55,
-      "retainedCount": 374,
+      "candidateCount": 1152,
+      "optimizedCount": 103,
+      "retainedCount": 1049,
       "fallbackReasons": [
         {
           "reason": "nonidentity-contract",
-          "count": 298,
+          "count": 798,
           "examples": [
             {
               "kind": "authored",
@@ -3108,7 +3046,7 @@
         },
         {
           "reason": "open-parameter-use",
-          "count": 41,
+          "count": 168,
           "examples": [
             {
               "kind": "authored",
@@ -3147,30 +3085,30 @@
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/multimap.ts",
-              "start": 6211,
-              "end": 6242,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/utilities.ts",
+              "start": 90057,
+              "end": 90175,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
-              "start": 30429,
-              "end": 30460,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/utilities.ts",
+              "start": 90177,
+              "end": 90208,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
-              "start": 30462,
-              "end": 30493,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/cow.ts",
+              "start": 2731,
+              "end": 2819,
               "syntaxKind": "KindParameter"
             }
           ]
         },
         {
           "reason": "nonidentity-input",
-          "count": 35,
+          "count": 83,
           "examples": [
             {
               "kind": "authored",
@@ -3188,44 +3126,44 @@
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 10567,
-              "end": 10598,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/cow.ts",
+              "start": 2240,
+              "end": 2271,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 10600,
-              "end": 10631,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/multimap.ts",
+              "start": 1480,
+              "end": 1511,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 12497,
-              "end": 12528,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 6194,
+              "end": 6225,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 14587,
-              "end": 14618,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 9968,
+              "end": 9999,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 20445,
-              "end": 20476,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 10001,
+              "end": 10032,
               "syntaxKind": "KindParameter"
             },
             {
               "kind": "authored",
-              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
-              "start": 24487,
-              "end": 24518,
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 11483,
+              "end": 11514,
               "syntaxKind": "KindParameter"
             }
           ]

@@ -27,11 +27,7 @@ export function Arena$New$Named_ast$ArrayTypeNode($argument0: tsonicTypeScriptRu
     }, ($argument0: ArrayTypeNode__from_ast$Storage): ArrayTypeNode__from_ast => {
         return ArrayTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ArrayTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ArrayTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ArrayTypeNode__from_ast$Storage, ArrayTypeNode__from_ast>(goSliceAddress<ArrayTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: ArrayTypeNode__from_ast$Storage): ArrayTypeNode__from_ast => {
-            return ArrayTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ArrayTypeNode__from_ast): ArrayTypeNode__from_ast$Storage => {
-            return ArrayTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ArrayTypeNode__from_ast$Storage, ArrayTypeNode__from_ast>(goSliceAddress<ArrayTypeNode__from_ast$Storage>($argument0, $argument1), ArrayTypeNode__from_ast.$fromStorage, ArrayTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ArrayTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ArrayTypeNode__from_ast): ArrayTypeNode__from_ast$Storage => {
@@ -50,11 +46,7 @@ export function Arena$New$Named_ast$BinaryExpression($argument0: tsonicTypeScrip
     }, ($argument0: BinaryExpression__from_ast$Storage): BinaryExpression__from_ast => {
         return BinaryExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<BinaryExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<BinaryExpression__from_ast$Storage, BinaryExpression__from_ast>(goSliceAddress<BinaryExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: BinaryExpression__from_ast$Storage): BinaryExpression__from_ast => {
-            return BinaryExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: BinaryExpression__from_ast): BinaryExpression__from_ast$Storage => {
-            return BinaryExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<BinaryExpression__from_ast$Storage, BinaryExpression__from_ast>(goSliceAddress<BinaryExpression__from_ast$Storage>($argument0, $argument1), BinaryExpression__from_ast.$fromStorage, BinaryExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<BinaryExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: BinaryExpression__from_ast): BinaryExpression__from_ast$Storage => {
@@ -73,11 +65,7 @@ export function Arena$New$Named_ast$Block($argument0: tsonicTypeScriptRuntime.Lo
     }, ($argument0: Block__from_ast$Storage): Block__from_ast => {
         return Block__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Block__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Block__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Block__from_ast$Storage, Block__from_ast>(goSliceAddress<Block__from_ast$Storage>($argument0, $argument1), ($go$storage: Block__from_ast$Storage): Block__from_ast => {
-            return Block__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Block__from_ast): Block__from_ast$Storage => {
-            return Block__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Block__from_ast$Storage, Block__from_ast>(goSliceAddress<Block__from_ast$Storage>($argument0, $argument1), Block__from_ast.$fromStorage, Block__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<Block__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Block__from_ast): Block__from_ast$Storage => {
@@ -96,11 +84,7 @@ export function Arena$New$Named_ast$CallExpression($argument0: tsonicTypeScriptR
     }, ($argument0: CallExpression__from_ast$Storage): CallExpression__from_ast => {
         return CallExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<CallExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<CallExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<CallExpression__from_ast$Storage, CallExpression__from_ast>(goSliceAddress<CallExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: CallExpression__from_ast$Storage): CallExpression__from_ast => {
-            return CallExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CallExpression__from_ast): CallExpression__from_ast$Storage => {
-            return CallExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<CallExpression__from_ast$Storage, CallExpression__from_ast>(goSliceAddress<CallExpression__from_ast$Storage>($argument0, $argument1), CallExpression__from_ast.$fromStorage, CallExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<CallExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: CallExpression__from_ast): CallExpression__from_ast$Storage => {
@@ -119,11 +103,7 @@ export function Arena$New$Named_ast$ConditionalExpression($argument0: tsonicType
     }, ($argument0: ConditionalExpression__from_ast$Storage): ConditionalExpression__from_ast => {
         return ConditionalExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ConditionalExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ConditionalExpression__from_ast$Storage, ConditionalExpression__from_ast>(goSliceAddress<ConditionalExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: ConditionalExpression__from_ast$Storage): ConditionalExpression__from_ast => {
-            return ConditionalExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ConditionalExpression__from_ast): ConditionalExpression__from_ast$Storage => {
-            return ConditionalExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ConditionalExpression__from_ast$Storage, ConditionalExpression__from_ast>(goSliceAddress<ConditionalExpression__from_ast$Storage>($argument0, $argument1), ConditionalExpression__from_ast.$fromStorage, ConditionalExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ConditionalExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ConditionalExpression__from_ast): ConditionalExpression__from_ast$Storage => {
@@ -142,11 +122,7 @@ export function Arena$New$Named_ast$ConstructSignatureDeclaration($argument0: ts
     }, ($argument0: ConstructSignatureDeclaration__from_ast$Storage): ConstructSignatureDeclaration__from_ast => {
         return ConstructSignatureDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ConstructSignatureDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ConstructSignatureDeclaration__from_ast$Storage, ConstructSignatureDeclaration__from_ast>(goSliceAddress<ConstructSignatureDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: ConstructSignatureDeclaration__from_ast$Storage): ConstructSignatureDeclaration__from_ast => {
-            return ConstructSignatureDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ConstructSignatureDeclaration__from_ast): ConstructSignatureDeclaration__from_ast$Storage => {
-            return ConstructSignatureDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ConstructSignatureDeclaration__from_ast$Storage, ConstructSignatureDeclaration__from_ast>(goSliceAddress<ConstructSignatureDeclaration__from_ast$Storage>($argument0, $argument1), ConstructSignatureDeclaration__from_ast.$fromStorage, ConstructSignatureDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ConstructSignatureDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ConstructSignatureDeclaration__from_ast): ConstructSignatureDeclaration__from_ast$Storage => {
@@ -165,11 +141,7 @@ export function Arena$New$Named_ast$ElementAccessExpression($argument0: tsonicTy
     }, ($argument0: ElementAccessExpression__from_ast$Storage): ElementAccessExpression__from_ast => {
         return ElementAccessExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ElementAccessExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ElementAccessExpression__from_ast$Storage, ElementAccessExpression__from_ast>(goSliceAddress<ElementAccessExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: ElementAccessExpression__from_ast$Storage): ElementAccessExpression__from_ast => {
-            return ElementAccessExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ElementAccessExpression__from_ast): ElementAccessExpression__from_ast$Storage => {
-            return ElementAccessExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ElementAccessExpression__from_ast$Storage, ElementAccessExpression__from_ast>(goSliceAddress<ElementAccessExpression__from_ast$Storage>($argument0, $argument1), ElementAccessExpression__from_ast.$fromStorage, ElementAccessExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ElementAccessExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ElementAccessExpression__from_ast): ElementAccessExpression__from_ast$Storage => {
@@ -188,11 +160,7 @@ export function Arena$New$Named_ast$ExpressionStatement($argument0: tsonicTypeSc
     }, ($argument0: ExpressionStatement__from_ast$Storage): ExpressionStatement__from_ast => {
         return ExpressionStatement__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ExpressionStatement__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ExpressionStatement__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ExpressionStatement__from_ast$Storage, ExpressionStatement__from_ast>(goSliceAddress<ExpressionStatement__from_ast$Storage>($argument0, $argument1), ($go$storage: ExpressionStatement__from_ast$Storage): ExpressionStatement__from_ast => {
-            return ExpressionStatement__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionStatement__from_ast): ExpressionStatement__from_ast$Storage => {
-            return ExpressionStatement__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ExpressionStatement__from_ast$Storage, ExpressionStatement__from_ast>(goSliceAddress<ExpressionStatement__from_ast$Storage>($argument0, $argument1), ExpressionStatement__from_ast.$fromStorage, ExpressionStatement__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ExpressionStatement__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ExpressionStatement__from_ast): ExpressionStatement__from_ast$Storage => {
@@ -211,11 +179,7 @@ export function Arena$New$Named_ast$ExpressionWithTypeArguments($argument0: tson
     }, ($argument0: ExpressionWithTypeArguments__from_ast$Storage): ExpressionWithTypeArguments__from_ast => {
         return ExpressionWithTypeArguments__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ExpressionWithTypeArguments__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ExpressionWithTypeArguments__from_ast$Storage, ExpressionWithTypeArguments__from_ast>(goSliceAddress<ExpressionWithTypeArguments__from_ast$Storage>($argument0, $argument1), ($go$storage: ExpressionWithTypeArguments__from_ast$Storage): ExpressionWithTypeArguments__from_ast => {
-            return ExpressionWithTypeArguments__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionWithTypeArguments__from_ast): ExpressionWithTypeArguments__from_ast$Storage => {
-            return ExpressionWithTypeArguments__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ExpressionWithTypeArguments__from_ast$Storage, ExpressionWithTypeArguments__from_ast>(goSliceAddress<ExpressionWithTypeArguments__from_ast$Storage>($argument0, $argument1), ExpressionWithTypeArguments__from_ast.$fromStorage, ExpressionWithTypeArguments__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ExpressionWithTypeArguments__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ExpressionWithTypeArguments__from_ast): ExpressionWithTypeArguments__from_ast$Storage => {
@@ -234,11 +198,7 @@ export function Arena$New$Named_ast$FlowList($argument0: tsonicTypeScriptRuntime
     }, ($argument0: FlowList__from_ast$Storage): FlowList__from_ast => {
         return FlowList__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<FlowList__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<FlowList__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<FlowList__from_ast$Storage, FlowList__from_ast>(goSliceAddress<FlowList__from_ast$Storage>($argument0, $argument1), ($go$storage: FlowList__from_ast$Storage): FlowList__from_ast => {
-            return FlowList__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowList__from_ast): FlowList__from_ast$Storage => {
-            return FlowList__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<FlowList__from_ast$Storage, FlowList__from_ast>(goSliceAddress<FlowList__from_ast$Storage>($argument0, $argument1), FlowList__from_ast.$fromStorage, FlowList__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<FlowList__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: FlowList__from_ast): FlowList__from_ast$Storage => {
@@ -257,11 +217,7 @@ export function Arena$New$Named_ast$FlowNode($argument0: tsonicTypeScriptRuntime
     }, ($argument0: FlowNode__from_ast$Storage): FlowNode__from_ast => {
         return FlowNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<FlowNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<FlowNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<FlowNode__from_ast$Storage, FlowNode__from_ast>(goSliceAddress<FlowNode__from_ast$Storage>($argument0, $argument1), ($go$storage: FlowNode__from_ast$Storage): FlowNode__from_ast => {
-            return FlowNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNode__from_ast): FlowNode__from_ast$Storage => {
-            return FlowNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<FlowNode__from_ast$Storage, FlowNode__from_ast>(goSliceAddress<FlowNode__from_ast$Storage>($argument0, $argument1), FlowNode__from_ast.$fromStorage, FlowNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<FlowNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: FlowNode__from_ast): FlowNode__from_ast$Storage => {
@@ -280,11 +236,7 @@ export function Arena$New$Named_ast$FunctionDeclaration($argument0: tsonicTypeSc
     }, ($argument0: FunctionDeclaration__from_ast$Storage): FunctionDeclaration__from_ast => {
         return FunctionDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<FunctionDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<FunctionDeclaration__from_ast$Storage, FunctionDeclaration__from_ast>(goSliceAddress<FunctionDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: FunctionDeclaration__from_ast$Storage): FunctionDeclaration__from_ast => {
-            return FunctionDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionDeclaration__from_ast): FunctionDeclaration__from_ast$Storage => {
-            return FunctionDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<FunctionDeclaration__from_ast$Storage, FunctionDeclaration__from_ast>(goSliceAddress<FunctionDeclaration__from_ast$Storage>($argument0, $argument1), FunctionDeclaration__from_ast.$fromStorage, FunctionDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<FunctionDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: FunctionDeclaration__from_ast): FunctionDeclaration__from_ast$Storage => {
@@ -303,11 +255,7 @@ export function Arena$New$Named_ast$FunctionTypeNode($argument0: tsonicTypeScrip
     }, ($argument0: FunctionTypeNode__from_ast$Storage): FunctionTypeNode__from_ast => {
         return FunctionTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<FunctionTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<FunctionTypeNode__from_ast$Storage, FunctionTypeNode__from_ast>(goSliceAddress<FunctionTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: FunctionTypeNode__from_ast$Storage): FunctionTypeNode__from_ast => {
-            return FunctionTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionTypeNode__from_ast): FunctionTypeNode__from_ast$Storage => {
-            return FunctionTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<FunctionTypeNode__from_ast$Storage, FunctionTypeNode__from_ast>(goSliceAddress<FunctionTypeNode__from_ast$Storage>($argument0, $argument1), FunctionTypeNode__from_ast.$fromStorage, FunctionTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<FunctionTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: FunctionTypeNode__from_ast): FunctionTypeNode__from_ast$Storage => {
@@ -326,11 +274,7 @@ export function Arena$New$Named_ast$HeritageClause($argument0: tsonicTypeScriptR
     }, ($argument0: HeritageClause__from_ast$Storage): HeritageClause__from_ast => {
         return HeritageClause__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<HeritageClause__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<HeritageClause__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<HeritageClause__from_ast$Storage, HeritageClause__from_ast>(goSliceAddress<HeritageClause__from_ast$Storage>($argument0, $argument1), ($go$storage: HeritageClause__from_ast$Storage): HeritageClause__from_ast => {
-            return HeritageClause__from_ast.$fromStorage($go$storage);
-        }, ($go$value: HeritageClause__from_ast): HeritageClause__from_ast$Storage => {
-            return HeritageClause__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<HeritageClause__from_ast$Storage, HeritageClause__from_ast>(goSliceAddress<HeritageClause__from_ast$Storage>($argument0, $argument1), HeritageClause__from_ast.$fromStorage, HeritageClause__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<HeritageClause__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: HeritageClause__from_ast): HeritageClause__from_ast$Storage => {
@@ -349,11 +293,7 @@ export function Arena$New$Named_ast$Identifier($argument0: tsonicTypeScriptRunti
     }, ($argument0: Identifier__from_ast$Storage): Identifier__from_ast => {
         return Identifier__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Identifier__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Identifier__from_ast$Storage, Identifier__from_ast>(goSliceAddress<Identifier__from_ast$Storage>($argument0, $argument1), ($go$storage: Identifier__from_ast$Storage): Identifier__from_ast => {
-            return Identifier__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Identifier__from_ast): Identifier__from_ast$Storage => {
-            return Identifier__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Identifier__from_ast$Storage, Identifier__from_ast>(goSliceAddress<Identifier__from_ast$Storage>($argument0, $argument1), Identifier__from_ast.$fromStorage, Identifier__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<Identifier__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Identifier__from_ast): Identifier__from_ast$Storage => {
@@ -372,11 +312,7 @@ export function Arena$New$Named_ast$IfStatement($argument0: tsonicTypeScriptRunt
     }, ($argument0: IfStatement__from_ast$Storage): IfStatement__from_ast => {
         return IfStatement__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<IfStatement__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<IfStatement__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<IfStatement__from_ast$Storage, IfStatement__from_ast>(goSliceAddress<IfStatement__from_ast$Storage>($argument0, $argument1), ($go$storage: IfStatement__from_ast$Storage): IfStatement__from_ast => {
-            return IfStatement__from_ast.$fromStorage($go$storage);
-        }, ($go$value: IfStatement__from_ast): IfStatement__from_ast$Storage => {
-            return IfStatement__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<IfStatement__from_ast$Storage, IfStatement__from_ast>(goSliceAddress<IfStatement__from_ast$Storage>($argument0, $argument1), IfStatement__from_ast.$fromStorage, IfStatement__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<IfStatement__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: IfStatement__from_ast): IfStatement__from_ast$Storage => {
@@ -395,11 +331,7 @@ export function Arena$New$Named_ast$ImportSpecifier($argument0: tsonicTypeScript
     }, ($argument0: ImportSpecifier__from_ast$Storage): ImportSpecifier__from_ast => {
         return ImportSpecifier__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ImportSpecifier__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ImportSpecifier__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ImportSpecifier__from_ast$Storage, ImportSpecifier__from_ast>(goSliceAddress<ImportSpecifier__from_ast$Storage>($argument0, $argument1), ($go$storage: ImportSpecifier__from_ast$Storage): ImportSpecifier__from_ast => {
-            return ImportSpecifier__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ImportSpecifier__from_ast): ImportSpecifier__from_ast$Storage => {
-            return ImportSpecifier__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ImportSpecifier__from_ast$Storage, ImportSpecifier__from_ast>(goSliceAddress<ImportSpecifier__from_ast$Storage>($argument0, $argument1), ImportSpecifier__from_ast.$fromStorage, ImportSpecifier__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ImportSpecifier__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ImportSpecifier__from_ast): ImportSpecifier__from_ast$Storage => {
@@ -418,11 +350,7 @@ export function Arena$New$Named_ast$IndexedAccessTypeNode($argument0: tsonicType
     }, ($argument0: IndexedAccessTypeNode__from_ast$Storage): IndexedAccessTypeNode__from_ast => {
         return IndexedAccessTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<IndexedAccessTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<IndexedAccessTypeNode__from_ast$Storage, IndexedAccessTypeNode__from_ast>(goSliceAddress<IndexedAccessTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: IndexedAccessTypeNode__from_ast$Storage): IndexedAccessTypeNode__from_ast => {
-            return IndexedAccessTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: IndexedAccessTypeNode__from_ast): IndexedAccessTypeNode__from_ast$Storage => {
-            return IndexedAccessTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<IndexedAccessTypeNode__from_ast$Storage, IndexedAccessTypeNode__from_ast>(goSliceAddress<IndexedAccessTypeNode__from_ast$Storage>($argument0, $argument1), IndexedAccessTypeNode__from_ast.$fromStorage, IndexedAccessTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<IndexedAccessTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: IndexedAccessTypeNode__from_ast): IndexedAccessTypeNode__from_ast$Storage => {
@@ -441,11 +369,7 @@ export function Arena$New$Named_ast$InterfaceDeclaration($argument0: tsonicTypeS
     }, ($argument0: InterfaceDeclaration__from_ast$Storage): InterfaceDeclaration__from_ast => {
         return InterfaceDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<InterfaceDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<InterfaceDeclaration__from_ast$Storage, InterfaceDeclaration__from_ast>(goSliceAddress<InterfaceDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: InterfaceDeclaration__from_ast$Storage): InterfaceDeclaration__from_ast => {
-            return InterfaceDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: InterfaceDeclaration__from_ast): InterfaceDeclaration__from_ast$Storage => {
-            return InterfaceDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<InterfaceDeclaration__from_ast$Storage, InterfaceDeclaration__from_ast>(goSliceAddress<InterfaceDeclaration__from_ast$Storage>($argument0, $argument1), InterfaceDeclaration__from_ast.$fromStorage, InterfaceDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<InterfaceDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: InterfaceDeclaration__from_ast): InterfaceDeclaration__from_ast$Storage => {
@@ -464,11 +388,7 @@ export function Arena$New$Named_ast$IntersectionTypeNode($argument0: tsonicTypeS
     }, ($argument0: IntersectionTypeNode__from_ast$Storage): IntersectionTypeNode__from_ast => {
         return IntersectionTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<IntersectionTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<IntersectionTypeNode__from_ast$Storage, IntersectionTypeNode__from_ast>(goSliceAddress<IntersectionTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: IntersectionTypeNode__from_ast$Storage): IntersectionTypeNode__from_ast => {
-            return IntersectionTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: IntersectionTypeNode__from_ast): IntersectionTypeNode__from_ast$Storage => {
-            return IntersectionTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<IntersectionTypeNode__from_ast$Storage, IntersectionTypeNode__from_ast>(goSliceAddress<IntersectionTypeNode__from_ast$Storage>($argument0, $argument1), IntersectionTypeNode__from_ast.$fromStorage, IntersectionTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<IntersectionTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: IntersectionTypeNode__from_ast): IntersectionTypeNode__from_ast$Storage => {
@@ -487,11 +407,7 @@ export function Arena$New$Named_ast$JSDoc($argument0: tsonicTypeScriptRuntime.Lo
     }, ($argument0: JSDoc__from_ast$Storage): JSDoc__from_ast => {
         return JSDoc__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JSDoc__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JSDoc__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JSDoc__from_ast$Storage, JSDoc__from_ast>(goSliceAddress<JSDoc__from_ast$Storage>($argument0, $argument1), ($go$storage: JSDoc__from_ast$Storage): JSDoc__from_ast => {
-            return JSDoc__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDoc__from_ast): JSDoc__from_ast$Storage => {
-            return JSDoc__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JSDoc__from_ast$Storage, JSDoc__from_ast>(goSliceAddress<JSDoc__from_ast$Storage>($argument0, $argument1), JSDoc__from_ast.$fromStorage, JSDoc__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<JSDoc__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: JSDoc__from_ast): JSDoc__from_ast$Storage => {
@@ -510,11 +426,7 @@ export function Arena$New$Named_ast$JSDocDeprecatedTag($argument0: tsonicTypeScr
     }, ($argument0: JSDocDeprecatedTag__from_ast$Storage): JSDocDeprecatedTag__from_ast => {
         return JSDocDeprecatedTag__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JSDocDeprecatedTag__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JSDocDeprecatedTag__from_ast$Storage, JSDocDeprecatedTag__from_ast>(goSliceAddress<JSDocDeprecatedTag__from_ast$Storage>($argument0, $argument1), ($go$storage: JSDocDeprecatedTag__from_ast$Storage): JSDocDeprecatedTag__from_ast => {
-            return JSDocDeprecatedTag__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocDeprecatedTag__from_ast): JSDocDeprecatedTag__from_ast$Storage => {
-            return JSDocDeprecatedTag__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JSDocDeprecatedTag__from_ast$Storage, JSDocDeprecatedTag__from_ast>(goSliceAddress<JSDocDeprecatedTag__from_ast$Storage>($argument0, $argument1), JSDocDeprecatedTag__from_ast.$fromStorage, JSDocDeprecatedTag__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<JSDocDeprecatedTag__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: JSDocDeprecatedTag__from_ast): JSDocDeprecatedTag__from_ast$Storage => {
@@ -533,11 +445,7 @@ export function Arena$New$Named_ast$JSDocText($argument0: tsonicTypeScriptRuntim
     }, ($argument0: JSDocText__from_ast$Storage): JSDocText__from_ast => {
         return JSDocText__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JSDocText__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JSDocText__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JSDocText__from_ast$Storage, JSDocText__from_ast>(goSliceAddress<JSDocText__from_ast$Storage>($argument0, $argument1), ($go$storage: JSDocText__from_ast$Storage): JSDocText__from_ast => {
-            return JSDocText__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocText__from_ast): JSDocText__from_ast$Storage => {
-            return JSDocText__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JSDocText__from_ast$Storage, JSDocText__from_ast>(goSliceAddress<JSDocText__from_ast$Storage>($argument0, $argument1), JSDocText__from_ast.$fromStorage, JSDocText__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<JSDocText__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: JSDocText__from_ast): JSDocText__from_ast$Storage => {
@@ -556,11 +464,7 @@ export function Arena$New$Named_ast$JSDocUnknownTag($argument0: tsonicTypeScript
     }, ($argument0: JSDocUnknownTag__from_ast$Storage): JSDocUnknownTag__from_ast => {
         return JSDocUnknownTag__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<JSDocUnknownTag__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<JSDocUnknownTag__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<JSDocUnknownTag__from_ast$Storage, JSDocUnknownTag__from_ast>(goSliceAddress<JSDocUnknownTag__from_ast$Storage>($argument0, $argument1), ($go$storage: JSDocUnknownTag__from_ast$Storage): JSDocUnknownTag__from_ast => {
-            return JSDocUnknownTag__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocUnknownTag__from_ast): JSDocUnknownTag__from_ast$Storage => {
-            return JSDocUnknownTag__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<JSDocUnknownTag__from_ast$Storage, JSDocUnknownTag__from_ast>(goSliceAddress<JSDocUnknownTag__from_ast$Storage>($argument0, $argument1), JSDocUnknownTag__from_ast.$fromStorage, JSDocUnknownTag__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<JSDocUnknownTag__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: JSDocUnknownTag__from_ast): JSDocUnknownTag__from_ast$Storage => {
@@ -579,11 +483,7 @@ export function Arena$New$Named_ast$KeywordExpression($argument0: tsonicTypeScri
     }, ($argument0: KeywordExpression__from_ast$Storage): KeywordExpression__from_ast => {
         return KeywordExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<KeywordExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<KeywordExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<KeywordExpression__from_ast$Storage, KeywordExpression__from_ast>(goSliceAddress<KeywordExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: KeywordExpression__from_ast$Storage): KeywordExpression__from_ast => {
-            return KeywordExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: KeywordExpression__from_ast): KeywordExpression__from_ast$Storage => {
-            return KeywordExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<KeywordExpression__from_ast$Storage, KeywordExpression__from_ast>(goSliceAddress<KeywordExpression__from_ast$Storage>($argument0, $argument1), KeywordExpression__from_ast.$fromStorage, KeywordExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<KeywordExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: KeywordExpression__from_ast): KeywordExpression__from_ast$Storage => {
@@ -602,11 +502,7 @@ export function Arena$New$Named_ast$KeywordTypeNode($argument0: tsonicTypeScript
     }, ($argument0: KeywordTypeNode__from_ast$Storage): KeywordTypeNode__from_ast => {
         return KeywordTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<KeywordTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<KeywordTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<KeywordTypeNode__from_ast$Storage, KeywordTypeNode__from_ast>(goSliceAddress<KeywordTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: KeywordTypeNode__from_ast$Storage): KeywordTypeNode__from_ast => {
-            return KeywordTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: KeywordTypeNode__from_ast): KeywordTypeNode__from_ast$Storage => {
-            return KeywordTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<KeywordTypeNode__from_ast$Storage, KeywordTypeNode__from_ast>(goSliceAddress<KeywordTypeNode__from_ast$Storage>($argument0, $argument1), KeywordTypeNode__from_ast.$fromStorage, KeywordTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<KeywordTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: KeywordTypeNode__from_ast): KeywordTypeNode__from_ast$Storage => {
@@ -625,11 +521,7 @@ export function Arena$New$Named_ast$LiteralTypeNode($argument0: tsonicTypeScript
     }, ($argument0: LiteralTypeNode__from_ast$Storage): LiteralTypeNode__from_ast => {
         return LiteralTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<LiteralTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<LiteralTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<LiteralTypeNode__from_ast$Storage, LiteralTypeNode__from_ast>(goSliceAddress<LiteralTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: LiteralTypeNode__from_ast$Storage): LiteralTypeNode__from_ast => {
-            return LiteralTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LiteralTypeNode__from_ast): LiteralTypeNode__from_ast$Storage => {
-            return LiteralTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<LiteralTypeNode__from_ast$Storage, LiteralTypeNode__from_ast>(goSliceAddress<LiteralTypeNode__from_ast$Storage>($argument0, $argument1), LiteralTypeNode__from_ast.$fromStorage, LiteralTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<LiteralTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: LiteralTypeNode__from_ast): LiteralTypeNode__from_ast$Storage => {
@@ -648,11 +540,7 @@ export function Arena$New$Named_ast$MethodSignatureDeclaration($argument0: tsoni
     }, ($argument0: MethodSignatureDeclaration__from_ast$Storage): MethodSignatureDeclaration__from_ast => {
         return MethodSignatureDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<MethodSignatureDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<MethodSignatureDeclaration__from_ast$Storage, MethodSignatureDeclaration__from_ast>(goSliceAddress<MethodSignatureDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: MethodSignatureDeclaration__from_ast$Storage): MethodSignatureDeclaration__from_ast => {
-            return MethodSignatureDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: MethodSignatureDeclaration__from_ast): MethodSignatureDeclaration__from_ast$Storage => {
-            return MethodSignatureDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<MethodSignatureDeclaration__from_ast$Storage, MethodSignatureDeclaration__from_ast>(goSliceAddress<MethodSignatureDeclaration__from_ast$Storage>($argument0, $argument1), MethodSignatureDeclaration__from_ast.$fromStorage, MethodSignatureDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<MethodSignatureDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: MethodSignatureDeclaration__from_ast): MethodSignatureDeclaration__from_ast$Storage => {
@@ -671,11 +559,7 @@ export function Arena$New$Named_ast$ModifierList($argument0: tsonicTypeScriptRun
     }, ($argument0: ModifierList__from_ast$Storage): ModifierList__from_ast => {
         return ModifierList__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ModifierList__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ModifierList__from_ast$Storage, ModifierList__from_ast>(goSliceAddress<ModifierList__from_ast$Storage>($argument0, $argument1), ($go$storage: ModifierList__from_ast$Storage): ModifierList__from_ast => {
-            return ModifierList__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifierList__from_ast): ModifierList__from_ast$Storage => {
-            return ModifierList__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ModifierList__from_ast$Storage, ModifierList__from_ast>(goSliceAddress<ModifierList__from_ast$Storage>($argument0, $argument1), ModifierList__from_ast.$fromStorage, ModifierList__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ModifierList__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ModifierList__from_ast): ModifierList__from_ast$Storage => {
@@ -694,11 +578,7 @@ export function Arena$New$Named_ast$NodeList($argument0: tsonicTypeScriptRuntime
     }, ($argument0: NodeList__from_ast$Storage): NodeList__from_ast => {
         return NodeList__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<NodeList__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(goSliceAddress<NodeList__from_ast$Storage>($argument0, $argument1), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-            return NodeList__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-            return NodeList__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(goSliceAddress<NodeList__from_ast$Storage>($argument0, $argument1), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<NodeList__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: NodeList__from_ast): NodeList__from_ast$Storage => {
@@ -717,11 +597,7 @@ export function Arena$New$Named_ast$NumericLiteral($argument0: tsonicTypeScriptR
     }, ($argument0: NumericLiteral__from_ast$Storage): NumericLiteral__from_ast => {
         return NumericLiteral__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<NumericLiteral__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<NumericLiteral__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<NumericLiteral__from_ast$Storage, NumericLiteral__from_ast>(goSliceAddress<NumericLiteral__from_ast$Storage>($argument0, $argument1), ($go$storage: NumericLiteral__from_ast$Storage): NumericLiteral__from_ast => {
-            return NumericLiteral__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NumericLiteral__from_ast): NumericLiteral__from_ast$Storage => {
-            return NumericLiteral__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<NumericLiteral__from_ast$Storage, NumericLiteral__from_ast>(goSliceAddress<NumericLiteral__from_ast$Storage>($argument0, $argument1), NumericLiteral__from_ast.$fromStorage, NumericLiteral__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<NumericLiteral__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: NumericLiteral__from_ast): NumericLiteral__from_ast$Storage => {
@@ -740,11 +616,7 @@ export function Arena$New$Named_ast$ParameterDeclaration($argument0: tsonicTypeS
     }, ($argument0: ParameterDeclaration__from_ast$Storage): ParameterDeclaration__from_ast => {
         return ParameterDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ParameterDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ParameterDeclaration__from_ast$Storage, ParameterDeclaration__from_ast>(goSliceAddress<ParameterDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: ParameterDeclaration__from_ast$Storage): ParameterDeclaration__from_ast => {
-            return ParameterDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ParameterDeclaration__from_ast): ParameterDeclaration__from_ast$Storage => {
-            return ParameterDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ParameterDeclaration__from_ast$Storage, ParameterDeclaration__from_ast>(goSliceAddress<ParameterDeclaration__from_ast$Storage>($argument0, $argument1), ParameterDeclaration__from_ast.$fromStorage, ParameterDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ParameterDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ParameterDeclaration__from_ast): ParameterDeclaration__from_ast$Storage => {
@@ -763,11 +635,7 @@ export function Arena$New$Named_ast$ParenthesizedExpression($argument0: tsonicTy
     }, ($argument0: ParenthesizedExpression__from_ast$Storage): ParenthesizedExpression__from_ast => {
         return ParenthesizedExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ParenthesizedExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ParenthesizedExpression__from_ast$Storage, ParenthesizedExpression__from_ast>(goSliceAddress<ParenthesizedExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: ParenthesizedExpression__from_ast$Storage): ParenthesizedExpression__from_ast => {
-            return ParenthesizedExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ParenthesizedExpression__from_ast): ParenthesizedExpression__from_ast$Storage => {
-            return ParenthesizedExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ParenthesizedExpression__from_ast$Storage, ParenthesizedExpression__from_ast>(goSliceAddress<ParenthesizedExpression__from_ast$Storage>($argument0, $argument1), ParenthesizedExpression__from_ast.$fromStorage, ParenthesizedExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ParenthesizedExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ParenthesizedExpression__from_ast): ParenthesizedExpression__from_ast$Storage => {
@@ -786,11 +654,7 @@ export function Arena$New$Named_ast$ParenthesizedTypeNode($argument0: tsonicType
     }, ($argument0: ParenthesizedTypeNode__from_ast$Storage): ParenthesizedTypeNode__from_ast => {
         return ParenthesizedTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ParenthesizedTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ParenthesizedTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ParenthesizedTypeNode__from_ast$Storage, ParenthesizedTypeNode__from_ast>(goSliceAddress<ParenthesizedTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: ParenthesizedTypeNode__from_ast$Storage): ParenthesizedTypeNode__from_ast => {
-            return ParenthesizedTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ParenthesizedTypeNode__from_ast): ParenthesizedTypeNode__from_ast$Storage => {
-            return ParenthesizedTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ParenthesizedTypeNode__from_ast$Storage, ParenthesizedTypeNode__from_ast>(goSliceAddress<ParenthesizedTypeNode__from_ast$Storage>($argument0, $argument1), ParenthesizedTypeNode__from_ast.$fromStorage, ParenthesizedTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ParenthesizedTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ParenthesizedTypeNode__from_ast): ParenthesizedTypeNode__from_ast$Storage => {
@@ -809,11 +673,7 @@ export function Arena$New$Named_ast$PrefixUnaryExpression($argument0: tsonicType
     }, ($argument0: PrefixUnaryExpression__from_ast$Storage): PrefixUnaryExpression__from_ast => {
         return PrefixUnaryExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<PrefixUnaryExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<PrefixUnaryExpression__from_ast$Storage, PrefixUnaryExpression__from_ast>(goSliceAddress<PrefixUnaryExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: PrefixUnaryExpression__from_ast$Storage): PrefixUnaryExpression__from_ast => {
-            return PrefixUnaryExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PrefixUnaryExpression__from_ast): PrefixUnaryExpression__from_ast$Storage => {
-            return PrefixUnaryExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<PrefixUnaryExpression__from_ast$Storage, PrefixUnaryExpression__from_ast>(goSliceAddress<PrefixUnaryExpression__from_ast$Storage>($argument0, $argument1), PrefixUnaryExpression__from_ast.$fromStorage, PrefixUnaryExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<PrefixUnaryExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: PrefixUnaryExpression__from_ast): PrefixUnaryExpression__from_ast$Storage => {
@@ -832,11 +692,7 @@ export function Arena$New$Named_ast$PropertyAccessExpression($argument0: tsonicT
     }, ($argument0: PropertyAccessExpression__from_ast$Storage): PropertyAccessExpression__from_ast => {
         return PropertyAccessExpression__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<PropertyAccessExpression__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<PropertyAccessExpression__from_ast$Storage, PropertyAccessExpression__from_ast>(goSliceAddress<PropertyAccessExpression__from_ast$Storage>($argument0, $argument1), ($go$storage: PropertyAccessExpression__from_ast$Storage): PropertyAccessExpression__from_ast => {
-            return PropertyAccessExpression__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PropertyAccessExpression__from_ast): PropertyAccessExpression__from_ast$Storage => {
-            return PropertyAccessExpression__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<PropertyAccessExpression__from_ast$Storage, PropertyAccessExpression__from_ast>(goSliceAddress<PropertyAccessExpression__from_ast$Storage>($argument0, $argument1), PropertyAccessExpression__from_ast.$fromStorage, PropertyAccessExpression__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<PropertyAccessExpression__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: PropertyAccessExpression__from_ast): PropertyAccessExpression__from_ast$Storage => {
@@ -855,11 +711,7 @@ export function Arena$New$Named_ast$PropertyAssignment($argument0: tsonicTypeScr
     }, ($argument0: PropertyAssignment__from_ast$Storage): PropertyAssignment__from_ast => {
         return PropertyAssignment__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<PropertyAssignment__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<PropertyAssignment__from_ast$Storage, PropertyAssignment__from_ast>(goSliceAddress<PropertyAssignment__from_ast$Storage>($argument0, $argument1), ($go$storage: PropertyAssignment__from_ast$Storage): PropertyAssignment__from_ast => {
-            return PropertyAssignment__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PropertyAssignment__from_ast): PropertyAssignment__from_ast$Storage => {
-            return PropertyAssignment__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<PropertyAssignment__from_ast$Storage, PropertyAssignment__from_ast>(goSliceAddress<PropertyAssignment__from_ast$Storage>($argument0, $argument1), PropertyAssignment__from_ast.$fromStorage, PropertyAssignment__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<PropertyAssignment__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: PropertyAssignment__from_ast): PropertyAssignment__from_ast$Storage => {
@@ -878,11 +730,7 @@ export function Arena$New$Named_ast$PropertySignatureDeclaration($argument0: tso
     }, ($argument0: PropertySignatureDeclaration__from_ast$Storage): PropertySignatureDeclaration__from_ast => {
         return PropertySignatureDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<PropertySignatureDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<PropertySignatureDeclaration__from_ast$Storage, PropertySignatureDeclaration__from_ast>(goSliceAddress<PropertySignatureDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: PropertySignatureDeclaration__from_ast$Storage): PropertySignatureDeclaration__from_ast => {
-            return PropertySignatureDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PropertySignatureDeclaration__from_ast): PropertySignatureDeclaration__from_ast$Storage => {
-            return PropertySignatureDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<PropertySignatureDeclaration__from_ast$Storage, PropertySignatureDeclaration__from_ast>(goSliceAddress<PropertySignatureDeclaration__from_ast$Storage>($argument0, $argument1), PropertySignatureDeclaration__from_ast.$fromStorage, PropertySignatureDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<PropertySignatureDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: PropertySignatureDeclaration__from_ast): PropertySignatureDeclaration__from_ast$Storage => {
@@ -901,11 +749,7 @@ export function Arena$New$Named_ast$ReturnStatement($argument0: tsonicTypeScript
     }, ($argument0: ReturnStatement__from_ast$Storage): ReturnStatement__from_ast => {
         return ReturnStatement__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<ReturnStatement__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<ReturnStatement__from_ast$Storage, ReturnStatement__from_ast>(goSliceAddress<ReturnStatement__from_ast$Storage>($argument0, $argument1), ($go$storage: ReturnStatement__from_ast$Storage): ReturnStatement__from_ast => {
-            return ReturnStatement__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ReturnStatement__from_ast): ReturnStatement__from_ast$Storage => {
-            return ReturnStatement__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<ReturnStatement__from_ast$Storage, ReturnStatement__from_ast>(goSliceAddress<ReturnStatement__from_ast$Storage>($argument0, $argument1), ReturnStatement__from_ast.$fromStorage, ReturnStatement__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<ReturnStatement__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: ReturnStatement__from_ast): ReturnStatement__from_ast$Storage => {
@@ -924,11 +768,7 @@ export function Arena$New$Named_ast$StringLiteral($argument0: tsonicTypeScriptRu
     }, ($argument0: StringLiteral__from_ast$Storage): StringLiteral__from_ast => {
         return StringLiteral__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<StringLiteral__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<StringLiteral__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<StringLiteral__from_ast$Storage, StringLiteral__from_ast>(goSliceAddress<StringLiteral__from_ast$Storage>($argument0, $argument1), ($go$storage: StringLiteral__from_ast$Storage): StringLiteral__from_ast => {
-            return StringLiteral__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StringLiteral__from_ast): StringLiteral__from_ast$Storage => {
-            return StringLiteral__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<StringLiteral__from_ast$Storage, StringLiteral__from_ast>(goSliceAddress<StringLiteral__from_ast$Storage>($argument0, $argument1), StringLiteral__from_ast.$fromStorage, StringLiteral__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<StringLiteral__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: StringLiteral__from_ast): StringLiteral__from_ast$Storage => {
@@ -947,11 +787,7 @@ export function Arena$New$Named_ast$Symbol($argument0: tsonicTypeScriptRuntime.L
     }, ($argument0: Symbol__from_ast$Storage): Symbol__from_ast => {
         return Symbol__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Symbol__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Symbol__from_ast$Storage, Symbol__from_ast>(goSliceAddress<Symbol__from_ast$Storage>($argument0, $argument1), ($go$storage: Symbol__from_ast$Storage): Symbol__from_ast => {
-            return Symbol__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Symbol__from_ast): Symbol__from_ast$Storage => {
-            return Symbol__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Symbol__from_ast$Storage, Symbol__from_ast>(goSliceAddress<Symbol__from_ast$Storage>($argument0, $argument1), Symbol__from_ast.$fromStorage, Symbol__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<Symbol__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Symbol__from_ast): Symbol__from_ast$Storage => {
@@ -970,11 +806,7 @@ export function Arena$New$Named_ast$Token($argument0: tsonicTypeScriptRuntime.Lo
     }, ($argument0: Token__from_ast$Storage): Token__from_ast => {
         return Token__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Token__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Token__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Token__from_ast$Storage, Token__from_ast>(goSliceAddress<Token__from_ast$Storage>($argument0, $argument1), ($go$storage: Token__from_ast$Storage): Token__from_ast => {
-            return Token__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Token__from_ast): Token__from_ast$Storage => {
-            return Token__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Token__from_ast$Storage, Token__from_ast>(goSliceAddress<Token__from_ast$Storage>($argument0, $argument1), Token__from_ast.$fromStorage, Token__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<Token__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Token__from_ast): Token__from_ast$Storage => {
@@ -993,11 +825,7 @@ export function Arena$New$Named_ast$TypeAliasDeclaration($argument0: tsonicTypeS
     }, ($argument0: TypeAliasDeclaration__from_ast$Storage): TypeAliasDeclaration__from_ast => {
         return TypeAliasDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeAliasDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeAliasDeclaration__from_ast$Storage, TypeAliasDeclaration__from_ast>(goSliceAddress<TypeAliasDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: TypeAliasDeclaration__from_ast$Storage): TypeAliasDeclaration__from_ast => {
-            return TypeAliasDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeAliasDeclaration__from_ast): TypeAliasDeclaration__from_ast$Storage => {
-            return TypeAliasDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeAliasDeclaration__from_ast$Storage, TypeAliasDeclaration__from_ast>(goSliceAddress<TypeAliasDeclaration__from_ast$Storage>($argument0, $argument1), TypeAliasDeclaration__from_ast.$fromStorage, TypeAliasDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<TypeAliasDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: TypeAliasDeclaration__from_ast): TypeAliasDeclaration__from_ast$Storage => {
@@ -1016,11 +844,7 @@ export function Arena$New$Named_ast$TypeLiteralNode($argument0: tsonicTypeScript
     }, ($argument0: TypeLiteralNode__from_ast$Storage): TypeLiteralNode__from_ast => {
         return TypeLiteralNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeLiteralNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeLiteralNode__from_ast$Storage, TypeLiteralNode__from_ast>(goSliceAddress<TypeLiteralNode__from_ast$Storage>($argument0, $argument1), ($go$storage: TypeLiteralNode__from_ast$Storage): TypeLiteralNode__from_ast => {
-            return TypeLiteralNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeLiteralNode__from_ast): TypeLiteralNode__from_ast$Storage => {
-            return TypeLiteralNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeLiteralNode__from_ast$Storage, TypeLiteralNode__from_ast>(goSliceAddress<TypeLiteralNode__from_ast$Storage>($argument0, $argument1), TypeLiteralNode__from_ast.$fromStorage, TypeLiteralNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<TypeLiteralNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: TypeLiteralNode__from_ast): TypeLiteralNode__from_ast$Storage => {
@@ -1039,11 +863,7 @@ export function Arena$New$Named_ast$TypeOperatorNode($argument0: tsonicTypeScrip
     }, ($argument0: TypeOperatorNode__from_ast$Storage): TypeOperatorNode__from_ast => {
         return TypeOperatorNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeOperatorNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeOperatorNode__from_ast$Storage, TypeOperatorNode__from_ast>(goSliceAddress<TypeOperatorNode__from_ast$Storage>($argument0, $argument1), ($go$storage: TypeOperatorNode__from_ast$Storage): TypeOperatorNode__from_ast => {
-            return TypeOperatorNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeOperatorNode__from_ast): TypeOperatorNode__from_ast$Storage => {
-            return TypeOperatorNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeOperatorNode__from_ast$Storage, TypeOperatorNode__from_ast>(goSliceAddress<TypeOperatorNode__from_ast$Storage>($argument0, $argument1), TypeOperatorNode__from_ast.$fromStorage, TypeOperatorNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<TypeOperatorNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: TypeOperatorNode__from_ast): TypeOperatorNode__from_ast$Storage => {
@@ -1062,11 +882,7 @@ export function Arena$New$Named_ast$TypeParameterDeclaration($argument0: tsonicT
     }, ($argument0: TypeParameterDeclaration__from_ast$Storage): TypeParameterDeclaration__from_ast => {
         return TypeParameterDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeParameterDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeParameterDeclaration__from_ast$Storage, TypeParameterDeclaration__from_ast>(goSliceAddress<TypeParameterDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: TypeParameterDeclaration__from_ast$Storage): TypeParameterDeclaration__from_ast => {
-            return TypeParameterDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeParameterDeclaration__from_ast): TypeParameterDeclaration__from_ast$Storage => {
-            return TypeParameterDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeParameterDeclaration__from_ast$Storage, TypeParameterDeclaration__from_ast>(goSliceAddress<TypeParameterDeclaration__from_ast$Storage>($argument0, $argument1), TypeParameterDeclaration__from_ast.$fromStorage, TypeParameterDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<TypeParameterDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: TypeParameterDeclaration__from_ast): TypeParameterDeclaration__from_ast$Storage => {
@@ -1085,11 +901,7 @@ export function Arena$New$Named_ast$TypeReferenceNode($argument0: tsonicTypeScri
     }, ($argument0: TypeReferenceNode__from_ast$Storage): TypeReferenceNode__from_ast => {
         return TypeReferenceNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<TypeReferenceNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<TypeReferenceNode__from_ast$Storage, TypeReferenceNode__from_ast>(goSliceAddress<TypeReferenceNode__from_ast$Storage>($argument0, $argument1), ($go$storage: TypeReferenceNode__from_ast$Storage): TypeReferenceNode__from_ast => {
-            return TypeReferenceNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeReferenceNode__from_ast): TypeReferenceNode__from_ast$Storage => {
-            return TypeReferenceNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<TypeReferenceNode__from_ast$Storage, TypeReferenceNode__from_ast>(goSliceAddress<TypeReferenceNode__from_ast$Storage>($argument0, $argument1), TypeReferenceNode__from_ast.$fromStorage, TypeReferenceNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<TypeReferenceNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: TypeReferenceNode__from_ast): TypeReferenceNode__from_ast$Storage => {
@@ -1108,11 +920,7 @@ export function Arena$New$Named_ast$UnionTypeNode($argument0: tsonicTypeScriptRu
     }, ($argument0: UnionTypeNode__from_ast$Storage): UnionTypeNode__from_ast => {
         return UnionTypeNode__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<UnionTypeNode__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<UnionTypeNode__from_ast$Storage, UnionTypeNode__from_ast>(goSliceAddress<UnionTypeNode__from_ast$Storage>($argument0, $argument1), ($go$storage: UnionTypeNode__from_ast$Storage): UnionTypeNode__from_ast => {
-            return UnionTypeNode__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UnionTypeNode__from_ast): UnionTypeNode__from_ast$Storage => {
-            return UnionTypeNode__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<UnionTypeNode__from_ast$Storage, UnionTypeNode__from_ast>(goSliceAddress<UnionTypeNode__from_ast$Storage>($argument0, $argument1), UnionTypeNode__from_ast.$fromStorage, UnionTypeNode__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<UnionTypeNode__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: UnionTypeNode__from_ast): UnionTypeNode__from_ast$Storage => {
@@ -1131,11 +939,7 @@ export function Arena$New$Named_ast$VariableDeclaration($argument0: tsonicTypeSc
     }, ($argument0: VariableDeclaration__from_ast$Storage): VariableDeclaration__from_ast => {
         return VariableDeclaration__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<VariableDeclaration__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<VariableDeclaration__from_ast$Storage, VariableDeclaration__from_ast>(goSliceAddress<VariableDeclaration__from_ast$Storage>($argument0, $argument1), ($go$storage: VariableDeclaration__from_ast$Storage): VariableDeclaration__from_ast => {
-            return VariableDeclaration__from_ast.$fromStorage($go$storage);
-        }, ($go$value: VariableDeclaration__from_ast): VariableDeclaration__from_ast$Storage => {
-            return VariableDeclaration__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<VariableDeclaration__from_ast$Storage, VariableDeclaration__from_ast>(goSliceAddress<VariableDeclaration__from_ast$Storage>($argument0, $argument1), VariableDeclaration__from_ast.$fromStorage, VariableDeclaration__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<VariableDeclaration__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: VariableDeclaration__from_ast): VariableDeclaration__from_ast$Storage => {
@@ -1154,11 +958,7 @@ export function Arena$New$Named_ast$VariableDeclarationList($argument0: tsonicTy
     }, ($argument0: VariableDeclarationList__from_ast$Storage): VariableDeclarationList__from_ast => {
         return VariableDeclarationList__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<VariableDeclarationList__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<VariableDeclarationList__from_ast$Storage, VariableDeclarationList__from_ast>(goSliceAddress<VariableDeclarationList__from_ast$Storage>($argument0, $argument1), ($go$storage: VariableDeclarationList__from_ast$Storage): VariableDeclarationList__from_ast => {
-            return VariableDeclarationList__from_ast.$fromStorage($go$storage);
-        }, ($go$value: VariableDeclarationList__from_ast): VariableDeclarationList__from_ast$Storage => {
-            return VariableDeclarationList__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<VariableDeclarationList__from_ast$Storage, VariableDeclarationList__from_ast>(goSliceAddress<VariableDeclarationList__from_ast$Storage>($argument0, $argument1), VariableDeclarationList__from_ast.$fromStorage, VariableDeclarationList__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<VariableDeclarationList__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: VariableDeclarationList__from_ast): VariableDeclarationList__from_ast$Storage => {
@@ -1177,11 +977,7 @@ export function Arena$New$Named_ast$VariableStatement($argument0: tsonicTypeScri
     }, ($argument0: VariableStatement__from_ast$Storage): VariableStatement__from_ast => {
         return VariableStatement__from_ast.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<VariableStatement__from_ast$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<VariableStatement__from_ast> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<VariableStatement__from_ast$Storage, VariableStatement__from_ast>(goSliceAddress<VariableStatement__from_ast$Storage>($argument0, $argument1), ($go$storage: VariableStatement__from_ast$Storage): VariableStatement__from_ast => {
-            return VariableStatement__from_ast.$fromStorage($go$storage);
-        }, ($go$value: VariableStatement__from_ast): VariableStatement__from_ast$Storage => {
-            return VariableStatement__from_ast.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<VariableStatement__from_ast$Storage, VariableStatement__from_ast>(goSliceAddress<VariableStatement__from_ast$Storage>($argument0, $argument1), VariableStatement__from_ast.$fromStorage, VariableStatement__from_ast.$storageOf);
     }, ($argument0: RuntimeSlice<VariableStatement__from_ast$Storage>): int => {
         return $argument0.length;
     }, ($argument0: VariableStatement__from_ast): VariableStatement__from_ast$Storage => {
@@ -1200,11 +996,7 @@ export function Arena$New$Named_checker$IndexInfo($argument0: tsonicTypeScriptRu
     }, ($argument0: IndexInfo__from_checker$Storage): IndexInfo__from_checker => {
         return IndexInfo__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<IndexInfo__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<IndexInfo__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<IndexInfo__from_checker$Storage, IndexInfo__from_checker>(goSliceAddress<IndexInfo__from_checker$Storage>($argument0, $argument1), ($go$storage: IndexInfo__from_checker$Storage): IndexInfo__from_checker => {
-            return IndexInfo__from_checker.$fromStorage($go$storage);
-        }, ($go$value: IndexInfo__from_checker): IndexInfo__from_checker$Storage => {
-            return IndexInfo__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<IndexInfo__from_checker$Storage, IndexInfo__from_checker>(goSliceAddress<IndexInfo__from_checker$Storage>($argument0, $argument1), IndexInfo__from_checker.$fromStorage, IndexInfo__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<IndexInfo__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: IndexInfo__from_checker): IndexInfo__from_checker$Storage => {
@@ -1223,11 +1015,7 @@ export function Arena$New$Named_checker$Signature($argument0: tsonicTypeScriptRu
     }, ($argument0: Signature__from_checker$Storage): Signature__from_checker => {
         return Signature__from_checker.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Signature__from_checker$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Signature__from_checker$Storage, Signature__from_checker>(goSliceAddress<Signature__from_checker$Storage>($argument0, $argument1), ($go$storage: Signature__from_checker$Storage): Signature__from_checker => {
-            return Signature__from_checker.$fromStorage($go$storage);
-        }, ($go$value: Signature__from_checker): Signature__from_checker$Storage => {
-            return Signature__from_checker.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Signature__from_checker$Storage, Signature__from_checker>(goSliceAddress<Signature__from_checker$Storage>($argument0, $argument1), Signature__from_checker.$fromStorage, Signature__from_checker.$storageOf);
     }, ($argument0: RuntimeSlice<Signature__from_checker$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Signature__from_checker): Signature__from_checker$Storage => {
@@ -1246,11 +1034,7 @@ export function Arena$New$Named_printer$commentState($argument0: tsonicTypeScrip
     }, ($argument0: commentState__from_printer$Storage): commentState__from_printer => {
         return commentState__from_printer.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<commentState__from_printer$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<commentState__from_printer> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<commentState__from_printer$Storage, commentState__from_printer>(goSliceAddress<commentState__from_printer$Storage>($argument0, $argument1), ($go$storage: commentState__from_printer$Storage): commentState__from_printer => {
-            return commentState__from_printer.$fromStorage($go$storage);
-        }, ($go$value: commentState__from_printer): commentState__from_printer$Storage => {
-            return commentState__from_printer.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<commentState__from_printer$Storage, commentState__from_printer>(goSliceAddress<commentState__from_printer$Storage>($argument0, $argument1), commentState__from_printer.$fromStorage, commentState__from_printer.$storageOf);
     }, ($argument0: RuntimeSlice<commentState__from_printer$Storage>): int => {
         return $argument0.length;
     }, ($argument0: commentState__from_printer): commentState__from_printer$Storage => {
@@ -1269,11 +1053,7 @@ export function Arena$New$Named_printer$sourceMapState($argument0: tsonicTypeScr
     }, ($argument0: sourceMapState__from_printer$Storage): sourceMapState__from_printer => {
         return sourceMapState__from_printer.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<sourceMapState__from_printer$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<sourceMapState__from_printer> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<sourceMapState__from_printer$Storage, sourceMapState__from_printer>(goSliceAddress<sourceMapState__from_printer$Storage>($argument0, $argument1), ($go$storage: sourceMapState__from_printer$Storage): sourceMapState__from_printer => {
-            return sourceMapState__from_printer.$fromStorage($go$storage);
-        }, ($go$value: sourceMapState__from_printer): sourceMapState__from_printer$Storage => {
-            return sourceMapState__from_printer.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<sourceMapState__from_printer$Storage, sourceMapState__from_printer>(goSliceAddress<sourceMapState__from_printer$Storage>($argument0, $argument1), sourceMapState__from_printer.$fromStorage, sourceMapState__from_printer.$storageOf);
     }, ($argument0: RuntimeSlice<sourceMapState__from_printer$Storage>): int => {
         return $argument0.length;
     }, ($argument0: sourceMapState__from_printer): sourceMapState__from_printer$Storage => {
@@ -1292,11 +1072,7 @@ export function Arena$New$Named_sourcemap$Mapping($argument0: tsonicTypeScriptRu
     }, ($argument0: Mapping__from_sourcemap$Storage): Mapping__from_sourcemap => {
         return Mapping__from_sourcemap.$fromStorage($argument0);
     }, ($argument0: RuntimeSlice<Mapping__from_sourcemap$Storage>, $argument1: int): tsonicTypeScriptRuntime.Location<Mapping__from_sourcemap> | undefined => {
-        return tsonicTypeScriptRuntime.projectLocation<Mapping__from_sourcemap$Storage, Mapping__from_sourcemap>(goSliceAddress<Mapping__from_sourcemap$Storage>($argument0, $argument1), ($go$storage: Mapping__from_sourcemap$Storage): Mapping__from_sourcemap => {
-            return Mapping__from_sourcemap.$fromStorage($go$storage);
-        }, ($go$value: Mapping__from_sourcemap): Mapping__from_sourcemap$Storage => {
-            return Mapping__from_sourcemap.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Mapping__from_sourcemap$Storage, Mapping__from_sourcemap>(goSliceAddress<Mapping__from_sourcemap$Storage>($argument0, $argument1), Mapping__from_sourcemap.$fromStorage, Mapping__from_sourcemap.$storageOf);
     }, ($argument0: RuntimeSlice<Mapping__from_sourcemap$Storage>): int => {
         return $argument0.length;
     }, ($argument0: Mapping__from_sourcemap): Mapping__from_sourcemap$Storage => {

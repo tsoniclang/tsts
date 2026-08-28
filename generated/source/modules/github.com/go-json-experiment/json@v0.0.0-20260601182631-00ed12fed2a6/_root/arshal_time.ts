@@ -67,7 +67,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     let xe: tsonicTypeScriptRuntime.Location<encoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Encoder(enc);
                     let m = durationArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
-                        if (!durationArshaler.$go$private$json$initFormat(m, ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
+                        if (!durationArshaler.$go$private$json$initFormat(m, (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
                             return newInvalidFormatError(new GoInterfaceAdapter(enc), t);
                         }
                     }
@@ -126,7 +127,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     let xd: tsonicTypeScriptRuntime.Location<decoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Decoder(dec);
                     let u = durationArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
-                        if (!durationArshaler.$go$private$json$initFormat(u, ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
+                        if (!durationArshaler.$go$private$json$initFormat(u, (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
                             return newInvalidFormatError(new $goInterfaceAdapter$PointerTo_Named_jsontext$Decoder(dec), t);
                         }
                     }
@@ -221,7 +223,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     let xe: tsonicTypeScriptRuntime.Location<encoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Encoder(enc);
                     let m = timeArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
-                        if (!timeArshaler.$go$private$json$initFormat(m, ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
+                        if (!timeArshaler.$go$private$json$initFormat(m, (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
                             return newInvalidFormatError(new GoInterfaceAdapter(enc), t);
                         }
                     }
@@ -273,7 +276,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     let xd: tsonicTypeScriptRuntime.Location<decoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Decoder(dec);
                     let u = timeArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
-                        if (!timeArshaler.$go$private$json$initFormat(u, ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
+                        if (!timeArshaler.$go$private$json$initFormat(u, (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format)) {
                             return newInvalidFormatError(new $goInterfaceAdapter$PointerTo_Named_jsontext$Decoder(dec), t);
                         }
                     }

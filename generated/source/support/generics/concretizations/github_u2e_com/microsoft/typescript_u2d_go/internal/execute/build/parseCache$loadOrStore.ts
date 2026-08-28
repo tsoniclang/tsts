@@ -14,8 +14,6 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 export function parseCache$loadOrStore$Named_ast$SourceFileParseOptions$PointerTo_Named_ast$SourceFile($argument0: tsonicTypeScriptRuntime.Location<parseCache__from_build<SourceFileParseOptions__from_ast, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>> | undefined, $argument1: SourceFileParseOptions__from_ast, $argument2: (($0: SourceFileParseOptions__from_ast) => tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) | undefined, $argument3: bool): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
     return parseCache__from_build.$go$private$build$loadOrStore$kernel<SourceFileParseOptions__from_ast, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, $argument1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): bool => {
         return !tsonicTypeScriptRuntime.sameLocation($argument0, $argument1);
-    }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
-        return $argument0;
     }, ($argument0: SourceFileParseOptions__from_ast): SourceFileParseOptions__from_ast => {
         return SourceFileParseOptions__from_ast.$copy($argument0);
     }, ($argument0: {
@@ -56,8 +54,6 @@ export function parseCache$loadOrStore$Named_ast$SourceFileParseOptions$PointerT
 export function parseCache$loadOrStore$Named_tspath$Path$PointerTo_Named_tsoptions$ParsedCommandLine($argument0: tsonicTypeScriptRuntime.Location<parseCache__from_build<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>> | undefined, $argument1: Path__from_tspath, $argument2: (($0: Path__from_tspath) => tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined) | undefined, $argument3: bool): tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined {
     return parseCache__from_build.$go$private$build$loadOrStore$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined, $argument1: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): bool => {
         return !tsonicTypeScriptRuntime.sameLocation($argument0, $argument1);
-    }, ($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: {

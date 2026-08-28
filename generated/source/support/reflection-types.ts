@@ -16199,11 +16199,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ArrayTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ArrayTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ArrayTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -16576,11 +16572,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             BinaryExpression__from_ast.$storageOf(instance).ExpressionBase = ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "ExpressionBase"), ($go$storage: ExpressionBase__from_ast$Storage): ExpressionBase__from_ast => {
-            return ExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionBase__from_ast): ExpressionBase__from_ast$Storage => {
-            return ExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "ExpressionBase"), ExpressionBase__from_ast.$fromStorage, ExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -16589,11 +16581,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             BinaryExpression__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -16602,11 +16590,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             BinaryExpression__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -16615,11 +16599,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             BinaryExpression__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(BinaryExpression__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -16953,11 +16933,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Block__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$LocalsContainerBase),
@@ -16966,11 +16942,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Block__from_ast.$storageOf(instance).LocalsContainerBase = LocalsContainerBase__from_ast.$storageOf(LocalsContainerBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LocalsContainerBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "LocalsContainerBase"), ($go$storage: LocalsContainerBase__from_ast$Storage): LocalsContainerBase__from_ast => {
-            return LocalsContainerBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LocalsContainerBase__from_ast): LocalsContainerBase__from_ast$Storage => {
-            return LocalsContainerBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "LocalsContainerBase"), LocalsContainerBase__from_ast.$fromStorage, LocalsContainerBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -16979,11 +16951,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Block__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Block__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -17173,11 +17141,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             CallExpression__from_ast.$storageOf(instance).LeftHandSideExpressionBase = LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LeftHandSideExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LeftHandSideExpressionBase(tsonicTypeScriptRuntime.projectLocation<LeftHandSideExpressionBase__from_ast$Storage, LeftHandSideExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "LeftHandSideExpressionBase"), ($go$storage: LeftHandSideExpressionBase__from_ast$Storage): LeftHandSideExpressionBase__from_ast => {
-            return LeftHandSideExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LeftHandSideExpressionBase__from_ast): LeftHandSideExpressionBase__from_ast$Storage => {
-            return LeftHandSideExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LeftHandSideExpressionBase(tsonicTypeScriptRuntime.projectLocation<LeftHandSideExpressionBase__from_ast$Storage, LeftHandSideExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "LeftHandSideExpressionBase"), LeftHandSideExpressionBase__from_ast.$fromStorage, LeftHandSideExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -17186,11 +17150,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             CallExpression__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -17199,11 +17159,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             CallExpression__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(CallExpression__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -18213,11 +18169,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             CommentDirective__from_ast.$storageOf(instance).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(CommentDirective__from_ast.$storageOf(instance), "Loc"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(CommentDirective__from_ast.$storageOf(instance), "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CommentDirectiveKind),
@@ -18285,11 +18237,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             CommentRange__from_ast.$storageOf(instance).TextRange = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(CommentRange__from_ast.$storageOf(instance), "TextRange"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(CommentRange__from_ast.$storageOf(instance), "TextRange"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$Kind),
@@ -18469,11 +18417,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConditionalExpression__from_ast.$storageOf(instance).ExpressionBase = ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConditionalExpression__from_ast.$storageOf(instance), "ExpressionBase"), ($go$storage: ExpressionBase__from_ast$Storage): ExpressionBase__from_ast => {
-            return ExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionBase__from_ast): ExpressionBase__from_ast$Storage => {
-            return ExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConditionalExpression__from_ast.$storageOf(instance), "ExpressionBase"), ExpressionBase__from_ast.$fromStorage, ExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -18482,11 +18426,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConditionalExpression__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConditionalExpression__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConditionalExpression__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -18708,11 +18648,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConstructSignatureDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -18721,11 +18657,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConstructSignatureDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FunctionLikeBase),
@@ -18734,11 +18666,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConstructSignatureDeclaration__from_ast.$storageOf(instance).FunctionLikeBase = FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionLikeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "FunctionLikeBase"), ($go$storage: FunctionLikeBase__from_ast$Storage): FunctionLikeBase__from_ast => {
-            return FunctionLikeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionLikeBase__from_ast): FunctionLikeBase__from_ast$Storage => {
-            return FunctionLikeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "FunctionLikeBase"), FunctionLikeBase__from_ast.$fromStorage, FunctionLikeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeElementBase),
@@ -18747,11 +18675,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConstructSignatureDeclaration__from_ast.$storageOf(instance).TypeElementBase = TypeElementBase__from_ast.$storageOf(TypeElementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeElementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), ($go$storage: TypeElementBase__from_ast$Storage): TypeElementBase__from_ast => {
-            return TypeElementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeElementBase__from_ast): TypeElementBase__from_ast$Storage => {
-            return TypeElementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), TypeElementBase__from_ast.$fromStorage, TypeElementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -18760,11 +18684,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ConstructSignatureDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ConstructSignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     }
 ], value => ConstructSignatureDeclaration__from_ast.$copy(value));
 export const $goReflectType$Named_ast$ConstructorDeclaration: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -19697,11 +19617,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ElementAccessExpression__from_ast.$storageOf(instance).MemberExpressionBase = MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$MemberExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "MemberExpressionBase"), ($go$storage: MemberExpressionBase__from_ast$Storage): MemberExpressionBase__from_ast => {
-            return MemberExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: MemberExpressionBase__from_ast): MemberExpressionBase__from_ast$Storage => {
-            return MemberExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "MemberExpressionBase"), MemberExpressionBase__from_ast.$fromStorage, MemberExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FlowNodeBase),
@@ -19710,11 +19626,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ElementAccessExpression__from_ast.$storageOf(instance).FlowNodeBase = FlowNodeBase__from_ast.$storageOf(FlowNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "FlowNodeBase"), ($go$storage: FlowNodeBase__from_ast$Storage): FlowNodeBase__from_ast => {
-            return FlowNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNodeBase__from_ast): FlowNodeBase__from_ast$Storage => {
-            return FlowNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "FlowNodeBase"), FlowNodeBase__from_ast.$fromStorage, FlowNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -19723,11 +19635,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ElementAccessExpression__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ElementAccessExpression__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -20512,11 +20420,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ExpressionBase__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionBase__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionBase__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     }
 ], value => ExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$ExpressionStatement: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -20552,11 +20456,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ExpressionStatement__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionStatement__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionStatement__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -20612,11 +20512,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ExpressionWithTypeArguments__from_ast.$storageOf(instance).MemberExpressionBase = MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$MemberExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionWithTypeArguments__from_ast.$storageOf(instance), "MemberExpressionBase"), ($go$storage: MemberExpressionBase__from_ast$Storage): MemberExpressionBase__from_ast => {
-            return MemberExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: MemberExpressionBase__from_ast): MemberExpressionBase__from_ast$Storage => {
-            return MemberExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionWithTypeArguments__from_ast.$storageOf(instance), "MemberExpressionBase"), MemberExpressionBase__from_ast.$fromStorage, MemberExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -20625,11 +20521,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ExpressionWithTypeArguments__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionWithTypeArguments__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ExpressionWithTypeArguments__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -21472,11 +21364,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$StatementBase),
@@ -21485,11 +21373,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ExportableBase),
@@ -21498,11 +21382,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).ExportableBase = ExportableBase__from_ast.$storageOf(ExportableBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExportableBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ($go$storage: ExportableBase__from_ast$Storage): ExportableBase__from_ast => {
-            return ExportableBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExportableBase__from_ast): ExportableBase__from_ast$Storage => {
-            return ExportableBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ExportableBase__from_ast.$fromStorage, ExportableBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -21511,11 +21391,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FunctionLikeWithBodyBase),
@@ -21524,11 +21400,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).FunctionLikeWithBodyBase = FunctionLikeWithBodyBase__from_ast.$storageOf(FunctionLikeWithBodyBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionLikeWithBodyBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeWithBodyBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeWithBodyBase__from_ast$Storage, FunctionLikeWithBodyBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "FunctionLikeWithBodyBase"), ($go$storage: FunctionLikeWithBodyBase__from_ast$Storage): FunctionLikeWithBodyBase__from_ast => {
-            return FunctionLikeWithBodyBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionLikeWithBodyBase__from_ast): FunctionLikeWithBodyBase__from_ast$Storage => {
-            return FunctionLikeWithBodyBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeWithBodyBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeWithBodyBase__from_ast$Storage, FunctionLikeWithBodyBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "FunctionLikeWithBodyBase"), FunctionLikeWithBodyBase__from_ast.$fromStorage, FunctionLikeWithBodyBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -21537,11 +21409,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionDeclaration__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionDeclaration__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -21777,11 +21645,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionLikeBase__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeBase__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeBase__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$LocalsContainerBase),
@@ -21790,11 +21654,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionLikeBase__from_ast.$storageOf(instance).LocalsContainerBase = LocalsContainerBase__from_ast.$storageOf(LocalsContainerBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LocalsContainerBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeBase__from_ast.$storageOf(instance), "LocalsContainerBase"), ($go$storage: LocalsContainerBase__from_ast$Storage): LocalsContainerBase__from_ast => {
-            return LocalsContainerBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LocalsContainerBase__from_ast): LocalsContainerBase__from_ast$Storage => {
-            return LocalsContainerBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeBase__from_ast.$storageOf(instance), "LocalsContainerBase"), LocalsContainerBase__from_ast.$fromStorage, LocalsContainerBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -21868,11 +21728,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionLikeWithBodyBase__from_ast.$storageOf(instance).FunctionLikeBase = FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionLikeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeWithBodyBase__from_ast.$storageOf(instance), "FunctionLikeBase"), ($go$storage: FunctionLikeBase__from_ast$Storage): FunctionLikeBase__from_ast => {
-            return FunctionLikeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionLikeBase__from_ast): FunctionLikeBase__from_ast$Storage => {
-            return FunctionLikeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeWithBodyBase__from_ast.$storageOf(instance), "FunctionLikeBase"), FunctionLikeBase__from_ast.$fromStorage, FunctionLikeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$BodyBase),
@@ -21881,11 +21737,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionLikeWithBodyBase__from_ast.$storageOf(instance).BodyBase = BodyBase__from_ast.$storageOf(BodyBase__from_ast.$copy($goInterfaceAdapter$Named_ast$BodyBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$BodyBase(tsonicTypeScriptRuntime.projectLocation<BodyBase__from_ast$Storage, BodyBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeWithBodyBase__from_ast.$storageOf(instance), "BodyBase"), ($go$storage: BodyBase__from_ast$Storage): BodyBase__from_ast => {
-            return BodyBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: BodyBase__from_ast): BodyBase__from_ast$Storage => {
-            return BodyBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$BodyBase(tsonicTypeScriptRuntime.projectLocation<BodyBase__from_ast$Storage, BodyBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionLikeWithBodyBase__from_ast.$storageOf(instance), "BodyBase"), BodyBase__from_ast.$fromStorage, BodyBase__from_ast.$storageOf)))
     }
 ], value => FunctionLikeWithBodyBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$FunctionOrConstructorTypeNodeBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -21929,11 +21781,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -21942,11 +21790,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FunctionLikeBase),
@@ -21955,11 +21799,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance).FunctionLikeBase = FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionLikeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "FunctionLikeBase"), ($go$storage: FunctionLikeBase__from_ast$Storage): FunctionLikeBase__from_ast => {
-            return FunctionLikeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionLikeBase__from_ast): FunctionLikeBase__from_ast$Storage => {
-            return FunctionLikeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(instance), "FunctionLikeBase"), FunctionLikeBase__from_ast.$fromStorage, FunctionLikeBase__from_ast.$storageOf)))
     }
 ], value => FunctionOrConstructorTypeNodeBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$FunctionTypeNode: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -21997,11 +21837,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FunctionOrConstructorTypeNodeBase),
@@ -22010,11 +21846,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             FunctionTypeNode__from_ast.$storageOf(instance).FunctionOrConstructorTypeNodeBase = FunctionOrConstructorTypeNodeBase__from_ast.$storageOf(FunctionOrConstructorTypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionOrConstructorTypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionOrConstructorTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<FunctionOrConstructorTypeNodeBase__from_ast$Storage, FunctionOrConstructorTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionTypeNode__from_ast.$storageOf(instance), "FunctionOrConstructorTypeNodeBase"), ($go$storage: FunctionOrConstructorTypeNodeBase__from_ast$Storage): FunctionOrConstructorTypeNodeBase__from_ast => {
-            return FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionOrConstructorTypeNodeBase__from_ast): FunctionOrConstructorTypeNodeBase__from_ast$Storage => {
-            return FunctionOrConstructorTypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionOrConstructorTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<FunctionOrConstructorTypeNodeBase__from_ast$Storage, FunctionOrConstructorTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(FunctionTypeNode__from_ast.$storageOf(instance), "FunctionOrConstructorTypeNodeBase"), FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage, FunctionOrConstructorTypeNodeBase__from_ast.$storageOf)))
     }
 ], value => FunctionTypeNode__from_ast.$copy(value));
 export const $goReflectType$Named_ast$GetAccessorDeclaration: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -22106,11 +21938,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             HeritageClause__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(HeritageClause__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(HeritageClause__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -22119,11 +21947,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             HeritageClause__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(HeritageClause__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(HeritageClause__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$Kind),
@@ -22183,11 +22007,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Identifier__from_ast.$storageOf(instance).PrimaryExpressionBase = PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$PrimaryExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Identifier__from_ast.$storageOf(instance), "PrimaryExpressionBase"), ($go$storage: PrimaryExpressionBase__from_ast$Storage): PrimaryExpressionBase__from_ast => {
-            return PrimaryExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PrimaryExpressionBase__from_ast): PrimaryExpressionBase__from_ast$Storage => {
-            return PrimaryExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Identifier__from_ast.$storageOf(instance), "PrimaryExpressionBase"), PrimaryExpressionBase__from_ast.$fromStorage, PrimaryExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FlowNodeBase),
@@ -22196,11 +22016,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Identifier__from_ast.$storageOf(instance).FlowNodeBase = FlowNodeBase__from_ast.$storageOf(FlowNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Identifier__from_ast.$storageOf(instance), "FlowNodeBase"), ($go$storage: FlowNodeBase__from_ast$Storage): FlowNodeBase__from_ast => {
-            return FlowNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNodeBase__from_ast): FlowNodeBase__from_ast$Storage => {
-            return FlowNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Identifier__from_ast.$storageOf(instance), "FlowNodeBase"), FlowNodeBase__from_ast.$fromStorage, FlowNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$string),
@@ -22261,11 +22077,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             IfStatement__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IfStatement__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IfStatement__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -22274,11 +22086,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             IfStatement__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IfStatement__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IfStatement__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -22997,11 +22805,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ImportSpecifier__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -23010,11 +22814,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ImportSpecifier__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ExportableBase),
@@ -23023,11 +22823,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ImportSpecifier__from_ast.$storageOf(instance).ExportableBase = ExportableBase__from_ast.$storageOf(ExportableBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExportableBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "ExportableBase"), ($go$storage: ExportableBase__from_ast$Storage): ExportableBase__from_ast => {
-            return ExportableBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExportableBase__from_ast): ExportableBase__from_ast$Storage => {
-            return ExportableBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "ExportableBase"), ExportableBase__from_ast.$fromStorage, ExportableBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -23036,11 +22832,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ImportSpecifier__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ImportSpecifier__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -23353,11 +23145,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             IndexedAccessTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IndexedAccessTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IndexedAccessTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -23502,11 +23290,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             InterfaceDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$StatementBase),
@@ -23515,11 +23299,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             InterfaceDeclaration__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ExportableBase),
@@ -23528,11 +23308,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             InterfaceDeclaration__from_ast.$storageOf(instance).ExportableBase = ExportableBase__from_ast.$storageOf(ExportableBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExportableBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ($go$storage: ExportableBase__from_ast$Storage): ExportableBase__from_ast => {
-            return ExportableBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExportableBase__from_ast): ExportableBase__from_ast$Storage => {
-            return ExportableBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ExportableBase__from_ast.$fromStorage, ExportableBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -23541,11 +23317,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             InterfaceDeclaration__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -23554,11 +23326,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             InterfaceDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(InterfaceDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -23631,11 +23399,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             IntersectionTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IntersectionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IntersectionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$UnionOrIntersectionTypeNodeBase),
@@ -23644,11 +23408,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             IntersectionTypeNode__from_ast.$storageOf(instance).UnionOrIntersectionTypeNodeBase = UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$UnionOrIntersectionTypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionOrIntersectionTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<UnionOrIntersectionTypeNodeBase__from_ast$Storage, UnionOrIntersectionTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IntersectionTypeNode__from_ast.$storageOf(instance), "UnionOrIntersectionTypeNodeBase"), ($go$storage: UnionOrIntersectionTypeNodeBase__from_ast$Storage): UnionOrIntersectionTypeNodeBase__from_ast => {
-            return UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UnionOrIntersectionTypeNodeBase__from_ast): UnionOrIntersectionTypeNodeBase__from_ast$Storage => {
-            return UnionOrIntersectionTypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionOrIntersectionTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<UnionOrIntersectionTypeNodeBase__from_ast$Storage, UnionOrIntersectionTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(IntersectionTypeNode__from_ast.$storageOf(instance), "UnionOrIntersectionTypeNodeBase"), UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage, UnionOrIntersectionTypeNodeBase__from_ast.$storageOf)))
     }
 ], value => IntersectionTypeNode__from_ast.$copy(value));
 export const $goReflectType$Named_ast$IterationStatementBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -23740,11 +23500,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDoc__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDoc__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDoc__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -23954,11 +23710,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDocCommentBase__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocCommentBase__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocCommentBase__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$SliceOf_string),
@@ -23998,11 +23750,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDocDeprecatedTag__from_ast.$storageOf(instance).JSDocTagBase = JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocTagBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocTagBase(tsonicTypeScriptRuntime.projectLocation<JSDocTagBase__from_ast$Storage, JSDocTagBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocDeprecatedTag__from_ast.$storageOf(instance), "JSDocTagBase"), ($go$storage: JSDocTagBase__from_ast$Storage): JSDocTagBase__from_ast => {
-            return JSDocTagBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocTagBase__from_ast): JSDocTagBase__from_ast$Storage => {
-            return JSDocTagBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocTagBase(tsonicTypeScriptRuntime.projectLocation<JSDocTagBase__from_ast$Storage, JSDocTagBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocDeprecatedTag__from_ast.$storageOf(instance), "JSDocTagBase"), JSDocTagBase__from_ast.$fromStorage, JSDocTagBase__from_ast.$storageOf)))
     }
 ], value => JSDocDeprecatedTag__from_ast.$copy(value));
 export const $goReflectType$Named_ast$JSDocImplementsTag: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -25073,11 +24821,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDocTagBase__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocTagBase__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocTagBase__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -25195,11 +24939,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDocText__from_ast.$storageOf(instance).JSDocCommentBase = JSDocCommentBase__from_ast.$storageOf(JSDocCommentBase__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocCommentBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocCommentBase(tsonicTypeScriptRuntime.projectLocation<JSDocCommentBase__from_ast$Storage, JSDocCommentBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocText__from_ast.$storageOf(instance), "JSDocCommentBase"), ($go$storage: JSDocCommentBase__from_ast$Storage): JSDocCommentBase__from_ast => {
-            return JSDocCommentBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocCommentBase__from_ast): JSDocCommentBase__from_ast$Storage => {
-            return JSDocCommentBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocCommentBase(tsonicTypeScriptRuntime.projectLocation<JSDocCommentBase__from_ast$Storage, JSDocCommentBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocText__from_ast.$storageOf(instance), "JSDocCommentBase"), JSDocCommentBase__from_ast.$fromStorage, JSDocCommentBase__from_ast.$storageOf)))
     }
 ], value => JSDocText__from_ast.$copy(value));
 export const $goReflectType$Named_ast$JSDocThisTag: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -25624,11 +25364,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             JSDocUnknownTag__from_ast.$storageOf(instance).JSDocTagBase = JSDocTagBase__from_ast.$storageOf(JSDocTagBase__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocTagBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocTagBase(tsonicTypeScriptRuntime.projectLocation<JSDocTagBase__from_ast$Storage, JSDocTagBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocUnknownTag__from_ast.$storageOf(instance), "JSDocTagBase"), ($go$storage: JSDocTagBase__from_ast$Storage): JSDocTagBase__from_ast => {
-            return JSDocTagBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: JSDocTagBase__from_ast): JSDocTagBase__from_ast$Storage => {
-            return JSDocTagBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocTagBase(tsonicTypeScriptRuntime.projectLocation<JSDocTagBase__from_ast$Storage, JSDocTagBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(JSDocUnknownTag__from_ast.$storageOf(instance), "JSDocTagBase"), JSDocTagBase__from_ast.$fromStorage, JSDocTagBase__from_ast.$storageOf)))
     }
 ], value => JSDocUnknownTag__from_ast.$copy(value));
 export const $goReflectType$Named_ast$JSDocVariadicType: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -26731,11 +26467,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             KeywordExpression__from_ast.$storageOf(instance).ExpressionBase = ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordExpression__from_ast.$storageOf(instance), "ExpressionBase"), ($go$storage: ExpressionBase__from_ast$Storage): ExpressionBase__from_ast => {
-            return ExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionBase__from_ast): ExpressionBase__from_ast$Storage => {
-            return ExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordExpression__from_ast.$storageOf(instance), "ExpressionBase"), ExpressionBase__from_ast.$fromStorage, ExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FlowNodeBase),
@@ -26744,11 +26476,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             KeywordExpression__from_ast.$storageOf(instance).FlowNodeBase = FlowNodeBase__from_ast.$storageOf(FlowNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordExpression__from_ast.$storageOf(instance), "FlowNodeBase"), ($go$storage: FlowNodeBase__from_ast$Storage): FlowNodeBase__from_ast => {
-            return FlowNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNodeBase__from_ast): FlowNodeBase__from_ast$Storage => {
-            return FlowNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordExpression__from_ast.$storageOf(instance), "FlowNodeBase"), FlowNodeBase__from_ast.$fromStorage, FlowNodeBase__from_ast.$storageOf)))
     }
 ], value => KeywordExpression__from_ast.$copy(value));
 export const $goReflectType$Named_ast$KeywordTypeNode: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -26779,11 +26507,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             KeywordTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(KeywordTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     }
 ], value => KeywordTypeNode__from_ast.$copy(value));
 export const $goReflectType$Named_ast$Kind: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -26902,11 +26626,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             LeftHandSideExpressionBase__from_ast.$storageOf(instance).UpdateExpressionBase = UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$UpdateExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UpdateExpressionBase(tsonicTypeScriptRuntime.projectLocation<UpdateExpressionBase__from_ast$Storage, UpdateExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LeftHandSideExpressionBase__from_ast.$storageOf(instance), "UpdateExpressionBase"), ($go$storage: UpdateExpressionBase__from_ast$Storage): UpdateExpressionBase__from_ast => {
-            return UpdateExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UpdateExpressionBase__from_ast): UpdateExpressionBase__from_ast$Storage => {
-            return UpdateExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UpdateExpressionBase(tsonicTypeScriptRuntime.projectLocation<UpdateExpressionBase__from_ast$Storage, UpdateExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LeftHandSideExpressionBase__from_ast.$storageOf(instance), "UpdateExpressionBase"), UpdateExpressionBase__from_ast.$fromStorage, UpdateExpressionBase__from_ast.$storageOf)))
     }
 ], value => LeftHandSideExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$LiteralExpressionBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -26943,11 +26663,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             LiteralExpressionBase__from_ast.$storageOf(instance).LiteralLikeNodeBase = LiteralLikeNodeBase__from_ast.$storageOf(LiteralLikeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LiteralLikeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralLikeNodeBase(tsonicTypeScriptRuntime.projectLocation<LiteralLikeNodeBase__from_ast$Storage, LiteralLikeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralExpressionBase__from_ast.$storageOf(instance), "LiteralLikeNodeBase"), ($go$storage: LiteralLikeNodeBase__from_ast$Storage): LiteralLikeNodeBase__from_ast => {
-            return LiteralLikeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LiteralLikeNodeBase__from_ast): LiteralLikeNodeBase__from_ast$Storage => {
-            return LiteralLikeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralLikeNodeBase(tsonicTypeScriptRuntime.projectLocation<LiteralLikeNodeBase__from_ast$Storage, LiteralLikeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralExpressionBase__from_ast.$storageOf(instance), "LiteralLikeNodeBase"), LiteralLikeNodeBase__from_ast.$fromStorage, LiteralLikeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$PrimaryExpressionBase),
@@ -26956,11 +26672,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             LiteralExpressionBase__from_ast.$storageOf(instance).PrimaryExpressionBase = PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$PrimaryExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralExpressionBase__from_ast.$storageOf(instance), "PrimaryExpressionBase"), ($go$storage: PrimaryExpressionBase__from_ast$Storage): PrimaryExpressionBase__from_ast => {
-            return PrimaryExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PrimaryExpressionBase__from_ast): PrimaryExpressionBase__from_ast$Storage => {
-            return PrimaryExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralExpressionBase__from_ast.$storageOf(instance), "PrimaryExpressionBase"), PrimaryExpressionBase__from_ast.$fromStorage, PrimaryExpressionBase__from_ast.$storageOf)))
     }
 ], value => LiteralExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$LiteralLikeNodeBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -27040,11 +26752,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             LiteralTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(LiteralTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -27306,11 +27014,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MemberExpressionBase__from_ast.$storageOf(instance).LeftHandSideExpressionBase = LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LeftHandSideExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LeftHandSideExpressionBase(tsonicTypeScriptRuntime.projectLocation<LeftHandSideExpressionBase__from_ast$Storage, LeftHandSideExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MemberExpressionBase__from_ast.$storageOf(instance), "LeftHandSideExpressionBase"), ($go$storage: LeftHandSideExpressionBase__from_ast$Storage): LeftHandSideExpressionBase__from_ast => {
-            return LeftHandSideExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LeftHandSideExpressionBase__from_ast): LeftHandSideExpressionBase__from_ast$Storage => {
-            return LeftHandSideExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LeftHandSideExpressionBase(tsonicTypeScriptRuntime.projectLocation<LeftHandSideExpressionBase__from_ast$Storage, LeftHandSideExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MemberExpressionBase__from_ast.$storageOf(instance), "LeftHandSideExpressionBase"), LeftHandSideExpressionBase__from_ast.$fromStorage, LeftHandSideExpressionBase__from_ast.$storageOf)))
     }
 ], value => MemberExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$MetaProperty: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -27614,11 +27318,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MethodSignatureDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$NamedMemberBase),
@@ -27627,11 +27327,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MethodSignatureDeclaration__from_ast.$storageOf(instance).NamedMemberBase = NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NamedMemberBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-            return NamedMemberBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-            return NamedMemberBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FunctionLikeBase),
@@ -27640,11 +27336,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MethodSignatureDeclaration__from_ast.$storageOf(instance).FunctionLikeBase = FunctionLikeBase__from_ast.$storageOf(FunctionLikeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionLikeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "FunctionLikeBase"), ($go$storage: FunctionLikeBase__from_ast$Storage): FunctionLikeBase__from_ast => {
-            return FunctionLikeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FunctionLikeBase__from_ast): FunctionLikeBase__from_ast$Storage => {
-            return FunctionLikeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionLikeBase(tsonicTypeScriptRuntime.projectLocation<FunctionLikeBase__from_ast$Storage, FunctionLikeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "FunctionLikeBase"), FunctionLikeBase__from_ast.$fromStorage, FunctionLikeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeElementBase),
@@ -27653,11 +27345,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MethodSignatureDeclaration__from_ast.$storageOf(instance).TypeElementBase = TypeElementBase__from_ast.$storageOf(TypeElementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeElementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), ($go$storage: TypeElementBase__from_ast$Storage): TypeElementBase__from_ast => {
-            return TypeElementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeElementBase__from_ast): TypeElementBase__from_ast$Storage => {
-            return TypeElementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), TypeElementBase__from_ast.$fromStorage, TypeElementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -27666,11 +27354,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             MethodSignatureDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(MethodSignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     }
 ], value => MethodSignatureDeclaration__from_ast.$copy(value));
 export const $goReflectType$Named_ast$MissingDeclaration: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -27795,11 +27479,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ModifierList__from_ast.$storageOf(instance).NodeList = NodeList__from_ast.$storageOf(NodeList__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeList.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeList(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ModifierList__from_ast.$storageOf(instance), "NodeList"), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-            return NodeList__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-            return NodeList__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeList(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ModifierList__from_ast.$storageOf(instance), "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifierFlags),
@@ -28272,11 +27952,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NamedMemberBase__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NamedMemberBase__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NamedMemberBase__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -28285,11 +27961,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NamedMemberBase__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NamedMemberBase__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NamedMemberBase__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -28940,11 +28612,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Node__from_ast.$storageOf(instance).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(Node__from_ast.$storageOf(instance), "Loc"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(Node__from_ast.$storageOf(instance), "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_atomic__package_1$Uint64),
@@ -29002,11 +28670,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NodeBase__from_ast.$storageOf(instance).NodeDefault = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeDefault.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeDefault(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeBase__from_ast.$storageOf(instance), "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-            return NodeDefault__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-            return NodeDefault__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeDefault(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeBase__from_ast.$storageOf(instance), "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))
     }
 ], value => NodeBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$NodeDefault: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -29037,11 +28701,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NodeDefault__from_ast.$storageOf(instance).Node = Node__from_ast.$storageOf(Node__from_ast.$copy($goInterfaceAdapter$Named_ast$Node.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeDefault__from_ast.$storageOf(instance), "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-            return Node__from_ast.$fromStorage($go$storage);
-        }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-            return Node__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeDefault__from_ast.$storageOf(instance), "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf)))
     }
 ], value => NodeDefault__from_ast.$copy(value));
 export const $goReflectType$Named_ast$NodeFactory: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -30114,11 +29774,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NodeList__from_ast.$storageOf(instance).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(NodeList__from_ast.$storageOf(instance), "Loc"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(NodeList__from_ast.$storageOf(instance), "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$SliceOf_PointerTo_Named_ast$Node),
@@ -30399,11 +30055,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NodeWithTypeArgumentsBase__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeWithTypeArgumentsBase__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NodeWithTypeArgumentsBase__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -30580,11 +30232,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             NumericLiteral__from_ast.$storageOf(instance).LiteralExpressionBase = LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LiteralExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralExpressionBase(tsonicTypeScriptRuntime.projectLocation<LiteralExpressionBase__from_ast$Storage, LiteralExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NumericLiteral__from_ast.$storageOf(instance), "LiteralExpressionBase"), ($go$storage: LiteralExpressionBase__from_ast$Storage): LiteralExpressionBase__from_ast => {
-            return LiteralExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LiteralExpressionBase__from_ast): LiteralExpressionBase__from_ast$Storage => {
-            return LiteralExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralExpressionBase(tsonicTypeScriptRuntime.projectLocation<LiteralExpressionBase__from_ast$Storage, LiteralExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(NumericLiteral__from_ast.$storageOf(instance), "LiteralExpressionBase"), LiteralExpressionBase__from_ast.$fromStorage, LiteralExpressionBase__from_ast.$storageOf)))
     }
 ], value => NumericLiteral__from_ast.$copy(value));
 export const $goReflectType$Named_ast$ObjectLiteralElementBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -30879,11 +30527,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParameterDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -30892,11 +30536,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParameterDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -30905,11 +30545,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParameterDeclaration__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -30918,11 +30554,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParameterDeclaration__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParameterDeclaration__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -31003,11 +30635,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParenthesizedExpression__from_ast.$storageOf(instance).PrimaryExpressionBase = PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$PrimaryExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParenthesizedExpression__from_ast.$storageOf(instance), "PrimaryExpressionBase"), ($go$storage: PrimaryExpressionBase__from_ast$Storage): PrimaryExpressionBase__from_ast => {
-            return PrimaryExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: PrimaryExpressionBase__from_ast): PrimaryExpressionBase__from_ast$Storage => {
-            return PrimaryExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$PrimaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<PrimaryExpressionBase__from_ast$Storage, PrimaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParenthesizedExpression__from_ast.$storageOf(instance), "PrimaryExpressionBase"), PrimaryExpressionBase__from_ast.$fromStorage, PrimaryExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -31052,11 +30680,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParenthesizedTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParenthesizedTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParenthesizedTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -31327,11 +30951,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Pragma__from_ast.$storageOf(instance).CommentRange = CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy($goInterfaceAdapter$Named_ast$CommentRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentRange(tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Pragma__from_ast.$storageOf(instance), "CommentRange"), ($go$storage: CommentRange__from_ast$Storage): CommentRange__from_ast => {
-            return CommentRange__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CommentRange__from_ast): CommentRange__from_ast$Storage => {
-            return CommentRange__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentRange(tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Pragma__from_ast.$storageOf(instance), "CommentRange"), CommentRange__from_ast.$fromStorage, CommentRange__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$string),
@@ -31420,11 +31040,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PrefixUnaryExpression__from_ast.$storageOf(instance).UpdateExpressionBase = UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$UpdateExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UpdateExpressionBase(tsonicTypeScriptRuntime.projectLocation<UpdateExpressionBase__from_ast$Storage, UpdateExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PrefixUnaryExpression__from_ast.$storageOf(instance), "UpdateExpressionBase"), ($go$storage: UpdateExpressionBase__from_ast$Storage): UpdateExpressionBase__from_ast => {
-            return UpdateExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UpdateExpressionBase__from_ast): UpdateExpressionBase__from_ast$Storage => {
-            return UpdateExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UpdateExpressionBase(tsonicTypeScriptRuntime.projectLocation<UpdateExpressionBase__from_ast$Storage, UpdateExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PrefixUnaryExpression__from_ast.$storageOf(instance), "UpdateExpressionBase"), UpdateExpressionBase__from_ast.$fromStorage, UpdateExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$Kind),
@@ -31473,11 +31089,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PrimaryExpressionBase__from_ast.$storageOf(instance).MemberExpressionBase = MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$MemberExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PrimaryExpressionBase__from_ast.$storageOf(instance), "MemberExpressionBase"), ($go$storage: MemberExpressionBase__from_ast$Storage): MemberExpressionBase__from_ast => {
-            return MemberExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: MemberExpressionBase__from_ast): MemberExpressionBase__from_ast$Storage => {
-            return MemberExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PrimaryExpressionBase__from_ast.$storageOf(instance), "MemberExpressionBase"), MemberExpressionBase__from_ast.$fromStorage, MemberExpressionBase__from_ast.$storageOf)))
     }
 ], value => PrimaryExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$PrivateIdentifier: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -31587,11 +31199,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAccessExpression__from_ast.$storageOf(instance).MemberExpressionBase = MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$MemberExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "MemberExpressionBase"), ($go$storage: MemberExpressionBase__from_ast$Storage): MemberExpressionBase__from_ast => {
-            return MemberExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: MemberExpressionBase__from_ast): MemberExpressionBase__from_ast$Storage => {
-            return MemberExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$MemberExpressionBase(tsonicTypeScriptRuntime.projectLocation<MemberExpressionBase__from_ast$Storage, MemberExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "MemberExpressionBase"), MemberExpressionBase__from_ast.$fromStorage, MemberExpressionBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FlowNodeBase),
@@ -31600,11 +31208,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAccessExpression__from_ast.$storageOf(instance).FlowNodeBase = FlowNodeBase__from_ast.$storageOf(FlowNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "FlowNodeBase"), ($go$storage: FlowNodeBase__from_ast$Storage): FlowNodeBase__from_ast => {
-            return FlowNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNodeBase__from_ast): FlowNodeBase__from_ast$Storage => {
-            return FlowNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "FlowNodeBase"), FlowNodeBase__from_ast.$fromStorage, FlowNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -31613,11 +31217,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAccessExpression__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAccessExpression__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -31703,11 +31303,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAssignment__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$NamedMemberBase),
@@ -31716,11 +31312,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAssignment__from_ast.$storageOf(instance).NamedMemberBase = NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NamedMemberBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-            return NamedMemberBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-            return NamedMemberBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ObjectLiteralElementBase),
@@ -31729,11 +31321,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAssignment__from_ast.$storageOf(instance).ObjectLiteralElementBase = ObjectLiteralElementBase__from_ast.$storageOf(ObjectLiteralElementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ObjectLiteralElementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ObjectLiteralElementBase(tsonicTypeScriptRuntime.projectLocation<ObjectLiteralElementBase__from_ast$Storage, ObjectLiteralElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "ObjectLiteralElementBase"), ($go$storage: ObjectLiteralElementBase__from_ast$Storage): ObjectLiteralElementBase__from_ast => {
-            return ObjectLiteralElementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ObjectLiteralElementBase__from_ast): ObjectLiteralElementBase__from_ast$Storage => {
-            return ObjectLiteralElementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ObjectLiteralElementBase(tsonicTypeScriptRuntime.projectLocation<ObjectLiteralElementBase__from_ast$Storage, ObjectLiteralElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "ObjectLiteralElementBase"), ObjectLiteralElementBase__from_ast.$fromStorage, ObjectLiteralElementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -31742,11 +31330,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertyAssignment__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertyAssignment__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -31945,11 +31529,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertySignatureDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$NamedMemberBase),
@@ -31958,11 +31538,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertySignatureDeclaration__from_ast.$storageOf(instance).NamedMemberBase = NamedMemberBase__from_ast.$storageOf(NamedMemberBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NamedMemberBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "NamedMemberBase"), ($go$storage: NamedMemberBase__from_ast$Storage): NamedMemberBase__from_ast => {
-            return NamedMemberBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NamedMemberBase__from_ast): NamedMemberBase__from_ast$Storage => {
-            return NamedMemberBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NamedMemberBase(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeElementBase),
@@ -31971,11 +31547,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertySignatureDeclaration__from_ast.$storageOf(instance).TypeElementBase = TypeElementBase__from_ast.$storageOf(TypeElementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeElementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), ($go$storage: TypeElementBase__from_ast$Storage): TypeElementBase__from_ast => {
-            return TypeElementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeElementBase__from_ast): TypeElementBase__from_ast$Storage => {
-            return TypeElementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeElementBase(tsonicTypeScriptRuntime.projectLocation<TypeElementBase__from_ast$Storage, TypeElementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "TypeElementBase"), TypeElementBase__from_ast.$fromStorage, TypeElementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -31984,11 +31556,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             PropertySignatureDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(PropertySignatureDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -32337,11 +31905,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ReturnStatement__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ReturnStatement__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ReturnStatement__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -32350,11 +31914,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ReturnStatement__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ReturnStatement__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ReturnStatement__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -33831,11 +33391,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             SourceFileParseOptions__from_ast.$storageOf(instance).ExternalModuleIndicatorOptions = ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$copy($goInterfaceAdapter$Named_ast$ExternalModuleIndicatorOptions.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExternalModuleIndicatorOptions(tsonicTypeScriptRuntime.projectLocation<ExternalModuleIndicatorOptions__from_ast$Storage, ExternalModuleIndicatorOptions__from_ast>(tsonicTypeScriptRuntime.propertyLocation(SourceFileParseOptions__from_ast.$storageOf(instance), "ExternalModuleIndicatorOptions"), ($go$storage: ExternalModuleIndicatorOptions__from_ast$Storage): ExternalModuleIndicatorOptions__from_ast => {
-            return ExternalModuleIndicatorOptions__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExternalModuleIndicatorOptions__from_ast): ExternalModuleIndicatorOptions__from_ast$Storage => {
-            return ExternalModuleIndicatorOptions__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExternalModuleIndicatorOptions(tsonicTypeScriptRuntime.projectLocation<ExternalModuleIndicatorOptions__from_ast$Storage, ExternalModuleIndicatorOptions__from_ast>(tsonicTypeScriptRuntime.propertyLocation(SourceFileParseOptions__from_ast.$storageOf(instance), "ExternalModuleIndicatorOptions"), ExternalModuleIndicatorOptions__from_ast.$fromStorage, ExternalModuleIndicatorOptions__from_ast.$storageOf)))
     }
 ], value => SourceFileParseOptions__from_ast.$copy(value));
 export const $goReflectType$Named_ast$SpreadAssignment: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -34010,11 +33566,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             StatementBase__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StatementBase__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StatementBase__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$FlowNodeBase),
@@ -34023,11 +33575,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             StatementBase__from_ast.$storageOf(instance).FlowNodeBase = FlowNodeBase__from_ast.$storageOf(FlowNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StatementBase__from_ast.$storageOf(instance), "FlowNodeBase"), ($go$storage: FlowNodeBase__from_ast$Storage): FlowNodeBase__from_ast => {
-            return FlowNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: FlowNodeBase__from_ast): FlowNodeBase__from_ast$Storage => {
-            return FlowNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNodeBase(tsonicTypeScriptRuntime.projectLocation<FlowNodeBase__from_ast$Storage, FlowNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StatementBase__from_ast.$storageOf(instance), "FlowNodeBase"), FlowNodeBase__from_ast.$fromStorage, FlowNodeBase__from_ast.$storageOf)))
     }
 ], value => StatementBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$StringLiteral: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -34058,11 +33606,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             StringLiteral__from_ast.$storageOf(instance).LiteralExpressionBase = LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LiteralExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralExpressionBase(tsonicTypeScriptRuntime.projectLocation<LiteralExpressionBase__from_ast$Storage, LiteralExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StringLiteral__from_ast.$storageOf(instance), "LiteralExpressionBase"), ($go$storage: LiteralExpressionBase__from_ast$Storage): LiteralExpressionBase__from_ast => {
-            return LiteralExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LiteralExpressionBase__from_ast): LiteralExpressionBase__from_ast$Storage => {
-            return LiteralExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralExpressionBase(tsonicTypeScriptRuntime.projectLocation<LiteralExpressionBase__from_ast$Storage, LiteralExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(StringLiteral__from_ast.$storageOf(instance), "LiteralExpressionBase"), LiteralExpressionBase__from_ast.$fromStorage, LiteralExpressionBase__from_ast.$storageOf)))
     }
 ], value => StringLiteral__from_ast.$copy(value));
 export const $goReflectType$Named_ast$SwitchStatement: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -35375,11 +34919,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Token__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Token__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(Token__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     }
 ], value => Token__from_ast.$copy(value));
 export const $goReflectType$Named_ast$TokenCacheKey: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -35653,11 +35193,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$StatementBase),
@@ -35666,11 +35202,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ExportableBase),
@@ -35679,11 +35211,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).ExportableBase = ExportableBase__from_ast.$storageOf(ExportableBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExportableBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ($go$storage: ExportableBase__from_ast$Storage): ExportableBase__from_ast => {
-            return ExportableBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExportableBase__from_ast): ExportableBase__from_ast$Storage => {
-            return ExportableBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ExportableBase__from_ast.$fromStorage, ExportableBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -35692,11 +35220,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$LocalsContainerBase),
@@ -35705,11 +35229,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).LocalsContainerBase = LocalsContainerBase__from_ast.$storageOf(LocalsContainerBase__from_ast.$copy($goInterfaceAdapter$Named_ast$LocalsContainerBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "LocalsContainerBase"), ($go$storage: LocalsContainerBase__from_ast$Storage): LocalsContainerBase__from_ast => {
-            return LocalsContainerBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: LocalsContainerBase__from_ast): LocalsContainerBase__from_ast$Storage => {
-            return LocalsContainerBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$LocalsContainerBase(tsonicTypeScriptRuntime.projectLocation<LocalsContainerBase__from_ast$Storage, LocalsContainerBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "LocalsContainerBase"), LocalsContainerBase__from_ast.$fromStorage, LocalsContainerBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -35718,11 +35238,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeAliasDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeAliasDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -35872,11 +35388,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeLiteralNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeLiteralNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeLiteralNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -35885,11 +35397,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeLiteralNode__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeLiteralNode__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeLiteralNode__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -35935,11 +35443,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeNodeBase__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeNodeBase__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeNodeBase__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -35948,11 +35452,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeNodeBase__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeNodeBase__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeNodeBase__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     }
 ], value => TypeNodeBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$TypeOfExpression: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -36044,11 +35544,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeOperatorNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeOperatorNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeOperatorNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$Kind),
@@ -36136,11 +35632,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeParameterDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -36149,11 +35641,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeParameterDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -36162,11 +35650,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeParameterDeclaration__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$TypeSyntaxBase),
@@ -36175,11 +35659,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeParameterDeclaration__from_ast.$storageOf(instance).TypeSyntaxBase = TypeSyntaxBase__from_ast.$storageOf(TypeSyntaxBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeSyntaxBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), ($go$storage: TypeSyntaxBase__from_ast$Storage): TypeSyntaxBase__from_ast => {
-            return TypeSyntaxBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeSyntaxBase__from_ast): TypeSyntaxBase__from_ast$Storage => {
-            return TypeSyntaxBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeSyntaxBase(tsonicTypeScriptRuntime.projectLocation<TypeSyntaxBase__from_ast$Storage, TypeSyntaxBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeParameterDeclaration__from_ast.$storageOf(instance), "TypeSyntaxBase"), TypeSyntaxBase__from_ast.$fromStorage, TypeSyntaxBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -36387,11 +35867,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TypeReferenceNode__from_ast.$storageOf(instance).NodeWithTypeArgumentsBase = NodeWithTypeArgumentsBase__from_ast.$storageOf(NodeWithTypeArgumentsBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeWithTypeArgumentsBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeWithTypeArgumentsBase(tsonicTypeScriptRuntime.projectLocation<NodeWithTypeArgumentsBase__from_ast$Storage, NodeWithTypeArgumentsBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeReferenceNode__from_ast.$storageOf(instance), "NodeWithTypeArgumentsBase"), ($go$storage: NodeWithTypeArgumentsBase__from_ast$Storage): NodeWithTypeArgumentsBase__from_ast => {
-            return NodeWithTypeArgumentsBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeWithTypeArgumentsBase__from_ast): NodeWithTypeArgumentsBase__from_ast$Storage => {
-            return NodeWithTypeArgumentsBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeWithTypeArgumentsBase(tsonicTypeScriptRuntime.projectLocation<NodeWithTypeArgumentsBase__from_ast$Storage, NodeWithTypeArgumentsBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(TypeReferenceNode__from_ast.$storageOf(instance), "NodeWithTypeArgumentsBase"), NodeWithTypeArgumentsBase__from_ast.$fromStorage, NodeWithTypeArgumentsBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -36446,11 +35922,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             UnaryExpressionBase__from_ast.$storageOf(instance).ExpressionBase = ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnaryExpressionBase__from_ast.$storageOf(instance), "ExpressionBase"), ($go$storage: ExpressionBase__from_ast$Storage): ExpressionBase__from_ast => {
-            return ExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExpressionBase__from_ast): ExpressionBase__from_ast$Storage => {
-            return ExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionBase(tsonicTypeScriptRuntime.projectLocation<ExpressionBase__from_ast$Storage, ExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnaryExpressionBase__from_ast.$storageOf(instance), "ExpressionBase"), ExpressionBase__from_ast.$fromStorage, ExpressionBase__from_ast.$storageOf)))
     }
 ], value => UnaryExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$UnionOrIntersectionTypeNodeBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -36486,11 +35958,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -36536,11 +36004,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             UnionTypeNode__from_ast.$storageOf(instance).TypeNodeBase = TypeNodeBase__from_ast.$storageOf(TypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), ($go$storage: TypeNodeBase__from_ast$Storage): TypeNodeBase__from_ast => {
-            return TypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: TypeNodeBase__from_ast): TypeNodeBase__from_ast$Storage => {
-            return TypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeNodeBase(tsonicTypeScriptRuntime.projectLocation<TypeNodeBase__from_ast$Storage, TypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionTypeNode__from_ast.$storageOf(instance), "TypeNodeBase"), TypeNodeBase__from_ast.$fromStorage, TypeNodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$UnionOrIntersectionTypeNodeBase),
@@ -36549,11 +36013,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             UnionTypeNode__from_ast.$storageOf(instance).UnionOrIntersectionTypeNodeBase = UnionOrIntersectionTypeNodeBase__from_ast.$storageOf(UnionOrIntersectionTypeNodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$UnionOrIntersectionTypeNodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionOrIntersectionTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<UnionOrIntersectionTypeNodeBase__from_ast$Storage, UnionOrIntersectionTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionTypeNode__from_ast.$storageOf(instance), "UnionOrIntersectionTypeNodeBase"), ($go$storage: UnionOrIntersectionTypeNodeBase__from_ast$Storage): UnionOrIntersectionTypeNodeBase__from_ast => {
-            return UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UnionOrIntersectionTypeNodeBase__from_ast): UnionOrIntersectionTypeNodeBase__from_ast$Storage => {
-            return UnionOrIntersectionTypeNodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionOrIntersectionTypeNodeBase(tsonicTypeScriptRuntime.projectLocation<UnionOrIntersectionTypeNodeBase__from_ast$Storage, UnionOrIntersectionTypeNodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UnionTypeNode__from_ast.$storageOf(instance), "UnionOrIntersectionTypeNodeBase"), UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage, UnionOrIntersectionTypeNodeBase__from_ast.$storageOf)))
     }
 ], value => UnionTypeNode__from_ast.$copy(value));
 export const $goReflectType$Named_ast$UpdateExpressionBase: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -36584,11 +36044,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             UpdateExpressionBase__from_ast.$storageOf(instance).UnaryExpressionBase = UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$copy($goInterfaceAdapter$Named_ast$UnaryExpressionBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<UnaryExpressionBase__from_ast$Storage, UnaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UpdateExpressionBase__from_ast.$storageOf(instance), "UnaryExpressionBase"), ($go$storage: UnaryExpressionBase__from_ast$Storage): UnaryExpressionBase__from_ast => {
-            return UnaryExpressionBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: UnaryExpressionBase__from_ast): UnaryExpressionBase__from_ast$Storage => {
-            return UnaryExpressionBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$UnaryExpressionBase(tsonicTypeScriptRuntime.projectLocation<UnaryExpressionBase__from_ast$Storage, UnaryExpressionBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(UpdateExpressionBase__from_ast.$storageOf(instance), "UnaryExpressionBase"), UnaryExpressionBase__from_ast.$fromStorage, UnaryExpressionBase__from_ast.$storageOf)))
     }
 ], value => UpdateExpressionBase__from_ast.$copy(value));
 export const $goReflectType$Named_ast$VariableDeclaration: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -36658,11 +36114,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclaration__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$DeclarationBase),
@@ -36671,11 +36123,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclaration__from_ast.$storageOf(instance).DeclarationBase = DeclarationBase__from_ast.$storageOf(DeclarationBase__from_ast.$copy($goInterfaceAdapter$Named_ast$DeclarationBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), ($go$storage: DeclarationBase__from_ast$Storage): DeclarationBase__from_ast => {
-            return DeclarationBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: DeclarationBase__from_ast): DeclarationBase__from_ast$Storage => {
-            return DeclarationBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$DeclarationBase(tsonicTypeScriptRuntime.projectLocation<DeclarationBase__from_ast$Storage, DeclarationBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "DeclarationBase"), DeclarationBase__from_ast.$fromStorage, DeclarationBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ExportableBase),
@@ -36684,11 +36132,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclaration__from_ast.$storageOf(instance).ExportableBase = ExportableBase__from_ast.$storageOf(ExportableBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ExportableBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ($go$storage: ExportableBase__from_ast$Storage): ExportableBase__from_ast => {
-            return ExportableBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ExportableBase__from_ast): ExportableBase__from_ast$Storage => {
-            return ExportableBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ExportableBase(tsonicTypeScriptRuntime.projectLocation<ExportableBase__from_ast$Storage, ExportableBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "ExportableBase"), ExportableBase__from_ast.$fromStorage, ExportableBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -36697,11 +36141,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclaration__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclaration__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -36779,11 +36219,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclarationList__from_ast.$storageOf(instance).NodeBase = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclarationList__from_ast.$storageOf(instance), "NodeBase"), ($go$storage: NodeBase__from_ast$Storage): NodeBase__from_ast => {
-            return NodeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: NodeBase__from_ast): NodeBase__from_ast$Storage => {
-            return NodeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeBase(tsonicTypeScriptRuntime.projectLocation<NodeBase__from_ast$Storage, NodeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclarationList__from_ast.$storageOf(instance), "NodeBase"), NodeBase__from_ast.$fromStorage, NodeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -36792,11 +36228,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableDeclarationList__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclarationList__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableDeclarationList__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$NodeList),
@@ -36853,11 +36285,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableStatement__from_ast.$storageOf(instance).StatementBase = StatementBase__from_ast.$storageOf(StatementBase__from_ast.$copy($goInterfaceAdapter$Named_ast$StatementBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "StatementBase"), ($go$storage: StatementBase__from_ast$Storage): StatementBase__from_ast => {
-            return StatementBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: StatementBase__from_ast): StatementBase__from_ast$Storage => {
-            return StatementBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$StatementBase(tsonicTypeScriptRuntime.projectLocation<StatementBase__from_ast$Storage, StatementBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "StatementBase"), StatementBase__from_ast.$fromStorage, StatementBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$ModifiersBase),
@@ -36866,11 +36294,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableStatement__from_ast.$storageOf(instance).ModifiersBase = ModifiersBase__from_ast.$storageOf(ModifiersBase__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifiersBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "ModifiersBase"), ($go$storage: ModifiersBase__from_ast$Storage): ModifiersBase__from_ast => {
-            return ModifiersBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: ModifiersBase__from_ast): ModifiersBase__from_ast$Storage => {
-            return ModifiersBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifiersBase(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_ast$CompositeBase),
@@ -36879,11 +36303,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             VariableStatement__from_ast.$storageOf(instance).CompositeBase = CompositeBase__from_ast.$storageOf(CompositeBase__from_ast.$copy($goInterfaceAdapter$Named_ast$CompositeBase.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "CompositeBase"), ($go$storage: CompositeBase__from_ast$Storage): CompositeBase__from_ast => {
-            return CompositeBase__from_ast.$fromStorage($go$storage);
-        }, ($go$value: CompositeBase__from_ast): CompositeBase__from_ast$Storage => {
-            return CompositeBase__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$CompositeBase(tsonicTypeScriptRuntime.projectLocation<CompositeBase__from_ast$Storage, CompositeBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(VariableStatement__from_ast.$storageOf(instance), "CompositeBase"), CompositeBase__from_ast.$fromStorage, CompositeBase__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_ast$Node),
@@ -41605,23 +41025,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
         } | undefined>, SyncMap__from_collections<SourceFileParseOptions__from_ast, {
             value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(parseCache__from_build.$storageOf(instance), "entries"), ($go$storage: SyncMap__from_collections$Storage<SourceFileParseOptions__from_ast, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>): SyncMap__from_collections<SourceFileParseOptions__from_ast, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<SourceFileParseOptions__from_ast, {
-                value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<SourceFileParseOptions__from_ast, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<SourceFileParseOptions__from_ast, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<SourceFileParseOptions__from_ast, {
-                value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(parseCache__from_build.$storageOf(instance), "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_build$parseCacheOf_Named_tspath$Path_And_PointerTo_Named_tsoptions$ParsedCommandLine: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -41659,23 +41063,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
         } | undefined>, SyncMap__from_collections<Path__from_tspath, {
             value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(parseCache__from_build.$storageOf(instance), "entries"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(parseCache__from_build.$storageOf(instance), "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_build$taskResult: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -49729,11 +49117,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_evaluator$Result(tsonicTypeScriptRuntime.projectLocation<Result__from_evaluator$Storage, Result__from_evaluator>(tsonicTypeScriptRuntime.propertyLocation(EnumMemberLinks__from_checker.$storageOf(instance), "value"), ($go$storage: Result__from_evaluator$Storage): Result__from_evaluator => {
-            return Result__from_evaluator.$fromStorage($go$storage);
-        }, ($go$value: Result__from_evaluator): Result__from_evaluator$Storage => {
-            return Result__from_evaluator.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_evaluator$Result(tsonicTypeScriptRuntime.projectLocation<Result__from_evaluator$Storage, Result__from_evaluator>(tsonicTypeScriptRuntime.propertyLocation(EnumMemberLinks__from_checker.$storageOf(instance), "value"), Result__from_evaluator.$fromStorage, Result__from_evaluator.$storageOf)))
     }
 ], value => EnumMemberLinks__from_checker.$copy(value));
 export const $goReflectType$Named_checker$EnumRelationKey: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -50031,11 +49415,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowLoopKey(tsonicTypeScriptRuntime.projectLocation<FlowLoopKey__from_checker$Storage, FlowLoopKey__from_checker>(tsonicTypeScriptRuntime.propertyLocation(FlowLoopInfo__from_checker.$storageOf(instance), "key"), ($go$storage: FlowLoopKey__from_checker$Storage): FlowLoopKey__from_checker => {
-            return FlowLoopKey__from_checker.$fromStorage($go$storage);
-        }, ($go$value: FlowLoopKey__from_checker): FlowLoopKey__from_checker$Storage => {
-            return FlowLoopKey__from_checker.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowLoopKey(tsonicTypeScriptRuntime.projectLocation<FlowLoopKey__from_checker$Storage, FlowLoopKey__from_checker>(tsonicTypeScriptRuntime.propertyLocation(FlowLoopInfo__from_checker.$storageOf(instance), "key"), FlowLoopKey__from_checker.$fromStorage, FlowLoopKey__from_checker.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$SliceOf_PointerTo_Named_checker$Type),
@@ -50088,11 +49468,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$CacheHashKey(tsonicTypeScriptRuntime.projectLocation<CacheHashKey__from_checker$Storage, CacheHashKey__from_checker>(tsonicTypeScriptRuntime.propertyLocation(FlowLoopKey__from_checker.$storageOf(instance), "refKey"), ($go$storage: CacheHashKey__from_checker$Storage): CacheHashKey__from_checker => {
-            return CacheHashKey__from_checker.$fromStorage($go$storage);
-        }, ($go$value: CacheHashKey__from_checker): CacheHashKey__from_checker$Storage => {
-            return CacheHashKey__from_checker.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$CacheHashKey(tsonicTypeScriptRuntime.projectLocation<CacheHashKey__from_checker$Storage, CacheHashKey__from_checker>(tsonicTypeScriptRuntime.propertyLocation(FlowLoopKey__from_checker.$storageOf(instance), "refKey"), CacheHashKey__from_checker.$fromStorage, CacheHashKey__from_checker.$storageOf)))
     }
 ], value => FlowLoopKey__from_checker.$copy(value));
 export const $goReflectType$Named_checker$FlowState: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -54709,11 +54085,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowType(tsonicTypeScriptRuntime.projectLocation<FlowType__from_checker$Storage, FlowType__from_checker>(tsonicTypeScriptRuntime.propertyLocation(SharedFlow__from_checker.$storageOf(instance), "flowType"), ($go$storage: FlowType__from_checker$Storage): FlowType__from_checker => {
-            return FlowType__from_checker.$fromStorage($go$storage);
-        }, ($go$value: FlowType__from_checker): FlowType__from_checker$Storage => {
-            return FlowType__from_checker.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowType(tsonicTypeScriptRuntime.projectLocation<FlowType__from_checker$Storage, FlowType__from_checker>(tsonicTypeScriptRuntime.propertyLocation(SharedFlow__from_checker.$storageOf(instance), "flowType"), FlowType__from_checker.$fromStorage, FlowType__from_checker.$storageOf)))
     }
 ], value => SharedFlow__from_checker.$copy(value));
 export const $goReflectType$Named_checker$Signature: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -55198,11 +54570,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$OrderedSetOf_PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.projectLocation<OrderedSet__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, OrderedSet__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SourceFileLinks__from_checker.$storageOf(instance), "deferredNodes"), ($go$storage: OrderedSet__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>): OrderedSet__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> => {
-            return OrderedSet__from_collections.$fromStorage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>($go$storage);
-        }, ($go$value: OrderedSet__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>): OrderedSet__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> => {
-            return OrderedSet__from_collections.$storageOf<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$OrderedSetOf_PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.projectLocation<OrderedSet__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, OrderedSet__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SourceFileLinks__from_checker.$storageOf(instance), "deferredNodes"), OrderedSet__from_collections.$fromStorage, OrderedSet__from_collections.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$SliceOf_PointerTo_Named_ast$Node),
@@ -58267,11 +57635,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$CopyOnWriteMapOf_Named_ast$SymbolId_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap__from_collections$Storage<SymbolId__from_ast, GoEmptyStruct>, CopyOnWriteMap__from_collections<SymbolId__from_ast, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(CopyOnWriteSet__from_collections.$storageOf(instance), "m"), ($go$storage: CopyOnWriteMap__from_collections$Storage<SymbolId__from_ast, GoEmptyStruct>): CopyOnWriteMap__from_collections<SymbolId__from_ast, GoEmptyStruct> => {
-            return CopyOnWriteMap__from_collections.$fromStorage<SymbolId__from_ast, GoEmptyStruct>($go$storage);
-        }, ($go$value: CopyOnWriteMap__from_collections<SymbolId__from_ast, GoEmptyStruct>): CopyOnWriteMap__from_collections$Storage<SymbolId__from_ast, GoEmptyStruct> => {
-            return CopyOnWriteMap__from_collections.$storageOf<SymbolId__from_ast, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$CopyOnWriteMapOf_Named_ast$SymbolId_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap__from_collections$Storage<SymbolId__from_ast, GoEmptyStruct>, CopyOnWriteMap__from_collections<SymbolId__from_ast, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(CopyOnWriteSet__from_collections.$storageOf(instance), "m"), CopyOnWriteMap__from_collections.$fromStorage, CopyOnWriteMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$CopyOnWriteSetOf_string: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -58303,11 +57667,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$CopyOnWriteMapOf_string_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap__from_collections$Storage<gostring, GoEmptyStruct>, CopyOnWriteMap__from_collections<gostring, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(CopyOnWriteSet__from_collections.$storageOf(instance), "m"), ($go$storage: CopyOnWriteMap__from_collections$Storage<gostring, GoEmptyStruct>): CopyOnWriteMap__from_collections<gostring, GoEmptyStruct> => {
-            return CopyOnWriteMap__from_collections.$fromStorage<gostring, GoEmptyStruct>($go$storage);
-        }, ($go$value: CopyOnWriteMap__from_collections<gostring, GoEmptyStruct>): CopyOnWriteMap__from_collections$Storage<gostring, GoEmptyStruct> => {
-            return CopyOnWriteMap__from_collections.$storageOf<gostring, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$CopyOnWriteMapOf_string_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap__from_collections$Storage<gostring, GoEmptyStruct>, CopyOnWriteMap__from_collections<gostring, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(CopyOnWriteSet__from_collections.$storageOf(instance), "m"), CopyOnWriteMap__from_collections.$fromStorage, CopyOnWriteMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$OrderedMapOf_PointerTo_Named_ast$Node_And_Struct_void: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -58699,11 +58059,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$OrderedMapOf_PointerTo_Named_ast$Node_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<OrderedMap__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>, OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(OrderedSet__from_collections.$storageOf(instance), "m"), ($go$storage: OrderedMap__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>): OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
-            return OrderedMap__from_collections.$fromStorage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>($go$storage);
-        }, ($go$value: OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>): OrderedMap__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
-            return OrderedMap__from_collections.$storageOf<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$OrderedMapOf_PointerTo_Named_ast$Node_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<OrderedMap__from_collections$Storage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>, OrderedMap__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(OrderedSet__from_collections.$storageOf(instance), "m"), OrderedMap__from_collections.$fromStorage, OrderedMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$OrderedSetOf_PointerTo_Named_printer$EmitHelper: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -58741,23 +58097,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: EmitHelper__from_printer;
         } | undefined, GoEmptyStruct>, OrderedMap__from_collections<{
             value: EmitHelper__from_printer;
-        } | undefined, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(OrderedSet__from_collections.$storageOf(instance), "m"), ($go$storage: OrderedMap__from_collections$Storage<{
-            value: EmitHelper__from_printer;
-        } | undefined, GoEmptyStruct>): OrderedMap__from_collections<{
-            value: EmitHelper__from_printer;
-        } | undefined, GoEmptyStruct> => {
-            return OrderedMap__from_collections.$fromStorage<{
-                value: EmitHelper__from_printer;
-            } | undefined, GoEmptyStruct>($go$storage);
-        }, ($go$value: OrderedMap__from_collections<{
-            value: EmitHelper__from_printer;
-        } | undefined, GoEmptyStruct>): OrderedMap__from_collections$Storage<{
-            value: EmitHelper__from_printer;
-        } | undefined, GoEmptyStruct> => {
-            return OrderedMap__from_collections.$storageOf<{
-                value: EmitHelper__from_printer;
-            } | undefined, GoEmptyStruct>($go$value);
-        })))
+        } | undefined, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(OrderedSet__from_collections.$storageOf(instance), "m"), OrderedMap__from_collections.$fromStorage, OrderedMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$SetOf_Named_checker$CacheHashKey: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -61738,11 +61078,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_Named_project$WatcherID_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<WatcherID__from_project, GoEmptyStruct>, SyncMap__from_collections<WatcherID__from_project, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), ($go$storage: SyncMap__from_collections$Storage<WatcherID__from_project, GoEmptyStruct>): SyncMap__from_collections<WatcherID__from_project, GoEmptyStruct> => {
-            return SyncMap__from_collections.$fromStorage<WatcherID__from_project, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap__from_collections<WatcherID__from_project, GoEmptyStruct>): SyncMap__from_collections$Storage<WatcherID__from_project, GoEmptyStruct> => {
-            return SyncMap__from_collections.$storageOf<WatcherID__from_project, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_Named_project$WatcherID_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<WatcherID__from_project, GoEmptyStruct>, SyncMap__from_collections<WatcherID__from_project, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$SyncSetOf_Named_tspath$Path: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -61774,11 +61110,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<Path__from_tspath, GoEmptyStruct>, SyncMap__from_collections<Path__from_tspath, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, GoEmptyStruct>): SyncMap__from_collections<Path__from_tspath, GoEmptyStruct> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, GoEmptyStruct>): SyncMap__from_collections$Storage<Path__from_tspath, GoEmptyStruct> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<Path__from_tspath, GoEmptyStruct>, SyncMap__from_collections<Path__from_tspath, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$SyncSetOf_string: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -61810,11 +61142,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_string_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<gostring, GoEmptyStruct>, SyncMap__from_collections<gostring, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), ($go$storage: SyncMap__from_collections$Storage<gostring, GoEmptyStruct>): SyncMap__from_collections<gostring, GoEmptyStruct> => {
-            return SyncMap__from_collections.$fromStorage<gostring, GoEmptyStruct>($go$storage);
-        }, ($go$value: SyncMap__from_collections<gostring, GoEmptyStruct>): SyncMap__from_collections$Storage<gostring, GoEmptyStruct> => {
-            return SyncMap__from_collections.$storageOf<gostring, GoEmptyStruct>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_collections$SyncMapOf_string_And_Struct_void(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<gostring, GoEmptyStruct>, SyncMap__from_collections<gostring, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(SyncSet__from_collections.$storageOf(instance), "m"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_collections$noCopy: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71197,11 +70525,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ArrayLiteralLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ArrayLiteralLinks__from_checker>, Arena__from_core<ArrayLiteralLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ArrayLiteralLinks__from_checker>): Arena__from_core<ArrayLiteralLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ArrayLiteralLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ArrayLiteralLinks__from_checker>): Arena__from_core$Storage<ArrayLiteralLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ArrayLiteralLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ArrayLiteralLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ArrayLiteralLinks__from_checker>, Arena__from_core<ArrayLiteralLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$AssertionLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71248,11 +70572,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$AssertionLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<AssertionLinks__from_checker>, Arena__from_core<AssertionLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<AssertionLinks__from_checker>): Arena__from_core<AssertionLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<AssertionLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<AssertionLinks__from_checker>): Arena__from_core$Storage<AssertionLinks__from_checker> => {
-            return Arena__from_core.$storageOf<AssertionLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$AssertionLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<AssertionLinks__from_checker>, Arena__from_core<AssertionLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$DeclarationFileLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71299,11 +70619,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclarationFileLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclarationFileLinks__from_checker>, Arena__from_core<DeclarationFileLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<DeclarationFileLinks__from_checker>): Arena__from_core<DeclarationFileLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<DeclarationFileLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<DeclarationFileLinks__from_checker>): Arena__from_core$Storage<DeclarationFileLinks__from_checker> => {
-            return Arena__from_core.$storageOf<DeclarationFileLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclarationFileLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclarationFileLinks__from_checker>, Arena__from_core<DeclarationFileLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$DeclarationLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71350,11 +70666,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclarationLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclarationLinks__from_checker>, Arena__from_core<DeclarationLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<DeclarationLinks__from_checker>): Arena__from_core<DeclarationLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<DeclarationLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<DeclarationLinks__from_checker>): Arena__from_core$Storage<DeclarationLinks__from_checker> => {
-            return Arena__from_core.$storageOf<DeclarationLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclarationLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclarationLinks__from_checker>, Arena__from_core<DeclarationLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$EnumMemberLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71401,11 +70713,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$EnumMemberLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<EnumMemberLinks__from_checker>, Arena__from_core<EnumMemberLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<EnumMemberLinks__from_checker>): Arena__from_core<EnumMemberLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<EnumMemberLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<EnumMemberLinks__from_checker>): Arena__from_core$Storage<EnumMemberLinks__from_checker> => {
-            return Arena__from_core.$storageOf<EnumMemberLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$EnumMemberLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<EnumMemberLinks__from_checker>, Arena__from_core<EnumMemberLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$JSXLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71452,11 +70760,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$JSXLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<JSXLinks__from_checker>, Arena__from_core<JSXLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<JSXLinks__from_checker>): Arena__from_core<JSXLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<JSXLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<JSXLinks__from_checker>): Arena__from_core$Storage<JSXLinks__from_checker> => {
-            return Arena__from_core.$storageOf<JSXLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$JSXLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<JSXLinks__from_checker>, Arena__from_core<JSXLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$JsxElementLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71503,11 +70807,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$JsxElementLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<JsxElementLinks__from_checker>, Arena__from_core<JsxElementLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<JsxElementLinks__from_checker>): Arena__from_core<JsxElementLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<JsxElementLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<JsxElementLinks__from_checker>): Arena__from_core$Storage<JsxElementLinks__from_checker> => {
-            return Arena__from_core.$storageOf<JsxElementLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$JsxElementLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<JsxElementLinks__from_checker>, Arena__from_core<JsxElementLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$NodeBuilderLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71554,11 +70854,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeBuilderLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeBuilderLinks__from_checker>, Arena__from_core<NodeBuilderLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<NodeBuilderLinks__from_checker>): Arena__from_core<NodeBuilderLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<NodeBuilderLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<NodeBuilderLinks__from_checker>): Arena__from_core$Storage<NodeBuilderLinks__from_checker> => {
-            return Arena__from_core.$storageOf<NodeBuilderLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeBuilderLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeBuilderLinks__from_checker>, Arena__from_core<NodeBuilderLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$NodeLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71605,11 +70901,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeLinks__from_checker>, Arena__from_core<NodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<NodeLinks__from_checker>): Arena__from_core<NodeLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<NodeLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<NodeLinks__from_checker>): Arena__from_core$Storage<NodeLinks__from_checker> => {
-            return Arena__from_core.$storageOf<NodeLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeLinks__from_checker>, Arena__from_core<NodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$SignatureLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71656,11 +70948,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SignatureLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SignatureLinks__from_checker>, Arena__from_core<SignatureLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SignatureLinks__from_checker>): Arena__from_core<SignatureLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SignatureLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SignatureLinks__from_checker>): Arena__from_core$Storage<SignatureLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SignatureLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SignatureLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SignatureLinks__from_checker>, Arena__from_core<SignatureLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$SwitchStatementLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71707,11 +70995,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SwitchStatementLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SwitchStatementLinks__from_checker>, Arena__from_core<SwitchStatementLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SwitchStatementLinks__from_checker>): Arena__from_core<SwitchStatementLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SwitchStatementLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SwitchStatementLinks__from_checker>): Arena__from_core$Storage<SwitchStatementLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SwitchStatementLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SwitchStatementLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SwitchStatementLinks__from_checker>, Arena__from_core<SwitchStatementLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$SymbolNodeLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71758,11 +71042,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SymbolNodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SymbolNodeLinks__from_checker>, Arena__from_core<SymbolNodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SymbolNodeLinks__from_checker>): Arena__from_core<SymbolNodeLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SymbolNodeLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SymbolNodeLinks__from_checker>): Arena__from_core$Storage<SymbolNodeLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SymbolNodeLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SymbolNodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SymbolNodeLinks__from_checker>, Arena__from_core<SymbolNodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_checker$TypeNodeLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71809,11 +71089,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$TypeNodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<TypeNodeLinks__from_checker>, Arena__from_core<TypeNodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<TypeNodeLinks__from_checker>): Arena__from_core<TypeNodeLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<TypeNodeLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<TypeNodeLinks__from_checker>): Arena__from_core$Storage<TypeNodeLinks__from_checker> => {
-            return Arena__from_core.$storageOf<TypeNodeLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$TypeNodeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<TypeNodeLinks__from_checker>, Arena__from_core<TypeNodeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Node_And_Named_printer$emitNode: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71860,11 +71136,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_printer$emitNode(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<emitNode__from_printer>, Arena__from_core<emitNode__from_printer>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<emitNode__from_printer>): Arena__from_core<emitNode__from_printer> => {
-            return Arena__from_core.$fromStorage<emitNode__from_printer>($go$storage);
-        }, ($go$value: Arena__from_core<emitNode__from_printer>): Arena__from_core$Storage<emitNode__from_printer> => {
-            return Arena__from_core.$storageOf<emitNode__from_printer>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_printer$emitNode(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<emitNode__from_printer>, Arena__from_core<emitNode__from_printer>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$SourceFile_And_Named_checker$SourceFileLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71911,11 +71183,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SourceFileLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SourceFileLinks__from_checker>, Arena__from_core<SourceFileLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SourceFileLinks__from_checker>): Arena__from_core<SourceFileLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SourceFileLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SourceFileLinks__from_checker>): Arena__from_core$Storage<SourceFileLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SourceFileLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SourceFileLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SourceFileLinks__from_checker>, Arena__from_core<SourceFileLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$AliasSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -71962,11 +71230,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$AliasSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<AliasSymbolLinks__from_checker>, Arena__from_core<AliasSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<AliasSymbolLinks__from_checker>): Arena__from_core<AliasSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<AliasSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<AliasSymbolLinks__from_checker>): Arena__from_core$Storage<AliasSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<AliasSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$AliasSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<AliasSymbolLinks__from_checker>, Arena__from_core<AliasSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$ContainingSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72013,11 +71277,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ContainingSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ContainingSymbolLinks__from_checker>, Arena__from_core<ContainingSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ContainingSymbolLinks__from_checker>): Arena__from_core<ContainingSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ContainingSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ContainingSymbolLinks__from_checker>): Arena__from_core$Storage<ContainingSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ContainingSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ContainingSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ContainingSymbolLinks__from_checker>, Arena__from_core<ContainingSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$DeclaredTypeLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72064,11 +71324,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclaredTypeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclaredTypeLinks__from_checker>, Arena__from_core<DeclaredTypeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<DeclaredTypeLinks__from_checker>): Arena__from_core<DeclaredTypeLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<DeclaredTypeLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<DeclaredTypeLinks__from_checker>): Arena__from_core$Storage<DeclaredTypeLinks__from_checker> => {
-            return Arena__from_core.$storageOf<DeclaredTypeLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeclaredTypeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeclaredTypeLinks__from_checker>, Arena__from_core<DeclaredTypeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$DeferredSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72115,11 +71371,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeferredSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeferredSymbolLinks__from_checker>, Arena__from_core<DeferredSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<DeferredSymbolLinks__from_checker>): Arena__from_core<DeferredSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<DeferredSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<DeferredSymbolLinks__from_checker>): Arena__from_core$Storage<DeferredSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<DeferredSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$DeferredSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<DeferredSymbolLinks__from_checker>, Arena__from_core<DeferredSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$ExportTypeLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72166,11 +71418,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ExportTypeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ExportTypeLinks__from_checker>, Arena__from_core<ExportTypeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ExportTypeLinks__from_checker>): Arena__from_core<ExportTypeLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ExportTypeLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ExportTypeLinks__from_checker>): Arena__from_core$Storage<ExportTypeLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ExportTypeLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ExportTypeLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ExportTypeLinks__from_checker>, Arena__from_core<ExportTypeLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$LateBoundLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72217,11 +71465,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$LateBoundLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<LateBoundLinks__from_checker>, Arena__from_core<LateBoundLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<LateBoundLinks__from_checker>): Arena__from_core<LateBoundLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<LateBoundLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<LateBoundLinks__from_checker>): Arena__from_core$Storage<LateBoundLinks__from_checker> => {
-            return Arena__from_core.$storageOf<LateBoundLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$LateBoundLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<LateBoundLinks__from_checker>, Arena__from_core<LateBoundLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$MappedSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72268,11 +71512,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MappedSymbolLinks__from_checker>, Arena__from_core<MappedSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<MappedSymbolLinks__from_checker>): Arena__from_core<MappedSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<MappedSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<MappedSymbolLinks__from_checker>): Arena__from_core$Storage<MappedSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<MappedSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MappedSymbolLinks__from_checker>, Arena__from_core<MappedSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$MarkedAssignmentSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72319,11 +71559,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MarkedAssignmentSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MarkedAssignmentSymbolLinks__from_checker>, Arena__from_core<MarkedAssignmentSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<MarkedAssignmentSymbolLinks__from_checker>): Arena__from_core<MarkedAssignmentSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<MarkedAssignmentSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<MarkedAssignmentSymbolLinks__from_checker>): Arena__from_core$Storage<MarkedAssignmentSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<MarkedAssignmentSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MarkedAssignmentSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MarkedAssignmentSymbolLinks__from_checker>, Arena__from_core<MarkedAssignmentSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$MembersAndExportsLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72370,11 +71606,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MembersAndExportsLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MembersAndExportsLinks__from_checker>, Arena__from_core<MembersAndExportsLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<MembersAndExportsLinks__from_checker>): Arena__from_core<MembersAndExportsLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<MembersAndExportsLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<MembersAndExportsLinks__from_checker>): Arena__from_core$Storage<MembersAndExportsLinks__from_checker> => {
-            return Arena__from_core.$storageOf<MembersAndExportsLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$MembersAndExportsLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<MembersAndExportsLinks__from_checker>, Arena__from_core<MembersAndExportsLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$ModuleSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72421,11 +71653,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ModuleSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ModuleSymbolLinks__from_checker>, Arena__from_core<ModuleSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ModuleSymbolLinks__from_checker>): Arena__from_core<ModuleSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ModuleSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ModuleSymbolLinks__from_checker>): Arena__from_core$Storage<ModuleSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ModuleSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ModuleSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ModuleSymbolLinks__from_checker>, Arena__from_core<ModuleSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$NodeBuilderSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72472,11 +71700,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeBuilderSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeBuilderSymbolLinks__from_checker>, Arena__from_core<NodeBuilderSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<NodeBuilderSymbolLinks__from_checker>): Arena__from_core<NodeBuilderSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<NodeBuilderSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<NodeBuilderSymbolLinks__from_checker>): Arena__from_core$Storage<NodeBuilderSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<NodeBuilderSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$NodeBuilderSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<NodeBuilderSymbolLinks__from_checker>, Arena__from_core<NodeBuilderSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$ReverseMappedSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72523,11 +71747,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ReverseMappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ReverseMappedSymbolLinks__from_checker>, Arena__from_core<ReverseMappedSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ReverseMappedSymbolLinks__from_checker>): Arena__from_core<ReverseMappedSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ReverseMappedSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ReverseMappedSymbolLinks__from_checker>): Arena__from_core$Storage<ReverseMappedSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ReverseMappedSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ReverseMappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ReverseMappedSymbolLinks__from_checker>, Arena__from_core<ReverseMappedSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$SpreadLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72574,11 +71794,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SpreadLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SpreadLinks__from_checker>, Arena__from_core<SpreadLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SpreadLinks__from_checker>): Arena__from_core<SpreadLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SpreadLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SpreadLinks__from_checker>): Arena__from_core$Storage<SpreadLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SpreadLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SpreadLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SpreadLinks__from_checker>, Arena__from_core<SpreadLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$SymbolReferenceLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72625,11 +71841,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SymbolReferenceLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SymbolReferenceLinks__from_checker>, Arena__from_core<SymbolReferenceLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<SymbolReferenceLinks__from_checker>): Arena__from_core<SymbolReferenceLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<SymbolReferenceLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<SymbolReferenceLinks__from_checker>): Arena__from_core$Storage<SymbolReferenceLinks__from_checker> => {
-            return Arena__from_core.$storageOf<SymbolReferenceLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$SymbolReferenceLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<SymbolReferenceLinks__from_checker>, Arena__from_core<SymbolReferenceLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$TypeAliasLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72676,11 +71888,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$TypeAliasLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<TypeAliasLinks__from_checker>, Arena__from_core<TypeAliasLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<TypeAliasLinks__from_checker>): Arena__from_core<TypeAliasLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<TypeAliasLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<TypeAliasLinks__from_checker>): Arena__from_core$Storage<TypeAliasLinks__from_checker> => {
-            return Arena__from_core.$storageOf<TypeAliasLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$TypeAliasLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<TypeAliasLinks__from_checker>, Arena__from_core<TypeAliasLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$ValueSymbolLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72727,11 +71935,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ValueSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ValueSymbolLinks__from_checker>, Arena__from_core<ValueSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<ValueSymbolLinks__from_checker>): Arena__from_core<ValueSymbolLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<ValueSymbolLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<ValueSymbolLinks__from_checker>): Arena__from_core$Storage<ValueSymbolLinks__from_checker> => {
-            return Arena__from_core.$storageOf<ValueSymbolLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$ValueSymbolLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<ValueSymbolLinks__from_checker>, Arena__from_core<ValueSymbolLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$LinkStoreOf_PointerTo_Named_ast$Symbol_And_Named_checker$VarianceLinks: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -72778,11 +71982,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$VarianceLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<VarianceLinks__from_checker>, Arena__from_core<VarianceLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), ($go$storage: Arena__from_core$Storage<VarianceLinks__from_checker>): Arena__from_core<VarianceLinks__from_checker> => {
-            return Arena__from_core.$fromStorage<VarianceLinks__from_checker>($go$storage);
-        }, ($go$value: Arena__from_core<VarianceLinks__from_checker>): Arena__from_core$Storage<VarianceLinks__from_checker> => {
-            return Arena__from_core.$storageOf<VarianceLinks__from_checker>($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$ArenaOf_Named_checker$VarianceLinks(tsonicTypeScriptRuntime.projectLocation<Arena__from_core$Storage<VarianceLinks__from_checker>, Arena__from_core<VarianceLinks__from_checker>>(tsonicTypeScriptRuntime.propertyLocation(LinkStore__from_core.$storageOf(instance), "arena"), Arena__from_core.$fromStorage, Arena__from_core.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_core$ModuleDetectionKind: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -73200,11 +72400,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             TextChange__from_core.$storageOf(instance).TextRange = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(TextChange__from_core.$storageOf(instance), "TextRange"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(TextChange__from_core.$storageOf(instance), "TextRange"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$string),
@@ -74597,23 +73793,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: Project__from_project;
         } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
             value: Project__from_project;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>($go$storage);
-        }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project),
@@ -74696,23 +73876,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: configFileEntry__from_project;
         } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
             value: configFileEntry__from_project;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>($go$storage);
-        }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry),
@@ -74795,23 +73959,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: diskFile__from_project;
         } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
             value: diskFile__from_project;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>($go$storage);
-        }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile),
@@ -74894,23 +74042,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: realpathAliasSet__from_project;
         } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
             value: realpathAliasSet__from_project;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), ($go$storage: mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>): mapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$fromStorage<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>($go$storage);
-        }, ($go$value: mapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>): mapEntry__from_dirty$Storage<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined> => {
-            return mapEntry__from_dirty.$storageOf<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMapEntry__from_dirty.$storageOf(instance), "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet),
@@ -74978,35 +74110,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: SyncMapEntry__from_dirty<Path__from_tspath, {
                 value: Project__from_project;
             } | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: Project__from_project;
-                } | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: Project__from_project;
-                } | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -75065,35 +74169,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: SyncMapEntry__from_dirty<Path__from_tspath, {
                 value: configFileEntry__from_project;
             } | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: configFileEntry__from_project;
-                } | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: configFileEntry__from_project;
-                } | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -75152,35 +74228,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: SyncMapEntry__from_dirty<Path__from_tspath, {
                 value: diskFile__from_project;
             } | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: diskFile__from_project;
-                } | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: diskFile__from_project;
-                } | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -75239,35 +74287,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: SyncMapEntry__from_dirty<Path__from_tspath, {
                 value: realpathAliasSet__from_project;
             } | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: realpathAliasSet__from_project;
-                } | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: realpathAliasSet__from_project;
-                } | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(SyncMap__from_dirty.$storageOf(instance), "dirty"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     }
 ]);
 export const $goReflectType$Named_dirty$mapEntryOf_Named_tspath$Path_And_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -80600,11 +79620,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Struct__from_jsonopts.$storageOf(instance).Flags = Flags__from_jsonflags.$storageOf(Flags__from_jsonflags.$copy($goInterfaceAdapter$Named_jsonflags$Flags.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonflags$Flags(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-            return Flags__from_jsonflags.$fromStorage($go$storage);
-        }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-            return Flags__from_jsonflags.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonflags$Flags(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_jsonopts$CoderValues),
@@ -80613,11 +79629,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Struct__from_jsonopts.$storageOf(instance).CoderValues = CoderValues__from_jsonopts.$storageOf(CoderValues__from_jsonopts.$copy($goInterfaceAdapter$Named_jsonopts$CoderValues.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonopts$CoderValues(tsonicTypeScriptRuntime.projectLocation<CoderValues__from_jsonopts$Storage, CoderValues__from_jsonopts>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "CoderValues"), ($go$storage: CoderValues__from_jsonopts$Storage): CoderValues__from_jsonopts => {
-            return CoderValues__from_jsonopts.$fromStorage($go$storage);
-        }, ($go$value: CoderValues__from_jsonopts): CoderValues__from_jsonopts$Storage => {
-            return CoderValues__from_jsonopts.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonopts$CoderValues(tsonicTypeScriptRuntime.projectLocation<CoderValues__from_jsonopts$Storage, CoderValues__from_jsonopts>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "CoderValues"), CoderValues__from_jsonopts.$fromStorage, CoderValues__from_jsonopts.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_jsonopts$ArshalValues),
@@ -80626,11 +79638,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Struct__from_jsonopts.$storageOf(instance).ArshalValues = ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$copy($goInterfaceAdapter$Named_jsonopts$ArshalValues.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonopts$ArshalValues(tsonicTypeScriptRuntime.projectLocation<ArshalValues__from_jsonopts$Storage, ArshalValues__from_jsonopts>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "ArshalValues"), ($go$storage: ArshalValues__from_jsonopts$Storage): ArshalValues__from_jsonopts => {
-            return ArshalValues__from_jsonopts.$fromStorage($go$storage);
-        }, ($go$value: ArshalValues__from_jsonopts): ArshalValues__from_jsonopts$Storage => {
-            return ArshalValues__from_jsonopts.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_jsonopts$ArshalValues(tsonicTypeScriptRuntime.projectLocation<ArshalValues__from_jsonopts$Storage, ArshalValues__from_jsonopts>(tsonicTypeScriptRuntime.propertyLocation(Struct__from_jsonopts.$storageOf(instance), "ArshalValues"), ArshalValues__from_jsonopts.$fromStorage, ArshalValues__from_jsonopts.$storageOf)))
     }
 ], value => Struct__from_jsonopts.$copy(value));
 export const $goReflectType$Named_jsonrpc$ID: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -82188,11 +81196,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$Named_
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, objectNamespace__from_jsontext.$storageOf(objectNamespace__from_jsontext.$copy($goInterfaceAdapter$Named_jsontext$objectNamespace.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_jsontext$objectNamespace(tsonicTypeScriptRuntime.projectLocation<objectNamespace__from_jsontext$Storage, objectNamespace__from_jsontext>(goSliceAddress<objectNamespace__from_jsontext$Storage>(instance, index), ($go$storage: objectNamespace__from_jsontext$Storage): objectNamespace__from_jsontext => {
-                return objectNamespace__from_jsontext.$fromStorage($go$storage);
-            }, ($go$value: objectNamespace__from_jsontext): objectNamespace__from_jsontext$Storage => {
-                return objectNamespace__from_jsontext.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_jsontext$objectNamespace(tsonicTypeScriptRuntime.projectLocation<objectNamespace__from_jsontext$Storage, objectNamespace__from_jsontext>(goSliceAddress<objectNamespace__from_jsontext$Storage>(instance, index), objectNamespace__from_jsontext.$fromStorage, objectNamespace__from_jsontext.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -84490,11 +83494,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyIncomingCallsOrNull(tsonicTypeScriptRuntime.projectLocation<CallHierarchyIncomingCallsOrNull__from_lsproto$Storage, CallHierarchyIncomingCallsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), ($go$storage: CallHierarchyIncomingCallsOrNull__from_lsproto$Storage): CallHierarchyIncomingCallsOrNull__from_lsproto => {
-            return CallHierarchyIncomingCallsOrNull__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: CallHierarchyIncomingCallsOrNull__from_lsproto): CallHierarchyIncomingCallsOrNull__from_lsproto$Storage => {
-            return CallHierarchyIncomingCallsOrNull__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyIncomingCallsOrNull(tsonicTypeScriptRuntime.projectLocation<CallHierarchyIncomingCallsOrNull__from_lsproto$Storage, CallHierarchyIncomingCallsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), CallHierarchyIncomingCallsOrNull__from_lsproto.$fromStorage, CallHierarchyIncomingCallsOrNull__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -84553,11 +83553,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$LocationOrLocationsOrDefinitionLinksOrNull(tsonicTypeScriptRuntime.projectLocation<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), ($go$storage: LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage): LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto => {
-            return LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto): LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage => {
-            return LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$LocationOrLocationsOrDefinitionLinksOrNull(tsonicTypeScriptRuntime.projectLocation<LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto$Storage, LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto.$fromStorage, LocationOrLocationsOrDefinitionLinksOrNull__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -84616,11 +83612,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$LocationsOrNull(tsonicTypeScriptRuntime.projectLocation<LocationsOrNull__from_lsproto$Storage, LocationsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), ($go$storage: LocationsOrNull__from_lsproto$Storage): LocationsOrNull__from_lsproto => {
-            return LocationsOrNull__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: LocationsOrNull__from_lsproto): LocationsOrNull__from_lsproto$Storage => {
-            return LocationsOrNull__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$LocationsOrNull(tsonicTypeScriptRuntime.projectLocation<LocationsOrNull__from_lsproto$Storage, LocationsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), LocationsOrNull__from_lsproto.$fromStorage, LocationsOrNull__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -84679,11 +83671,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItemsOrNull(tsonicTypeScriptRuntime.projectLocation<VSReferenceItemsOrNull__from_lsproto$Storage, VSReferenceItemsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), ($go$storage: VSReferenceItemsOrNull__from_lsproto$Storage): VSReferenceItemsOrNull__from_lsproto => {
-            return VSReferenceItemsOrNull__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: VSReferenceItemsOrNull__from_lsproto): VSReferenceItemsOrNull__from_lsproto$Storage => {
-            return VSReferenceItemsOrNull__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItemsOrNull(tsonicTypeScriptRuntime.projectLocation<VSReferenceItemsOrNull__from_lsproto$Storage, VSReferenceItemsOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), VSReferenceItemsOrNull__from_lsproto.$fromStorage, VSReferenceItemsOrNull__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -84742,11 +83730,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceEditOrNull(tsonicTypeScriptRuntime.projectLocation<WorkspaceEditOrNull__from_lsproto$Storage, WorkspaceEditOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), ($go$storage: WorkspaceEditOrNull__from_lsproto$Storage): WorkspaceEditOrNull__from_lsproto => {
-            return WorkspaceEditOrNull__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: WorkspaceEditOrNull__from_lsproto): WorkspaceEditOrNull__from_lsproto$Storage => {
-            return WorkspaceEditOrNull__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceEditOrNull(tsonicTypeScriptRuntime.projectLocation<WorkspaceEditOrNull__from_lsproto$Storage, WorkspaceEditOrNull__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(response__from_ls.$storageOf(instance), "result"), WorkspaceEditOrNull__from_lsproto.$fromStorage, WorkspaceEditOrNull__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -103342,11 +102326,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Location__from_lsproto.$storageOf(instance).Range = Range__from_lsproto.$storageOf(Range__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Range.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(tsonicTypeScriptRuntime.projectLocation<Range__from_lsproto$Storage, Range__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Location__from_lsproto.$storageOf(instance), "Range"), ($go$storage: Range__from_lsproto$Storage): Range__from_lsproto => {
-            return Range__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: Range__from_lsproto): Range__from_lsproto$Storage => {
-            return Range__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(tsonicTypeScriptRuntime.projectLocation<Range__from_lsproto$Storage, Range__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Location__from_lsproto.$storageOf(instance), "Range"), Range__from_lsproto.$fromStorage, Range__from_lsproto.$storageOf)))
     }
 ], value => Location__from_lsproto.$copy(value));
 export const $goReflectType$Named_lsproto$LocationLink: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -106494,11 +105474,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Range__from_lsproto.$storageOf(instance).Start = Position__from_lsproto.$storageOf(Position__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Position.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Range__from_lsproto.$storageOf(instance), "Start"), ($go$storage: Position__from_lsproto$Storage): Position__from_lsproto => {
-            return Position__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: Position__from_lsproto): Position__from_lsproto$Storage => {
-            return Position__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Range__from_lsproto.$storageOf(instance), "Start"), Position__from_lsproto.$fromStorage, Position__from_lsproto.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_lsproto$Position),
@@ -106507,11 +105483,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             Range__from_lsproto.$storageOf(instance).End = Position__from_lsproto.$storageOf(Position__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Position.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Range__from_lsproto.$storageOf(instance), "End"), ($go$storage: Position__from_lsproto$Storage): Position__from_lsproto => {
-            return Position__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: Position__from_lsproto): Position__from_lsproto$Storage => {
-            return Position__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(Range__from_lsproto.$storageOf(instance), "End"), Position__from_lsproto.$fromStorage, Position__from_lsproto.$storageOf)))
     }
 ], value => Range__from_lsproto.$copy(value));
 export const $goReflectType$Named_lsproto$RangeOrEditRangeWithInsertReplace: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -118389,11 +117361,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             SymbolInformation__from_lsproto.$storageOf(instance).Location = Location__from_lsproto.$storageOf(Location__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Location.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.projectLocation<Location__from_lsproto$Storage, Location__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(SymbolInformation__from_lsproto.$storageOf(instance), "Location"), ($go$storage: Location__from_lsproto$Storage): Location__from_lsproto => {
-            return Location__from_lsproto.$fromStorage($go$storage);
-        }, ($go$value: Location__from_lsproto): Location__from_lsproto$Storage => {
-            return Location__from_lsproto.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.projectLocation<Location__from_lsproto$Storage, Location__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(SymbolInformation__from_lsproto.$storageOf(instance), "Location"), Location__from_lsproto.$fromStorage, Location__from_lsproto.$storageOf)))
     }
 ], value => SymbolInformation__from_lsproto.$copy(value));
 export const $goReflectType$Named_lsproto$SymbolInformationsOrDocumentSymbolsOrNull: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -126977,8 +125945,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
-            }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_MapOf_string_To_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -126992,8 +125958,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         get: instance => (new $goInterfaceAdapter$Named_packagejson$ExpectedOf_MapOf_string_To_string(instance.DevDependencies)),
         set: (instance, value) => {
             instance.DevDependencies = Expected__from_packagejson.$copy<GoMapValue<gostring, gostring>>(($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-                return $argument0;
-            }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
             }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
@@ -127013,8 +125977,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
-            }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_MapOf_string_To_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -127028,8 +125990,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         get: instance => (new $goInterfaceAdapter$Named_packagejson$ExpectedOf_MapOf_string_To_string(instance.OptionalDependencies)),
         set: (instance, value) => {
             instance.OptionalDependencies = Expected__from_packagejson.$copy<GoMapValue<gostring, gostring>>(($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-                return $argument0;
-            }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
             }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
                 return $argument0;
@@ -127223,11 +126183,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ExportsOrImports__from_packagejson.$storageOf(instance).JSONValue = JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$copy($goInterfaceAdapter$Named_packagejson$JSONValue.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_packagejson$JSONValue(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(ExportsOrImports__from_packagejson.$storageOf(instance), "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-            return JSONValue__from_packagejson.$fromStorage($go$storage);
-        }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-            return JSONValue__from_packagejson.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_packagejson$JSONValue(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(ExportsOrImports__from_packagejson.$storageOf(instance), "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_packagejson$objectKind),
@@ -127350,8 +126306,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
-            }, ($argument0: gostring): gostring => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -127368,8 +126322,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
-            }, ($argument0: gostring): gostring => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -127383,8 +126335,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         get: instance => (new $goInterfaceAdapter$Named_packagejson$ExpectedOf_string(instance.Type)),
         set: (instance, value) => {
             instance.Type = Expected__from_packagejson.$copy<gostring>(($argument0: gostring): gostring => {
-                return $argument0;
-            }, ($argument0: gostring): gostring => {
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
@@ -127769,8 +126719,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
-            }, ($argument0: gostring): gostring => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -127784,8 +126732,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         get: instance => (new $goInterfaceAdapter$Named_packagejson$ExpectedOf_string(instance.Main)),
         set: (instance, value) => {
             instance.Main = Expected__from_packagejson.$copy<gostring>(($argument0: gostring): gostring => {
-                return $argument0;
-            }, ($argument0: gostring): gostring => {
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
@@ -127805,8 +126751,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
-            }, ($argument0: gostring): gostring => {
-                return $argument0;
             }, $goInterfaceAdapter$Named_packagejson$ExpectedOf_string.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"));
         },
         address: instance => {
@@ -127820,8 +126764,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         get: instance => (new $goInterfaceAdapter$Named_packagejson$ExpectedOf_string(instance.Typings)),
         set: (instance, value) => {
             instance.Typings = Expected__from_packagejson.$copy<gostring>(($argument0: gostring): gostring => {
-                return $argument0;
-            }, ($argument0: gostring): gostring => {
                 return $argument0;
             }, ($argument0: gostring): gostring => {
                 return $argument0;
@@ -129650,11 +128592,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             SynthesizedComment__from_printer.$storageOf(instance).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy($goInterfaceAdapter$Named_core$TextRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(SynthesizedComment__from_printer.$storageOf(instance), "Loc"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(SynthesizedComment__from_printer.$storageOf(instance), "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$bool),
@@ -129821,11 +128759,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(emitNode__from_printer.$storageOf(instance), "commentRange"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(emitNode__from_printer.$storageOf(instance), "commentRange"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_core$TextRange),
@@ -129834,11 +128768,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(emitNode__from_printer.$storageOf(instance), "sourceMapRange"), ($go$storage: TextRange__from_core$Storage): TextRange__from_core => {
-            return TextRange__from_core.$fromStorage($go$storage);
-        }, ($go$value: TextRange__from_core): TextRange__from_core$Storage => {
-            return TextRange__from_core.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_core$TextRange(tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(emitNode__from_printer.$storageOf(instance), "sourceMapRange"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$MapOf_Named_ast$Kind_To_Named_core$TextRange),
@@ -130817,35 +129747,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: ownerCacheEntry__from_project<{
                 value: ExtendedConfigCacheEntry__from_project;
             } | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(OwnerCache__from_project.$storageOf(instance), "entries"), ($go$storage: SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: ownerCacheEntry__from_project<{
-                value: ExtendedConfigCacheEntry__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections<Path__from_tspath, {
-            value: ownerCacheEntry__from_project<{
-                value: ExtendedConfigCacheEntry__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<Path__from_tspath, {
-                value: ownerCacheEntry__from_project<{
-                    value: ExtendedConfigCacheEntry__from_project;
-                } | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<Path__from_tspath, {
-            value: ownerCacheEntry__from_project<{
-                value: ExtendedConfigCacheEntry__from_project;
-            } | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<Path__from_tspath, {
-            value: ownerCacheEntry__from_project<{
-                value: ExtendedConfigCacheEntry__from_project;
-            } | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<Path__from_tspath, {
-                value: ownerCacheEntry__from_project<{
-                    value: ExtendedConfigCacheEntry__from_project;
-                } | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(OwnerCache__from_project.$storageOf(instance), "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_tspath$Path_PointerTo_Named_project$ExtendedConfigCacheEntry_Named_project$ExtendedConfigParseArgs_to_bool),
@@ -130902,11 +129804,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParseCacheKey__from_project.$storageOf(instance).SourceFileParseOptions = SourceFileParseOptions__from_ast.$storageOf(SourceFileParseOptions__from_ast.$copy($goInterfaceAdapter$Named_ast$SourceFileParseOptions.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$SourceFileParseOptions(tsonicTypeScriptRuntime.projectLocation<SourceFileParseOptions__from_ast$Storage, SourceFileParseOptions__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParseCacheKey__from_project.$storageOf(instance), "SourceFileParseOptions"), ($go$storage: SourceFileParseOptions__from_ast$Storage): SourceFileParseOptions__from_ast => {
-            return SourceFileParseOptions__from_ast.$fromStorage($go$storage);
-        }, ($go$value: SourceFileParseOptions__from_ast): SourceFileParseOptions__from_ast$Storage => {
-            return SourceFileParseOptions__from_ast.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_ast$SourceFileParseOptions(tsonicTypeScriptRuntime.projectLocation<SourceFileParseOptions__from_ast$Storage, SourceFileParseOptions__from_ast>(tsonicTypeScriptRuntime.propertyLocation(ParseCacheKey__from_project.$storageOf(instance), "SourceFileParseOptions"), SourceFileParseOptions__from_ast.$fromStorage, SourceFileParseOptions__from_ast.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_core$ScriptKind),
@@ -130924,11 +129822,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             ParseCacheKey__from_project.$storageOf(instance).Hash = Uint128__from_xxh3.$storageOf(Uint128__from_xxh3.$copy($goInterfaceAdapter$Named_xxh3$Uint128.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_xxh3$Uint128(tsonicTypeScriptRuntime.projectLocation<Uint128__from_xxh3$Storage, Uint128__from_xxh3>(tsonicTypeScriptRuntime.propertyLocation(ParseCacheKey__from_project.$storageOf(instance), "Hash"), ($go$storage: Uint128__from_xxh3$Storage): Uint128__from_xxh3 => {
-            return Uint128__from_xxh3.$fromStorage($go$storage);
-        }, ($go$value: Uint128__from_xxh3): Uint128__from_xxh3$Storage => {
-            return Uint128__from_xxh3.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_xxh3$Uint128(tsonicTypeScriptRuntime.projectLocation<Uint128__from_xxh3$Storage, Uint128__from_xxh3>(tsonicTypeScriptRuntime.propertyLocation(ParseCacheKey__from_project.$storageOf(instance), "Hash"), Uint128__from_xxh3.$fromStorage, Uint128__from_xxh3.$storageOf)))
     }
 ], value => ParseCacheKey__from_project.$copy(value));
 export const $goReflectType$Named_project$ParseCacheKey_Named_project$FileHandle_to_PointerTo_Named_ast$SourceFile: named_reflect.RuntimeType = named_reflect.ReflectTypeMetadataOperations.$create(() => ({
@@ -131961,11 +130855,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             RefCountCache__from_project.$storageOf(instance).Options = RefCountCacheOptions__from_project.$storageOf(RefCountCacheOptions__from_project.$copy($goInterfaceAdapter$Named_project$RefCountCacheOptions.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_project$RefCountCacheOptions(tsonicTypeScriptRuntime.projectLocation<RefCountCacheOptions__from_project$Storage, RefCountCacheOptions__from_project>(tsonicTypeScriptRuntime.propertyLocation(RefCountCache__from_project.$storageOf(instance), "Options"), ($go$storage: RefCountCacheOptions__from_project$Storage): RefCountCacheOptions__from_project => {
-            return RefCountCacheOptions__from_project.$fromStorage($go$storage);
-        }, ($go$value: RefCountCacheOptions__from_project): RefCountCacheOptions__from_project$Storage => {
-            return RefCountCacheOptions__from_project.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_project$RefCountCacheOptions(tsonicTypeScriptRuntime.projectLocation<RefCountCacheOptions__from_project$Storage, RefCountCacheOptions__from_project>(tsonicTypeScriptRuntime.propertyLocation(RefCountCache__from_project.$storageOf(instance), "Options"), RefCountCacheOptions__from_project.$fromStorage, RefCountCacheOptions__from_project.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_collections$SyncMapOf_Named_project$ParseCacheKey_And_PointerTo_Named_project$refCountCacheEntryOf_PointerTo_Named_ast$SourceFile),
@@ -131980,23 +130870,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
             value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
         } | undefined>, SyncMap__from_collections<ParseCacheKey__from_project, {
             value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(RefCountCache__from_project.$storageOf(instance), "entries"), ($go$storage: SyncMap__from_collections$Storage<ParseCacheKey__from_project, {
-            value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>): SyncMap__from_collections<ParseCacheKey__from_project, {
-            value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$fromStorage<ParseCacheKey__from_project, {
-                value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>($go$storage);
-        }, ($go$value: SyncMap__from_collections<ParseCacheKey__from_project, {
-            value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined>): SyncMap__from_collections$Storage<ParseCacheKey__from_project, {
-            value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-        } | undefined> => {
-            return SyncMap__from_collections.$storageOf<ParseCacheKey__from_project, {
-                value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
-            } | undefined>($go$value);
-        })))
+        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(RefCountCache__from_project.$storageOf(instance), "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_project$ParseCacheKey_Named_project$FileHandle_to_PointerTo_Named_ast$SourceFile),
@@ -133735,11 +132609,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerStruct($goReflectType$Named
         set: (instance, value) => {
             GoPanic.raiseRuntime("reflect: Value.Set using unaddressable value");
         },
-        address: instance => (new $goInterfaceAdapter$PointerTo_Named_project$PatternsAndIgnored(tsonicTypeScriptRuntime.projectLocation<PatternsAndIgnored__from_project$Storage, PatternsAndIgnored__from_project>(tsonicTypeScriptRuntime.propertyLocation(WatchedFiles__from_project.$storageOf(instance), "input"), ($go$storage: PatternsAndIgnored__from_project$Storage): PatternsAndIgnored__from_project => {
-            return PatternsAndIgnored__from_project.$fromStorage($go$storage);
-        }, ($go$value: PatternsAndIgnored__from_project): PatternsAndIgnored__from_project$Storage => {
-            return PatternsAndIgnored__from_project.$storageOf($go$value);
-        })))
+        address: instance => (new $goInterfaceAdapter$PointerTo_Named_project$PatternsAndIgnored(tsonicTypeScriptRuntime.projectLocation<PatternsAndIgnored__from_project$Storage, PatternsAndIgnored__from_project>(tsonicTypeScriptRuntime.propertyLocation(WatchedFiles__from_project.$storageOf(instance), "input"), PatternsAndIgnored__from_project.$fromStorage, PatternsAndIgnored__from_project.$storageOf)))
     },
     {
         type: (): named_reflect.RuntimeType => ($goReflectType$Named_sync__package_1$Once),
@@ -148919,8 +147789,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
                     return $argument0;
                 }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
                     return $argument0;
-                }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
-                    return $argument0;
                 }, $goInterfaceAdapter$Named_build$parseCacheEntryOf_PointerTo_Named_ast$SourceFile.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         }
     }
@@ -148943,8 +147811,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
         set: (pointer, value) => {
             void (pointer.value =
                 parseCacheEntry__from_build.$copy<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined => {
-                    return $argument0;
-                }, ($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined => {
                     return $argument0;
                 }, ($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined => {
                     return $argument0;
@@ -151906,12 +150772,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
                 Box__from_dirty.$copy<{
                     value: Project__from_project;
                 } | undefined>(($argument0: {
-                    value: Project__from_project;
-                } | undefined): {
-                    value: Project__from_project;
-                } | undefined => {
-                    return $argument0;
-                }, ($argument0: {
                     value: Project__from_project;
                 } | undefined): {
                     value: Project__from_project;
@@ -166845,12 +165705,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
                     value: ExtendedConfigCacheEntry__from_project;
                 } | undefined => {
                     return $argument0;
-                }, ($argument0: {
-                    value: ExtendedConfigCacheEntry__from_project;
-                } | undefined): {
-                    value: ExtendedConfigCacheEntry__from_project;
-                } | undefined => {
-                    return $argument0;
                 }, $goInterfaceAdapter$Named_project$ownerCacheEntryOf_PointerTo_Named_project$ExtendedConfigCacheEntry.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         }
     }
@@ -166917,8 +165771,6 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
         set: (pointer, value) => {
             void (pointer.value =
                 refCountCacheEntry__from_project.$copy<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
-                    return $argument0;
-                }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
                     return $argument0;
                 }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
                     return $argument0;
@@ -174844,8 +173696,8 @@ named_reflect.ReflectTypeMetadataOperations.$registerPointer($goReflectType$Poin
         type: (): named_reflect.RuntimeType => ($goReflectType$Struct_void),
         get: pointer => (new $goInterfaceAdapter$Struct_void(pointer.value)),
         set: (pointer, value) => {
-            void (pointer.value =
-                GoEmptyStruct.$copy($goInterfaceAdapter$Struct_void.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
+            void (pointer.value = (void GoEmptyStruct.$copy,
+                $goInterfaceAdapter$Struct_void.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box")));
         }
     }
 });
@@ -175181,11 +174033,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DiagAndArgs__from___go_module.$storageOf(DiagAndArgs__from___go_module.$copy($goInterfaceAdapter$Named___go_module$DiagAndArgs.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named___go_module$DiagAndArgs(tsonicTypeScriptRuntime.projectLocation<DiagAndArgs__from___go_module$Storage, DiagAndArgs__from___go_module>(goSliceAddress<DiagAndArgs__from___go_module$Storage>(instance, index), ($go$storage: DiagAndArgs__from___go_module$Storage): DiagAndArgs__from___go_module => {
-                return DiagAndArgs__from___go_module.$fromStorage($go$storage);
-            }, ($go$value: DiagAndArgs__from___go_module): DiagAndArgs__from___go_module$Storage => {
-                return DiagAndArgs__from___go_module.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named___go_module$DiagAndArgs(tsonicTypeScriptRuntime.projectLocation<DiagAndArgs__from___go_module$Storage, DiagAndArgs__from___go_module>(goSliceAddress<DiagAndArgs__from___go_module$Storage>(instance, index), DiagAndArgs__from___go_module.$fromStorage, DiagAndArgs__from___go_module.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -175280,11 +174128,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DocumentIdentifier__from_api.$storageOf(DocumentIdentifier__from_api.$copy($goInterfaceAdapter$Named_api$DocumentIdentifier.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$DocumentIdentifier(tsonicTypeScriptRuntime.projectLocation<DocumentIdentifier__from_api$Storage, DocumentIdentifier__from_api>(goSliceAddress<DocumentIdentifier__from_api$Storage>(instance, index), ($go$storage: DocumentIdentifier__from_api$Storage): DocumentIdentifier__from_api => {
-                return DocumentIdentifier__from_api.$fromStorage($go$storage);
-            }, ($go$value: DocumentIdentifier__from_api): DocumentIdentifier__from_api$Storage => {
-                return DocumentIdentifier__from_api.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$DocumentIdentifier(tsonicTypeScriptRuntime.projectLocation<DocumentIdentifier__from_api$Storage, DocumentIdentifier__from_api>(goSliceAddress<DocumentIdentifier__from_api$Storage>(instance, index), DocumentIdentifier__from_api.$fromStorage, DocumentIdentifier__from_api.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -175511,11 +174355,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ReferencedSymbolEntry__from_api.$storageOf(ReferencedSymbolEntry__from_api.$copy($goInterfaceAdapter$Named_api$ReferencedSymbolEntry.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$ReferencedSymbolEntry(tsonicTypeScriptRuntime.projectLocation<ReferencedSymbolEntry__from_api$Storage, ReferencedSymbolEntry__from_api>(goSliceAddress<ReferencedSymbolEntry__from_api$Storage>(instance, index), ($go$storage: ReferencedSymbolEntry__from_api$Storage): ReferencedSymbolEntry__from_api => {
-                return ReferencedSymbolEntry__from_api.$fromStorage($go$storage);
-            }, ($go$value: ReferencedSymbolEntry__from_api): ReferencedSymbolEntry__from_api$Storage => {
-                return ReferencedSymbolEntry__from_api.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$ReferencedSymbolEntry(tsonicTypeScriptRuntime.projectLocation<ReferencedSymbolEntry__from_api$Storage, ReferencedSymbolEntry__from_api>(goSliceAddress<ReferencedSymbolEntry__from_api$Storage>(instance, index), ReferencedSymbolEntry__from_api.$fromStorage, ReferencedSymbolEntry__from_api.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -175610,11 +174450,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SignatureUsageResponse__from_api.$storageOf(SignatureUsageResponse__from_api.$copy($goInterfaceAdapter$Named_api$SignatureUsageResponse.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$SignatureUsageResponse(tsonicTypeScriptRuntime.projectLocation<SignatureUsageResponse__from_api$Storage, SignatureUsageResponse__from_api>(goSliceAddress<SignatureUsageResponse__from_api$Storage>(instance, index), ($go$storage: SignatureUsageResponse__from_api$Storage): SignatureUsageResponse__from_api => {
-                return SignatureUsageResponse__from_api.$fromStorage($go$storage);
-            }, ($go$value: SignatureUsageResponse__from_api): SignatureUsageResponse__from_api$Storage => {
-                return SignatureUsageResponse__from_api.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_api$SignatureUsageResponse(tsonicTypeScriptRuntime.projectLocation<SignatureUsageResponse__from_api$Storage, SignatureUsageResponse__from_api>(goSliceAddress<SignatureUsageResponse__from_api$Storage>(instance, index), SignatureUsageResponse__from_api.$fromStorage, SignatureUsageResponse__from_api.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -175834,11 +174670,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ArrayTypeNode__from_ast.$storageOf(ArrayTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$ArrayTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ArrayTypeNode(tsonicTypeScriptRuntime.projectLocation<ArrayTypeNode__from_ast$Storage, ArrayTypeNode__from_ast>(goSliceAddress<ArrayTypeNode__from_ast$Storage>(instance, index), ($go$storage: ArrayTypeNode__from_ast$Storage): ArrayTypeNode__from_ast => {
-                return ArrayTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ArrayTypeNode__from_ast): ArrayTypeNode__from_ast$Storage => {
-                return ArrayTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ArrayTypeNode(tsonicTypeScriptRuntime.projectLocation<ArrayTypeNode__from_ast$Storage, ArrayTypeNode__from_ast>(goSliceAddress<ArrayTypeNode__from_ast$Storage>(instance, index), ArrayTypeNode__from_ast.$fromStorage, ArrayTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -175933,11 +174765,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, BinaryExpression__from_ast.$storageOf(BinaryExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$BinaryExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$BinaryExpression(tsonicTypeScriptRuntime.projectLocation<BinaryExpression__from_ast$Storage, BinaryExpression__from_ast>(goSliceAddress<BinaryExpression__from_ast$Storage>(instance, index), ($go$storage: BinaryExpression__from_ast$Storage): BinaryExpression__from_ast => {
-                return BinaryExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: BinaryExpression__from_ast): BinaryExpression__from_ast$Storage => {
-                return BinaryExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$BinaryExpression(tsonicTypeScriptRuntime.projectLocation<BinaryExpression__from_ast$Storage, BinaryExpression__from_ast>(goSliceAddress<BinaryExpression__from_ast$Storage>(instance, index), BinaryExpression__from_ast.$fromStorage, BinaryExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176032,11 +174860,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Block__from_ast.$storageOf(Block__from_ast.$copy($goInterfaceAdapter$Named_ast$Block.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Block(tsonicTypeScriptRuntime.projectLocation<Block__from_ast$Storage, Block__from_ast>(goSliceAddress<Block__from_ast$Storage>(instance, index), ($go$storage: Block__from_ast$Storage): Block__from_ast => {
-                return Block__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Block__from_ast): Block__from_ast$Storage => {
-                return Block__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Block(tsonicTypeScriptRuntime.projectLocation<Block__from_ast$Storage, Block__from_ast>(goSliceAddress<Block__from_ast$Storage>(instance, index), Block__from_ast.$fromStorage, Block__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176131,11 +174955,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, CallExpression__from_ast.$storageOf(CallExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$CallExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CallExpression(tsonicTypeScriptRuntime.projectLocation<CallExpression__from_ast$Storage, CallExpression__from_ast>(goSliceAddress<CallExpression__from_ast$Storage>(instance, index), ($go$storage: CallExpression__from_ast$Storage): CallExpression__from_ast => {
-                return CallExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: CallExpression__from_ast): CallExpression__from_ast$Storage => {
-                return CallExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CallExpression(tsonicTypeScriptRuntime.projectLocation<CallExpression__from_ast$Storage, CallExpression__from_ast>(goSliceAddress<CallExpression__from_ast$Storage>(instance, index), CallExpression__from_ast.$fromStorage, CallExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176230,11 +175050,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$copy($goInterfaceAdapter$Named_ast$CommentDirective.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentDirective(tsonicTypeScriptRuntime.projectLocation<CommentDirective__from_ast$Storage, CommentDirective__from_ast>(goSliceAddress<CommentDirective__from_ast$Storage>(instance, index), ($go$storage: CommentDirective__from_ast$Storage): CommentDirective__from_ast => {
-                return CommentDirective__from_ast.$fromStorage($go$storage);
-            }, ($go$value: CommentDirective__from_ast): CommentDirective__from_ast$Storage => {
-                return CommentDirective__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentDirective(tsonicTypeScriptRuntime.projectLocation<CommentDirective__from_ast$Storage, CommentDirective__from_ast>(goSliceAddress<CommentDirective__from_ast$Storage>(instance, index), CommentDirective__from_ast.$fromStorage, CommentDirective__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176329,11 +175145,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy($goInterfaceAdapter$Named_ast$CommentRange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentRange(tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(goSliceAddress<CommentRange__from_ast$Storage>(instance, index), ($go$storage: CommentRange__from_ast$Storage): CommentRange__from_ast => {
-                return CommentRange__from_ast.$fromStorage($go$storage);
-            }, ($go$value: CommentRange__from_ast): CommentRange__from_ast$Storage => {
-                return CommentRange__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$CommentRange(tsonicTypeScriptRuntime.projectLocation<CommentRange__from_ast$Storage, CommentRange__from_ast>(goSliceAddress<CommentRange__from_ast$Storage>(instance, index), CommentRange__from_ast.$fromStorage, CommentRange__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176428,11 +175240,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ConditionalExpression__from_ast.$storageOf(ConditionalExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$ConditionalExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ConditionalExpression(tsonicTypeScriptRuntime.projectLocation<ConditionalExpression__from_ast$Storage, ConditionalExpression__from_ast>(goSliceAddress<ConditionalExpression__from_ast$Storage>(instance, index), ($go$storage: ConditionalExpression__from_ast$Storage): ConditionalExpression__from_ast => {
-                return ConditionalExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ConditionalExpression__from_ast): ConditionalExpression__from_ast$Storage => {
-                return ConditionalExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ConditionalExpression(tsonicTypeScriptRuntime.projectLocation<ConditionalExpression__from_ast$Storage, ConditionalExpression__from_ast>(goSliceAddress<ConditionalExpression__from_ast$Storage>(instance, index), ConditionalExpression__from_ast.$fromStorage, ConditionalExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176527,11 +175335,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ConstructSignatureDeclaration__from_ast.$storageOf(ConstructSignatureDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$ConstructSignatureDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ConstructSignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<ConstructSignatureDeclaration__from_ast$Storage, ConstructSignatureDeclaration__from_ast>(goSliceAddress<ConstructSignatureDeclaration__from_ast$Storage>(instance, index), ($go$storage: ConstructSignatureDeclaration__from_ast$Storage): ConstructSignatureDeclaration__from_ast => {
-                return ConstructSignatureDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ConstructSignatureDeclaration__from_ast): ConstructSignatureDeclaration__from_ast$Storage => {
-                return ConstructSignatureDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ConstructSignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<ConstructSignatureDeclaration__from_ast$Storage, ConstructSignatureDeclaration__from_ast>(goSliceAddress<ConstructSignatureDeclaration__from_ast$Storage>(instance, index), ConstructSignatureDeclaration__from_ast.$fromStorage, ConstructSignatureDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176626,11 +175430,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ElementAccessExpression__from_ast.$storageOf(ElementAccessExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$ElementAccessExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ElementAccessExpression(tsonicTypeScriptRuntime.projectLocation<ElementAccessExpression__from_ast$Storage, ElementAccessExpression__from_ast>(goSliceAddress<ElementAccessExpression__from_ast$Storage>(instance, index), ($go$storage: ElementAccessExpression__from_ast$Storage): ElementAccessExpression__from_ast => {
-                return ElementAccessExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ElementAccessExpression__from_ast): ElementAccessExpression__from_ast$Storage => {
-                return ElementAccessExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ElementAccessExpression(tsonicTypeScriptRuntime.projectLocation<ElementAccessExpression__from_ast$Storage, ElementAccessExpression__from_ast>(goSliceAddress<ElementAccessExpression__from_ast$Storage>(instance, index), ElementAccessExpression__from_ast.$fromStorage, ElementAccessExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176725,11 +175525,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ExpressionStatement__from_ast.$storageOf(ExpressionStatement__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionStatement.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionStatement(tsonicTypeScriptRuntime.projectLocation<ExpressionStatement__from_ast$Storage, ExpressionStatement__from_ast>(goSliceAddress<ExpressionStatement__from_ast$Storage>(instance, index), ($go$storage: ExpressionStatement__from_ast$Storage): ExpressionStatement__from_ast => {
-                return ExpressionStatement__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ExpressionStatement__from_ast): ExpressionStatement__from_ast$Storage => {
-                return ExpressionStatement__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionStatement(tsonicTypeScriptRuntime.projectLocation<ExpressionStatement__from_ast$Storage, ExpressionStatement__from_ast>(goSliceAddress<ExpressionStatement__from_ast$Storage>(instance, index), ExpressionStatement__from_ast.$fromStorage, ExpressionStatement__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176824,11 +175620,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ExpressionWithTypeArguments__from_ast.$storageOf(ExpressionWithTypeArguments__from_ast.$copy($goInterfaceAdapter$Named_ast$ExpressionWithTypeArguments.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionWithTypeArguments(tsonicTypeScriptRuntime.projectLocation<ExpressionWithTypeArguments__from_ast$Storage, ExpressionWithTypeArguments__from_ast>(goSliceAddress<ExpressionWithTypeArguments__from_ast$Storage>(instance, index), ($go$storage: ExpressionWithTypeArguments__from_ast$Storage): ExpressionWithTypeArguments__from_ast => {
-                return ExpressionWithTypeArguments__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ExpressionWithTypeArguments__from_ast): ExpressionWithTypeArguments__from_ast$Storage => {
-                return ExpressionWithTypeArguments__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ExpressionWithTypeArguments(tsonicTypeScriptRuntime.projectLocation<ExpressionWithTypeArguments__from_ast$Storage, ExpressionWithTypeArguments__from_ast>(goSliceAddress<ExpressionWithTypeArguments__from_ast$Storage>(instance, index), ExpressionWithTypeArguments__from_ast.$fromStorage, ExpressionWithTypeArguments__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -176923,11 +175715,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FlowList__from_ast.$storageOf(FlowList__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowList.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowList(tsonicTypeScriptRuntime.projectLocation<FlowList__from_ast$Storage, FlowList__from_ast>(goSliceAddress<FlowList__from_ast$Storage>(instance, index), ($go$storage: FlowList__from_ast$Storage): FlowList__from_ast => {
-                return FlowList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: FlowList__from_ast): FlowList__from_ast$Storage => {
-                return FlowList__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowList(tsonicTypeScriptRuntime.projectLocation<FlowList__from_ast$Storage, FlowList__from_ast>(goSliceAddress<FlowList__from_ast$Storage>(instance, index), FlowList__from_ast.$fromStorage, FlowList__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177022,11 +175810,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FlowNode__from_ast.$storageOf(FlowNode__from_ast.$copy($goInterfaceAdapter$Named_ast$FlowNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNode(tsonicTypeScriptRuntime.projectLocation<FlowNode__from_ast$Storage, FlowNode__from_ast>(goSliceAddress<FlowNode__from_ast$Storage>(instance, index), ($go$storage: FlowNode__from_ast$Storage): FlowNode__from_ast => {
-                return FlowNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: FlowNode__from_ast): FlowNode__from_ast$Storage => {
-                return FlowNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FlowNode(tsonicTypeScriptRuntime.projectLocation<FlowNode__from_ast$Storage, FlowNode__from_ast>(goSliceAddress<FlowNode__from_ast$Storage>(instance, index), FlowNode__from_ast.$fromStorage, FlowNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177121,11 +175905,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FunctionDeclaration__from_ast.$storageOf(FunctionDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionDeclaration(tsonicTypeScriptRuntime.projectLocation<FunctionDeclaration__from_ast$Storage, FunctionDeclaration__from_ast>(goSliceAddress<FunctionDeclaration__from_ast$Storage>(instance, index), ($go$storage: FunctionDeclaration__from_ast$Storage): FunctionDeclaration__from_ast => {
-                return FunctionDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: FunctionDeclaration__from_ast): FunctionDeclaration__from_ast$Storage => {
-                return FunctionDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionDeclaration(tsonicTypeScriptRuntime.projectLocation<FunctionDeclaration__from_ast$Storage, FunctionDeclaration__from_ast>(goSliceAddress<FunctionDeclaration__from_ast$Storage>(instance, index), FunctionDeclaration__from_ast.$fromStorage, FunctionDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177220,11 +176000,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FunctionTypeNode__from_ast.$storageOf(FunctionTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$FunctionTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionTypeNode(tsonicTypeScriptRuntime.projectLocation<FunctionTypeNode__from_ast$Storage, FunctionTypeNode__from_ast>(goSliceAddress<FunctionTypeNode__from_ast$Storage>(instance, index), ($go$storage: FunctionTypeNode__from_ast$Storage): FunctionTypeNode__from_ast => {
-                return FunctionTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: FunctionTypeNode__from_ast): FunctionTypeNode__from_ast$Storage => {
-                return FunctionTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$FunctionTypeNode(tsonicTypeScriptRuntime.projectLocation<FunctionTypeNode__from_ast$Storage, FunctionTypeNode__from_ast>(goSliceAddress<FunctionTypeNode__from_ast$Storage>(instance, index), FunctionTypeNode__from_ast.$fromStorage, FunctionTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177319,11 +176095,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, HeritageClause__from_ast.$storageOf(HeritageClause__from_ast.$copy($goInterfaceAdapter$Named_ast$HeritageClause.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$HeritageClause(tsonicTypeScriptRuntime.projectLocation<HeritageClause__from_ast$Storage, HeritageClause__from_ast>(goSliceAddress<HeritageClause__from_ast$Storage>(instance, index), ($go$storage: HeritageClause__from_ast$Storage): HeritageClause__from_ast => {
-                return HeritageClause__from_ast.$fromStorage($go$storage);
-            }, ($go$value: HeritageClause__from_ast): HeritageClause__from_ast$Storage => {
-                return HeritageClause__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$HeritageClause(tsonicTypeScriptRuntime.projectLocation<HeritageClause__from_ast$Storage, HeritageClause__from_ast>(goSliceAddress<HeritageClause__from_ast$Storage>(instance, index), HeritageClause__from_ast.$fromStorage, HeritageClause__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177418,11 +176190,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Identifier__from_ast.$storageOf(Identifier__from_ast.$copy($goInterfaceAdapter$Named_ast$Identifier.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Identifier(tsonicTypeScriptRuntime.projectLocation<Identifier__from_ast$Storage, Identifier__from_ast>(goSliceAddress<Identifier__from_ast$Storage>(instance, index), ($go$storage: Identifier__from_ast$Storage): Identifier__from_ast => {
-                return Identifier__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Identifier__from_ast): Identifier__from_ast$Storage => {
-                return Identifier__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Identifier(tsonicTypeScriptRuntime.projectLocation<Identifier__from_ast$Storage, Identifier__from_ast>(goSliceAddress<Identifier__from_ast$Storage>(instance, index), Identifier__from_ast.$fromStorage, Identifier__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177517,11 +176285,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, IfStatement__from_ast.$storageOf(IfStatement__from_ast.$copy($goInterfaceAdapter$Named_ast$IfStatement.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IfStatement(tsonicTypeScriptRuntime.projectLocation<IfStatement__from_ast$Storage, IfStatement__from_ast>(goSliceAddress<IfStatement__from_ast$Storage>(instance, index), ($go$storage: IfStatement__from_ast$Storage): IfStatement__from_ast => {
-                return IfStatement__from_ast.$fromStorage($go$storage);
-            }, ($go$value: IfStatement__from_ast): IfStatement__from_ast$Storage => {
-                return IfStatement__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IfStatement(tsonicTypeScriptRuntime.projectLocation<IfStatement__from_ast$Storage, IfStatement__from_ast>(goSliceAddress<IfStatement__from_ast$Storage>(instance, index), IfStatement__from_ast.$fromStorage, IfStatement__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177616,11 +176380,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ImportSpecifier__from_ast.$storageOf(ImportSpecifier__from_ast.$copy($goInterfaceAdapter$Named_ast$ImportSpecifier.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ImportSpecifier(tsonicTypeScriptRuntime.projectLocation<ImportSpecifier__from_ast$Storage, ImportSpecifier__from_ast>(goSliceAddress<ImportSpecifier__from_ast$Storage>(instance, index), ($go$storage: ImportSpecifier__from_ast$Storage): ImportSpecifier__from_ast => {
-                return ImportSpecifier__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ImportSpecifier__from_ast): ImportSpecifier__from_ast$Storage => {
-                return ImportSpecifier__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ImportSpecifier(tsonicTypeScriptRuntime.projectLocation<ImportSpecifier__from_ast$Storage, ImportSpecifier__from_ast>(goSliceAddress<ImportSpecifier__from_ast$Storage>(instance, index), ImportSpecifier__from_ast.$fromStorage, ImportSpecifier__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177715,11 +176475,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, IndexedAccessTypeNode__from_ast.$storageOf(IndexedAccessTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$IndexedAccessTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IndexedAccessTypeNode(tsonicTypeScriptRuntime.projectLocation<IndexedAccessTypeNode__from_ast$Storage, IndexedAccessTypeNode__from_ast>(goSliceAddress<IndexedAccessTypeNode__from_ast$Storage>(instance, index), ($go$storage: IndexedAccessTypeNode__from_ast$Storage): IndexedAccessTypeNode__from_ast => {
-                return IndexedAccessTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: IndexedAccessTypeNode__from_ast): IndexedAccessTypeNode__from_ast$Storage => {
-                return IndexedAccessTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IndexedAccessTypeNode(tsonicTypeScriptRuntime.projectLocation<IndexedAccessTypeNode__from_ast$Storage, IndexedAccessTypeNode__from_ast>(goSliceAddress<IndexedAccessTypeNode__from_ast$Storage>(instance, index), IndexedAccessTypeNode__from_ast.$fromStorage, IndexedAccessTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177814,11 +176570,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, InterfaceDeclaration__from_ast.$storageOf(InterfaceDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$InterfaceDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$InterfaceDeclaration(tsonicTypeScriptRuntime.projectLocation<InterfaceDeclaration__from_ast$Storage, InterfaceDeclaration__from_ast>(goSliceAddress<InterfaceDeclaration__from_ast$Storage>(instance, index), ($go$storage: InterfaceDeclaration__from_ast$Storage): InterfaceDeclaration__from_ast => {
-                return InterfaceDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: InterfaceDeclaration__from_ast): InterfaceDeclaration__from_ast$Storage => {
-                return InterfaceDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$InterfaceDeclaration(tsonicTypeScriptRuntime.projectLocation<InterfaceDeclaration__from_ast$Storage, InterfaceDeclaration__from_ast>(goSliceAddress<InterfaceDeclaration__from_ast$Storage>(instance, index), InterfaceDeclaration__from_ast.$fromStorage, InterfaceDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -177913,11 +176665,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, IntersectionTypeNode__from_ast.$storageOf(IntersectionTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$IntersectionTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IntersectionTypeNode(tsonicTypeScriptRuntime.projectLocation<IntersectionTypeNode__from_ast$Storage, IntersectionTypeNode__from_ast>(goSliceAddress<IntersectionTypeNode__from_ast$Storage>(instance, index), ($go$storage: IntersectionTypeNode__from_ast$Storage): IntersectionTypeNode__from_ast => {
-                return IntersectionTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: IntersectionTypeNode__from_ast): IntersectionTypeNode__from_ast$Storage => {
-                return IntersectionTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$IntersectionTypeNode(tsonicTypeScriptRuntime.projectLocation<IntersectionTypeNode__from_ast$Storage, IntersectionTypeNode__from_ast>(goSliceAddress<IntersectionTypeNode__from_ast$Storage>(instance, index), IntersectionTypeNode__from_ast.$fromStorage, IntersectionTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178012,11 +176760,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSDoc__from_ast.$storageOf(JSDoc__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDoc.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDoc(tsonicTypeScriptRuntime.projectLocation<JSDoc__from_ast$Storage, JSDoc__from_ast>(goSliceAddress<JSDoc__from_ast$Storage>(instance, index), ($go$storage: JSDoc__from_ast$Storage): JSDoc__from_ast => {
-                return JSDoc__from_ast.$fromStorage($go$storage);
-            }, ($go$value: JSDoc__from_ast): JSDoc__from_ast$Storage => {
-                return JSDoc__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDoc(tsonicTypeScriptRuntime.projectLocation<JSDoc__from_ast$Storage, JSDoc__from_ast>(goSliceAddress<JSDoc__from_ast$Storage>(instance, index), JSDoc__from_ast.$fromStorage, JSDoc__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178111,11 +176855,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSDocDeprecatedTag__from_ast.$storageOf(JSDocDeprecatedTag__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocDeprecatedTag.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocDeprecatedTag(tsonicTypeScriptRuntime.projectLocation<JSDocDeprecatedTag__from_ast$Storage, JSDocDeprecatedTag__from_ast>(goSliceAddress<JSDocDeprecatedTag__from_ast$Storage>(instance, index), ($go$storage: JSDocDeprecatedTag__from_ast$Storage): JSDocDeprecatedTag__from_ast => {
-                return JSDocDeprecatedTag__from_ast.$fromStorage($go$storage);
-            }, ($go$value: JSDocDeprecatedTag__from_ast): JSDocDeprecatedTag__from_ast$Storage => {
-                return JSDocDeprecatedTag__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocDeprecatedTag(tsonicTypeScriptRuntime.projectLocation<JSDocDeprecatedTag__from_ast$Storage, JSDocDeprecatedTag__from_ast>(goSliceAddress<JSDocDeprecatedTag__from_ast$Storage>(instance, index), JSDocDeprecatedTag__from_ast.$fromStorage, JSDocDeprecatedTag__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178210,11 +176950,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSDocText__from_ast.$storageOf(JSDocText__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocText.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocText(tsonicTypeScriptRuntime.projectLocation<JSDocText__from_ast$Storage, JSDocText__from_ast>(goSliceAddress<JSDocText__from_ast$Storage>(instance, index), ($go$storage: JSDocText__from_ast$Storage): JSDocText__from_ast => {
-                return JSDocText__from_ast.$fromStorage($go$storage);
-            }, ($go$value: JSDocText__from_ast): JSDocText__from_ast$Storage => {
-                return JSDocText__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocText(tsonicTypeScriptRuntime.projectLocation<JSDocText__from_ast$Storage, JSDocText__from_ast>(goSliceAddress<JSDocText__from_ast$Storage>(instance, index), JSDocText__from_ast.$fromStorage, JSDocText__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178309,11 +177045,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSDocUnknownTag__from_ast.$storageOf(JSDocUnknownTag__from_ast.$copy($goInterfaceAdapter$Named_ast$JSDocUnknownTag.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocUnknownTag(tsonicTypeScriptRuntime.projectLocation<JSDocUnknownTag__from_ast$Storage, JSDocUnknownTag__from_ast>(goSliceAddress<JSDocUnknownTag__from_ast$Storage>(instance, index), ($go$storage: JSDocUnknownTag__from_ast$Storage): JSDocUnknownTag__from_ast => {
-                return JSDocUnknownTag__from_ast.$fromStorage($go$storage);
-            }, ($go$value: JSDocUnknownTag__from_ast): JSDocUnknownTag__from_ast$Storage => {
-                return JSDocUnknownTag__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$JSDocUnknownTag(tsonicTypeScriptRuntime.projectLocation<JSDocUnknownTag__from_ast$Storage, JSDocUnknownTag__from_ast>(goSliceAddress<JSDocUnknownTag__from_ast$Storage>(instance, index), JSDocUnknownTag__from_ast.$fromStorage, JSDocUnknownTag__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178408,11 +177140,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, KeywordExpression__from_ast.$storageOf(KeywordExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$KeywordExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$KeywordExpression(tsonicTypeScriptRuntime.projectLocation<KeywordExpression__from_ast$Storage, KeywordExpression__from_ast>(goSliceAddress<KeywordExpression__from_ast$Storage>(instance, index), ($go$storage: KeywordExpression__from_ast$Storage): KeywordExpression__from_ast => {
-                return KeywordExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: KeywordExpression__from_ast): KeywordExpression__from_ast$Storage => {
-                return KeywordExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$KeywordExpression(tsonicTypeScriptRuntime.projectLocation<KeywordExpression__from_ast$Storage, KeywordExpression__from_ast>(goSliceAddress<KeywordExpression__from_ast$Storage>(instance, index), KeywordExpression__from_ast.$fromStorage, KeywordExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178507,11 +177235,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, KeywordTypeNode__from_ast.$storageOf(KeywordTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$KeywordTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$KeywordTypeNode(tsonicTypeScriptRuntime.projectLocation<KeywordTypeNode__from_ast$Storage, KeywordTypeNode__from_ast>(goSliceAddress<KeywordTypeNode__from_ast$Storage>(instance, index), ($go$storage: KeywordTypeNode__from_ast$Storage): KeywordTypeNode__from_ast => {
-                return KeywordTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: KeywordTypeNode__from_ast): KeywordTypeNode__from_ast$Storage => {
-                return KeywordTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$KeywordTypeNode(tsonicTypeScriptRuntime.projectLocation<KeywordTypeNode__from_ast$Storage, KeywordTypeNode__from_ast>(goSliceAddress<KeywordTypeNode__from_ast$Storage>(instance, index), KeywordTypeNode__from_ast.$fromStorage, KeywordTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178665,11 +177389,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, LiteralTypeNode__from_ast.$storageOf(LiteralTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$LiteralTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralTypeNode(tsonicTypeScriptRuntime.projectLocation<LiteralTypeNode__from_ast$Storage, LiteralTypeNode__from_ast>(goSliceAddress<LiteralTypeNode__from_ast$Storage>(instance, index), ($go$storage: LiteralTypeNode__from_ast$Storage): LiteralTypeNode__from_ast => {
-                return LiteralTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: LiteralTypeNode__from_ast): LiteralTypeNode__from_ast$Storage => {
-                return LiteralTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$LiteralTypeNode(tsonicTypeScriptRuntime.projectLocation<LiteralTypeNode__from_ast$Storage, LiteralTypeNode__from_ast>(goSliceAddress<LiteralTypeNode__from_ast$Storage>(instance, index), LiteralTypeNode__from_ast.$fromStorage, LiteralTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178764,11 +177484,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, MethodSignatureDeclaration__from_ast.$storageOf(MethodSignatureDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$MethodSignatureDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$MethodSignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<MethodSignatureDeclaration__from_ast$Storage, MethodSignatureDeclaration__from_ast>(goSliceAddress<MethodSignatureDeclaration__from_ast$Storage>(instance, index), ($go$storage: MethodSignatureDeclaration__from_ast$Storage): MethodSignatureDeclaration__from_ast => {
-                return MethodSignatureDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: MethodSignatureDeclaration__from_ast): MethodSignatureDeclaration__from_ast$Storage => {
-                return MethodSignatureDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$MethodSignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<MethodSignatureDeclaration__from_ast$Storage, MethodSignatureDeclaration__from_ast>(goSliceAddress<MethodSignatureDeclaration__from_ast$Storage>(instance, index), MethodSignatureDeclaration__from_ast.$fromStorage, MethodSignatureDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178863,11 +177579,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ModifierList__from_ast.$storageOf(ModifierList__from_ast.$copy($goInterfaceAdapter$Named_ast$ModifierList.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(tsonicTypeScriptRuntime.projectLocation<ModifierList__from_ast$Storage, ModifierList__from_ast>(goSliceAddress<ModifierList__from_ast$Storage>(instance, index), ($go$storage: ModifierList__from_ast$Storage): ModifierList__from_ast => {
-                return ModifierList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ModifierList__from_ast): ModifierList__from_ast$Storage => {
-                return ModifierList__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(tsonicTypeScriptRuntime.projectLocation<ModifierList__from_ast$Storage, ModifierList__from_ast>(goSliceAddress<ModifierList__from_ast$Storage>(instance, index), ModifierList__from_ast.$fromStorage, ModifierList__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -178962,11 +177674,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, NodeList__from_ast.$storageOf(NodeList__from_ast.$copy($goInterfaceAdapter$Named_ast$NodeList.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeList(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(goSliceAddress<NodeList__from_ast$Storage>(instance, index), ($go$storage: NodeList__from_ast$Storage): NodeList__from_ast => {
-                return NodeList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeList__from_ast): NodeList__from_ast$Storage => {
-                return NodeList__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$NodeList(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(goSliceAddress<NodeList__from_ast$Storage>(instance, index), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179061,11 +177769,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, NumericLiteral__from_ast.$storageOf(NumericLiteral__from_ast.$copy($goInterfaceAdapter$Named_ast$NumericLiteral.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$NumericLiteral(tsonicTypeScriptRuntime.projectLocation<NumericLiteral__from_ast$Storage, NumericLiteral__from_ast>(goSliceAddress<NumericLiteral__from_ast$Storage>(instance, index), ($go$storage: NumericLiteral__from_ast$Storage): NumericLiteral__from_ast => {
-                return NumericLiteral__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NumericLiteral__from_ast): NumericLiteral__from_ast$Storage => {
-                return NumericLiteral__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$NumericLiteral(tsonicTypeScriptRuntime.projectLocation<NumericLiteral__from_ast$Storage, NumericLiteral__from_ast>(goSliceAddress<NumericLiteral__from_ast$Storage>(instance, index), NumericLiteral__from_ast.$fromStorage, NumericLiteral__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179160,11 +177864,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ParameterDeclaration__from_ast.$storageOf(ParameterDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$ParameterDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParameterDeclaration(tsonicTypeScriptRuntime.projectLocation<ParameterDeclaration__from_ast$Storage, ParameterDeclaration__from_ast>(goSliceAddress<ParameterDeclaration__from_ast$Storage>(instance, index), ($go$storage: ParameterDeclaration__from_ast$Storage): ParameterDeclaration__from_ast => {
-                return ParameterDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ParameterDeclaration__from_ast): ParameterDeclaration__from_ast$Storage => {
-                return ParameterDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParameterDeclaration(tsonicTypeScriptRuntime.projectLocation<ParameterDeclaration__from_ast$Storage, ParameterDeclaration__from_ast>(goSliceAddress<ParameterDeclaration__from_ast$Storage>(instance, index), ParameterDeclaration__from_ast.$fromStorage, ParameterDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179259,11 +177959,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ParenthesizedExpression__from_ast.$storageOf(ParenthesizedExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$ParenthesizedExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParenthesizedExpression(tsonicTypeScriptRuntime.projectLocation<ParenthesizedExpression__from_ast$Storage, ParenthesizedExpression__from_ast>(goSliceAddress<ParenthesizedExpression__from_ast$Storage>(instance, index), ($go$storage: ParenthesizedExpression__from_ast$Storage): ParenthesizedExpression__from_ast => {
-                return ParenthesizedExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ParenthesizedExpression__from_ast): ParenthesizedExpression__from_ast$Storage => {
-                return ParenthesizedExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParenthesizedExpression(tsonicTypeScriptRuntime.projectLocation<ParenthesizedExpression__from_ast$Storage, ParenthesizedExpression__from_ast>(goSliceAddress<ParenthesizedExpression__from_ast$Storage>(instance, index), ParenthesizedExpression__from_ast.$fromStorage, ParenthesizedExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179358,11 +178054,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ParenthesizedTypeNode__from_ast.$storageOf(ParenthesizedTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$ParenthesizedTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParenthesizedTypeNode(tsonicTypeScriptRuntime.projectLocation<ParenthesizedTypeNode__from_ast$Storage, ParenthesizedTypeNode__from_ast>(goSliceAddress<ParenthesizedTypeNode__from_ast$Storage>(instance, index), ($go$storage: ParenthesizedTypeNode__from_ast$Storage): ParenthesizedTypeNode__from_ast => {
-                return ParenthesizedTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ParenthesizedTypeNode__from_ast): ParenthesizedTypeNode__from_ast$Storage => {
-                return ParenthesizedTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ParenthesizedTypeNode(tsonicTypeScriptRuntime.projectLocation<ParenthesizedTypeNode__from_ast$Storage, ParenthesizedTypeNode__from_ast>(goSliceAddress<ParenthesizedTypeNode__from_ast$Storage>(instance, index), ParenthesizedTypeNode__from_ast.$fromStorage, ParenthesizedTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179457,11 +178149,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Pragma__from_ast.$storageOf(Pragma__from_ast.$copy($goInterfaceAdapter$Named_ast$Pragma.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Pragma(tsonicTypeScriptRuntime.projectLocation<Pragma__from_ast$Storage, Pragma__from_ast>(goSliceAddress<Pragma__from_ast$Storage>(instance, index), ($go$storage: Pragma__from_ast$Storage): Pragma__from_ast => {
-                return Pragma__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Pragma__from_ast): Pragma__from_ast$Storage => {
-                return Pragma__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Pragma(tsonicTypeScriptRuntime.projectLocation<Pragma__from_ast$Storage, Pragma__from_ast>(goSliceAddress<Pragma__from_ast$Storage>(instance, index), Pragma__from_ast.$fromStorage, Pragma__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179556,11 +178244,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, PrefixUnaryExpression__from_ast.$storageOf(PrefixUnaryExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$PrefixUnaryExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PrefixUnaryExpression(tsonicTypeScriptRuntime.projectLocation<PrefixUnaryExpression__from_ast$Storage, PrefixUnaryExpression__from_ast>(goSliceAddress<PrefixUnaryExpression__from_ast$Storage>(instance, index), ($go$storage: PrefixUnaryExpression__from_ast$Storage): PrefixUnaryExpression__from_ast => {
-                return PrefixUnaryExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: PrefixUnaryExpression__from_ast): PrefixUnaryExpression__from_ast$Storage => {
-                return PrefixUnaryExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PrefixUnaryExpression(tsonicTypeScriptRuntime.projectLocation<PrefixUnaryExpression__from_ast$Storage, PrefixUnaryExpression__from_ast>(goSliceAddress<PrefixUnaryExpression__from_ast$Storage>(instance, index), PrefixUnaryExpression__from_ast.$fromStorage, PrefixUnaryExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179655,11 +178339,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, PropertyAccessExpression__from_ast.$storageOf(PropertyAccessExpression__from_ast.$copy($goInterfaceAdapter$Named_ast$PropertyAccessExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertyAccessExpression(tsonicTypeScriptRuntime.projectLocation<PropertyAccessExpression__from_ast$Storage, PropertyAccessExpression__from_ast>(goSliceAddress<PropertyAccessExpression__from_ast$Storage>(instance, index), ($go$storage: PropertyAccessExpression__from_ast$Storage): PropertyAccessExpression__from_ast => {
-                return PropertyAccessExpression__from_ast.$fromStorage($go$storage);
-            }, ($go$value: PropertyAccessExpression__from_ast): PropertyAccessExpression__from_ast$Storage => {
-                return PropertyAccessExpression__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertyAccessExpression(tsonicTypeScriptRuntime.projectLocation<PropertyAccessExpression__from_ast$Storage, PropertyAccessExpression__from_ast>(goSliceAddress<PropertyAccessExpression__from_ast$Storage>(instance, index), PropertyAccessExpression__from_ast.$fromStorage, PropertyAccessExpression__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179754,11 +178434,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, PropertyAssignment__from_ast.$storageOf(PropertyAssignment__from_ast.$copy($goInterfaceAdapter$Named_ast$PropertyAssignment.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertyAssignment(tsonicTypeScriptRuntime.projectLocation<PropertyAssignment__from_ast$Storage, PropertyAssignment__from_ast>(goSliceAddress<PropertyAssignment__from_ast$Storage>(instance, index), ($go$storage: PropertyAssignment__from_ast$Storage): PropertyAssignment__from_ast => {
-                return PropertyAssignment__from_ast.$fromStorage($go$storage);
-            }, ($go$value: PropertyAssignment__from_ast): PropertyAssignment__from_ast$Storage => {
-                return PropertyAssignment__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertyAssignment(tsonicTypeScriptRuntime.projectLocation<PropertyAssignment__from_ast$Storage, PropertyAssignment__from_ast>(goSliceAddress<PropertyAssignment__from_ast$Storage>(instance, index), PropertyAssignment__from_ast.$fromStorage, PropertyAssignment__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179853,11 +178529,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, PropertySignatureDeclaration__from_ast.$storageOf(PropertySignatureDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$PropertySignatureDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertySignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<PropertySignatureDeclaration__from_ast$Storage, PropertySignatureDeclaration__from_ast>(goSliceAddress<PropertySignatureDeclaration__from_ast$Storage>(instance, index), ($go$storage: PropertySignatureDeclaration__from_ast$Storage): PropertySignatureDeclaration__from_ast => {
-                return PropertySignatureDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: PropertySignatureDeclaration__from_ast): PropertySignatureDeclaration__from_ast$Storage => {
-                return PropertySignatureDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$PropertySignatureDeclaration(tsonicTypeScriptRuntime.projectLocation<PropertySignatureDeclaration__from_ast$Storage, PropertySignatureDeclaration__from_ast>(goSliceAddress<PropertySignatureDeclaration__from_ast$Storage>(instance, index), PropertySignatureDeclaration__from_ast.$fromStorage, PropertySignatureDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -179952,11 +178624,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ReturnStatement__from_ast.$storageOf(ReturnStatement__from_ast.$copy($goInterfaceAdapter$Named_ast$ReturnStatement.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ReturnStatement(tsonicTypeScriptRuntime.projectLocation<ReturnStatement__from_ast$Storage, ReturnStatement__from_ast>(goSliceAddress<ReturnStatement__from_ast$Storage>(instance, index), ($go$storage: ReturnStatement__from_ast$Storage): ReturnStatement__from_ast => {
-                return ReturnStatement__from_ast.$fromStorage($go$storage);
-            }, ($go$value: ReturnStatement__from_ast): ReturnStatement__from_ast$Storage => {
-                return ReturnStatement__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$ReturnStatement(tsonicTypeScriptRuntime.projectLocation<ReturnStatement__from_ast$Storage, ReturnStatement__from_ast>(goSliceAddress<ReturnStatement__from_ast$Storage>(instance, index), ReturnStatement__from_ast.$fromStorage, ReturnStatement__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180051,11 +178719,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, StringLiteral__from_ast.$storageOf(StringLiteral__from_ast.$copy($goInterfaceAdapter$Named_ast$StringLiteral.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$StringLiteral(tsonicTypeScriptRuntime.projectLocation<StringLiteral__from_ast$Storage, StringLiteral__from_ast>(goSliceAddress<StringLiteral__from_ast$Storage>(instance, index), ($go$storage: StringLiteral__from_ast$Storage): StringLiteral__from_ast => {
-                return StringLiteral__from_ast.$fromStorage($go$storage);
-            }, ($go$value: StringLiteral__from_ast): StringLiteral__from_ast$Storage => {
-                return StringLiteral__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$StringLiteral(tsonicTypeScriptRuntime.projectLocation<StringLiteral__from_ast$Storage, StringLiteral__from_ast>(goSliceAddress<StringLiteral__from_ast$Storage>(instance, index), StringLiteral__from_ast.$fromStorage, StringLiteral__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180150,11 +178814,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Symbol__from_ast.$storageOf(Symbol__from_ast.$copy($goInterfaceAdapter$Named_ast$Symbol.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Symbol(tsonicTypeScriptRuntime.projectLocation<Symbol__from_ast$Storage, Symbol__from_ast>(goSliceAddress<Symbol__from_ast$Storage>(instance, index), ($go$storage: Symbol__from_ast$Storage): Symbol__from_ast => {
-                return Symbol__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Symbol__from_ast): Symbol__from_ast$Storage => {
-                return Symbol__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Symbol(tsonicTypeScriptRuntime.projectLocation<Symbol__from_ast$Storage, Symbol__from_ast>(goSliceAddress<Symbol__from_ast$Storage>(instance, index), Symbol__from_ast.$fromStorage, Symbol__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180249,11 +178909,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Token__from_ast.$storageOf(Token__from_ast.$copy($goInterfaceAdapter$Named_ast$Token.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Token(tsonicTypeScriptRuntime.projectLocation<Token__from_ast$Storage, Token__from_ast>(goSliceAddress<Token__from_ast$Storage>(instance, index), ($go$storage: Token__from_ast$Storage): Token__from_ast => {
-                return Token__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Token__from_ast): Token__from_ast$Storage => {
-                return Token__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$Token(tsonicTypeScriptRuntime.projectLocation<Token__from_ast$Storage, Token__from_ast>(goSliceAddress<Token__from_ast$Storage>(instance, index), Token__from_ast.$fromStorage, Token__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180348,11 +179004,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeAliasDeclaration__from_ast.$storageOf(TypeAliasDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeAliasDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeAliasDeclaration(tsonicTypeScriptRuntime.projectLocation<TypeAliasDeclaration__from_ast$Storage, TypeAliasDeclaration__from_ast>(goSliceAddress<TypeAliasDeclaration__from_ast$Storage>(instance, index), ($go$storage: TypeAliasDeclaration__from_ast$Storage): TypeAliasDeclaration__from_ast => {
-                return TypeAliasDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: TypeAliasDeclaration__from_ast): TypeAliasDeclaration__from_ast$Storage => {
-                return TypeAliasDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeAliasDeclaration(tsonicTypeScriptRuntime.projectLocation<TypeAliasDeclaration__from_ast$Storage, TypeAliasDeclaration__from_ast>(goSliceAddress<TypeAliasDeclaration__from_ast$Storage>(instance, index), TypeAliasDeclaration__from_ast.$fromStorage, TypeAliasDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180447,11 +179099,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeLiteralNode__from_ast.$storageOf(TypeLiteralNode__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeLiteralNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeLiteralNode(tsonicTypeScriptRuntime.projectLocation<TypeLiteralNode__from_ast$Storage, TypeLiteralNode__from_ast>(goSliceAddress<TypeLiteralNode__from_ast$Storage>(instance, index), ($go$storage: TypeLiteralNode__from_ast$Storage): TypeLiteralNode__from_ast => {
-                return TypeLiteralNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: TypeLiteralNode__from_ast): TypeLiteralNode__from_ast$Storage => {
-                return TypeLiteralNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeLiteralNode(tsonicTypeScriptRuntime.projectLocation<TypeLiteralNode__from_ast$Storage, TypeLiteralNode__from_ast>(goSliceAddress<TypeLiteralNode__from_ast$Storage>(instance, index), TypeLiteralNode__from_ast.$fromStorage, TypeLiteralNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180546,11 +179194,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeOperatorNode__from_ast.$storageOf(TypeOperatorNode__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeOperatorNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeOperatorNode(tsonicTypeScriptRuntime.projectLocation<TypeOperatorNode__from_ast$Storage, TypeOperatorNode__from_ast>(goSliceAddress<TypeOperatorNode__from_ast$Storage>(instance, index), ($go$storage: TypeOperatorNode__from_ast$Storage): TypeOperatorNode__from_ast => {
-                return TypeOperatorNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: TypeOperatorNode__from_ast): TypeOperatorNode__from_ast$Storage => {
-                return TypeOperatorNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeOperatorNode(tsonicTypeScriptRuntime.projectLocation<TypeOperatorNode__from_ast$Storage, TypeOperatorNode__from_ast>(goSliceAddress<TypeOperatorNode__from_ast$Storage>(instance, index), TypeOperatorNode__from_ast.$fromStorage, TypeOperatorNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180645,11 +179289,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeParameterDeclaration__from_ast.$storageOf(TypeParameterDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeParameterDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeParameterDeclaration(tsonicTypeScriptRuntime.projectLocation<TypeParameterDeclaration__from_ast$Storage, TypeParameterDeclaration__from_ast>(goSliceAddress<TypeParameterDeclaration__from_ast$Storage>(instance, index), ($go$storage: TypeParameterDeclaration__from_ast$Storage): TypeParameterDeclaration__from_ast => {
-                return TypeParameterDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: TypeParameterDeclaration__from_ast): TypeParameterDeclaration__from_ast$Storage => {
-                return TypeParameterDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeParameterDeclaration(tsonicTypeScriptRuntime.projectLocation<TypeParameterDeclaration__from_ast$Storage, TypeParameterDeclaration__from_ast>(goSliceAddress<TypeParameterDeclaration__from_ast$Storage>(instance, index), TypeParameterDeclaration__from_ast.$fromStorage, TypeParameterDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180744,11 +179384,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeReferenceNode__from_ast.$storageOf(TypeReferenceNode__from_ast.$copy($goInterfaceAdapter$Named_ast$TypeReferenceNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeReferenceNode(tsonicTypeScriptRuntime.projectLocation<TypeReferenceNode__from_ast$Storage, TypeReferenceNode__from_ast>(goSliceAddress<TypeReferenceNode__from_ast$Storage>(instance, index), ($go$storage: TypeReferenceNode__from_ast$Storage): TypeReferenceNode__from_ast => {
-                return TypeReferenceNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: TypeReferenceNode__from_ast): TypeReferenceNode__from_ast$Storage => {
-                return TypeReferenceNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$TypeReferenceNode(tsonicTypeScriptRuntime.projectLocation<TypeReferenceNode__from_ast$Storage, TypeReferenceNode__from_ast>(goSliceAddress<TypeReferenceNode__from_ast$Storage>(instance, index), TypeReferenceNode__from_ast.$fromStorage, TypeReferenceNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180843,11 +179479,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, UnionTypeNode__from_ast.$storageOf(UnionTypeNode__from_ast.$copy($goInterfaceAdapter$Named_ast$UnionTypeNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionTypeNode(tsonicTypeScriptRuntime.projectLocation<UnionTypeNode__from_ast$Storage, UnionTypeNode__from_ast>(goSliceAddress<UnionTypeNode__from_ast$Storage>(instance, index), ($go$storage: UnionTypeNode__from_ast$Storage): UnionTypeNode__from_ast => {
-                return UnionTypeNode__from_ast.$fromStorage($go$storage);
-            }, ($go$value: UnionTypeNode__from_ast): UnionTypeNode__from_ast$Storage => {
-                return UnionTypeNode__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$UnionTypeNode(tsonicTypeScriptRuntime.projectLocation<UnionTypeNode__from_ast$Storage, UnionTypeNode__from_ast>(goSliceAddress<UnionTypeNode__from_ast$Storage>(instance, index), UnionTypeNode__from_ast.$fromStorage, UnionTypeNode__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -180942,11 +179574,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, VariableDeclaration__from_ast.$storageOf(VariableDeclaration__from_ast.$copy($goInterfaceAdapter$Named_ast$VariableDeclaration.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableDeclaration(tsonicTypeScriptRuntime.projectLocation<VariableDeclaration__from_ast$Storage, VariableDeclaration__from_ast>(goSliceAddress<VariableDeclaration__from_ast$Storage>(instance, index), ($go$storage: VariableDeclaration__from_ast$Storage): VariableDeclaration__from_ast => {
-                return VariableDeclaration__from_ast.$fromStorage($go$storage);
-            }, ($go$value: VariableDeclaration__from_ast): VariableDeclaration__from_ast$Storage => {
-                return VariableDeclaration__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableDeclaration(tsonicTypeScriptRuntime.projectLocation<VariableDeclaration__from_ast$Storage, VariableDeclaration__from_ast>(goSliceAddress<VariableDeclaration__from_ast$Storage>(instance, index), VariableDeclaration__from_ast.$fromStorage, VariableDeclaration__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181041,11 +179669,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, VariableDeclarationList__from_ast.$storageOf(VariableDeclarationList__from_ast.$copy($goInterfaceAdapter$Named_ast$VariableDeclarationList.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableDeclarationList(tsonicTypeScriptRuntime.projectLocation<VariableDeclarationList__from_ast$Storage, VariableDeclarationList__from_ast>(goSliceAddress<VariableDeclarationList__from_ast$Storage>(instance, index), ($go$storage: VariableDeclarationList__from_ast$Storage): VariableDeclarationList__from_ast => {
-                return VariableDeclarationList__from_ast.$fromStorage($go$storage);
-            }, ($go$value: VariableDeclarationList__from_ast): VariableDeclarationList__from_ast$Storage => {
-                return VariableDeclarationList__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableDeclarationList(tsonicTypeScriptRuntime.projectLocation<VariableDeclarationList__from_ast$Storage, VariableDeclarationList__from_ast>(goSliceAddress<VariableDeclarationList__from_ast$Storage>(instance, index), VariableDeclarationList__from_ast.$fromStorage, VariableDeclarationList__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181140,11 +179764,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, VariableStatement__from_ast.$storageOf(VariableStatement__from_ast.$copy($goInterfaceAdapter$Named_ast$VariableStatement.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableStatement(tsonicTypeScriptRuntime.projectLocation<VariableStatement__from_ast$Storage, VariableStatement__from_ast>(goSliceAddress<VariableStatement__from_ast$Storage>(instance, index), ($go$storage: VariableStatement__from_ast$Storage): VariableStatement__from_ast => {
-                return VariableStatement__from_ast.$fromStorage($go$storage);
-            }, ($go$value: VariableStatement__from_ast): VariableStatement__from_ast$Storage => {
-                return VariableStatement__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$VariableStatement(tsonicTypeScriptRuntime.projectLocation<VariableStatement__from_ast$Storage, VariableStatement__from_ast>(goSliceAddress<VariableStatement__from_ast$Storage>(instance, index), VariableStatement__from_ast.$fromStorage, VariableStatement__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181239,11 +179859,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, positionMapEntry__from_ast.$storageOf(positionMapEntry__from_ast.$copy($goInterfaceAdapter$Named_ast$positionMapEntry.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$positionMapEntry(tsonicTypeScriptRuntime.projectLocation<positionMapEntry__from_ast$Storage, positionMapEntry__from_ast>(goSliceAddress<positionMapEntry__from_ast$Storage>(instance, index), ($go$storage: positionMapEntry__from_ast$Storage): positionMapEntry__from_ast => {
-                return positionMapEntry__from_ast.$fromStorage($go$storage);
-            }, ($go$value: positionMapEntry__from_ast): positionMapEntry__from_ast$Storage => {
-                return positionMapEntry__from_ast.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_ast$positionMapEntry(tsonicTypeScriptRuntime.projectLocation<positionMapEntry__from_ast$Storage, positionMapEntry__from_ast>(goSliceAddress<positionMapEntry__from_ast$Storage>(instance, index), positionMapEntry__from_ast.$fromStorage, positionMapEntry__from_ast.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181338,11 +179954,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ExpandoAssignmentInfo__from_binder.$storageOf(ExpandoAssignmentInfo__from_binder.$copy($goInterfaceAdapter$Named_binder$ExpandoAssignmentInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_binder$ExpandoAssignmentInfo(tsonicTypeScriptRuntime.projectLocation<ExpandoAssignmentInfo__from_binder$Storage, ExpandoAssignmentInfo__from_binder>(goSliceAddress<ExpandoAssignmentInfo__from_binder$Storage>(instance, index), ($go$storage: ExpandoAssignmentInfo__from_binder$Storage): ExpandoAssignmentInfo__from_binder => {
-                return ExpandoAssignmentInfo__from_binder.$fromStorage($go$storage);
-            }, ($go$value: ExpandoAssignmentInfo__from_binder): ExpandoAssignmentInfo__from_binder$Storage => {
-                return ExpandoAssignmentInfo__from_binder.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_binder$ExpandoAssignmentInfo(tsonicTypeScriptRuntime.projectLocation<ExpandoAssignmentInfo__from_binder$Storage, ExpandoAssignmentInfo__from_binder>(goSliceAddress<ExpandoAssignmentInfo__from_binder$Storage>(instance, index), ExpandoAssignmentInfo__from_binder.$fromStorage, ExpandoAssignmentInfo__from_binder.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181437,11 +180049,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, AliasSymbolLinks__from_checker.$storageOf(AliasSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$AliasSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$AliasSymbolLinks(tsonicTypeScriptRuntime.projectLocation<AliasSymbolLinks__from_checker$Storage, AliasSymbolLinks__from_checker>(goSliceAddress<AliasSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: AliasSymbolLinks__from_checker$Storage): AliasSymbolLinks__from_checker => {
-                return AliasSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: AliasSymbolLinks__from_checker): AliasSymbolLinks__from_checker$Storage => {
-                return AliasSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$AliasSymbolLinks(tsonicTypeScriptRuntime.projectLocation<AliasSymbolLinks__from_checker$Storage, AliasSymbolLinks__from_checker>(goSliceAddress<AliasSymbolLinks__from_checker$Storage>(instance, index), AliasSymbolLinks__from_checker.$fromStorage, AliasSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181536,11 +180144,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ArrayLiteralLinks__from_checker.$storageOf(ArrayLiteralLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ArrayLiteralLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ArrayLiteralLinks(tsonicTypeScriptRuntime.projectLocation<ArrayLiteralLinks__from_checker$Storage, ArrayLiteralLinks__from_checker>(goSliceAddress<ArrayLiteralLinks__from_checker$Storage>(instance, index), ($go$storage: ArrayLiteralLinks__from_checker$Storage): ArrayLiteralLinks__from_checker => {
-                return ArrayLiteralLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ArrayLiteralLinks__from_checker): ArrayLiteralLinks__from_checker$Storage => {
-                return ArrayLiteralLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ArrayLiteralLinks(tsonicTypeScriptRuntime.projectLocation<ArrayLiteralLinks__from_checker$Storage, ArrayLiteralLinks__from_checker>(goSliceAddress<ArrayLiteralLinks__from_checker$Storage>(instance, index), ArrayLiteralLinks__from_checker.$fromStorage, ArrayLiteralLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181635,11 +180239,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, AssertionLinks__from_checker.$storageOf(AssertionLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$AssertionLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$AssertionLinks(tsonicTypeScriptRuntime.projectLocation<AssertionLinks__from_checker$Storage, AssertionLinks__from_checker>(goSliceAddress<AssertionLinks__from_checker$Storage>(instance, index), ($go$storage: AssertionLinks__from_checker$Storage): AssertionLinks__from_checker => {
-                return AssertionLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: AssertionLinks__from_checker): AssertionLinks__from_checker$Storage => {
-                return AssertionLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$AssertionLinks(tsonicTypeScriptRuntime.projectLocation<AssertionLinks__from_checker$Storage, AssertionLinks__from_checker>(goSliceAddress<AssertionLinks__from_checker$Storage>(instance, index), AssertionLinks__from_checker.$fromStorage, AssertionLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181734,11 +180334,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, CacheHashKey__from_checker.$storageOf(CacheHashKey__from_checker.$copy($goInterfaceAdapter$Named_checker$CacheHashKey.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$CacheHashKey(tsonicTypeScriptRuntime.projectLocation<CacheHashKey__from_checker$Storage, CacheHashKey__from_checker>(goSliceAddress<CacheHashKey__from_checker$Storage>(instance, index), ($go$storage: CacheHashKey__from_checker$Storage): CacheHashKey__from_checker => {
-                return CacheHashKey__from_checker.$fromStorage($go$storage);
-            }, ($go$value: CacheHashKey__from_checker): CacheHashKey__from_checker$Storage => {
-                return CacheHashKey__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$CacheHashKey(tsonicTypeScriptRuntime.projectLocation<CacheHashKey__from_checker$Storage, CacheHashKey__from_checker>(goSliceAddress<CacheHashKey__from_checker$Storage>(instance, index), CacheHashKey__from_checker.$fromStorage, CacheHashKey__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181833,11 +180429,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ContainingSymbolLinks__from_checker.$storageOf(ContainingSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ContainingSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ContainingSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ContainingSymbolLinks__from_checker$Storage, ContainingSymbolLinks__from_checker>(goSliceAddress<ContainingSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: ContainingSymbolLinks__from_checker$Storage): ContainingSymbolLinks__from_checker => {
-                return ContainingSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ContainingSymbolLinks__from_checker): ContainingSymbolLinks__from_checker$Storage => {
-                return ContainingSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ContainingSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ContainingSymbolLinks__from_checker$Storage, ContainingSymbolLinks__from_checker>(goSliceAddress<ContainingSymbolLinks__from_checker$Storage>(instance, index), ContainingSymbolLinks__from_checker.$fromStorage, ContainingSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -181932,11 +180524,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ContextualInfo__from_checker.$storageOf(ContextualInfo__from_checker.$copy($goInterfaceAdapter$Named_checker$ContextualInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ContextualInfo(tsonicTypeScriptRuntime.projectLocation<ContextualInfo__from_checker$Storage, ContextualInfo__from_checker>(goSliceAddress<ContextualInfo__from_checker$Storage>(instance, index), ($go$storage: ContextualInfo__from_checker$Storage): ContextualInfo__from_checker => {
-                return ContextualInfo__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ContextualInfo__from_checker): ContextualInfo__from_checker$Storage => {
-                return ContextualInfo__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ContextualInfo(tsonicTypeScriptRuntime.projectLocation<ContextualInfo__from_checker$Storage, ContextualInfo__from_checker>(goSliceAddress<ContextualInfo__from_checker$Storage>(instance, index), ContextualInfo__from_checker.$fromStorage, ContextualInfo__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182031,11 +180619,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DeclarationFileLinks__from_checker.$storageOf(DeclarationFileLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$DeclarationFileLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclarationFileLinks(tsonicTypeScriptRuntime.projectLocation<DeclarationFileLinks__from_checker$Storage, DeclarationFileLinks__from_checker>(goSliceAddress<DeclarationFileLinks__from_checker$Storage>(instance, index), ($go$storage: DeclarationFileLinks__from_checker$Storage): DeclarationFileLinks__from_checker => {
-                return DeclarationFileLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: DeclarationFileLinks__from_checker): DeclarationFileLinks__from_checker$Storage => {
-                return DeclarationFileLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclarationFileLinks(tsonicTypeScriptRuntime.projectLocation<DeclarationFileLinks__from_checker$Storage, DeclarationFileLinks__from_checker>(goSliceAddress<DeclarationFileLinks__from_checker$Storage>(instance, index), DeclarationFileLinks__from_checker.$fromStorage, DeclarationFileLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182130,11 +180714,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DeclarationLinks__from_checker.$storageOf(DeclarationLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$DeclarationLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclarationLinks(tsonicTypeScriptRuntime.projectLocation<DeclarationLinks__from_checker$Storage, DeclarationLinks__from_checker>(goSliceAddress<DeclarationLinks__from_checker$Storage>(instance, index), ($go$storage: DeclarationLinks__from_checker$Storage): DeclarationLinks__from_checker => {
-                return DeclarationLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: DeclarationLinks__from_checker): DeclarationLinks__from_checker$Storage => {
-                return DeclarationLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclarationLinks(tsonicTypeScriptRuntime.projectLocation<DeclarationLinks__from_checker$Storage, DeclarationLinks__from_checker>(goSliceAddress<DeclarationLinks__from_checker$Storage>(instance, index), DeclarationLinks__from_checker.$fromStorage, DeclarationLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182229,11 +180809,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DeclaredTypeLinks__from_checker.$storageOf(DeclaredTypeLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$DeclaredTypeLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclaredTypeLinks(tsonicTypeScriptRuntime.projectLocation<DeclaredTypeLinks__from_checker$Storage, DeclaredTypeLinks__from_checker>(goSliceAddress<DeclaredTypeLinks__from_checker$Storage>(instance, index), ($go$storage: DeclaredTypeLinks__from_checker$Storage): DeclaredTypeLinks__from_checker => {
-                return DeclaredTypeLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: DeclaredTypeLinks__from_checker): DeclaredTypeLinks__from_checker$Storage => {
-                return DeclaredTypeLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeclaredTypeLinks(tsonicTypeScriptRuntime.projectLocation<DeclaredTypeLinks__from_checker$Storage, DeclaredTypeLinks__from_checker>(goSliceAddress<DeclaredTypeLinks__from_checker$Storage>(instance, index), DeclaredTypeLinks__from_checker.$fromStorage, DeclaredTypeLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182328,11 +180904,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, DeferredSymbolLinks__from_checker.$storageOf(DeferredSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$DeferredSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeferredSymbolLinks(tsonicTypeScriptRuntime.projectLocation<DeferredSymbolLinks__from_checker$Storage, DeferredSymbolLinks__from_checker>(goSliceAddress<DeferredSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: DeferredSymbolLinks__from_checker$Storage): DeferredSymbolLinks__from_checker => {
-                return DeferredSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: DeferredSymbolLinks__from_checker): DeferredSymbolLinks__from_checker$Storage => {
-                return DeferredSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$DeferredSymbolLinks(tsonicTypeScriptRuntime.projectLocation<DeferredSymbolLinks__from_checker$Storage, DeferredSymbolLinks__from_checker>(goSliceAddress<DeferredSymbolLinks__from_checker$Storage>(instance, index), DeferredSymbolLinks__from_checker.$fromStorage, DeferredSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182486,11 +181058,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, EnumMemberLinks__from_checker.$storageOf(EnumMemberLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$EnumMemberLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$EnumMemberLinks(tsonicTypeScriptRuntime.projectLocation<EnumMemberLinks__from_checker$Storage, EnumMemberLinks__from_checker>(goSliceAddress<EnumMemberLinks__from_checker$Storage>(instance, index), ($go$storage: EnumMemberLinks__from_checker$Storage): EnumMemberLinks__from_checker => {
-                return EnumMemberLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: EnumMemberLinks__from_checker): EnumMemberLinks__from_checker$Storage => {
-                return EnumMemberLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$EnumMemberLinks(tsonicTypeScriptRuntime.projectLocation<EnumMemberLinks__from_checker$Storage, EnumMemberLinks__from_checker>(goSliceAddress<EnumMemberLinks__from_checker$Storage>(instance, index), EnumMemberLinks__from_checker.$fromStorage, EnumMemberLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182585,11 +181153,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ExportTypeLinks__from_checker.$storageOf(ExportTypeLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ExportTypeLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ExportTypeLinks(tsonicTypeScriptRuntime.projectLocation<ExportTypeLinks__from_checker$Storage, ExportTypeLinks__from_checker>(goSliceAddress<ExportTypeLinks__from_checker$Storage>(instance, index), ($go$storage: ExportTypeLinks__from_checker$Storage): ExportTypeLinks__from_checker => {
-                return ExportTypeLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ExportTypeLinks__from_checker): ExportTypeLinks__from_checker$Storage => {
-                return ExportTypeLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ExportTypeLinks(tsonicTypeScriptRuntime.projectLocation<ExportTypeLinks__from_checker$Storage, ExportTypeLinks__from_checker>(goSliceAddress<ExportTypeLinks__from_checker$Storage>(instance, index), ExportTypeLinks__from_checker.$fromStorage, ExportTypeLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182684,11 +181248,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FlowLoopInfo__from_checker.$storageOf(FlowLoopInfo__from_checker.$copy($goInterfaceAdapter$Named_checker$FlowLoopInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowLoopInfo(tsonicTypeScriptRuntime.projectLocation<FlowLoopInfo__from_checker$Storage, FlowLoopInfo__from_checker>(goSliceAddress<FlowLoopInfo__from_checker$Storage>(instance, index), ($go$storage: FlowLoopInfo__from_checker$Storage): FlowLoopInfo__from_checker => {
-                return FlowLoopInfo__from_checker.$fromStorage($go$storage);
-            }, ($go$value: FlowLoopInfo__from_checker): FlowLoopInfo__from_checker$Storage => {
-                return FlowLoopInfo__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$FlowLoopInfo(tsonicTypeScriptRuntime.projectLocation<FlowLoopInfo__from_checker$Storage, FlowLoopInfo__from_checker>(goSliceAddress<FlowLoopInfo__from_checker$Storage>(instance, index), FlowLoopInfo__from_checker.$fromStorage, FlowLoopInfo__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182783,11 +181343,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, IndexInfo__from_checker.$storageOf(IndexInfo__from_checker.$copy($goInterfaceAdapter$Named_checker$IndexInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$IndexInfo(tsonicTypeScriptRuntime.projectLocation<IndexInfo__from_checker$Storage, IndexInfo__from_checker>(goSliceAddress<IndexInfo__from_checker$Storage>(instance, index), ($go$storage: IndexInfo__from_checker$Storage): IndexInfo__from_checker => {
-                return IndexInfo__from_checker.$fromStorage($go$storage);
-            }, ($go$value: IndexInfo__from_checker): IndexInfo__from_checker$Storage => {
-                return IndexInfo__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$IndexInfo(tsonicTypeScriptRuntime.projectLocation<IndexInfo__from_checker$Storage, IndexInfo__from_checker>(goSliceAddress<IndexInfo__from_checker$Storage>(instance, index), IndexInfo__from_checker.$fromStorage, IndexInfo__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182882,11 +181438,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, InferenceContextInfo__from_checker.$storageOf(InferenceContextInfo__from_checker.$copy($goInterfaceAdapter$Named_checker$InferenceContextInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$InferenceContextInfo(tsonicTypeScriptRuntime.projectLocation<InferenceContextInfo__from_checker$Storage, InferenceContextInfo__from_checker>(goSliceAddress<InferenceContextInfo__from_checker$Storage>(instance, index), ($go$storage: InferenceContextInfo__from_checker$Storage): InferenceContextInfo__from_checker => {
-                return InferenceContextInfo__from_checker.$fromStorage($go$storage);
-            }, ($go$value: InferenceContextInfo__from_checker): InferenceContextInfo__from_checker$Storage => {
-                return InferenceContextInfo__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$InferenceContextInfo(tsonicTypeScriptRuntime.projectLocation<InferenceContextInfo__from_checker$Storage, InferenceContextInfo__from_checker>(goSliceAddress<InferenceContextInfo__from_checker$Storage>(instance, index), InferenceContextInfo__from_checker.$fromStorage, InferenceContextInfo__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -182981,11 +181533,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, IntraExpressionInferenceSite__from_checker.$storageOf(IntraExpressionInferenceSite__from_checker.$copy($goInterfaceAdapter$Named_checker$IntraExpressionInferenceSite.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$IntraExpressionInferenceSite(tsonicTypeScriptRuntime.projectLocation<IntraExpressionInferenceSite__from_checker$Storage, IntraExpressionInferenceSite__from_checker>(goSliceAddress<IntraExpressionInferenceSite__from_checker$Storage>(instance, index), ($go$storage: IntraExpressionInferenceSite__from_checker$Storage): IntraExpressionInferenceSite__from_checker => {
-                return IntraExpressionInferenceSite__from_checker.$fromStorage($go$storage);
-            }, ($go$value: IntraExpressionInferenceSite__from_checker): IntraExpressionInferenceSite__from_checker$Storage => {
-                return IntraExpressionInferenceSite__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$IntraExpressionInferenceSite(tsonicTypeScriptRuntime.projectLocation<IntraExpressionInferenceSite__from_checker$Storage, IntraExpressionInferenceSite__from_checker>(goSliceAddress<IntraExpressionInferenceSite__from_checker$Storage>(instance, index), IntraExpressionInferenceSite__from_checker.$fromStorage, IntraExpressionInferenceSite__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183080,11 +181628,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSXLinks__from_checker.$storageOf(JSXLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$JSXLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$JSXLinks(tsonicTypeScriptRuntime.projectLocation<JSXLinks__from_checker$Storage, JSXLinks__from_checker>(goSliceAddress<JSXLinks__from_checker$Storage>(instance, index), ($go$storage: JSXLinks__from_checker$Storage): JSXLinks__from_checker => {
-                return JSXLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: JSXLinks__from_checker): JSXLinks__from_checker$Storage => {
-                return JSXLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$JSXLinks(tsonicTypeScriptRuntime.projectLocation<JSXLinks__from_checker$Storage, JSXLinks__from_checker>(goSliceAddress<JSXLinks__from_checker$Storage>(instance, index), JSXLinks__from_checker.$fromStorage, JSXLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183179,11 +181723,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JsxElementLinks__from_checker.$storageOf(JsxElementLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$JsxElementLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$JsxElementLinks(tsonicTypeScriptRuntime.projectLocation<JsxElementLinks__from_checker$Storage, JsxElementLinks__from_checker>(goSliceAddress<JsxElementLinks__from_checker$Storage>(instance, index), ($go$storage: JsxElementLinks__from_checker$Storage): JsxElementLinks__from_checker => {
-                return JsxElementLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: JsxElementLinks__from_checker): JsxElementLinks__from_checker$Storage => {
-                return JsxElementLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$JsxElementLinks(tsonicTypeScriptRuntime.projectLocation<JsxElementLinks__from_checker$Storage, JsxElementLinks__from_checker>(goSliceAddress<JsxElementLinks__from_checker$Storage>(instance, index), JsxElementLinks__from_checker.$fromStorage, JsxElementLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183278,11 +181818,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, LateBoundLinks__from_checker.$storageOf(LateBoundLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$LateBoundLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$LateBoundLinks(tsonicTypeScriptRuntime.projectLocation<LateBoundLinks__from_checker$Storage, LateBoundLinks__from_checker>(goSliceAddress<LateBoundLinks__from_checker$Storage>(instance, index), ($go$storage: LateBoundLinks__from_checker$Storage): LateBoundLinks__from_checker => {
-                return LateBoundLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: LateBoundLinks__from_checker): LateBoundLinks__from_checker$Storage => {
-                return LateBoundLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$LateBoundLinks(tsonicTypeScriptRuntime.projectLocation<LateBoundLinks__from_checker$Storage, LateBoundLinks__from_checker>(goSliceAddress<LateBoundLinks__from_checker$Storage>(instance, index), LateBoundLinks__from_checker.$fromStorage, LateBoundLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183377,11 +181913,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, MappedSymbolLinks__from_checker.$storageOf(MappedSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$MappedSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$MappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<MappedSymbolLinks__from_checker$Storage, MappedSymbolLinks__from_checker>(goSliceAddress<MappedSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: MappedSymbolLinks__from_checker$Storage): MappedSymbolLinks__from_checker => {
-                return MappedSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: MappedSymbolLinks__from_checker): MappedSymbolLinks__from_checker$Storage => {
-                return MappedSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$MappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<MappedSymbolLinks__from_checker$Storage, MappedSymbolLinks__from_checker>(goSliceAddress<MappedSymbolLinks__from_checker$Storage>(instance, index), MappedSymbolLinks__from_checker.$fromStorage, MappedSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183476,11 +182008,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, MarkedAssignmentSymbolLinks__from_checker.$storageOf(MarkedAssignmentSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$MarkedAssignmentSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$MarkedAssignmentSymbolLinks(tsonicTypeScriptRuntime.projectLocation<MarkedAssignmentSymbolLinks__from_checker$Storage, MarkedAssignmentSymbolLinks__from_checker>(goSliceAddress<MarkedAssignmentSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: MarkedAssignmentSymbolLinks__from_checker$Storage): MarkedAssignmentSymbolLinks__from_checker => {
-                return MarkedAssignmentSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: MarkedAssignmentSymbolLinks__from_checker): MarkedAssignmentSymbolLinks__from_checker$Storage => {
-                return MarkedAssignmentSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$MarkedAssignmentSymbolLinks(tsonicTypeScriptRuntime.projectLocation<MarkedAssignmentSymbolLinks__from_checker$Storage, MarkedAssignmentSymbolLinks__from_checker>(goSliceAddress<MarkedAssignmentSymbolLinks__from_checker$Storage>(instance, index), MarkedAssignmentSymbolLinks__from_checker.$fromStorage, MarkedAssignmentSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183674,11 +182202,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ModuleSymbolLinks__from_checker.$storageOf(ModuleSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ModuleSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ModuleSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ModuleSymbolLinks__from_checker$Storage, ModuleSymbolLinks__from_checker>(goSliceAddress<ModuleSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: ModuleSymbolLinks__from_checker$Storage): ModuleSymbolLinks__from_checker => {
-                return ModuleSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ModuleSymbolLinks__from_checker): ModuleSymbolLinks__from_checker$Storage => {
-                return ModuleSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ModuleSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ModuleSymbolLinks__from_checker$Storage, ModuleSymbolLinks__from_checker>(goSliceAddress<ModuleSymbolLinks__from_checker$Storage>(instance, index), ModuleSymbolLinks__from_checker.$fromStorage, ModuleSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183773,11 +182297,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, NodeBuilderLinks__from_checker.$storageOf(NodeBuilderLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$NodeBuilderLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderLinks(tsonicTypeScriptRuntime.projectLocation<NodeBuilderLinks__from_checker$Storage, NodeBuilderLinks__from_checker>(goSliceAddress<NodeBuilderLinks__from_checker$Storage>(instance, index), ($go$storage: NodeBuilderLinks__from_checker$Storage): NodeBuilderLinks__from_checker => {
-                return NodeBuilderLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: NodeBuilderLinks__from_checker): NodeBuilderLinks__from_checker$Storage => {
-                return NodeBuilderLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderLinks(tsonicTypeScriptRuntime.projectLocation<NodeBuilderLinks__from_checker$Storage, NodeBuilderLinks__from_checker>(goSliceAddress<NodeBuilderLinks__from_checker$Storage>(instance, index), NodeBuilderLinks__from_checker.$fromStorage, NodeBuilderLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183872,11 +182392,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, NodeBuilderSymbolLinks__from_checker.$storageOf(NodeBuilderSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$NodeBuilderSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderSymbolLinks(tsonicTypeScriptRuntime.projectLocation<NodeBuilderSymbolLinks__from_checker$Storage, NodeBuilderSymbolLinks__from_checker>(goSliceAddress<NodeBuilderSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: NodeBuilderSymbolLinks__from_checker$Storage): NodeBuilderSymbolLinks__from_checker => {
-                return NodeBuilderSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: NodeBuilderSymbolLinks__from_checker): NodeBuilderSymbolLinks__from_checker$Storage => {
-                return NodeBuilderSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderSymbolLinks(tsonicTypeScriptRuntime.projectLocation<NodeBuilderSymbolLinks__from_checker$Storage, NodeBuilderSymbolLinks__from_checker>(goSliceAddress<NodeBuilderSymbolLinks__from_checker$Storage>(instance, index), NodeBuilderSymbolLinks__from_checker.$fromStorage, NodeBuilderSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -183971,11 +182487,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, NodeLinks__from_checker.$storageOf(NodeLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$NodeLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeLinks(tsonicTypeScriptRuntime.projectLocation<NodeLinks__from_checker$Storage, NodeLinks__from_checker>(goSliceAddress<NodeLinks__from_checker$Storage>(instance, index), ($go$storage: NodeLinks__from_checker$Storage): NodeLinks__from_checker => {
-                return NodeLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: NodeLinks__from_checker): NodeLinks__from_checker$Storage => {
-                return NodeLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$NodeLinks(tsonicTypeScriptRuntime.projectLocation<NodeLinks__from_checker$Storage, NodeLinks__from_checker>(goSliceAddress<NodeLinks__from_checker$Storage>(instance, index), NodeLinks__from_checker.$fromStorage, NodeLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184070,11 +182582,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ReverseMappedSymbolLinks__from_checker.$storageOf(ReverseMappedSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ReverseMappedSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ReverseMappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ReverseMappedSymbolLinks__from_checker$Storage, ReverseMappedSymbolLinks__from_checker>(goSliceAddress<ReverseMappedSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: ReverseMappedSymbolLinks__from_checker$Storage): ReverseMappedSymbolLinks__from_checker => {
-                return ReverseMappedSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ReverseMappedSymbolLinks__from_checker): ReverseMappedSymbolLinks__from_checker$Storage => {
-                return ReverseMappedSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ReverseMappedSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ReverseMappedSymbolLinks__from_checker$Storage, ReverseMappedSymbolLinks__from_checker>(goSliceAddress<ReverseMappedSymbolLinks__from_checker$Storage>(instance, index), ReverseMappedSymbolLinks__from_checker.$fromStorage, ReverseMappedSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184169,11 +182677,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SharedFlow__from_checker.$storageOf(SharedFlow__from_checker.$copy($goInterfaceAdapter$Named_checker$SharedFlow.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SharedFlow(tsonicTypeScriptRuntime.projectLocation<SharedFlow__from_checker$Storage, SharedFlow__from_checker>(goSliceAddress<SharedFlow__from_checker$Storage>(instance, index), ($go$storage: SharedFlow__from_checker$Storage): SharedFlow__from_checker => {
-                return SharedFlow__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SharedFlow__from_checker): SharedFlow__from_checker$Storage => {
-                return SharedFlow__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SharedFlow(tsonicTypeScriptRuntime.projectLocation<SharedFlow__from_checker$Storage, SharedFlow__from_checker>(goSliceAddress<SharedFlow__from_checker$Storage>(instance, index), SharedFlow__from_checker.$fromStorage, SharedFlow__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184268,11 +182772,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Signature__from_checker.$storageOf(Signature__from_checker.$copy($goInterfaceAdapter$Named_checker$Signature.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$Signature(tsonicTypeScriptRuntime.projectLocation<Signature__from_checker$Storage, Signature__from_checker>(goSliceAddress<Signature__from_checker$Storage>(instance, index), ($go$storage: Signature__from_checker$Storage): Signature__from_checker => {
-                return Signature__from_checker.$fromStorage($go$storage);
-            }, ($go$value: Signature__from_checker): Signature__from_checker$Storage => {
-                return Signature__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$Signature(tsonicTypeScriptRuntime.projectLocation<Signature__from_checker$Storage, Signature__from_checker>(goSliceAddress<Signature__from_checker$Storage>(instance, index), Signature__from_checker.$fromStorage, Signature__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184367,11 +182867,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SignatureLinks__from_checker.$storageOf(SignatureLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SignatureLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SignatureLinks(tsonicTypeScriptRuntime.projectLocation<SignatureLinks__from_checker$Storage, SignatureLinks__from_checker>(goSliceAddress<SignatureLinks__from_checker$Storage>(instance, index), ($go$storage: SignatureLinks__from_checker$Storage): SignatureLinks__from_checker => {
-                return SignatureLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SignatureLinks__from_checker): SignatureLinks__from_checker$Storage => {
-                return SignatureLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SignatureLinks(tsonicTypeScriptRuntime.projectLocation<SignatureLinks__from_checker$Storage, SignatureLinks__from_checker>(goSliceAddress<SignatureLinks__from_checker$Storage>(instance, index), SignatureLinks__from_checker.$fromStorage, SignatureLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184466,11 +182962,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SourceFileLinks__from_checker.$storageOf(SourceFileLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SourceFileLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SourceFileLinks(tsonicTypeScriptRuntime.projectLocation<SourceFileLinks__from_checker$Storage, SourceFileLinks__from_checker>(goSliceAddress<SourceFileLinks__from_checker$Storage>(instance, index), ($go$storage: SourceFileLinks__from_checker$Storage): SourceFileLinks__from_checker => {
-                return SourceFileLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SourceFileLinks__from_checker): SourceFileLinks__from_checker$Storage => {
-                return SourceFileLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SourceFileLinks(tsonicTypeScriptRuntime.projectLocation<SourceFileLinks__from_checker$Storage, SourceFileLinks__from_checker>(goSliceAddress<SourceFileLinks__from_checker$Storage>(instance, index), SourceFileLinks__from_checker.$fromStorage, SourceFileLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184565,11 +183057,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SpreadLinks__from_checker.$storageOf(SpreadLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SpreadLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SpreadLinks(tsonicTypeScriptRuntime.projectLocation<SpreadLinks__from_checker$Storage, SpreadLinks__from_checker>(goSliceAddress<SpreadLinks__from_checker$Storage>(instance, index), ($go$storage: SpreadLinks__from_checker$Storage): SpreadLinks__from_checker => {
-                return SpreadLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SpreadLinks__from_checker): SpreadLinks__from_checker$Storage => {
-                return SpreadLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SpreadLinks(tsonicTypeScriptRuntime.projectLocation<SpreadLinks__from_checker$Storage, SpreadLinks__from_checker>(goSliceAddress<SpreadLinks__from_checker$Storage>(instance, index), SpreadLinks__from_checker.$fromStorage, SpreadLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184664,11 +183152,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SwitchStatementLinks__from_checker.$storageOf(SwitchStatementLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SwitchStatementLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SwitchStatementLinks(tsonicTypeScriptRuntime.projectLocation<SwitchStatementLinks__from_checker$Storage, SwitchStatementLinks__from_checker>(goSliceAddress<SwitchStatementLinks__from_checker$Storage>(instance, index), ($go$storage: SwitchStatementLinks__from_checker$Storage): SwitchStatementLinks__from_checker => {
-                return SwitchStatementLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SwitchStatementLinks__from_checker): SwitchStatementLinks__from_checker$Storage => {
-                return SwitchStatementLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SwitchStatementLinks(tsonicTypeScriptRuntime.projectLocation<SwitchStatementLinks__from_checker$Storage, SwitchStatementLinks__from_checker>(goSliceAddress<SwitchStatementLinks__from_checker$Storage>(instance, index), SwitchStatementLinks__from_checker.$fromStorage, SwitchStatementLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184763,11 +183247,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SymbolNodeLinks__from_checker.$storageOf(SymbolNodeLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SymbolNodeLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SymbolNodeLinks(tsonicTypeScriptRuntime.projectLocation<SymbolNodeLinks__from_checker$Storage, SymbolNodeLinks__from_checker>(goSliceAddress<SymbolNodeLinks__from_checker$Storage>(instance, index), ($go$storage: SymbolNodeLinks__from_checker$Storage): SymbolNodeLinks__from_checker => {
-                return SymbolNodeLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SymbolNodeLinks__from_checker): SymbolNodeLinks__from_checker$Storage => {
-                return SymbolNodeLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SymbolNodeLinks(tsonicTypeScriptRuntime.projectLocation<SymbolNodeLinks__from_checker$Storage, SymbolNodeLinks__from_checker>(goSliceAddress<SymbolNodeLinks__from_checker$Storage>(instance, index), SymbolNodeLinks__from_checker.$fromStorage, SymbolNodeLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184862,11 +183342,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SymbolReferenceLinks__from_checker.$storageOf(SymbolReferenceLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$SymbolReferenceLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SymbolReferenceLinks(tsonicTypeScriptRuntime.projectLocation<SymbolReferenceLinks__from_checker$Storage, SymbolReferenceLinks__from_checker>(goSliceAddress<SymbolReferenceLinks__from_checker$Storage>(instance, index), ($go$storage: SymbolReferenceLinks__from_checker$Storage): SymbolReferenceLinks__from_checker => {
-                return SymbolReferenceLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: SymbolReferenceLinks__from_checker): SymbolReferenceLinks__from_checker$Storage => {
-                return SymbolReferenceLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$SymbolReferenceLinks(tsonicTypeScriptRuntime.projectLocation<SymbolReferenceLinks__from_checker$Storage, SymbolReferenceLinks__from_checker>(goSliceAddress<SymbolReferenceLinks__from_checker$Storage>(instance, index), SymbolReferenceLinks__from_checker.$fromStorage, SymbolReferenceLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -184961,11 +183437,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TupleElementInfo__from_checker.$storageOf(TupleElementInfo__from_checker.$copy($goInterfaceAdapter$Named_checker$TupleElementInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TupleElementInfo(tsonicTypeScriptRuntime.projectLocation<TupleElementInfo__from_checker$Storage, TupleElementInfo__from_checker>(goSliceAddress<TupleElementInfo__from_checker$Storage>(instance, index), ($go$storage: TupleElementInfo__from_checker$Storage): TupleElementInfo__from_checker => {
-                return TupleElementInfo__from_checker.$fromStorage($go$storage);
-            }, ($go$value: TupleElementInfo__from_checker): TupleElementInfo__from_checker$Storage => {
-                return TupleElementInfo__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TupleElementInfo(tsonicTypeScriptRuntime.projectLocation<TupleElementInfo__from_checker$Storage, TupleElementInfo__from_checker>(goSliceAddress<TupleElementInfo__from_checker$Storage>(instance, index), TupleElementInfo__from_checker.$fromStorage, TupleElementInfo__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185060,11 +183532,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeAliasLinks__from_checker.$storageOf(TypeAliasLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$TypeAliasLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeAliasLinks(tsonicTypeScriptRuntime.projectLocation<TypeAliasLinks__from_checker$Storage, TypeAliasLinks__from_checker>(goSliceAddress<TypeAliasLinks__from_checker$Storage>(instance, index), ($go$storage: TypeAliasLinks__from_checker$Storage): TypeAliasLinks__from_checker => {
-                return TypeAliasLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: TypeAliasLinks__from_checker): TypeAliasLinks__from_checker$Storage => {
-                return TypeAliasLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeAliasLinks(tsonicTypeScriptRuntime.projectLocation<TypeAliasLinks__from_checker$Storage, TypeAliasLinks__from_checker>(goSliceAddress<TypeAliasLinks__from_checker$Storage>(instance, index), TypeAliasLinks__from_checker.$fromStorage, TypeAliasLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185159,11 +183627,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeNodeLinks__from_checker.$storageOf(TypeNodeLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$TypeNodeLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeNodeLinks(tsonicTypeScriptRuntime.projectLocation<TypeNodeLinks__from_checker$Storage, TypeNodeLinks__from_checker>(goSliceAddress<TypeNodeLinks__from_checker$Storage>(instance, index), ($go$storage: TypeNodeLinks__from_checker$Storage): TypeNodeLinks__from_checker => {
-                return TypeNodeLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: TypeNodeLinks__from_checker): TypeNodeLinks__from_checker$Storage => {
-                return TypeNodeLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeNodeLinks(tsonicTypeScriptRuntime.projectLocation<TypeNodeLinks__from_checker$Storage, TypeNodeLinks__from_checker>(goSliceAddress<TypeNodeLinks__from_checker$Storage>(instance, index), TypeNodeLinks__from_checker.$fromStorage, TypeNodeLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185258,11 +183722,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TypeResolution__from_checker.$storageOf(TypeResolution__from_checker.$copy($goInterfaceAdapter$Named_checker$TypeResolution.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeResolution(tsonicTypeScriptRuntime.projectLocation<TypeResolution__from_checker$Storage, TypeResolution__from_checker>(goSliceAddress<TypeResolution__from_checker$Storage>(instance, index), ($go$storage: TypeResolution__from_checker$Storage): TypeResolution__from_checker => {
-                return TypeResolution__from_checker.$fromStorage($go$storage);
-            }, ($go$value: TypeResolution__from_checker): TypeResolution__from_checker$Storage => {
-                return TypeResolution__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$TypeResolution(tsonicTypeScriptRuntime.projectLocation<TypeResolution__from_checker$Storage, TypeResolution__from_checker>(goSliceAddress<TypeResolution__from_checker$Storage>(instance, index), TypeResolution__from_checker.$fromStorage, TypeResolution__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185357,11 +183817,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ValueSymbolLinks__from_checker.$storageOf(ValueSymbolLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$ValueSymbolLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ValueSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ValueSymbolLinks__from_checker$Storage, ValueSymbolLinks__from_checker>(goSliceAddress<ValueSymbolLinks__from_checker$Storage>(instance, index), ($go$storage: ValueSymbolLinks__from_checker$Storage): ValueSymbolLinks__from_checker => {
-                return ValueSymbolLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: ValueSymbolLinks__from_checker): ValueSymbolLinks__from_checker$Storage => {
-                return ValueSymbolLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$ValueSymbolLinks(tsonicTypeScriptRuntime.projectLocation<ValueSymbolLinks__from_checker$Storage, ValueSymbolLinks__from_checker>(goSliceAddress<ValueSymbolLinks__from_checker$Storage>(instance, index), ValueSymbolLinks__from_checker.$fromStorage, ValueSymbolLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185515,11 +183971,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, VarianceLinks__from_checker.$storageOf(VarianceLinks__from_checker.$copy($goInterfaceAdapter$Named_checker$VarianceLinks.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$VarianceLinks(tsonicTypeScriptRuntime.projectLocation<VarianceLinks__from_checker$Storage, VarianceLinks__from_checker>(goSliceAddress<VarianceLinks__from_checker$Storage>(instance, index), ($go$storage: VarianceLinks__from_checker$Storage): VarianceLinks__from_checker => {
-                return VarianceLinks__from_checker.$fromStorage($go$storage);
-            }, ($go$value: VarianceLinks__from_checker): VarianceLinks__from_checker$Storage => {
-                return VarianceLinks__from_checker.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_checker$VarianceLinks(tsonicTypeScriptRuntime.projectLocation<VarianceLinks__from_checker$Storage, VarianceLinks__from_checker>(goSliceAddress<VarianceLinks__from_checker$Storage>(instance, index), VarianceLinks__from_checker.$fromStorage, VarianceLinks__from_checker.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185614,11 +184066,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Pattern__from_core.$storageOf(Pattern__from_core.$copy($goInterfaceAdapter$Named_core$Pattern.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_core$Pattern(tsonicTypeScriptRuntime.projectLocation<Pattern__from_core$Storage, Pattern__from_core>(goSliceAddress<Pattern__from_core$Storage>(instance, index), ($go$storage: Pattern__from_core$Storage): Pattern__from_core => {
-                return Pattern__from_core.$fromStorage($go$storage);
-            }, ($go$value: Pattern__from_core): Pattern__from_core$Storage => {
-                return Pattern__from_core.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_core$Pattern(tsonicTypeScriptRuntime.projectLocation<Pattern__from_core$Storage, Pattern__from_core>(goSliceAddress<Pattern__from_core$Storage>(instance, index), Pattern__from_core.$fromStorage, Pattern__from_core.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -185713,11 +184161,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TextChange__from_core.$storageOf(TextChange__from_core.$copy($goInterfaceAdapter$Named_core$TextChange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_core$TextChange(tsonicTypeScriptRuntime.projectLocation<TextChange__from_core$Storage, TextChange__from_core>(goSliceAddress<TextChange__from_core$Storage>(instance, index), ($go$storage: TextChange__from_core$Storage): TextChange__from_core => {
-                return TextChange__from_core.$fromStorage($go$storage);
-            }, ($go$value: TextChange__from_core): TextChange__from_core$Storage => {
-                return TextChange__from_core.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_core$TextChange(tsonicTypeScriptRuntime.projectLocation<TextChange__from_core$Storage, TextChange__from_core>(goSliceAddress<TextChange__from_core$Storage>(instance, index), TextChange__from_core.$fromStorage, TextChange__from_core.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -186055,11 +184499,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, typedArshaler__from_json.$storageOf<Decoder__from_jsontext>(typedArshaler__from_json.$copy<Decoder__from_jsontext>($goInterfaceAdapter$Named_json$typedArshalerOf_Named_jsontext$Decoder.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_json$typedArshalerOf_Named_jsontext$Decoder(tsonicTypeScriptRuntime.projectLocation<typedArshaler__from_json$Storage<Decoder__from_jsontext>, typedArshaler__from_json<Decoder__from_jsontext>>(goSliceAddress<typedArshaler__from_json$Storage<Decoder__from_jsontext>>(instance, index), ($go$storage: typedArshaler__from_json$Storage<Decoder__from_jsontext>): typedArshaler__from_json<Decoder__from_jsontext> => {
-                return typedArshaler__from_json.$fromStorage<Decoder__from_jsontext>($go$storage);
-            }, ($go$value: typedArshaler__from_json<Decoder__from_jsontext>): typedArshaler__from_json$Storage<Decoder__from_jsontext> => {
-                return typedArshaler__from_json.$storageOf<Decoder__from_jsontext>($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_json$typedArshalerOf_Named_jsontext$Decoder(tsonicTypeScriptRuntime.projectLocation<typedArshaler__from_json$Storage<Decoder__from_jsontext>, typedArshaler__from_json<Decoder__from_jsontext>>(goSliceAddress<typedArshaler__from_json$Storage<Decoder__from_jsontext>>(instance, index), typedArshaler__from_json.$fromStorage, typedArshaler__from_json.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -186154,11 +184594,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, typedArshaler__from_json.$storageOf<Encoder__from_jsontext>(typedArshaler__from_json.$copy<Encoder__from_jsontext>($goInterfaceAdapter$Named_json$typedArshalerOf_Named_jsontext$Encoder.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_json$typedArshalerOf_Named_jsontext$Encoder(tsonicTypeScriptRuntime.projectLocation<typedArshaler__from_json$Storage<Encoder__from_jsontext>, typedArshaler__from_json<Encoder__from_jsontext>>(goSliceAddress<typedArshaler__from_json$Storage<Encoder__from_jsontext>>(instance, index), ($go$storage: typedArshaler__from_json$Storage<Encoder__from_jsontext>): typedArshaler__from_json<Encoder__from_jsontext> => {
-                return typedArshaler__from_json.$fromStorage<Encoder__from_jsontext>($go$storage);
-            }, ($go$value: typedArshaler__from_json<Encoder__from_jsontext>): typedArshaler__from_json$Storage<Encoder__from_jsontext> => {
-                return typedArshaler__from_json.$storageOf<Encoder__from_jsontext>($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_json$typedArshalerOf_Named_jsontext$Encoder(tsonicTypeScriptRuntime.projectLocation<typedArshaler__from_json$Storage<Encoder__from_jsontext>, typedArshaler__from_json<Encoder__from_jsontext>>(goSliceAddress<typedArshaler__from_json$Storage<Encoder__from_jsontext>>(instance, index), typedArshaler__from_json.$fromStorage, typedArshaler__from_json.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -186312,11 +184748,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, objectMember__from_jsontext.$storageOf(objectMember__from_jsontext.$copy($goInterfaceAdapter$Named_jsontext$objectMember.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_jsontext$objectMember(tsonicTypeScriptRuntime.projectLocation<objectMember__from_jsontext$Storage, objectMember__from_jsontext>(goSliceAddress<objectMember__from_jsontext$Storage>(instance, index), ($go$storage: objectMember__from_jsontext$Storage): objectMember__from_jsontext => {
-                return objectMember__from_jsontext.$fromStorage($go$storage);
-            }, ($go$value: objectMember__from_jsontext): objectMember__from_jsontext$Storage => {
-                return objectMember__from_jsontext.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_jsontext$objectMember(tsonicTypeScriptRuntime.projectLocation<objectMember__from_jsontext$Storage, objectMember__from_jsontext>(goSliceAddress<objectMember__from_jsontext$Storage>(instance, index), objectMember__from_jsontext.$fromStorage, objectMember__from_jsontext.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -186477,11 +184909,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Extension__from_language__package_1.$storageOf(Extension__from_language__package_1.$copy($goInterfaceAdapter$Named_language__package_1$Extension.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_language__package_1$Extension(tsonicTypeScriptRuntime.projectLocation<Extension__from_language__package_1$Storage, Extension__from_language__package_1>(goSliceAddress<Extension__from_language__package_1$Storage>(instance, index), ($go$storage: Extension__from_language__package_1$Storage): Extension__from_language__package_1 => {
-                return Extension__from_language__package_1.$fromStorage($go$storage);
-            }, ($go$value: Extension__from_language__package_1): Extension__from_language__package_1$Storage => {
-                return Extension__from_language__package_1.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_language__package_1$Extension(tsonicTypeScriptRuntime.projectLocation<Extension__from_language__package_1$Storage, Extension__from_language__package_1>(goSliceAddress<Extension__from_language__package_1$Storage>(instance, index), Extension__from_language__package_1.$fromStorage, Extension__from_language__package_1.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -186760,11 +185188,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$CommandOrCodeAction.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$CommandOrCodeAction(tsonicTypeScriptRuntime.projectLocation<CommandOrCodeAction__from_lsproto$Storage, CommandOrCodeAction__from_lsproto>(goSliceAddress<CommandOrCodeAction__from_lsproto$Storage>(instance, index), ($go$storage: CommandOrCodeAction__from_lsproto$Storage): CommandOrCodeAction__from_lsproto => {
-                return CommandOrCodeAction__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: CommandOrCodeAction__from_lsproto): CommandOrCodeAction__from_lsproto$Storage => {
-                return CommandOrCodeAction__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$CommandOrCodeAction(tsonicTypeScriptRuntime.projectLocation<CommandOrCodeAction__from_lsproto$Storage, CommandOrCodeAction__from_lsproto>(goSliceAddress<CommandOrCodeAction__from_lsproto$Storage>(instance, index), CommandOrCodeAction__from_lsproto.$fromStorage, CommandOrCodeAction__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187168,11 +185592,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$storageOf(InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$InlineValueTextOrVariableLookupOrEvaluatableExpression.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueTextOrVariableLookupOrEvaluatableExpression(tsonicTypeScriptRuntime.projectLocation<InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage, InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto>(goSliceAddress<InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage>(instance, index), ($go$storage: InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage): InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto => {
-                return InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto): InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage => {
-                return InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueTextOrVariableLookupOrEvaluatableExpression(tsonicTypeScriptRuntime.projectLocation<InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage, InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto>(goSliceAddress<InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto$Storage>(instance, index), InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$fromStorage, InlineValueTextOrVariableLookupOrEvaluatableExpression__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187326,11 +185746,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Location__from_lsproto.$storageOf(Location__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Location.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.projectLocation<Location__from_lsproto$Storage, Location__from_lsproto>(goSliceAddress<Location__from_lsproto$Storage>(instance, index), ($go$storage: Location__from_lsproto$Storage): Location__from_lsproto => {
-                return Location__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: Location__from_lsproto): Location__from_lsproto$Storage => {
-                return Location__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.projectLocation<Location__from_lsproto$Storage, Location__from_lsproto>(goSliceAddress<Location__from_lsproto$Storage>(instance, index), Location__from_lsproto.$fromStorage, Location__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187491,11 +185907,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Position__from_lsproto.$storageOf(Position__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Position.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(goSliceAddress<Position__from_lsproto$Storage>(instance, index), ($go$storage: Position__from_lsproto$Storage): Position__from_lsproto => {
-                return Position__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: Position__from_lsproto): Position__from_lsproto$Storage => {
-                return Position__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position__from_lsproto$Storage, Position__from_lsproto>(goSliceAddress<Position__from_lsproto$Storage>(instance, index), Position__from_lsproto.$fromStorage, Position__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187656,11 +186068,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, PreviousResultId__from_lsproto.$storageOf(PreviousResultId__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$PreviousResultId.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$PreviousResultId(tsonicTypeScriptRuntime.projectLocation<PreviousResultId__from_lsproto$Storage, PreviousResultId__from_lsproto>(goSliceAddress<PreviousResultId__from_lsproto$Storage>(instance, index), ($go$storage: PreviousResultId__from_lsproto$Storage): PreviousResultId__from_lsproto => {
-                return PreviousResultId__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: PreviousResultId__from_lsproto): PreviousResultId__from_lsproto$Storage => {
-                return PreviousResultId__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$PreviousResultId(tsonicTypeScriptRuntime.projectLocation<PreviousResultId__from_lsproto$Storage, PreviousResultId__from_lsproto>(goSliceAddress<PreviousResultId__from_lsproto$Storage>(instance, index), PreviousResultId__from_lsproto.$fromStorage, PreviousResultId__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187755,11 +186163,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, Range__from_lsproto.$storageOf(Range__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$Range.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(tsonicTypeScriptRuntime.projectLocation<Range__from_lsproto$Storage, Range__from_lsproto>(goSliceAddress<Range__from_lsproto$Storage>(instance, index), ($go$storage: Range__from_lsproto$Storage): Range__from_lsproto => {
-                return Range__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: Range__from_lsproto): Range__from_lsproto$Storage => {
-                return Range__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(tsonicTypeScriptRuntime.projectLocation<Range__from_lsproto$Storage, Range__from_lsproto>(goSliceAddress<Range__from_lsproto$Storage>(instance, index), Range__from_lsproto.$fromStorage, Range__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -187920,11 +186324,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, StringOrMarkedStringWithLanguage__from_lsproto.$storageOf(StringOrMarkedStringWithLanguage__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$StringOrMarkedStringWithLanguage.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$StringOrMarkedStringWithLanguage(tsonicTypeScriptRuntime.projectLocation<StringOrMarkedStringWithLanguage__from_lsproto$Storage, StringOrMarkedStringWithLanguage__from_lsproto>(goSliceAddress<StringOrMarkedStringWithLanguage__from_lsproto$Storage>(instance, index), ($go$storage: StringOrMarkedStringWithLanguage__from_lsproto$Storage): StringOrMarkedStringWithLanguage__from_lsproto => {
-                return StringOrMarkedStringWithLanguage__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: StringOrMarkedStringWithLanguage__from_lsproto): StringOrMarkedStringWithLanguage__from_lsproto$Storage => {
-                return StringOrMarkedStringWithLanguage__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$StringOrMarkedStringWithLanguage(tsonicTypeScriptRuntime.projectLocation<StringOrMarkedStringWithLanguage__from_lsproto$Storage, StringOrMarkedStringWithLanguage__from_lsproto>(goSliceAddress<StringOrMarkedStringWithLanguage__from_lsproto$Storage>(instance, index), StringOrMarkedStringWithLanguage__from_lsproto.$fromStorage, StringOrMarkedStringWithLanguage__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188137,11 +186537,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$storageOf(TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$TextDocumentContentChangePartialOrWholeDocument.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentChangePartialOrWholeDocument(tsonicTypeScriptRuntime.projectLocation<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage, TextDocumentContentChangePartialOrWholeDocument__from_lsproto>(goSliceAddress<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>(instance, index), ($go$storage: TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage): TextDocumentContentChangePartialOrWholeDocument__from_lsproto => {
-                return TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: TextDocumentContentChangePartialOrWholeDocument__from_lsproto): TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage => {
-                return TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentChangePartialOrWholeDocument(tsonicTypeScriptRuntime.projectLocation<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage, TextDocumentContentChangePartialOrWholeDocument__from_lsproto>(goSliceAddress<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>(instance, index), TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$fromStorage, TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188236,11 +186632,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile(tsonicTypeScriptRuntime.projectLocation<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto>(goSliceAddress<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(instance, index), ($go$storage: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage): TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto => {
-                return TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto): TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage => {
-                return TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile(tsonicTypeScriptRuntime.projectLocation<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto>(goSliceAddress<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto$Storage>(instance, index), TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$fromStorage, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188335,11 +186727,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$storageOf(TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$TextDocumentFilterLanguageOrSchemeOrPattern.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguageOrSchemeOrPattern(tsonicTypeScriptRuntime.projectLocation<TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage, TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto>(goSliceAddress<TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage>(instance, index), ($go$storage: TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage): TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto => {
-                return TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto): TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage => {
-                return TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguageOrSchemeOrPattern(tsonicTypeScriptRuntime.projectLocation<TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage, TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto>(goSliceAddress<TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto$Storage>(instance, index), TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$fromStorage, TextDocumentFilterLanguageOrSchemeOrPattern__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188434,11 +186822,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$TextEditOrAnnotatedTextEditOrSnippetTextEdit.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextEditOrAnnotatedTextEditOrSnippetTextEdit(tsonicTypeScriptRuntime.projectLocation<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto>(goSliceAddress<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage>(instance, index), ($go$storage: TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage): TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto => {
-                return TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto): TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage => {
-                return TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$TextEditOrAnnotatedTextEditOrSnippetTextEdit(tsonicTypeScriptRuntime.projectLocation<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto>(goSliceAddress<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage>(instance, index), TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$fromStorage, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188658,11 +187042,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$storageOf(WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$copy($goInterfaceAdapter$Named_lsproto$WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport(tsonicTypeScriptRuntime.projectLocation<WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage, WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto>(goSliceAddress<WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage>(instance, index), ($go$storage: WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage): WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto => {
-                return WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$fromStorage($go$storage);
-            }, ($go$value: WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto): WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage => {
-                return WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport(tsonicTypeScriptRuntime.projectLocation<WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage, WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto>(goSliceAddress<WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto$Storage>(instance, index), WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$fromStorage, WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport__from_lsproto.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188757,11 +187137,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ExportsOrImports__from_packagejson.$storageOf(ExportsOrImports__from_packagejson.$copy($goInterfaceAdapter$Named_packagejson$ExportsOrImports.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$ExportsOrImports(tsonicTypeScriptRuntime.projectLocation<ExportsOrImports__from_packagejson$Storage, ExportsOrImports__from_packagejson>(goSliceAddress<ExportsOrImports__from_packagejson$Storage>(instance, index), ($go$storage: ExportsOrImports__from_packagejson$Storage): ExportsOrImports__from_packagejson => {
-                return ExportsOrImports__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: ExportsOrImports__from_packagejson): ExportsOrImports__from_packagejson$Storage => {
-                return ExportsOrImports__from_packagejson.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$ExportsOrImports(tsonicTypeScriptRuntime.projectLocation<ExportsOrImports__from_packagejson$Storage, ExportsOrImports__from_packagejson>(goSliceAddress<ExportsOrImports__from_packagejson$Storage>(instance, index), ExportsOrImports__from_packagejson.$fromStorage, ExportsOrImports__from_packagejson.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188856,11 +187232,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$copy($goInterfaceAdapter$Named_packagejson$JSONValue.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$JSONValue(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(goSliceAddress<JSONValue__from_packagejson$Storage>(instance, index), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                return JSONValue__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                return JSONValue__from_packagejson.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$JSONValue(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(goSliceAddress<JSONValue__from_packagejson$Storage>(instance, index), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -188955,11 +187327,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, diagnosticAndArgs__from_packagejson.$storageOf(diagnosticAndArgs__from_packagejson.$copy($goInterfaceAdapter$Named_packagejson$diagnosticAndArgs.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$diagnosticAndArgs(tsonicTypeScriptRuntime.projectLocation<diagnosticAndArgs__from_packagejson$Storage, diagnosticAndArgs__from_packagejson>(goSliceAddress<diagnosticAndArgs__from_packagejson$Storage>(instance, index), ($go$storage: diagnosticAndArgs__from_packagejson$Storage): diagnosticAndArgs__from_packagejson => {
-                return diagnosticAndArgs__from_packagejson.$fromStorage($go$storage);
-            }, ($go$value: diagnosticAndArgs__from_packagejson): diagnosticAndArgs__from_packagejson$Storage => {
-                return diagnosticAndArgs__from_packagejson.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_packagejson$diagnosticAndArgs(tsonicTypeScriptRuntime.projectLocation<diagnosticAndArgs__from_packagejson$Storage, diagnosticAndArgs__from_packagejson>(goSliceAddress<diagnosticAndArgs__from_packagejson$Storage>(instance, index), diagnosticAndArgs__from_packagejson.$fromStorage, diagnosticAndArgs__from_packagejson.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189054,11 +187422,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, JSDocInfo__from_parser.$storageOf(JSDocInfo__from_parser.$copy($goInterfaceAdapter$Named_parser$JSDocInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_parser$JSDocInfo(tsonicTypeScriptRuntime.projectLocation<JSDocInfo__from_parser$Storage, JSDocInfo__from_parser>(goSliceAddress<JSDocInfo__from_parser$Storage>(instance, index), ($go$storage: JSDocInfo__from_parser$Storage): JSDocInfo__from_parser => {
-                return JSDocInfo__from_parser.$fromStorage($go$storage);
-            }, ($go$value: JSDocInfo__from_parser): JSDocInfo__from_parser$Storage => {
-                return JSDocInfo__from_parser.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_parser$JSDocInfo(tsonicTypeScriptRuntime.projectLocation<JSDocInfo__from_parser$Storage, JSDocInfo__from_parser>(goSliceAddress<JSDocInfo__from_parser$Storage>(instance, index), JSDocInfo__from_parser.$fromStorage, JSDocInfo__from_parser.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189153,11 +187517,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, SynthesizedComment__from_printer.$storageOf(SynthesizedComment__from_printer.$copy($goInterfaceAdapter$Named_printer$SynthesizedComment.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_printer$SynthesizedComment(tsonicTypeScriptRuntime.projectLocation<SynthesizedComment__from_printer$Storage, SynthesizedComment__from_printer>(goSliceAddress<SynthesizedComment__from_printer$Storage>(instance, index), ($go$storage: SynthesizedComment__from_printer$Storage): SynthesizedComment__from_printer => {
-                return SynthesizedComment__from_printer.$fromStorage($go$storage);
-            }, ($go$value: SynthesizedComment__from_printer): SynthesizedComment__from_printer$Storage => {
-                return SynthesizedComment__from_printer.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_printer$SynthesizedComment(tsonicTypeScriptRuntime.projectLocation<SynthesizedComment__from_printer$Storage, SynthesizedComment__from_printer>(goSliceAddress<SynthesizedComment__from_printer$Storage>(instance, index), SynthesizedComment__from_printer.$fromStorage, SynthesizedComment__from_printer.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189252,11 +187612,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, emitNode__from_printer.$storageOf(emitNode__from_printer.$copy($goInterfaceAdapter$Named_printer$emitNode.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_printer$emitNode(tsonicTypeScriptRuntime.projectLocation<emitNode__from_printer$Storage, emitNode__from_printer>(goSliceAddress<emitNode__from_printer$Storage>(instance, index), ($go$storage: emitNode__from_printer$Storage): emitNode__from_printer => {
-                return emitNode__from_printer.$fromStorage($go$storage);
-            }, ($go$value: emitNode__from_printer): emitNode__from_printer$Storage => {
-                return emitNode__from_printer.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_printer$emitNode(tsonicTypeScriptRuntime.projectLocation<emitNode__from_printer$Storage, emitNode__from_printer>(goSliceAddress<emitNode__from_printer$Storage>(instance, index), emitNode__from_printer.$fromStorage, emitNode__from_printer.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189351,11 +187707,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FileChange__from_project.$storageOf(FileChange__from_project.$copy($goInterfaceAdapter$Named_project$FileChange.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_project$FileChange(tsonicTypeScriptRuntime.projectLocation<FileChange__from_project$Storage, FileChange__from_project>(goSliceAddress<FileChange__from_project$Storage>(instance, index), ($go$storage: FileChange__from_project$Storage): FileChange__from_project => {
-                return FileChange__from_project.$fromStorage($go$storage);
-            }, ($go$value: FileChange__from_project): FileChange__from_project$Storage => {
-                return FileChange__from_project.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_project$FileChange(tsonicTypeScriptRuntime.projectLocation<FileChange__from_project$Storage, FileChange__from_project>(goSliceAddress<FileChange__from_project$Storage>(instance, index), FileChange__from_project.$fromStorage, FileChange__from_project.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189450,11 +187802,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, ParseCacheKey__from_project.$storageOf(ParseCacheKey__from_project.$copy($goInterfaceAdapter$Named_project$ParseCacheKey.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_project$ParseCacheKey(tsonicTypeScriptRuntime.projectLocation<ParseCacheKey__from_project$Storage, ParseCacheKey__from_project>(goSliceAddress<ParseCacheKey__from_project$Storage>(instance, index), ($go$storage: ParseCacheKey__from_project$Storage): ParseCacheKey__from_project => {
-                return ParseCacheKey__from_project.$fromStorage($go$storage);
-            }, ($go$value: ParseCacheKey__from_project): ParseCacheKey__from_project$Storage => {
-                return ParseCacheKey__from_project.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_project$ParseCacheKey(tsonicTypeScriptRuntime.projectLocation<ParseCacheKey__from_project$Storage, ParseCacheKey__from_project>(goSliceAddress<ParseCacheKey__from_project$Storage>(instance, index), ParseCacheKey__from_project.$fromStorage, ParseCacheKey__from_project.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189677,11 +188025,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, TraceRecord__from_tracing.$storageOf(TraceRecord__from_tracing.$copy($goInterfaceAdapter$Named_tracing$TraceRecord.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_tracing$TraceRecord(tsonicTypeScriptRuntime.projectLocation<TraceRecord__from_tracing$Storage, TraceRecord__from_tracing>(goSliceAddress<TraceRecord__from_tracing$Storage>(instance, index), ($go$storage: TraceRecord__from_tracing$Storage): TraceRecord__from_tracing => {
-                return TraceRecord__from_tracing.$fromStorage($go$storage);
-            }, ($go$value: TraceRecord__from_tracing): TraceRecord__from_tracing$Storage => {
-                return TraceRecord__from_tracing.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_tracing$TraceRecord(tsonicTypeScriptRuntime.projectLocation<TraceRecord__from_tracing$Storage, TraceRecord__from_tracing>(goSliceAddress<TraceRecord__from_tracing$Storage>(instance, index), TraceRecord__from_tracing.$fromStorage, TraceRecord__from_tracing.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {
@@ -189835,11 +188179,7 @@ named_reflect.ReflectTypeMetadataOperations.$registerValue($goReflectType$SliceO
             set: (value: GoInterfaceValue | undefined): void => {
                 instance.set(index, FileExtensionInfo__from_tsoptions.$storageOf(FileExtensionInfo__from_tsoptions.$copy($goInterfaceAdapter$Named_tsoptions$FileExtensionInfo.$is(value) ? value.$go$value : GoPanic.raiseRuntime("reflect: Value.Set received a foreign interface box"))));
             },
-            address: () => (new $goInterfaceAdapter$PointerTo_Named_tsoptions$FileExtensionInfo(tsonicTypeScriptRuntime.projectLocation<FileExtensionInfo__from_tsoptions$Storage, FileExtensionInfo__from_tsoptions>(goSliceAddress<FileExtensionInfo__from_tsoptions$Storage>(instance, index), ($go$storage: FileExtensionInfo__from_tsoptions$Storage): FileExtensionInfo__from_tsoptions => {
-                return FileExtensionInfo__from_tsoptions.$fromStorage($go$storage);
-            }, ($go$value: FileExtensionInfo__from_tsoptions): FileExtensionInfo__from_tsoptions$Storage => {
-                return FileExtensionInfo__from_tsoptions.$storageOf($go$value);
-            })))
+            address: () => (new $goInterfaceAdapter$PointerTo_Named_tsoptions$FileExtensionInfo(tsonicTypeScriptRuntime.projectLocation<FileExtensionInfo__from_tsoptions$Storage, FileExtensionInfo__from_tsoptions>(goSliceAddress<FileExtensionInfo__from_tsoptions$Storage>(instance, index), FileExtensionInfo__from_tsoptions.$fromStorage, FileExtensionInfo__from_tsoptions.$storageOf)))
         };
     },
     append: (box: GoInterfaceValue, values: readonly (GoInterfaceValue | undefined)[]) => {

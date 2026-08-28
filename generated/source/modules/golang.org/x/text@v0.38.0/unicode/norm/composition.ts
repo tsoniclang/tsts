@@ -93,30 +93,33 @@ export class reorderBuffer {
         let sz = globalThis.Number(BigInt.asIntN(64, utf8__from_gostdlib.EncodeRune(goArraySlice(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.byte, bn, null, null), r)));
         const __gotots_store_4 = ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value;
         __gotots_store_4.nbyte = __gotots_store_4.nbyte + UTFMax$uint8__from_utf8;
-        ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.set(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.nrune, Properties.$storageOf(Properties.$fromStorage({
-            pos: bn,
-            size: sz & 255,
-            ccc: 0,
-            tccc: 0,
-            nLead: 0,
-            flags: 0,
-            index: 0
-        })));
+        ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.set(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.nrune, (void Properties.$storageOf, (void Properties.$fromStorage,
+            {
+                pos: bn,
+                size: sz & 255,
+                ccc: 0,
+                tccc: 0,
+                nLead: 0,
+                flags: 0,
+                index: 0
+            })));
         const __gotots_store_5 = ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value;
         __gotots_store_5.nrune = __gotots_store_5.nrune + 1;
     }
     static $go$private$norm$assignRune(rb: tsonicTypeScriptRuntime.Location<reorderBuffer> | undefined, pos: int, r: int32): void {
-        let bn = Properties.$storageOf(Properties.$fromStorage(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(pos))).pos;
+        let bn = (void Properties.$storageOf, (void Properties.$fromStorage,
+            ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(pos))).pos;
         let sz = globalThis.Number(BigInt.asIntN(64, utf8__from_gostdlib.EncodeRune(goArraySlice(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.byte, bn, null, null), r)));
-        ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.set(pos, Properties.$storageOf(Properties.$fromStorage({
-            pos: bn,
-            size: sz & 255,
-            ccc: 0,
-            tccc: 0,
-            nLead: 0,
-            flags: 0,
-            index: 0
-        })));
+        ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.set(pos, (void Properties.$storageOf, (void Properties.$fromStorage,
+            {
+                pos: bn,
+                size: sz & 255,
+                ccc: 0,
+                tccc: 0,
+                nLead: 0,
+                flags: 0,
+                index: 0
+            })));
     }
     static $go$private$norm$bytesAt(rb: tsonicTypeScriptRuntime.Location<reorderBuffer> | undefined, n: int): RuntimeSlice<uint8> {
         let inf = Properties.$copy(Properties.$fromStorage(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(n)));
@@ -126,8 +129,10 @@ export class reorderBuffer {
         let b = goArraySlice(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune, 0, null, null);
         let bn = ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.nrune;
         for (; i < bn; i++) {
-            let cccB = Properties.$storageOf(Properties.$fromStorage(b.get(k - 1))).ccc;
-            let cccC = Properties.$storageOf(Properties.$fromStorage(b.get(i))).ccc;
+            let cccB = (void Properties.$storageOf, (void Properties.$fromStorage,
+                b.get(k - 1))).ccc;
+            let cccC = (void Properties.$storageOf, (void Properties.$fromStorage,
+                b.get(i))).ccc;
             if (cccB === 0) {
                 s = k - 1;
             }
@@ -174,7 +179,8 @@ export class reorderBuffer {
                 }
                 let ii = Properties.$copy(Properties.$fromStorage(b.get(i)));
                 if (ii.$go$private$norm$combinesBackward()) {
-                    let cccB = Properties.$storageOf(Properties.$fromStorage(b.get(k - 1))).ccc;
+                    let cccB = (void Properties.$storageOf, (void Properties.$fromStorage,
+                        b.get(k - 1))).ccc;
                     let cccC = Properties.$storageOf(ii).ccc;
                     let blocked = false;
                     if (cccB === 0) {
@@ -274,7 +280,8 @@ export class reorderBuffer {
         let cc = Properties.$storageOf(info).ccc;
         if (cc > 0) {
             for (; n > 0; n--) {
-                if (Properties.$storageOf(Properties.$fromStorage(b.get(n - 1))).ccc <= cc) {
+                if ((void Properties.$storageOf, (void Properties.$fromStorage,
+                    b.get(n - 1))).ccc <= cc) {
                     break;
                 }
                 b.set(n, Properties.$storageOf(Properties.$copy(Properties.$fromStorage(b.get(n - 1)))));
@@ -329,8 +336,10 @@ export class reorderBuffer {
 }
 export function appendFlush(rb: tsonicTypeScriptRuntime.Location<reorderBuffer> | undefined): bool {
     for (let i = 0; i < ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.nrune; i++) {
-        let start = Properties.$storageOf(Properties.$fromStorage(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(i))).pos;
-        let end = start + Properties.$storageOf(Properties.$fromStorage(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(i))).size;
+        let start = (void Properties.$storageOf, (void Properties.$fromStorage,
+            ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(i))).pos;
+        let end = start + (void Properties.$storageOf, (void Properties.$fromStorage,
+            ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.rune.get(i))).size;
         ((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.__go_out = goSliceAppendSlice<uint8>(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.__go_out, goArraySlice(((rb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<reorderBuffer>).value.byte, start, end, null), 0);
     }
     return true;

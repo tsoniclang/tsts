@@ -75,7 +75,7 @@ export class aliasResolver {
     static GetCurrentDirectory(r: {
         value: aliasResolver;
     } | undefined): gostring {
-        const __gotots_receiver_1 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_1: aliasResolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         return goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_1).GetCurrentDirectory();
     }
     static GetDefaultResolutionModeForFile(r: {
@@ -204,7 +204,7 @@ export class aliasResolver {
                 return resolved__shadow_1;
             }
         }
-        const __gotots_receiver_5 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.moduleResolver;
+        const __gotots_receiver_5: aliasResolver["moduleResolver"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.moduleResolver;
         const __gotots_argument_16 = moduleReference;
         const __gotots_receiver_4 = currentSourceFile;
         const __gotots_argument_17 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_4).FileName();
@@ -218,7 +218,7 @@ export class aliasResolver {
         }), resolved);
         resolved = __gotots_results_3[0];
         if (!ResolvedModule__from___go_module.IsResolved(resolved) && !PathIsRelative__from_tspath(moduleReference)) {
-            const __gotots_callee_1 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.onFailedAmbientModuleLookup;
+            const __gotots_callee_1: aliasResolver["onFailedAmbientModuleLookup"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.onFailedAmbientModuleLookup;
             const __gotots_argument_20 = currentSourceFile;
             const __gotots_argument_21 = moduleReference;
             (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_20, __gotots_argument_21);
@@ -240,9 +240,9 @@ export class aliasResolver {
     static GetSourceFile(r: {
         value: aliasResolver;
     } | undefined, fileName: gostring): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
-        const __gotots_receiver_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_0: aliasResolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_1 = fileName;
-        const __gotots_callee_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+        const __gotots_callee_0: aliasResolver["toPath"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
         const __gotots_argument_0 = fileName;
         const __gotots_argument_2 = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
         let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_0).GetSourceFile(__gotots_argument_1, __gotots_argument_2);
@@ -310,7 +310,7 @@ export class aliasResolver {
     static UseCaseSensitiveFileNames(r: {
         value: aliasResolver;
     } | undefined): bool {
-        const __gotots_receiver_6 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_6: aliasResolver["host"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_7 = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_6).FS();
         return goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).UseCaseSensitiveFileNames();
     }

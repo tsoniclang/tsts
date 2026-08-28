@@ -230,7 +230,7 @@ export class includeProcessor {
             const __gotots_struct_0 = DiagnosticsCollection__from_ast.$zero();
             (i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.computedDiagnostics =
                 tsonicTypeScriptRuntime.location<DiagnosticsCollection__from_ast>(__gotots_struct_0);
-            const __gotots_range_0 = (i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics;
+            const __gotots_range_0: includeProcessor["processingDiagnostics"] = (i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics;
             for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                 const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
                 let d: {

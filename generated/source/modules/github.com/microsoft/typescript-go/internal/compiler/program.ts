@@ -474,7 +474,7 @@ export class Program {
             const __gotots_argument_310 = new GoInterfaceAdapter((__gotots_callee_91 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_309));
             const __gotots_argument_312 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([__gotots_argument_310]);
             provider_fmt_writer.FprintlnDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_311), __gotots_argument_312);
-            const __gotots_map_0 = ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles.includeProcessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileIncludeReasons;
+            const __gotots_map_0: includeProcessor["fileIncludeReasons"] = ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles.includeProcessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileIncludeReasons;
             const __gotots_receiver_17 = file;
             const __gotots_map_1 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_17).Path();
             const __gotots_range_11 = __gotots_map_0.lookup(__gotots_map_1);
@@ -1104,7 +1104,7 @@ export class Program {
                 if (InfoCacheEntry__from_packagejson.GetContents(info) === undefined) {
                     continue;
                 }
-                const __gotots_store_14 = (InfoCacheEntry__from_packagejson.GetContents(info) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
+                const __gotots_store_14: PackageJson__from_packagejson["Fields"] = (InfoCacheEntry__from_packagejson.GetContents(info) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
                 const __gotots_range_26 = Set$Keys$string(DependencyFields__from_packagejson.GetRuntimeDependencyNames(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "DependencyFields")));
                 const __gotots_range_keys_4 = __gotots_range_26.keys();
                 for (const __gotots_range_value_40 of __gotots_range_keys_4) {
@@ -1155,7 +1155,7 @@ export class Program {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
             return checkerPool.$go$private$compiler$getCheckerNonExclusive((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool);
         }
-        const __gotots_receiver_68 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
+        const __gotots_receiver_68: Program["checkerPool"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
         const __gotots_argument_397 = ctx;
         const __gotots_argument_398 = void 0;
         return goInterfaceNonNil<CheckerPool>(__gotots_receiver_68).GetChecker(__gotots_argument_397, __gotots_argument_398);
@@ -1169,7 +1169,7 @@ export class Program {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
             return checkerPool.$go$private$compiler$getCheckerForFileNonExclusive((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool, file);
         }
-        const __gotots_receiver_53 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
+        const __gotots_receiver_53: Program["checkerPool"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
         const __gotots_argument_370 = ctx;
         const __gotots_argument_371 = file;
         return goInterfaceNonNil<CheckerPool>(__gotots_receiver_53).GetChecker(__gotots_argument_370, __gotots_argument_371);
@@ -1183,7 +1183,7 @@ export class Program {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
             return checkerPool.$go$private$compiler$getCheckerForFileExclusive((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool, ctx, file);
         }
-        const __gotots_receiver_20 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
+        const __gotots_receiver_20: Program["checkerPool"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
         const __gotots_argument_324 = ctx;
         const __gotots_argument_325 = file;
         return goInterfaceNonNil<CheckerPool>(__gotots_receiver_20).GetChecker(__gotots_argument_324, __gotots_argument_325);
@@ -1283,7 +1283,7 @@ export class Program {
     static IsSourceFileFromExternalLibrary(p: {
         value: Program;
     } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): bool {
-        const __gotots_store_15 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles;
+        const __gotots_store_15: Program["processedFiles"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles;
         return Set__from_collections.Has<Path__from_tspath>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "sourceFilesFoundSearchingNodeModules"), SourceFile__from_ast.Path(file));
     }
     static IsSourceFromProjectReference(p: {
@@ -1557,7 +1557,7 @@ export class Program {
                 }
                 const __gotots_receiver_51 = wg;
                 const __gotots_argument_369 = (): void => {
-                    const __gotots_receiver_50 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
+                    const __gotots_receiver_50: Program["checkerPool"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool;
                     const __gotots_argument_364 = ctx;
                     const __gotots_argument_365 = file;
                     const __gotots_results_11 = goInterfaceNonNil<CheckerPool>(__gotots_receiver_50).GetChecker(__gotots_argument_364, __gotots_argument_365);
@@ -1699,11 +1699,7 @@ export class Program {
                                                 let __gotots_logical_result_3 = !(scope === undefined) && InfoCacheEntry__from_packagejson.Exists(scope);
                                                 if (__gotots_logical_result_3) {
                                                     const __gotots_store_25 = ExportsOrImports__from_packagejson.$storageOf(((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-                                                    __gotots_logical_result_3 = !JSONValue__from_packagejson.IsPresent(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue__from_packagejson => {
-                                                        return JSONValue__from_packagejson.$fromStorage($go$storage);
-                                                    }, ($go$value: JSONValue__from_packagejson): JSONValue__from_packagejson$Storage => {
-                                                        return JSONValue__from_packagejson.$storageOf($go$value);
-                                                    }));
+                                                    __gotots_logical_result_3 = !JSONValue__from_packagejson.IsPresent(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
                                                 }
                                                 if (__gotots_logical_result_3) {
                                                     Set$Add$string(((packageNames ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<packageNamesInfo>).value.deepImportPackages, GetPackageNameFromTypesPackageName__from___go_module(name));
@@ -2171,7 +2167,7 @@ export class Program {
             if (__gotots_binary_operand_0 !== __gotots_binary_operand_1) {
                 const __gotots_callee_14 = configFilePath;
                 const __gotots_argument_36 = (__gotots_callee_14 ?? GoPanic.raiseRuntime("call of nil function"))();
-                const __gotots_argument_37 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUrl;
+                const __gotots_argument_37: CompilerOptions__from_core["BaseUrl"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUrl;
                 const __gotots_argument_38 = ComparePathsOptions__from_tspath.$copy((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparePathsOptions);
                 let relative = GetRelativePathFromFile__from_tspath(__gotots_argument_36, __gotots_argument_37, __gotots_argument_38);
                 if (!(strings__from_gostdlib.HasPrefix(relative, "./") || strings__from_gostdlib.HasPrefix(relative, "../"))) {
@@ -3037,11 +3033,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: tsonicTypeScriptRuntim
         return false;
     });
     const __gotots_store_4 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-        return NodeDefault__from_ast.$fromStorage($go$storage);
-    }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-        return NodeDefault__from_ast.$storageOf($go$value);
-    })), walk);
+    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), walk);
     return diags;
 }
 export function hasZeroOrOneAsteriskCharacter(str: gostring): bool {

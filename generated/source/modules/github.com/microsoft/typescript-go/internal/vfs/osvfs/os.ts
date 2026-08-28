@@ -711,7 +711,7 @@ export class limitedWalkDirFunc {
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         __gotots_deferred_1 === undefined ? (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                     };
-                    const __gotots_callee_2 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
+                    const __gotots_callee_2: limitedWalkDirFunc["inner"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inner;
                     const __gotots_argument_0 = path;
                     const __gotots_argument_1 = d;
                     const __gotots_argument_2 = err;

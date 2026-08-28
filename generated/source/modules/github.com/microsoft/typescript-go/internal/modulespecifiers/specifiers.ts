@@ -342,22 +342,24 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                 let __gotots_slice_build_21 = __gotots_slice_build_20;
                 if (__gotots_slice_build_22 <= __gotots_slice_build_20.capacity) {
                     __gotots_slice_build_21 = __gotots_slice_build_20.$withLength(__gotots_slice_build_22);
-                    __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                        FileName: p,
-                        IsInNodeModules: ContainsNodeModules(p),
-                        IsRedirect: referenceRedirect === p
-                    })));
+                    __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                        {
+                            FileName: p,
+                            IsInNodeModules: ContainsNodeModules(p),
+                            IsRedirect: referenceRedirect === p
+                        })));
                 }
                 else {
                     __gotots_slice_build_21 = goSliceAllocate<ModulePath__from_modulespecifiers$Storage>(__gotots_slice_build_22, RuntimeSlice.$grownCapacity(__gotots_slice_build_20.capacity, __gotots_slice_build_22));
                     for (let __gotots_slice_build_23 = 0; __gotots_slice_build_23 < __gotots_slice_build_20.length; __gotots_slice_build_23++) {
                         __gotots_slice_build_21.set(__gotots_slice_build_23, ModulePath.$storageOf(ModulePath.$copy(ModulePath.$fromStorage(__gotots_slice_build_20.get(__gotots_slice_build_23)))));
                     }
-                    __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                        FileName: p,
-                        IsInNodeModules: ContainsNodeModules(p),
-                        IsRedirect: referenceRedirect === p
-                    })));
+                    __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                        {
+                            FileName: p,
+                            IsInNodeModules: ContainsNodeModules(p),
+                            IsRedirect: referenceRedirect === p
+                        })));
                     for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
                         __gotots_slice_build_21.$initialize(__gotots_slice_build_23, ModulePath.$storageOf(ModulePath.$zero()));
                     }
@@ -420,22 +422,24 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                     let __gotots_slice_build_25 = __gotots_slice_build_24;
                     if (__gotots_slice_build_26 <= __gotots_slice_build_24.capacity) {
                         __gotots_slice_build_25 = __gotots_slice_build_24.$withLength(__gotots_slice_build_26);
-                        __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                            FileName: option,
-                            IsInNodeModules: ContainsNodeModules(option),
-                            IsRedirect: target === referenceRedirect
-                        })));
+                        __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                            {
+                                FileName: option,
+                                IsInNodeModules: ContainsNodeModules(option),
+                                IsRedirect: target === referenceRedirect
+                            })));
                     }
                     else {
                         __gotots_slice_build_25 = goSliceAllocate<ModulePath__from_modulespecifiers$Storage>(__gotots_slice_build_26, RuntimeSlice.$grownCapacity(__gotots_slice_build_24.capacity, __gotots_slice_build_26));
                         for (let __gotots_slice_build_27 = 0; __gotots_slice_build_27 < __gotots_slice_build_24.length; __gotots_slice_build_27++) {
                             __gotots_slice_build_25.set(__gotots_slice_build_27, ModulePath.$storageOf(ModulePath.$copy(ModulePath.$fromStorage(__gotots_slice_build_24.get(__gotots_slice_build_27)))));
                         }
-                        __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                            FileName: option,
-                            IsInNodeModules: ContainsNodeModules(option),
-                            IsRedirect: target === referenceRedirect
-                        })));
+                        __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                            {
+                                FileName: option,
+                                IsInNodeModules: ContainsNodeModules(option),
+                                IsRedirect: target === referenceRedirect
+                            })));
                         for (let __gotots_slice_build_27 = __gotots_slice_build_26; __gotots_slice_build_27 < __gotots_slice_build_25.capacity; __gotots_slice_build_27++) {
                             __gotots_slice_build_25.$initialize(__gotots_slice_build_27, ModulePath.$storageOf(ModulePath.$zero()));
                         }
@@ -460,22 +464,24 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                 let __gotots_slice_build_29 = __gotots_slice_build_28;
                 if (__gotots_slice_build_30 <= __gotots_slice_build_28.capacity) {
                     __gotots_slice_build_29 = __gotots_slice_build_28.$withLength(__gotots_slice_build_30);
-                    __gotots_slice_build_29.set(__gotots_slice_build_28.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                        FileName: p,
-                        IsInNodeModules: ContainsNodeModules(p),
-                        IsRedirect: referenceRedirect === p
-                    })));
+                    __gotots_slice_build_29.set(__gotots_slice_build_28.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                        {
+                            FileName: p,
+                            IsInNodeModules: ContainsNodeModules(p),
+                            IsRedirect: referenceRedirect === p
+                        })));
                 }
                 else {
                     __gotots_slice_build_29 = goSliceAllocate<ModulePath__from_modulespecifiers$Storage>(__gotots_slice_build_30, RuntimeSlice.$grownCapacity(__gotots_slice_build_28.capacity, __gotots_slice_build_30));
                     for (let __gotots_slice_build_31 = 0; __gotots_slice_build_31 < __gotots_slice_build_28.length; __gotots_slice_build_31++) {
                         __gotots_slice_build_29.set(__gotots_slice_build_31, ModulePath.$storageOf(ModulePath.$copy(ModulePath.$fromStorage(__gotots_slice_build_28.get(__gotots_slice_build_31)))));
                     }
-                    __gotots_slice_build_29.set(__gotots_slice_build_28.length + 0, ModulePath.$storageOf(ModulePath.$fromStorage({
-                        FileName: p,
-                        IsInNodeModules: ContainsNodeModules(p),
-                        IsRedirect: referenceRedirect === p
-                    })));
+                    __gotots_slice_build_29.set(__gotots_slice_build_28.length + 0, (void ModulePath.$storageOf, (void ModulePath.$fromStorage,
+                        {
+                            FileName: p,
+                            IsInNodeModules: ContainsNodeModules(p),
+                            IsRedirect: referenceRedirect === p
+                        })));
                     for (let __gotots_slice_build_31 = __gotots_slice_build_30; __gotots_slice_build_31 < __gotots_slice_build_29.capacity; __gotots_slice_build_31++) {
                         __gotots_slice_build_29.$initialize(__gotots_slice_build_31, ModulePath.$storageOf(ModulePath.$zero()));
                     }
@@ -615,7 +621,7 @@ export function getLocalModuleSpecifier(moduleFileName: gostring, info: Info, co
     value: CompilerOptions__from_core;
 } | undefined, host: ModuleSpecifierGenerationHost | undefined, importMode: ModuleKind__from_core, preferences: ModuleSpecifierPreferences, pathsOnly: bool): gostring {
     let paths: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, RuntimeSlice<gostring>>> | undefined = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Paths;
-    let rootDirs = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
+    let rootDirs: CompilerOptions__from_core["RootDirs"] = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDirs;
     if (pathsOnly && paths === undefined) {
         return "";
     }
@@ -989,13 +995,15 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
         }
         let conditions = GetConditions__from___go_module(options, importMode);
         let fromExports = "";
-        if (!(packageJsonContent === undefined) && !(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf((packageJsonContent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
+        if (!(packageJsonContent === undefined) && !((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+            ExportsOrImports__from_packagejson.$storageOf((packageJsonContent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
             fromExports = tryGetModuleNameFromExports(options, host, ModulePath.$storageOf(pathObj).FileName, packageRootPath, packageName, ExportsOrImports__from_packagejson.$copy((packageJsonContent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports), conditions);
         }
         if (fromExports.length > 0) {
             return new pkgJsonDirAttemptResult(fromExports, "", false, true);
         }
-        if (!(packageJsonContent === undefined) && !(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf((packageJsonContent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
+        if (!(packageJsonContent === undefined) && !((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+            ExportsOrImports__from_packagejson.$storageOf((packageJsonContent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports).JSONValue)).Type === JSONValueTypeNotPresent$constant__from_packagejson())) {
             return new pkgJsonDirAttemptResult(ModulePath.$storageOf(pathObj).FileName, "", true, false);
         }
     }
@@ -1140,7 +1148,8 @@ export function tryGetModuleNameFromPackageJsonImports(moduleFileName: gostring,
         return "";
     }
     let imports = ExportsOrImports__from_packagejson.$copy((InfoCacheEntry__from_packagejson.GetContents(info) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Imports);
-    switch (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(imports).JSONValue)).Type) {
+    switch ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+        ExportsOrImports__from_packagejson.$storageOf(imports).JSONValue)).Type) {
         case JSONValueTypeNotPresent$constant__from_packagejson():
         case JSONValueTypeArray$constant__from_packagejson():
         case JSONValueTypeString$constant__from_packagejson(): {
@@ -1305,20 +1314,22 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: gostring, paths: ts
                 let __gotots_slice_build_33 = __gotots_slice_build_32;
                 if (__gotots_slice_build_34 <= __gotots_slice_build_32.capacity) {
                     __gotots_slice_build_33 = __gotots_slice_build_32.$withLength(__gotots_slice_build_34);
-                    __gotots_slice_build_33.set(__gotots_slice_build_32.length + 0, specPair.$storageOf(specPair.$fromStorage({
-                        ending: ending,
-                        value: result
-                    })));
+                    __gotots_slice_build_33.set(__gotots_slice_build_32.length + 0, (void specPair.$storageOf, (void specPair.$fromStorage,
+                        {
+                            ending: ending,
+                            value: result
+                        })));
                 }
                 else {
                     __gotots_slice_build_33 = goSliceAllocate<specPair$Storage>(__gotots_slice_build_34, RuntimeSlice.$grownCapacity(__gotots_slice_build_32.capacity, __gotots_slice_build_34));
                     for (let __gotots_slice_build_35 = 0; __gotots_slice_build_35 < __gotots_slice_build_32.length; __gotots_slice_build_35++) {
                         __gotots_slice_build_33.set(__gotots_slice_build_35, specPair.$storageOf(specPair.$copy(specPair.$fromStorage(__gotots_slice_build_32.get(__gotots_slice_build_35)))));
                     }
-                    __gotots_slice_build_33.set(__gotots_slice_build_32.length + 0, specPair.$storageOf(specPair.$fromStorage({
-                        ending: ending,
-                        value: result
-                    })));
+                    __gotots_slice_build_33.set(__gotots_slice_build_32.length + 0, (void specPair.$storageOf, (void specPair.$fromStorage,
+                        {
+                            ending: ending,
+                            value: result
+                        })));
                     for (let __gotots_slice_build_35 = __gotots_slice_build_34; __gotots_slice_build_35 < __gotots_slice_build_33.capacity; __gotots_slice_build_35++) {
                         __gotots_slice_build_33.$initialize(__gotots_slice_build_35, specPair.$storageOf(specPair.$zero()));
                     }
@@ -1331,20 +1342,22 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: gostring, paths: ts
                 let __gotots_slice_build_37 = __gotots_slice_build_36;
                 if (__gotots_slice_build_38 <= __gotots_slice_build_36.capacity) {
                     __gotots_slice_build_37 = __gotots_slice_build_36.$withLength(__gotots_slice_build_38);
-                    __gotots_slice_build_37.set(__gotots_slice_build_36.length + 0, specPair.$storageOf(specPair.$fromStorage({
-                        ending: ModuleSpecifierEndingJsExtension$constant(),
-                        value: relativeToBaseUrl
-                    })));
+                    __gotots_slice_build_37.set(__gotots_slice_build_36.length + 0, (void specPair.$storageOf, (void specPair.$fromStorage,
+                        {
+                            ending: ModuleSpecifierEndingJsExtension$constant(),
+                            value: relativeToBaseUrl
+                        })));
                 }
                 else {
                     __gotots_slice_build_37 = goSliceAllocate<specPair$Storage>(__gotots_slice_build_38, RuntimeSlice.$grownCapacity(__gotots_slice_build_36.capacity, __gotots_slice_build_38));
                     for (let __gotots_slice_build_39 = 0; __gotots_slice_build_39 < __gotots_slice_build_36.length; __gotots_slice_build_39++) {
                         __gotots_slice_build_37.set(__gotots_slice_build_39, specPair.$storageOf(specPair.$copy(specPair.$fromStorage(__gotots_slice_build_36.get(__gotots_slice_build_39)))));
                     }
-                    __gotots_slice_build_37.set(__gotots_slice_build_36.length + 0, specPair.$storageOf(specPair.$fromStorage({
-                        ending: ModuleSpecifierEndingJsExtension$constant(),
-                        value: relativeToBaseUrl
-                    })));
+                    __gotots_slice_build_37.set(__gotots_slice_build_36.length + 0, (void specPair.$storageOf, (void specPair.$fromStorage,
+                        {
+                            ending: ModuleSpecifierEndingJsExtension$constant(),
+                            value: relativeToBaseUrl
+                        })));
                     for (let __gotots_slice_build_39 = __gotots_slice_build_38; __gotots_slice_build_39 < __gotots_slice_build_37.capacity; __gotots_slice_build_39++) {
                         __gotots_slice_build_37.$initialize(__gotots_slice_build_39, specPair.$storageOf(specPair.$zero()));
                     }
@@ -1397,7 +1410,8 @@ export function validateEnding(c: specPair, relativeToBaseUrl: gostring, compile
 export function tryGetModuleNameFromExportsOrImports(options: {
     value: CompilerOptions__from_core;
 } | undefined, host: ModuleSpecifierGenerationHost | undefined, targetFilePath: gostring, packageDirectory: gostring, packageName: gostring, exports: ExportsOrImports__from_packagejson, conditions: RuntimeSlice<gostring>, mode: MatchingMode, isImports: bool, preferTsExtension: bool): gostring {
-    switch (JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Type) {
+    switch ((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+        ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Type) {
         case JSONValueTypeNotPresent$constant__from_packagejson(): {
             return "";
             break;
@@ -1408,7 +1422,8 @@ export function tryGetModuleNameFromExportsOrImports(options: {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
                 return $value.$go$value;
-            })(JSONValue__from_packagejson.$storageOf(JSONValue__from_packagejson.$fromStorage(ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Value);
+            })((void JSONValue__from_packagejson.$storageOf, (void JSONValue__from_packagejson.$fromStorage,
+                ExportsOrImports__from_packagejson.$storageOf(exports).JSONValue)).Value);
             let outputFile = "";
             let declarationFile = "";
             if (isImports) {

@@ -128,7 +128,7 @@ export class parseTask {
                         } | undefined = ParsedCommandLine__from_tsoptions.CompilerOptions(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Config);
                         let allowNonTsExtensions = Tristate_IsTrue__from_core((compilerOptions__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AllowNonTsExtensions);
                         if (!allowNonTsExtensions) {
-                            const __gotots_argument_12 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath;
+                            const __gotots_argument_12: parseTask["normalizedFilePath"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath;
                             const __gotots_receiver_5 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
                             const __gotots_receiver_6 = goInterfaceNonNil<CompilerHost>(__gotots_receiver_5).FS();
                             const __gotots_argument_13 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_6).UseCaseSensitiveFileNames();
@@ -575,7 +575,7 @@ export class filesParser {
                         }
                     }
                 }
-                const __gotots_range_1 = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeResolutionsTrace;
+                const __gotots_range_1: parseTask["typeResolutionsTrace"] = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeResolutionsTrace;
                 for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                     const __gotots_range_value_1 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_1.get(__gotots_range_index_1)));
                     let trace = __gotots_range_value_1;
@@ -584,7 +584,7 @@ export class filesParser {
                     const __gotots_argument_1 = DiagAndArgs__from___go_module.$storageOf(trace).Args;
                     goInterfaceNonNil<CompilerHost>(__gotots_receiver_1).Trace(__gotots_argument_0, __gotots_argument_1);
                 }
-                const __gotots_range_2 = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolutionsTrace;
+                const __gotots_range_2: parseTask["resolutionsTrace"] = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolutionsTrace;
                 for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
                     const __gotots_range_value_2 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_2.get(__gotots_range_index_2)));
                     let trace = __gotots_range_value_2;
@@ -622,7 +622,7 @@ export class filesParser {
                     }
                 }
                 {
-                    let subTasks = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subTasks;
+                    let subTasks: parseTask["subTasks"] = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subTasks;
                     if (subTasks.length > 0) {
                         const __gotots_callee_0 = collectFiles;
                         const __gotots_argument_4 = subTasks;
@@ -646,7 +646,7 @@ export class filesParser {
                     }
                     continue;
                 }
-                let path = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path;
+                let path: parseTask["path"] = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path;
                 if ((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics.length > 0) {
                     (includeProcessor__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics = goSliceAppendSlice<{
                         value: processingDiagnostic;
@@ -719,7 +719,7 @@ export class filesParser {
                         Name: (value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.libraryName,
                         Mode: ModuleKindCommonJS$constant__from_core()
                     }), (value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolution]])));
-            const __gotots_range_5 = (value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trace;
+            const __gotots_range_5: libResolution["trace"] = (value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.trace;
             for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_5.length; __gotots_range_index_4++) {
                 const __gotots_range_value_7 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_5.get(__gotots_range_index_4)));
                 let trace = __gotots_range_value_7;
@@ -737,7 +737,7 @@ export class filesParser {
         value: parseTask;
     } | undefined>): void {
         filesParser.$go$private$compiler$start(w, loader, tasks, 0);
-        const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.wg;
+        const __gotots_receiver_0: filesParser["wg"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.wg;
         goInterfaceNonNil<WorkGroup__from_core>(__gotots_receiver_0).RunAndWait();
     }
     static $go$private$compiler$start(w: {
@@ -766,7 +766,7 @@ export class filesParser {
             if (loaded) {
                 putParseTaskData(candidate);
             }
-            const __gotots_receiver_5 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.wg;
+            const __gotots_receiver_5: filesParser["wg"] = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.wg;
             const __gotots_argument_11 = (): void => {
                 let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
                 let __gotots_panic_0: GoPanic | undefined = undefined;
@@ -774,7 +774,7 @@ export class filesParser {
                     try {
                         __gotots_return_block_0: {
                             sync__from_gostdlib.Mutex.Lock((data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                            const __gotots_receiver_4 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                            const __gotots_receiver_4: parseTaskData["mu"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                             __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                                 recovery_sync.SyncMutexUnlock(__gotots_receiver_4, $go$recovery);
                             };
@@ -807,7 +807,7 @@ export class filesParser {
                             if ((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.elideOnDepth && currentDepth > (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.maxDepth) {
                                 break __gotots_return_block_0;
                             }
-                            const __gotots_range_7 = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tasks;
+                            const __gotots_range_7: parseTaskData["tasks"] = (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tasks;
                             const __gotots_range_keys_1 = __gotots_range_7.keys();
                             for (const __gotots_range_value_10 of __gotots_range_keys_1) {
                                 const __gotots_range_value_11 = __gotots_range_7.lookupOk(__gotots_range_value_10);

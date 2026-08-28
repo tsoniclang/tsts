@@ -10,9 +10,7 @@ import { SyncMap as SyncMap__from_collections } from "../../../../../../../../mo
 import { $goInterfaceAdapter$Named_tspath$Path as GoInterfaceAdapter } from "../../../../../../../interface-adapters.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 export function SyncMap$Keys$Named_tspath$Path$Named_incremental$FileEmitKind($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, FileEmitKind__from_incremental>> | undefined): iter.Seq<Path__from_tspath> {
-    return SyncMap__from_collections.Keys$kernel<Path__from_tspath, FileEmitKind__from_incremental>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
+    return SyncMap__from_collections.Keys$kernel<Path__from_tspath, FileEmitKind__from_incremental>($argument0, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
         return (($value: GoInterfaceValue | undefined): Path__from_tspath => {
             if (!GoInterfaceAdapter.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -22,9 +20,7 @@ export function SyncMap$Keys$Named_tspath$Path$Named_incremental$FileEmitKind($a
     });
 }
 export function SyncMap$Keys$Named_tspath$Path$PointerTo_Named_collections$SetOf_Named_tspath$Path($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined>> | undefined): iter.Seq<Path__from_tspath> {
-    return SyncMap__from_collections.Keys$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
+    return SyncMap__from_collections.Keys$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined>($argument0, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
         return (($value: GoInterfaceValue | undefined): Path__from_tspath => {
             if (!GoInterfaceAdapter.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -38,9 +34,7 @@ export function SyncMap$Keys$Named_tspath$Path$PointerTo_Named_compiler$libResol
 } | undefined>> | undefined): iter.Seq<Path__from_tspath> {
     return SyncMap__from_collections.Keys$kernel<Path__from_tspath, {
         value: libResolution__from_compiler;
-    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
+    } | undefined>($argument0, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
         return (($value: GoInterfaceValue | undefined): Path__from_tspath => {
             if (!GoInterfaceAdapter.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
@@ -54,9 +48,7 @@ export function SyncMap$Keys$Named_tspath$Path$PointerTo_Named_incremental$Diagn
 } | undefined>> | undefined): iter.Seq<Path__from_tspath> {
     return SyncMap__from_collections.Keys$kernel<Path__from_tspath, {
         value: DiagnosticsOrBuildInfoDiagnosticsWithFileName__from_incremental;
-    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
-        return $argument0;
-    }, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
+    } | undefined>($argument0, ($argument0: GoInterfaceValue | undefined): Path__from_tspath => {
         return (($value: GoInterfaceValue | undefined): Path__from_tspath => {
             if (!GoInterfaceAdapter.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");

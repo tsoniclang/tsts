@@ -900,7 +900,7 @@ export class BuildInfo {
             } | undefined = __gotots_range_value_3;
             if ((root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NonIncremental !== "") {
                 const __gotots_callee_3 = addRoot;
-                const __gotots_argument_3 = (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NonIncremental;
+                const __gotots_argument_3: BuildInfoRoot["NonIncremental"] = (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NonIncremental;
                 const __gotots_argument_4 = void 0;
                 (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3, __gotots_argument_4);
             }
@@ -913,7 +913,7 @@ export class BuildInfo {
                 (__gotots_callee_4 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_5, __gotots_argument_6);
             }
             else {
-                for (let i = (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Start; i.$value <= (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.End.$value; i = new BuildInfoFileId(i.$value + 1)) {
+                for (let i: BuildInfoRoot["Start"] = (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Start; i.$value <= (root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.End.$value; i = new BuildInfoFileId(i.$value + 1)) {
                     const __gotots_callee_5 = addRoot;
                     const __gotots_argument_7 = BuildInfo.$go$private$incremental$fileName(b, i);
                     const __gotots_argument_8 = BuildInfo.$go$private$incremental$fileInfo(b, i);

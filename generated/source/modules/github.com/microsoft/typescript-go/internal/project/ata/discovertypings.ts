@@ -61,7 +61,7 @@ export function DiscoverTypings(fs: FS__from_vfs | undefined, logger: Logger__fr
     if (!(((typingsInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypingsInfo>).value.TypeAcquisition ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Include.isNil()) {
         addInferredTypings(fs, logger, inferredTypings, (((typingsInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypingsInfo>).value.TypeAcquisition ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Include, "Explicitly included types");
     }
-    let exclude = (((typingsInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypingsInfo>).value.TypeAcquisition ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Exclude;
+    let exclude: TypeAcquisition__from_core["Exclude"] = (((typingsInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypingsInfo>).value.TypeAcquisition ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Exclude;
     if ((((typingsInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypingsInfo>).value.CompilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Types.isNil()) {
         let possibleSearchDirs: GoMapValue<gostring, bool> = GoMap.make<gostring, bool>(false, 0, []);
         const __gotots_range_0 = fileNames;

@@ -22,13 +22,7 @@ export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$Project(
 } | undefined) => bool) | undefined): void {
     return SyncMap__from_dirty.Range$kernel<Path__from_tspath, {
         value: Project__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
+    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
@@ -93,13 +87,7 @@ export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$configFi
 } | undefined) => bool) | undefined): void {
     return SyncMap__from_dirty.Range$kernel<Path__from_tspath, {
         value: configFileEntry__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
+    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {
@@ -164,13 +152,7 @@ export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile
 } | undefined) => bool) | undefined): void {
     return SyncMap__from_dirty.Range$kernel<Path__from_tspath, {
         value: diskFile__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
-        return $argument0;
-    }, ($argument0: Path__from_tspath): Path__from_tspath => {
+    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: {
         value: SyncMapEntry__from_dirty<Path__from_tspath, {

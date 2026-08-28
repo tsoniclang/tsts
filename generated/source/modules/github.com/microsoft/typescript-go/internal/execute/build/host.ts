@@ -49,19 +49,19 @@ export class host {
     static DefaultLibraryPath(h: {
         value: host;
     } | undefined): gostring {
-        const __gotots_receiver_4 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_4: host["host"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         return goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_4).DefaultLibraryPath();
     }
     static FS(h: {
         value: host;
     } | undefined): FS__from_vfs | undefined {
-        const __gotots_receiver_2 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_2: host["host"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         return goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_2).FS();
     }
     static GetCurrentDirectory(h: {
         value: host;
     } | undefined): gostring {
-        const __gotots_receiver_5 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_5: host["host"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         return goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_5).GetCurrentDirectory();
     }
     static GetMTime(h: {
@@ -100,7 +100,7 @@ export class host {
             }
             const __gotots_argument_0 = fileName;
             const __gotots_argument_1 = path__shadow_1;
-            const __gotots_argument_2 = (((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions;
+            const __gotots_argument_2: ParsedBuildCommandLine__from_tsoptions["CompilerOptions"] = (((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CompilerOptions;
             const __gotots_argument_3 = commandLineRaw;
             const __gotots_argument_4 = new $goInterfaceAdapter$PointerTo_Named_build$host(h);
             const __gotots_store_1 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -130,7 +130,7 @@ export class host {
             const __gotots_argument_11 = false;
             return parseCache$loadOrStore$Named_ast$SourceFileParseOptions$PointerTo_Named_ast$SourceFile(__gotots_receiver_8, __gotots_argument_9, __gotots_argument_10, __gotots_argument_11);
         }
-        const __gotots_receiver_9 = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_9: host["host"] = (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_argument_12 = SourceFileParseOptions__from_ast.$copy(opts);
         return goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_9).GetSourceFile(__gotots_argument_12);
     }

@@ -71,15 +71,15 @@ export class SymbolTrackerImpl {
         if (!tsonicTypeScriptRuntime.sameLocation(GetSourceFileOfNode__from_ast(node), ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentSourceFile)) {
             return;
         }
-        const __gotots_receiver_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolver;
+        const __gotots_receiver_0: SymbolTrackerSharedState["resolver"] = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolver;
         const __gotots_argument_0 = node;
         if (goInterfaceNonNil<EmitResolver__from_printer>(__gotots_receiver_0).IsExpandoFunctionDeclarationUnsafe(__gotots_argument_0)) {
-            const __gotots_callee_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportExpandoFunctionErrors;
+            const __gotots_callee_0: SymbolTrackerSharedState["reportExpandoFunctionErrors"] = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportExpandoFunctionErrors;
             const __gotots_argument_1 = node;
             (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
         }
-        const __gotots_receiver_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state;
-        const __gotots_callee_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getIsolatedDeclarationError;
+        const __gotots_receiver_1: SymbolTrackerImpl["state"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state;
+        const __gotots_callee_1: SymbolTrackerImpl["getIsolatedDeclarationError"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getIsolatedDeclarationError;
         const __gotots_argument_2 = node;
         const __gotots_argument_3 = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
         SymbolTrackerSharedState.$go$private$declarations$addDiagnostic(__gotots_receiver_1, __gotots_argument_3);
@@ -154,7 +154,7 @@ export class SymbolTrackerImpl {
             return false;
         }
         const __gotots_receiver_3 = s;
-        const __gotots_receiver_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolver;
+        const __gotots_receiver_2: SymbolTrackerImpl["resolver"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolver;
         const __gotots_argument_5 = __go_symbol;
         const __gotots_argument_6 = enclosingDeclaration;
         const __gotots_argument_7 = meaning;
@@ -211,7 +211,7 @@ export class SymbolTrackerImpl {
             }
         }
         else if (!(symbolAccessibilityResult.Accessibility === SymbolAccessibilityNotResolved$constant__from_printer())) {
-            const __gotots_callee_2 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getSymbolAccessibilityDiagnostic;
+            const __gotots_callee_2: SymbolTrackerSharedState["getSymbolAccessibilityDiagnostic"] = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getSymbolAccessibilityDiagnostic;
             const __gotots_argument_4 = SymbolAccessibilityResult__from_printer.$copy(symbolAccessibilityResult);
             let errorInfo: SymbolAccessibilityDiagnostic | undefined = (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
             if (!(errorInfo === undefined)) {

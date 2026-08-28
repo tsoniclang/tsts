@@ -24,7 +24,8 @@ export function isClassNamedEvaluationHelperBlock(emitContext: {
         if (EmitContext__from_printer.IsCallToHelper(emitContext, expression, "__setFunctionName")) {
             let __go_arguments: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = CallExpression__from_ast.$storageOf(((Node__from_ast.AsCallExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments;
             return NodeList__from_ast.$storageOf(((__go_arguments ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length >= 2 &&
-                tsonicTypeScriptRuntime.sameLocation(NodeList__from_ast.$storageOf(((__go_arguments ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(1), EmitContext__from_printer.AssignedName(emitContext, Node__from_ast.AsNode(node)));
+                tsonicTypeScriptRuntime.sameLocation(NodeList__from_ast.$storageOf(((__go_arguments ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(1), EmitContext__from_printer.AssignedName(emitContext, (void Node__from_ast.AsNode,
+                    node)));
         }
     }
     return false;
@@ -191,7 +192,8 @@ export function createClassNamedEvaluationHelperBlock(emitContext: {
     const __gotots_store_6 = (factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
     let block: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewClassStaticBlockDeclaration(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeFactory"), void 0, body);
     EmitContext__from_printer.SetAssignedName(emitContext, block, assignedName);
-    return Node__from_ast.AsNode(block);
+    return (void Node__from_ast.AsNode,
+        block);
 }
 export function injectClassNamedEvaluationHelperBlockIfMissing(emitContext: {
     value: EmitContext__from_printer;

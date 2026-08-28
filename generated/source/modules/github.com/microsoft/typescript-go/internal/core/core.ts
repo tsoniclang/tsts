@@ -1116,8 +1116,8 @@ export function levenshteinWithMax(buffers: {
     let bufferSize = s2.length + 1;
     (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.previous = Grow$SliceOf_float64$float64((buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.previous.slice(0, 0, null), bufferSize).slice(0, bufferSize, null);
     (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.current = Grow$SliceOf_float64$float64((buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.current.slice(0, 0, null), bufferSize).slice(0, bufferSize, null);
-    let previous = (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.previous;
-    let current = (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.current;
+    let previous: levenshteinBuffers["previous"] = (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.previous;
+    let current: levenshteinBuffers["current"] = (buffers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.current;
     let big = maxValue + 0.01;
     const __gotots_range_17 = previous;
     for (let __gotots_range_index_13 = 0; __gotots_range_index_13 < __gotots_range_17.length; __gotots_range_index_13++) {

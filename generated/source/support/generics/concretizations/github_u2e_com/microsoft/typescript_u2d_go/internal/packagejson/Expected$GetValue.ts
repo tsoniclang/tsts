@@ -9,8 +9,6 @@ export function Expected$GetValue$MapOf_string_To_string($argument0: tsonicTypeS
 ] {
     return Expected__from_packagejson.GetValue$kernel<GoMapValue<gostring, gostring>>($argument0, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
         return $argument0;
-    }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-        return $argument0;
     }, (): GoMapValue<gostring, gostring> => {
         return GoMap.nil<gostring, gostring>("");
     });
@@ -20,8 +18,6 @@ export function Expected$GetValue$string($argument0: tsonicTypeScriptRuntime.Loc
     bool
 ] {
     return Expected__from_packagejson.GetValue$kernel<gostring>($argument0, ($argument0: gostring): gostring => {
-        return $argument0;
-    }, ($argument0: gostring): gostring => {
         return $argument0;
     }, (): gostring => {
         return "";

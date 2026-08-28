@@ -88,7 +88,8 @@ export function visitNodeList(v: Visitor, nodeList: tsonicTypeScriptRuntime.Loca
 }
 export function visitModifiers(v: Visitor, modifiers: tsonicTypeScriptRuntime.Location<ModifierList> | undefined): bool {
     if (!(modifiers === undefined)) {
-        return visitNodes(v, NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes);
+        return visitNodes(v, (void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes);
     }
     return false;
 }
@@ -253,8 +254,12 @@ export class ModifierList implements GoContainerStoredValue<ModifierList$Storage
     static Clone(list: tsonicTypeScriptRuntime.Location<ModifierList> | undefined, f: tsonicTypeScriptRuntime.Location<NodeFactory> | undefined): tsonicTypeScriptRuntime.Location<ModifierList> | undefined {
         const __gotots_store_1 = ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeFactory>).value;
         let res: tsonicTypeScriptRuntime.Location<ModifierList> | undefined = Arena$New$Named_ast$ModifierList(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "modifierListArena"));
-        NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc)));
-        NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes = NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes;
+        (void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc)));
+        (void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes = (void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes;
         ModifierList.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).ModifierFlags = ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).ModifierFlags;
         return res;
     }
@@ -2621,7 +2626,8 @@ export class Node {
                 break;
             }
             case KindJSDocUnknownTag$constant(): {
-                return JSDocTagBase.$storageOf(JSDocTagBase.$fromStorage(JSDocUnknownTag.$storageOf(((Node.AsJSDocUnknownTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag>).value).JSDocTagBase)).Comment;
+                return (void JSDocTagBase.$storageOf, (void JSDocTagBase.$fromStorage,
+                    JSDocUnknownTag.$storageOf(((Node.AsJSDocUnknownTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag>).value).JSDocTagBase)).Comment;
                 break;
             }
             case KindJSDocAugmentsTag$constant(): {
@@ -2633,7 +2639,8 @@ export class Node {
                 break;
             }
             case KindJSDocDeprecatedTag$constant(): {
-                return JSDocTagBase.$storageOf(JSDocTagBase.$fromStorage(JSDocDeprecatedTag.$storageOf(((Node.AsJSDocDeprecatedTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag>).value).JSDocTagBase)).Comment;
+                return (void JSDocTagBase.$storageOf, (void JSDocTagBase.$fromStorage,
+                    JSDocDeprecatedTag.$storageOf(((Node.AsJSDocDeprecatedTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag>).value).JSDocTagBase)).Comment;
                 break;
             }
             case KindJSDocPublicTag$constant(): {
@@ -2725,7 +2732,8 @@ export class Node {
         if (Node.Modifiers(n) === undefined) {
             return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node> | undefined>();
         }
-        return Filter$PointerTo_Named_ast$Node(NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((Node.Modifiers(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes, IsDecorator);
+        return Filter$PointerTo_Named_ast$Node((void NodeList.$storageOf, (void NodeList.$fromStorage,
+            ModifierList.$storageOf(((Node.Modifiers(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes, IsDecorator);
     }
     static EagerJSDoc(node: tsonicTypeScriptRuntime.Location<Node> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node> | undefined> {
         if ((Node.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).Flags & NodeFlagsHasJSDoc$constant()) >>> 0 === 0) {
@@ -3147,7 +3155,8 @@ export class Node {
     static ModifierNodes(n: tsonicTypeScriptRuntime.Location<Node> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node> | undefined> {
         let modifiers: tsonicTypeScriptRuntime.Location<ModifierList> | undefined = Node.Modifiers(n);
         if (!(modifiers === undefined)) {
-            return NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes;
+            return (void NodeList.$storageOf, (void NodeList.$fromStorage,
+                ModifierList.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes;
         }
         return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node> | undefined>();
     }
@@ -3200,15 +3209,18 @@ export class Node {
                 break;
             }
             case KindMethodSignature$constant(): {
-                return NamedMemberBase.$storageOf(NamedMemberBase.$fromStorage(MethodSignatureDeclaration.$storageOf(((Node.AsMethodSignatureDeclaration(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration>).value).NamedMemberBase)).PostfixToken;
+                return (void NamedMemberBase.$storageOf, (void NamedMemberBase.$fromStorage,
+                    MethodSignatureDeclaration.$storageOf(((Node.AsMethodSignatureDeclaration(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration>).value).NamedMemberBase)).PostfixToken;
                 break;
             }
             case KindPropertySignature$constant(): {
-                return NamedMemberBase.$storageOf(NamedMemberBase.$fromStorage(PropertySignatureDeclaration.$storageOf(((Node.AsPropertySignatureDeclaration(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration>).value).NamedMemberBase)).PostfixToken;
+                return (void NamedMemberBase.$storageOf, (void NamedMemberBase.$fromStorage,
+                    PropertySignatureDeclaration.$storageOf(((Node.AsPropertySignatureDeclaration(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration>).value).NamedMemberBase)).PostfixToken;
                 break;
             }
             case KindPropertyAssignment$constant(): {
-                return NamedMemberBase.$storageOf(NamedMemberBase.$fromStorage(PropertyAssignment.$storageOf(((Node.AsPropertyAssignment(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment>).value).NamedMemberBase)).PostfixToken;
+                return (void NamedMemberBase.$storageOf, (void NamedMemberBase.$fromStorage,
+                    PropertyAssignment.$storageOf(((Node.AsPropertyAssignment(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment>).value).NamedMemberBase)).PostfixToken;
                 break;
             }
             case KindPropertyDeclaration$constant(): {
@@ -3432,7 +3444,8 @@ export class Node {
                 break;
             }
             case KindJSDocUnknownTag$constant(): {
-                return JSDocTagBase.$storageOf(JSDocTagBase.$fromStorage(JSDocUnknownTag.$storageOf(((Node.AsJSDocUnknownTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag>).value).JSDocTagBase)).TagName;
+                return (void JSDocTagBase.$storageOf, (void JSDocTagBase.$fromStorage,
+                    JSDocUnknownTag.$storageOf(((Node.AsJSDocUnknownTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocUnknownTag>).value).JSDocTagBase)).TagName;
                 break;
             }
             case KindJSDocAugmentsTag$constant(): {
@@ -3444,7 +3457,8 @@ export class Node {
                 break;
             }
             case KindJSDocDeprecatedTag$constant(): {
-                return JSDocTagBase.$storageOf(JSDocTagBase.$fromStorage(JSDocDeprecatedTag.$storageOf(((Node.AsJSDocDeprecatedTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag>).value).JSDocTagBase)).TagName;
+                return (void JSDocTagBase.$storageOf, (void JSDocTagBase.$fromStorage,
+                    JSDocDeprecatedTag.$storageOf(((Node.AsJSDocDeprecatedTag(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag>).value).JSDocTagBase)).TagName;
                 break;
             }
             case KindJSDocPublicTag$constant(): {
@@ -3536,15 +3550,20 @@ export class Node {
                 break;
             }
             case KindStringLiteral$constant(): {
-                return LiteralLikeNodeBase.$storageOf(LiteralLikeNodeBase.$fromStorage(LiteralExpressionBase.$storageOf(LiteralExpressionBase.$fromStorage(StringLiteral.$storageOf(((Node.AsStringLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
+                return (void LiteralLikeNodeBase.$storageOf, (void LiteralLikeNodeBase.$fromStorage,
+                    (void LiteralExpressionBase.$storageOf, (void LiteralExpressionBase.$fromStorage,
+                        StringLiteral.$storageOf(((Node.AsStringLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
                 break;
             }
             case KindNumericLiteral$constant(): {
-                return LiteralLikeNodeBase.$storageOf(LiteralLikeNodeBase.$fromStorage(LiteralExpressionBase.$storageOf(LiteralExpressionBase.$fromStorage(NumericLiteral.$storageOf(((Node.AsNumericLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NumericLiteral>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
+                return (void LiteralLikeNodeBase.$storageOf, (void LiteralLikeNodeBase.$fromStorage,
+                    (void LiteralExpressionBase.$storageOf, (void LiteralExpressionBase.$fromStorage,
+                        NumericLiteral.$storageOf(((Node.AsNumericLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NumericLiteral>).value).LiteralExpressionBase)).LiteralLikeNodeBase)).Text;
                 break;
             }
             case KindBigIntLiteral$constant(): {
-                return LiteralLikeNodeBase.$storageOf(LiteralLikeNodeBase.$fromStorage(LiteralExpressionBase.$storageOf((Node.AsBigIntLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).LiteralLikeNodeBase)).Text;
+                return (void LiteralLikeNodeBase.$storageOf, (void LiteralLikeNodeBase.$fromStorage,
+                    LiteralExpressionBase.$storageOf((Node.AsBigIntLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).LiteralLikeNodeBase)).Text;
                 break;
             }
             case KindMetaProperty$constant(): {
@@ -3572,11 +3591,13 @@ export class Node {
                 break;
             }
             case KindRegularExpressionLiteral$constant(): {
-                return LiteralLikeNodeBase.$storageOf(LiteralLikeNodeBase.$fromStorage(LiteralExpressionBase.$storageOf((Node.AsRegularExpressionLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).LiteralLikeNodeBase)).Text;
+                return (void LiteralLikeNodeBase.$storageOf, (void LiteralLikeNodeBase.$fromStorage,
+                    LiteralExpressionBase.$storageOf((Node.AsRegularExpressionLiteral(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).LiteralLikeNodeBase)).Text;
                 break;
             }
             case KindJSDocText$constant(): {
-                return strings__from_gostdlib.Join(JSDocCommentBase.$storageOf(JSDocCommentBase.$fromStorage(JSDocText.$storageOf(((Node.AsJSDocText(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocText>).value).JSDocCommentBase)).text, "");
+                return strings__from_gostdlib.Join((void JSDocCommentBase.$storageOf, (void JSDocCommentBase.$fromStorage,
+                    JSDocText.$storageOf(((Node.AsJSDocText(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocText>).value).JSDocCommentBase)).text, "");
                 break;
             }
             case KindJSDocLink$constant(): {
@@ -3727,7 +3748,8 @@ export class Node {
                 break;
             }
             case KindTypeReference$constant(): {
-                return NodeWithTypeArgumentsBase.$storageOf(NodeWithTypeArgumentsBase.$fromStorage(TypeReferenceNode.$storageOf(((Node.AsTypeReferenceNode(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode>).value).NodeWithTypeArgumentsBase)).TypeArguments;
+                return (void NodeWithTypeArgumentsBase.$storageOf, (void NodeWithTypeArgumentsBase.$fromStorage,
+                    TypeReferenceNode.$storageOf(((Node.AsTypeReferenceNode(n) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode>).value).NodeWithTypeArgumentsBase)).TypeArguments;
                 break;
             }
             case KindExpressionWithTypeArguments$constant(): {
@@ -4316,11 +4338,7 @@ export class NodeDefault {
     declare private readonly then?: never;
     static AsNode(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
         const __gotots_store_0 = NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value);
-        return tsonicTypeScriptRuntime.projectLocation<Node$Storage, Node>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), ($go$storage: Node$Storage): Node => {
-            return Node.$fromStorage($go$storage);
-        }, ($go$value: Node): Node$Storage => {
-            return Node.$storageOf($go$value);
-        });
+        return tsonicTypeScriptRuntime.projectLocation<Node$Storage, Node>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node.$fromStorage, Node.$storageOf);
     }
     static BodyData(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): tsonicTypeScriptRuntime.Location<BodyBase> | undefined {
         return void 0;
@@ -4365,8 +4383,10 @@ export class NodeDefault {
         return void 0;
     }
     static SubtreeFacts(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): SubtreeFacts {
-        const __gotots_receiver_20 = Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
-        const __gotots_argument_39 = Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
+        const __gotots_receiver_20 = (void Node.$storageOf, (void Node.$fromStorage,
+            NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
+        const __gotots_argument_39 = (void Node.$storageOf, (void Node.$fromStorage,
+            NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
         return goInterfaceNonNil<nodeData>(__gotots_receiver_20).$go$private$ast$subtreeFactsWorker(__gotots_argument_39);
     }
     static TemplateLiteralLikeData(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): tsonicTypeScriptRuntime.Location<TemplateLiteralLikeNodeBase> | undefined {
@@ -4381,12 +4401,14 @@ export class NodeDefault {
         return SubtreeFactsNone$constant();
     }
     static $go$private$ast$forEachChildIter(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined, __go_yield: (($0: tsonicTypeScriptRuntime.Location<Node> | undefined) => bool) | undefined): void {
-        const __gotots_receiver_23 = Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
+        const __gotots_receiver_23 = (void Node.$storageOf, (void Node.$fromStorage,
+            NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
         const __gotots_argument_40 = invert(__go_yield);
         goInterfaceNonNil<nodeData>(__gotots_receiver_23).ForEachChild(__gotots_argument_40);
     }
     static $go$private$ast$propagateSubtreeFacts(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): SubtreeFacts {
-        const __gotots_receiver_21 = Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
+        const __gotots_receiver_21 = (void Node.$storageOf, (void Node.$fromStorage,
+            NodeDefault.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeDefault>).value).Node)).data;
         const __gotots_binary_operand_0 = goInterfaceNonNil<nodeData>(__gotots_receiver_21).SubtreeFacts();
         const __gotots_binary_operand_1 = 4261412863;
         return (__gotots_binary_operand_0 & __gotots_binary_operand_1) >>> 0;
@@ -4524,8 +4546,10 @@ export function GetDeclarationFromName(name: tsonicTypeScriptRuntime.Location<No
                         leftHasSymbol = true;
                     }
                     if (leftHasSymbol || !(Node.Symbol(binExp) === undefined)) {
-                        if (tsonicTypeScriptRuntime.sameLocation(GetNameOfDeclaration(Node.AsNode(binExp)), name)) {
-                            return Node.AsNode(binExp);
+                        if (tsonicTypeScriptRuntime.sameLocation(GetNameOfDeclaration((void Node.AsNode,
+                            binExp)), name)) {
+                            return (void Node.AsNode,
+                                binExp);
                         }
                     }
                 }
@@ -4589,27 +4613,34 @@ export function declarationIsWriteAccess(decl: tsonicTypeScriptRuntime.Location<
         case KindSetAccessor$constant(): {
             switch (Node.$storageOf(((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).Kind) {
                 case KindFunctionDeclaration$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf(FunctionLikeWithBodyBase.$fromStorage(FunctionDeclaration.$storageOf(((Node.AsFunctionDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration>).value).FunctionLikeWithBodyBase)).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        (void FunctionLikeWithBodyBase.$storageOf, (void FunctionLikeWithBodyBase.$fromStorage,
+                            FunctionDeclaration.$storageOf(((Node.AsFunctionDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration>).value).FunctionLikeWithBodyBase)).BodyBase)).Body === undefined);
                     break;
                 }
                 case KindFunctionExpression$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf((Node.AsFunctionExpression(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        FunctionLikeWithBodyBase.$storageOf((Node.AsFunctionExpression(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
                     break;
                 }
                 case KindConstructor$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf((Node.AsConstructorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        FunctionLikeWithBodyBase.$storageOf((Node.AsConstructorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
                     break;
                 }
                 case KindMethodDeclaration$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf((Node.AsMethodDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        FunctionLikeWithBodyBase.$storageOf((Node.AsMethodDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
                     break;
                 }
                 case KindGetAccessor$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf((Node.AsGetAccessorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        FunctionLikeWithBodyBase.$storageOf((Node.AsGetAccessorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
                     break;
                 }
                 case KindSetAccessor$constant(): {
-                    return !(BodyBase.$storageOf(BodyBase.$fromStorage(FunctionLikeWithBodyBase.$storageOf((Node.AsSetAccessorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
+                    return !((void BodyBase.$storageOf, (void BodyBase.$fromStorage,
+                        FunctionLikeWithBodyBase.$storageOf((Node.AsSetAccessorDeclaration(decl) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body === undefined);
                     break;
                 }
             }
@@ -4683,7 +4714,7 @@ export function accessKind(node: tsonicTypeScriptRuntime.Location<Node> | undefi
             break;
         }
         case KindPostfixUnaryExpression$constant(): {
-            let operator = (Node.AsPostfixUnaryExpression(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Operator;
+            let operator: PostfixUnaryExpression["Operator"] = (Node.AsPostfixUnaryExpression(parent) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Operator;
             if (operator === KindPlusPlusToken$constant() || operator === KindMinusMinusToken$constant()) {
                 return AccessKindReadWrite$constant();
             }
@@ -4966,11 +4997,7 @@ export class SourceFile {
         SourceFile.$go$private$ast$copyFrom(newFile, node);
         const __gotots_argument_42 = updated;
         const __gotots_store_3 = NodeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase);
-        const __gotots_argument_43 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), ($go$storage: NodeDefault$Storage): NodeDefault => {
-            return NodeDefault.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault): NodeDefault$Storage => {
-            return NodeDefault.$storageOf($go$value);
-        }));
+        const __gotots_argument_43 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault.$fromStorage, NodeDefault.$storageOf));
         const __gotots_receiver_26 = f;
         const __gotots_argument_44 = NodeFactoryHooks.$copy(((goInterfaceNonNil<NodeFactoryCoercible>(__gotots_receiver_26).AsNodeFactory() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeFactory>).value.hooks);
         return cloneNode(__gotots_argument_42, __gotots_argument_43, __gotots_argument_44);
@@ -5568,8 +5595,12 @@ export class SourceFile {
         ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.LibReferenceDirectives = ((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.LibReferenceDirectives;
         ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.CommonJSModuleIndicator = ((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.CommonJSModuleIndicator;
         ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.ExternalModuleIndicator = ((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.ExternalModuleIndicator;
-        const __gotots_store_2 = Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(NodeDefault.$fromStorage(NodeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase).NodeDefault)).Node));
-        __gotots_store_2.Flags = (__gotots_store_2.Flags | Node.$storageOf(Node.$fromStorage(NodeDefault.$storageOf(NodeDefault.$fromStorage(NodeBase.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase).NodeDefault)).Node)).Flags) >>> 0;
+        const __gotots_store_2 = (void Node.$storageOf, (void Node.$fromStorage,
+            (void NodeDefault.$storageOf, (void NodeDefault.$fromStorage,
+                NodeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase).NodeDefault)).Node));
+        __gotots_store_2.Flags = (__gotots_store_2.Flags | (void Node.$storageOf, (void Node.$fromStorage,
+            (void NodeDefault.$storageOf, (void NodeDefault.$fromStorage,
+                NodeBase.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase).NodeDefault)).Node)).Flags) >>> 0;
     }
     static $go$private$ast$resolveJSDoc(node: tsonicTypeScriptRuntime.Location<SourceFile> | undefined, n: tsonicTypeScriptRuntime.Location<Node> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node> | undefined> {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;

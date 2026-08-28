@@ -14,24 +14,30 @@ export function $initialize(): void {
     $state.GetUnknownOption = void 0;
     $state.JoinUnknownOption = void 0;
     {
-        $state.DefaultOptionsV2 = Struct.$storageOf(Struct.$fromStorage({
-            Flags: Flags__from_jsonflags.$storageOf(Flags__from_jsonflags.$fromStorage({
-                Presence: 3298010072614n,
-                Values: 0n
-            })),
-            CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
-            ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
-        }));
+        $state.DefaultOptionsV2 =
+            (void Struct.$storageOf, (void Struct.$fromStorage,
+                {
+                    Flags: (void Flags__from_jsonflags.$storageOf, (void Flags__from_jsonflags.$fromStorage,
+                        {
+                            Presence: 3298010072614n,
+                            Values: 0n
+                        })),
+                    CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
+                    ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
+                }));
     }
     {
-        $state.DefaultOptionsV1 = Struct.$storageOf(Struct.$fromStorage({
-            Flags: Flags__from_jsonflags.$storageOf(Flags__from_jsonflags.$fromStorage({
-                Presence: 3298010072614n,
-                Values: 3298010072614n
-            })),
-            CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
-            ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
-        }));
+        $state.DefaultOptionsV1 =
+            (void Struct.$storageOf, (void Struct.$fromStorage,
+                {
+                    Flags: (void Flags__from_jsonflags.$storageOf, (void Flags__from_jsonflags.$fromStorage,
+                        {
+                            Presence: 3298010072614n,
+                            Values: 3298010072614n
+                        })),
+                    CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
+                    ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
+                }));
     }
     {
         $state.GetUnknownOption = ($0: Struct, $1: Options | undefined): [

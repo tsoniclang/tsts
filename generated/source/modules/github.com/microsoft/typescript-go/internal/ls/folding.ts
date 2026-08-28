@@ -530,10 +530,16 @@ export function spanForArrowFunction(ctx: GoInterface | undefined, node: tsonicT
     let arrowFunctionNode: {
         value: ArrowFunction__from_ast;
     } | undefined = Node__from_ast.AsArrowFunction(node);
-    if (IsBlock__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body) || IsParenthesizedExpression__from_ast(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body) || PositionsAreOnSameLine__from_printer(Node__from_ast.Pos(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), Node__from_ast.End(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), sourceFile)) {
+    if (IsBlock__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body) || IsParenthesizedExpression__from_ast((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body) || PositionsAreOnSameLine__from_printer(Node__from_ast.Pos((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), Node__from_ast.End((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), sourceFile)) {
         return void 0;
     }
-    let textRange = LanguageService.$go$private$ls$createLspRangeFromBounds(l, Node__from_ast.Pos(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), Node__from_ast.End(BodyBase__from_ast.$storageOf(BodyBase__from_ast.$fromStorage(FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), sourceFile);
+    let textRange = LanguageService.$go$private$ls$createLspRangeFromBounds(l, Node__from_ast.Pos((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), Node__from_ast.End((void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
+        FunctionLikeWithBodyBase__from_ast.$storageOf((arrowFunctionNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body), sourceFile);
     return createFoldingRange(ctx, Range__from_lsproto.$copy(textRange), new FoldingRangeKind__from_lsproto(""), "");
 }
 export function spanForTemplateLiteral(ctx: GoInterface | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, l: LanguageService | undefined): {
@@ -626,11 +632,15 @@ export function createFoldingRange(ctx: GoInterface | undefined, textRange: Rang
         kind =
             foldingRangeKind$location;
     }
-    const __gotots_field_0 = Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(textRange).Start)).Line;
-    const __gotots_store_1 = Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(textRange).Start));
+    const __gotots_field_0 = (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+        Range__from_lsproto.$storageOf(textRange).Start)).Line;
+    const __gotots_store_1 = (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+        Range__from_lsproto.$storageOf(textRange).Start));
     const __gotots_field_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Character");
-    const __gotots_field_2 = Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(textRange).End)).Line;
-    const __gotots_store_2 = Position__from_lsproto.$storageOf(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(textRange).End));
+    const __gotots_field_2 = (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+        Range__from_lsproto.$storageOf(textRange).End)).Line;
+    const __gotots_store_2 = (void Position__from_lsproto.$storageOf, (void Position__from_lsproto.$fromStorage,
+        Range__from_lsproto.$storageOf(textRange).End));
     const __gotots_field_3 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Character");
     let result: {
         value: FoldingRange__from_lsproto;

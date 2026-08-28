@@ -54,7 +54,7 @@ export function GetCommonSourceDirectory(options: {
             const __gotots_callee_1 = checkSourceFilesBelongToPath;
             const __gotots_callee_0 = files;
             const __gotots_argument_0 = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))();
-            const __gotots_argument_1 = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDir;
+            const __gotots_argument_1: CompilerOptions__from_core["RootDir"] = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RootDir;
             (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0, __gotots_argument_1);
         }
     }

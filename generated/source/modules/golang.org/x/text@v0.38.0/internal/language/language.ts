@@ -329,16 +329,21 @@ export class Tag {
                 for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < 5; __gotots_range_index_0++) {
                     const __gotots_range_value_0 = __gotots_range_index_0;
                     let i = __gotots_range_value_0;
-                    if (parentRel.$storageOf(parentRel.$fromStorage($state.parents.get(i))).lang === Tag.$storageOf(t).LangID && parentRel.$storageOf(parentRel.$fromStorage($state.parents.get(i))).maxScript === maxScript) {
-                        const __gotots_range_0 = parentRel.$storageOf(parentRel.$fromStorage($state.parents.get(i))).fromRegion;
+                    if ((void parentRel.$storageOf, (void parentRel.$fromStorage,
+                        $state.parents.get(i))).lang === Tag.$storageOf(t).LangID && (void parentRel.$storageOf, (void parentRel.$fromStorage,
+                        $state.parents.get(i))).maxScript === maxScript) {
+                        const __gotots_range_0 = (void parentRel.$storageOf, (void parentRel.$fromStorage,
+                            $state.parents.get(i))).fromRegion;
                         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_0.length; __gotots_range_index_1++) {
                             const __gotots_range_value_1 = __gotots_range_0.get(__gotots_range_index_1);
                             let r = __gotots_range_value_1;
                             if (r === Tag.$storageOf(t).RegionID) {
                                 return Tag.$fromStorage({
                                     LangID: Tag.$storageOf(t).LangID,
-                                    ScriptID: parentRel.$storageOf(parentRel.$fromStorage($state.parents.get(i))).script,
-                                    RegionID: parentRel.$storageOf(parentRel.$fromStorage($state.parents.get(i))).toRegion,
+                                    ScriptID: (void parentRel.$storageOf, (void parentRel.$fromStorage,
+                                        $state.parents.get(i))).script,
+                                    RegionID: (void parentRel.$storageOf, (void parentRel.$fromStorage,
+                                        $state.parents.get(i))).toRegion,
                                     pVariant: 0,
                                     pExt: 0,
                                     str: ""

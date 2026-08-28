@@ -206,7 +206,7 @@ export class buildInfoDiagnosticWithFileName {
             return repopulateDiagnosticChain(b, p, fileForDiagnostic);
         }
         let messageChain = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-        const __gotots_range_5 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
+        const __gotots_range_5: buildInfoDiagnosticWithFileName["messageChain"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
         for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_5.length; __gotots_range_index_5++) {
             const __gotots_range_value_5 = __gotots_range_5.get(__gotots_range_index_5);
             let msg: {
@@ -215,7 +215,7 @@ export class buildInfoDiagnosticWithFileName {
             messageChain = messageChain.append(void 0, [buildInfoDiagnosticWithFileName.$go$private$incremental$toDiagnostic(msg, p, fileForDiagnostic)]);
         }
         let relatedInformation = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-        const __gotots_range_6 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relatedInformation;
+        const __gotots_range_6: buildInfoDiagnosticWithFileName["relatedInformation"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relatedInformation;
         for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
             const __gotots_range_value_6 = __gotots_range_6.get(__gotots_range_index_6);
             let info: {
@@ -231,7 +231,7 @@ export class buildInfoDiagnosticWithFileName {
         value: Program__from_compiler;
     } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined {
         let messageChain = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-        const __gotots_range_3 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
+        const __gotots_range_3: buildInfoDiagnosticWithFileName["messageChain"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
         for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_3.length; __gotots_range_index_3++) {
             const __gotots_range_value_3 = __gotots_range_3.get(__gotots_range_index_3);
             let msg: {
@@ -240,7 +240,7 @@ export class buildInfoDiagnosticWithFileName {
             messageChain = messageChain.append(void 0, [buildInfoDiagnosticWithFileName.$go$private$incremental$toDiagnostic(msg, p, file)]);
         }
         let relatedInformation = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-        const __gotots_range_4 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relatedInformation;
+        const __gotots_range_4: buildInfoDiagnosticWithFileName["relatedInformation"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relatedInformation;
         for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
             const __gotots_range_value_4 = __gotots_range_4.get(__gotots_range_index_4);
             let info: {
@@ -310,7 +310,7 @@ export function repopulateModeMismatchChain(b: {
     }
     let details = CreateModeMismatchDetails__from_checker(new GoInterfaceAdapter(p), file);
     let nextChain = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-    const __gotots_range_1 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
+    const __gotots_range_1: buildInfoDiagnosticWithFileName["messageChain"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
         const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
         let msg: {
@@ -330,13 +330,13 @@ export function repopulateModuleNotFoundChain(b: {
     if (file === undefined) {
         return buildInfoDiagnosticWithFileName.$go$private$incremental$toDiagnosticWithoutRepopulate(b, p, file);
     }
-    let packageName = (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageName;
+    let packageName: RepopulateDiagnosticInfo__from_ast["PackageName"] = (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageName;
     if (packageName === "") {
         packageName = (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleReference;
     }
     let details = CreateModuleNotFoundChain__from_checker(new GoInterfaceAdapter(p), file, (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleReference, (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Mode, packageName);
     let nextChain = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
-    const __gotots_range_2 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
+    const __gotots_range_2: buildInfoDiagnosticWithFileName["messageChain"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.messageChain;
     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
         const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
         let msg: {

@@ -374,7 +374,8 @@ export function getModuleSpecifierExpression(declaration: tsonicTypeScriptRuntim
     }
 }
 export function GetExternalModuleName(specifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): gostring {
-    if (!(specifier === undefined) && IsStringLiteralLike__from_ast(Node__from_ast.AsNode(specifier))) {
+    if (!(specifier === undefined) && IsStringLiteralLike__from_ast((void Node__from_ast.AsNode,
+        specifier))) {
         return Node__from_ast.Text(specifier);
     }
     return "";
@@ -422,12 +423,9 @@ export function getImportKindOrder(s1: tsonicTypeScriptRuntime.Location<Node__fr
             let importClause: {
                 value: ImportClause__from_ast;
             } | undefined = Node__from_ast.AsImportClause((importDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImportClause);
-            const __gotots_store_0 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }))) {
+            const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
+            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
                 return importKindOrderTypeOnly$int;
             }
             if (!((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings === undefined) && Node__from_ast.$storageOf((((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindNamespaceImport$constant__from_ast()) {

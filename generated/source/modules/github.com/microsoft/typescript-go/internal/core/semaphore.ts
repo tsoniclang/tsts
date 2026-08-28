@@ -29,7 +29,8 @@ export function NewLimitedSemaphore(maxConcurrency: int): LimitedSemaphore | und
     let s: LimitedSemaphore | undefined = new LimitedSemaphore(GoChannel.make<GoEmptyStruct>(maxConcurrency, (): GoEmptyStruct => {
         return GoEmptyStruct.$zero();
     }, (value: GoEmptyStruct): GoEmptyStruct => {
-        return GoEmptyStruct.$copy(value);
+        return (void GoEmptyStruct.$copy,
+            value);
     }), void 0);
     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).release = (): void => {
         GoChannel.receive((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ch)[0];

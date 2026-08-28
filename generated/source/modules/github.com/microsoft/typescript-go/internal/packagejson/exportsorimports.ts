@@ -83,16 +83,13 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
     declare private readonly then?: never;
     static UnmarshalJSONFrom(e: tsonicTypeScriptRuntime.Location<ExportsOrImports> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const __gotots_store_0 = ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value);
-        const __gotots_argument_2 = tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "JSONValue"), ($go$storage: JSONValue__from_packagejson$Storage): JSONValue => {
-            return JSONValue.$fromStorage($go$storage);
-        }, ($go$value: JSONValue): JSONValue__from_packagejson$Storage => {
-            return JSONValue.$storageOf($go$value);
-        });
+        const __gotots_argument_2 = tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "JSONValue"), JSONValue.$fromStorage, JSONValue.$storageOf);
         const __gotots_argument_3 = dec;
         return unmarshalJSONValueV2$Named_packagejson$ExportsOrImports(__gotots_argument_2, __gotots_argument_3);
     }
     static $go$private$packagejson$initObjectKind(e: tsonicTypeScriptRuntime.Location<ExportsOrImports> | undefined): void {
-        if (ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value).objectKind === objectKindUnknown$constant() && JSONValue.$storageOf(JSONValue.$fromStorage(ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value).JSONValue)).Type === JSONValueTypeObject$constant()) {
+        if (ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value).objectKind === objectKindUnknown$constant() && (void JSONValue.$storageOf, (void JSONValue.$fromStorage,
+            ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value).JSONValue)).Type === JSONValueTypeObject$constant()) {
             {
                 let obj: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, ExportsOrImports>> | undefined = ((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value.AsObject();
                 if (OrderedMap$Size$string$Named_packagejson$ExportsOrImports(obj) > 0) {
@@ -157,7 +154,8 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
         }
     }
     AsArray(): RuntimeSlice<ExportsOrImports$Storage> {
-        if (!(JSONValue.$storageOf(JSONValue.$fromStorage(ExportsOrImports.$storageOf(this).JSONValue)).Type === JSONValueTypeArray$constant())) {
+        if (!((void JSONValue.$storageOf, (void JSONValue.$fromStorage,
+            ExportsOrImports.$storageOf(this).JSONValue)).Type === JSONValueTypeArray$constant())) {
             const __gotots_argument_1 = new GoInterfaceAdapter("expected array");
             GoPanic.raise(__gotots_argument_1 === undefined ? GoPanicNilValue.create() : __gotots_argument_1);
         }
@@ -166,10 +164,12 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
-        })(JSONValue.$storageOf(JSONValue.$fromStorage(ExportsOrImports.$storageOf(this).JSONValue)).Value);
+        })((void JSONValue.$storageOf, (void JSONValue.$fromStorage,
+            ExportsOrImports.$storageOf(this).JSONValue)).Value);
     }
     AsObject(): tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, ExportsOrImports>> | undefined {
-        if (!(JSONValue.$storageOf(JSONValue.$fromStorage(ExportsOrImports.$storageOf(this).JSONValue)).Type === JSONValueTypeObject$constant())) {
+        if (!((void JSONValue.$storageOf, (void JSONValue.$fromStorage,
+            ExportsOrImports.$storageOf(this).JSONValue)).Type === JSONValueTypeObject$constant())) {
             const __gotots_argument_0 = new GoInterfaceAdapter("expected object");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }
@@ -178,7 +178,8 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
-        })(JSONValue.$storageOf(JSONValue.$fromStorage(ExportsOrImports.$storageOf(this).JSONValue)).Value);
+        })((void JSONValue.$storageOf, (void JSONValue.$fromStorage,
+            ExportsOrImports.$storageOf(this).JSONValue)).Value);
     }
     IsConditions(): bool {
         let e: ExportsOrImports = ExportsOrImports.$copy(this);

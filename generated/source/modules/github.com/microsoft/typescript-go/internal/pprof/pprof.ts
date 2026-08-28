@@ -51,7 +51,7 @@ export class ProfileSession {
         value: ProfileSession;
     } | undefined): void {
         pprof__from_gostdlib.StopCPUProfile();
-        const __gotots_receiver_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cpuFile;
+        const __gotots_receiver_0: ProfileSession["cpuFile"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cpuFile;
         os__from_gostdlib.File.Close(__gotots_receiver_0 === void 0 ? void 0 :
             (__gotots_receiver_0 as tsonicTypeScriptRuntime.Location<os__from_gostdlib.File>).value);
         if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.memFilePath !== "") {
@@ -93,12 +93,12 @@ export class ProfileSession {
             const __gotots_receiver_3 = memFile;
             os__from_gostdlib.File.Close(__gotots_receiver_3 === void 0 ? void 0 :
                 (__gotots_receiver_3 as tsonicTypeScriptRuntime.Location<os__from_gostdlib.File>).value);
-            const __gotots_argument_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logWriter;
+            const __gotots_argument_8: ProfileSession["logWriter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logWriter;
             const __gotots_argument_9 = "Memory profile: %v\n";
             const __gotots_argument_10 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.memFilePath)]);
             provider_fmt_writer.FprintfDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_8), __gotots_argument_9, __gotots_argument_10);
         }
-        const __gotots_argument_11 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logWriter;
+        const __gotots_argument_11: ProfileSession["logWriter"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logWriter;
         const __gotots_argument_12 = "CPU profile: %v\n";
         const __gotots_argument_13 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$string((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cpuFilePath)]);
         provider_fmt_writer.FprintfDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_11), __gotots_argument_12, __gotots_argument_13);
@@ -279,7 +279,7 @@ export class CPUProfiler {
                         __gotots_return_0 = ["", GoProviderInterfaceBridge.$from(errors__from_gostdlib.New("CPU profiling not in progress"))];
                         break __gotots_return_block_0;
                     }
-                    let filePath = (((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CPUProfiler>).value.session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cpuFilePath;
+                    let filePath: ProfileSession["cpuFilePath"] = (((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CPUProfiler>).value.session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.cpuFilePath;
                     ProfileSession.Stop(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CPUProfiler>).value.session);
                     ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CPUProfiler>).value.session = void 0;
                     __gotots_return_0 = [filePath, void 0];

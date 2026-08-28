@@ -39,17 +39,11 @@ export class HeaderFields {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
-        }, ($argument0: gostring): gostring => {
-            return $argument0;
         }, $source.Name), Expected.$copy<gostring>(($argument0: gostring): gostring => {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
-        }, ($argument0: gostring): gostring => {
-            return $argument0;
         }, $source.Version), Expected.$copy<gostring>(($argument0: gostring): gostring => {
-            return $argument0;
-        }, ($argument0: gostring): gostring => {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
@@ -119,11 +113,7 @@ export class PathFields {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
-        }, ($argument0: gostring): gostring => {
-            return $argument0;
         }, $source.TSConfig), Expected.$copy<gostring>(($argument0: gostring): gostring => {
-            return $argument0;
-        }, ($argument0: gostring): gostring => {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
@@ -131,11 +121,7 @@ export class PathFields {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
-        }, ($argument0: gostring): gostring => {
-            return $argument0;
         }, $source.Types), Expected.$copy<gostring>(($argument0: gostring): gostring => {
-            return $argument0;
-        }, ($argument0: gostring): gostring => {
             return $argument0;
         }, ($argument0: gostring): gostring => {
             return $argument0;
@@ -217,11 +203,7 @@ export class DependencyFields {
             return $argument0;
         }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
-        }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-            return $argument0;
         }, $source.Dependencies), Expected.$copy<GoMapValue<gostring, gostring>>(($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-            return $argument0;
-        }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
         }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
@@ -229,11 +211,7 @@ export class DependencyFields {
             return $argument0;
         }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
-        }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-            return $argument0;
         }, $source.PeerDependencies), Expected.$copy<GoMapValue<gostring, gostring>>(($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
-            return $argument0;
-        }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;
         }, ($argument0: GoMapValue<gostring, gostring>): GoMapValue<gostring, gostring> => {
             return $argument0;

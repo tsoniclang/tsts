@@ -42,11 +42,11 @@ export class mapEntry<K, V> {
         return $hash;
     }
     declare private readonly then?: never;
-    static Key$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<mapEntry<K, V>> | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K): K {
-        return $go$copy$T0_to_T0($go$from_storage$T0_to_T0(mapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<mapEntry<K, V>>).value).key));
+    static Key$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<mapEntry<K, V>> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K): K {
+        return $go$from_storage$T0_to_T0(mapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<mapEntry<K, V>>).value).key);
     }
-    static Original$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<mapEntry<K, V>> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V): V {
-        return $go$copy$T1_to_T1($go$from_storage$T1_to_T1(mapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<mapEntry<K, V>>).value).original));
+    static Original$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<mapEntry<K, V>> | undefined, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V): V {
+        return $go$from_storage$T1_to_T1(mapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<mapEntry<K, V>>).value).original);
     }
     static Value$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<mapEntry<K, V>> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$zero$void_to_T1: () => V): V {
         if (mapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<mapEntry<K, V>>).value).__go_delete) {

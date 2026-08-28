@@ -220,7 +220,7 @@ export function getResolvedPackageNames(ctx: GoInterface | undefined, program: {
                     let name = __gotots_range_value_2;
                     Set$Add$string(resolvedPackageNames, GetPackageNameFromTypesPackageName__from___go_module(name));
                 }
-                const __gotots_range_1 = (Program__from_compiler.Options(program) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Types;
+                const __gotots_range_1: CompilerOptions__from_core["Types"] = (Program__from_compiler.Options(program) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Types;
                 for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_1.length; __gotots_range_index_0++) {
                     const __gotots_range_value_3 = __gotots_range_1.get(__gotots_range_index_0);
                     let name = __gotots_range_value_3;
@@ -404,7 +404,7 @@ export function createCheckerPool(program: Program__from_checker | undefined): [
 export function addPackageJsonDependencies(contents: {
     value: PackageJson__from_packagejson;
 } | undefined, deps: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined): void {
-    const __gotots_store_0 = (contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
+    const __gotots_store_0: PackageJson__from_packagejson["Fields"] = (contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields;
     DependencyFields__from_packagejson.RangeDependencies(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "DependencyFields"), (name: gostring, $1: gostring, field: gostring): bool => {
         if (name === "" || name === "@types/" || goStringIndex(name, 0) === 46) {
             return true;

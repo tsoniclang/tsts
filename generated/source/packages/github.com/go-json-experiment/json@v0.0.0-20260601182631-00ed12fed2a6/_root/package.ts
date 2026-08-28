@@ -90,11 +90,7 @@ export function $initialize(): void {
         $state.errChangingWhitespace = GoProviderInterfaceBridge.$from(errors__from_gostdlib.New("cannot change whitespace formatting within a MarshalEncode call"));
     }
     {
-        $state.__go_export = __go_export__from_jsontext.$storageOf(exporter__from_jsontext.$fromStorage($state__jsontext.Internal).Export(tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), ($go$storage: NotForPublicUse__from_internal$Storage): NotForPublicUse__from_internal => {
-            return NotForPublicUse__from_internal.$fromStorage($go$storage);
-        }, ($go$value: NotForPublicUse__from_internal): NotForPublicUse__from_internal$Storage => {
-            return NotForPublicUse__from_internal.$storageOf($go$value);
-        })));
+        $state.__go_export = __go_export__from_jsontext.$storageOf(exporter__from_jsontext.$fromStorage($state__jsontext.Internal).Export(tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf)));
     }
     {
         const __gotots_field_0 = (): GoInterface | undefined => {

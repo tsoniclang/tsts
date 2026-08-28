@@ -29,12 +29,6 @@ export function OwnerCache$LoadAndAcquire$Named_tspath$Path$PointerTo_Named_proj
         } | undefined>;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: ExtendedConfigCacheEntry__from_project;
-    } | undefined): {
-        value: ExtendedConfigCacheEntry__from_project;
-    } | undefined => {
-        return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: {

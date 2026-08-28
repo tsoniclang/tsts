@@ -136,8 +136,8 @@ export class OrderedMap<K, V> {
         let ok = __gotots_results_2[1];
         return [$go$copy$T1_to_T1(v), ok];
     }
-    static GetOrZero$kernel<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, $go$copy$T1_to_T1: ($0: V) => V, key: K): V {
-        return $go$copy$T1_to_T1(OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).mp.lookup(key));
+    static GetOrZero$kernel<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, key: K): V {
+        return OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).mp.lookup(key);
     }
     static Has<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, key: K): bool {
         const __gotots_results_1 = OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).mp.lookupOk(key);
@@ -158,7 +158,7 @@ export class OrderedMap<K, V> {
             }
         });
     }
-    static MarshalJSONTo$kernel<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<K>) => K, $go$interface_adapt$T1_to_Interface_void: ($0: V) => $goInterface$Interface_void | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => $goInterface$Interface_void | undefined, $go$reflection_value$PointerTo_T0_to_Named_reflect$Type: ($0: tsonicTypeScriptRuntime.Location<K> | undefined) => reflect__from_gostdlib.Type | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): GoInterface | undefined {
+    static MarshalJSONTo$kernel<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<K>) => K, $go$interface_adapt$T1_to_Interface_void: ($0: V) => $goInterface$Interface_void | undefined, $go$interface_adapt$T0_to_Interface_void: ($0: K) => $goInterface$Interface_void | undefined, $go$reflection_value$PointerTo_T0_to_Named_reflect$Type: ($0: tsonicTypeScriptRuntime.Location<K> | undefined) => reflect__from_gostdlib.Type | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): GoInterface | undefined {
         {
             let err: GoInterface | undefined = Encoder__from_jsontext.WriteToken(enc, Token__from_jsontext.$copy(Token__from_jsontext.$fromStorage($state__json__package_1.BeginObject)));
             if (!(err === undefined)) {
@@ -167,7 +167,7 @@ export class OrderedMap<K, V> {
         }
         const __gotots_range_0 = OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).keys;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
-            const __gotots_range_value_0 = $go$copy$T0_to_T0($go$from_container_storage$T0_to_T0(__gotots_range_0.get(__gotots_range_index_0)));
+            const __gotots_range_value_0 = $go$from_container_storage$T0_to_T0(__gotots_range_0.get(__gotots_range_index_0));
             let k: K = __gotots_range_value_0;
             const __gotots_results_4 = resolveKeyName(reflect__from_gostdlib.ValueOf($go$interface_adapt$T0_to_Interface_void(k)));
             let keyString = __gotots_results_4[0];

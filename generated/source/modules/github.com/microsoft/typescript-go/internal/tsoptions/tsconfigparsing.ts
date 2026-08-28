@@ -1342,7 +1342,7 @@ export function getExtendedConfig(sourceFile: {
         if (!(sourceFile === undefined)) {
             const __gotots_store_2 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             Set$Add$string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "extendedSourceFiles"), SourceFile__from_ast.FileName(((cacheEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.extendedResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SourceFile));
-            const __gotots_range_13 = ((cacheEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.extendedResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendedSourceFiles;
+            const __gotots_range_13: TsConfigSourceFile["ExtendedSourceFiles"] = ((cacheEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.extendedResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendedSourceFiles;
             for (let __gotots_range_index_8 = 0; __gotots_range_index_8 < __gotots_range_13.length; __gotots_range_index_8++) {
                 const __gotots_range_value_16 = __gotots_range_13.get(__gotots_range_index_8);
                 let extendedSourceFile = __gotots_range_value_16;
@@ -1833,8 +1833,8 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
     let excludeSpecs = (__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_40, __gotots_argument_41, __gotots_argument_42);
     let isDefaultIncludeSpec = false;
     if (excludeSpecs.wrongValue === "no-prop" && !((parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options === undefined)) {
-        let outDir = ((parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
-        let declarationDir = ((parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
+        let outDir: CompilerOptions__from_core["OutDir"] = ((parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutDir;
+        let declarationDir: CompilerOptions__from_core["DeclarationDir"] = ((parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeclarationDir;
         if (outDir !== "" || declarationDir !== "") {
             let values = RuntimeSlice.nil<GoInterface | undefined>();
             if (outDir !== "") {
@@ -2000,15 +2000,15 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
     const __gotots_results_26 = (__gotots_callee_10 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_58);
     let fileNames = __gotots_results_26[0];
     let literalFileNamesLen = __gotots_results_26[1];
-    const __gotots_field_3 = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options;
-    const __gotots_field_4 = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeAcquisition;
+    const __gotots_field_3: parsedTsconfig["options"] = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.options;
+    const __gotots_field_4: parsedTsconfig["typeAcquisition"] = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeAcquisition;
     const __gotots_field_5 = fileNames;
     const __gotots_callee_11 = getProjectReferences;
     const __gotots_argument_59 = basePathForFileNames;
     const __gotots_field_6 = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_59);
     const __gotots_field_8 = tsonicTypeScriptRuntime.location<ParsedOptions__from_core>(new ParsedOptions__from_core(__gotots_field_3, void 0, __gotots_field_4, __gotots_field_5, __gotots_field_6));
     const __gotots_field_9 = sourceFile;
-    const __gotots_field_10 = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.raw;
+    const __gotots_field_10: parsedTsconfig["raw"] = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.raw;
     const __gotots_field_11 = errors;
     const __gotots_field_12 = extraFileExtensions;
     const __gotots_receiver_23 = host;
@@ -2039,12 +2039,16 @@ export function validateSpecs(specs: GoInterface | undefined, disallowTrailingRe
         let element: tsonicTypeScriptRuntime.Location<StringLiteral__from_ast> | undefined = GetTsConfigPropArrayElementValue(jsonSourceFile, specKey, spec);
         let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (!(element === undefined)) {
-            const __gotots_store_4 = NodeBase__from_ast.$storageOf(NodeBase__from_ast.$fromStorage(ExpressionBase__from_ast.$storageOf(ExpressionBase__from_ast.$fromStorage(UnaryExpressionBase__from_ast.$storageOf(UnaryExpressionBase__from_ast.$fromStorage(UpdateExpressionBase__from_ast.$storageOf(UpdateExpressionBase__from_ast.$fromStorage(LeftHandSideExpressionBase__from_ast.$storageOf(LeftHandSideExpressionBase__from_ast.$fromStorage(MemberExpressionBase__from_ast.$storageOf(MemberExpressionBase__from_ast.$fromStorage(PrimaryExpressionBase__from_ast.$storageOf(PrimaryExpressionBase__from_ast.$fromStorage(LiteralExpressionBase__from_ast.$storageOf(LiteralExpressionBase__from_ast.$fromStorage(StringLiteral__from_ast.$storageOf(((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault__from_ast => {
-                return NodeDefault__from_ast.$fromStorage($go$storage);
-            }, ($go$value: NodeDefault__from_ast): NodeDefault__from_ast$Storage => {
-                return NodeDefault__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_4 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
+                (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
+                    (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
+                        (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
+                            (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
+                                (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
+                                    (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
+                                        (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
+                                            StringLiteral__from_ast.$storageOf(((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
+            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(jsonSourceFile, node, message, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(spec)]));
     };

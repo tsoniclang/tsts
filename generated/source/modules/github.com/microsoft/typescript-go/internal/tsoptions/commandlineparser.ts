@@ -414,11 +414,7 @@ export function ParseBuildCommandLine(commandLine: RuntimeSlice<gostring>, host:
         let key = __gotots_range_value_0;
         let value: GoInterface | undefined = __gotots_range_value_1;
         let buildOption: tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined = NameMap.Get($state.BuildNameMap, key);
-        if (tsonicTypeScriptRuntime.sameLocation(buildOption, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), ($go$storage: CommandLineOption__from_tsoptions$Storage): CommandLineOption => {
-            return CommandLineOption.$fromStorage($go$storage);
-        }, ($go$value: CommandLineOption): CommandLineOption__from_tsoptions$Storage => {
-            return CommandLineOption.$storageOf($go$value);
-        }))
+        if (tsonicTypeScriptRuntime.sameLocation(buildOption, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), CommandLineOption.$fromStorage, CommandLineOption.$storageOf))
             ||
                 tsonicTypeScriptRuntime.sameLocation(buildOption, NameMap.Get($state.CompilerNameMap, key))) {
             ParseCompilerOptions(key, value, compilerOptions);

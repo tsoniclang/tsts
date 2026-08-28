@@ -1057,12 +1057,9 @@ export class View {
                 value: ImportClause__from_ast;
             } | undefined = Node__from_ast.AsImportClause(importClauseNode);
             let namedBindings: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings;
-            const __gotots_store_0 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            })) && !(importKind === ImportKindNamed$constant__from_lsproto() && !(namedBindings === undefined))) {
+            const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
+            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) && !(importKind === ImportKindNamed$constant__from_lsproto() && !(namedBindings === undefined))) {
                 continue;
             }
             if (importKind === ImportKindDefault$constant__from_lsproto() && (!(ImportClause__from_ast.Name(importClause) === undefined) || addAsTypeOnly === AddAsTypeOnlyRequired$constant__from_lsproto() && !(namedBindings === undefined))) {
@@ -1074,12 +1071,9 @@ export class View {
             let fix: {
                 value: Fix;
             } | undefined = { value: new Fix({ value: new AutoImportFix__from_lsproto(AutoImportFixKindAddToExisting$constant__from_lsproto(), Export.Name(__go_export), importKind, false, addAsTypeOnly, existingImport.$storageOf(existingImport__shadow_1).moduleSpecifier, existingImport.$storageOf(existingImport__shadow_1).index | 0, void 0, "") }, 0, false, "", void 0) };
-            const __gotots_store_1 = NodeDefault__from_ast.$storageOf(NodeDefault__from_ast.$fromStorage(NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            let isTypeOnly = Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Node"), ($go$storage: Node__from_ast$Storage): Node__from_ast => {
-                return Node__from_ast.$fromStorage($go$storage);
-            }, ($go$value: Node__from_ast): Node__from_ast$Storage => {
-                return Node__from_ast.$storageOf($go$value);
-            }));
+            const __gotots_store_1 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
+                NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
+            let isTypeOnly = Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             if ((!(addAsTypeOnly === AddAsTypeOnlyNotAllowed$constant__from_lsproto()) && isTypeOnly) || (addAsTypeOnly === AddAsTypeOnlyNotAllowed$constant__from_lsproto() && !isTypeOnly)) {
                 return fix;
             }

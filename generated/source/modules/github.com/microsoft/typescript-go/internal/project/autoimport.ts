@@ -57,7 +57,7 @@ export class autoImportBuilderFS {
     static GetFile(a: {
         value: autoImportBuilderFS;
     } | undefined, fileName: gostring): FileHandle | undefined {
-        const __gotots_callee_0 = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
+        const __gotots_callee_0: snapshotFSBuilder["toPath"] = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
         const __gotots_argument_4 = fileName;
         let path = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
         return autoImportBuilderFS.GetFileByPath(a, fileName, path);
@@ -97,7 +97,7 @@ export class autoImportBuilderFS {
             }
         }
         let fh: FileHandle | undefined = void 0;
-        const __gotots_receiver_4 = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+        const __gotots_receiver_4: snapshotFSBuilder["fs"] = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_5 = fileName;
         const __gotots_results_4 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_4).ReadFile(__gotots_argument_5);
         let content = __gotots_results_4[0];
@@ -134,11 +134,11 @@ export class autoImportRegistryCloneHost {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.filesMu);
-                    const __gotots_receiver_0 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.filesMu;
+                    const __gotots_receiver_0: autoImportRegistryCloneHost["filesMu"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.filesMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
-                    const __gotots_range_0 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.files;
+                    const __gotots_range_0: autoImportRegistryCloneHost["files"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.files;
                     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                         const __gotots_range_value_0 = ParseCacheKey.$copy(ParseCacheKey.$fromStorage(__gotots_range_0.get(__gotots_range_index_0)));
                         let key = __gotots_range_value_0;
@@ -272,7 +272,7 @@ export class autoImportRegistryCloneHost {
         let key = NewParseCacheKey(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
         let result: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = RefCountCache$Acquire$Named_project$ParseCacheKey$PointerTo_Named_ast$SourceFile$Named_project$FileHandle((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parseCache, ParseCacheKey.$copy(key), fh);
         sync__from_gostdlib.Mutex.Lock((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.filesMu);
-        const __gotots_slice_build_0 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.files;
+        const __gotots_slice_build_0: autoImportRegistryCloneHost["files"] = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.files;
         const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {

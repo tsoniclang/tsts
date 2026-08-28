@@ -33,7 +33,7 @@ export class NodeVisitor {
         if (node === undefined || (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit === undefined) {
             return node;
         }
-        const __gotots_callee_11 = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
+        const __gotots_callee_11: NodeVisitor["Visit"] = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
         const __gotots_argument_23 = node;
         let visited: tsonicTypeScriptRuntime.Location<Node> | undefined = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_23);
         if (visited === undefined) {
@@ -48,12 +48,15 @@ export class NodeVisitor {
             return nodes;
         }
         {
-            const __gotots_results_0 = NodeVisitor.VisitSlice(v, NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes);
+            const __gotots_results_0 = NodeVisitor.VisitSlice(v, (void NodeList.$storageOf, (void NodeList.$fromStorage,
+                ModifierList.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Nodes);
             let result = __gotots_results_0[0];
             let changed = __gotots_results_0[1];
             if (changed) {
                 let list: tsonicTypeScriptRuntime.Location<ModifierList> | undefined = NodeFactory.NewModifierList((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory, result);
-                NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList.$storageOf(NodeList.$fromStorage(ModifierList.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc)));
+                (void NodeList.$storageOf, (void NodeList.$fromStorage,
+                    ModifierList.$storageOf(((list ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void NodeList.$storageOf, (void NodeList.$fromStorage,
+                    ModifierList.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value).NodeList)).Loc)));
                 return list;
             }
         }
@@ -66,11 +69,11 @@ export class NodeVisitor {
             return node;
         }
         if (!((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit === undefined)) {
-            const __gotots_callee_0 = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
+            const __gotots_callee_0: NodeVisitor["Visit"] = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
             const __gotots_argument_0 = node;
             let visited: tsonicTypeScriptRuntime.Location<Node> | undefined = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
             if (!(visited === undefined) && Node.$storageOf(((visited ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).Kind === KindSyntaxList$constant()) {
-                let nodes = (Node.AsSyntaxList(visited) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Children;
+                let nodes: SyntaxList["Children"] = (Node.AsSyntaxList(visited) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Children;
                 if (nodes.length !== 1) {
                     const __gotots_argument_1 = new GoInterfaceAdapter("Expected only a single node to be written to output");
                     GoPanic.raise(__gotots_argument_1 === undefined ? GoPanicNilValue.create() : __gotots_argument_1);
@@ -119,7 +122,7 @@ export class NodeVisitor {
             if ((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit === undefined) {
                 break;
             }
-            const __gotots_callee_1 = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
+            const __gotots_callee_1: NodeVisitor["Visit"] = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
             const __gotots_argument_3 = node;
             let visited: tsonicTypeScriptRuntime.Location<Node> | undefined = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3);
             if (visited === undefined || !tsonicTypeScriptRuntime.sameLocation(visited, node)) {
@@ -141,7 +144,7 @@ export class NodeVisitor {
                     }
                     if (!((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit === undefined)) {
                         node = nodes.get(i);
-                        const __gotots_callee_2 = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
+                        const __gotots_callee_2: NodeVisitor["Visit"] = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Visit;
                         const __gotots_argument_4 = node;
                         visited = (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_4);
                     }
@@ -160,11 +163,7 @@ export class NodeVisitor {
     } | undefined, node: tsonicTypeScriptRuntime.Location<SourceFile> | undefined): tsonicTypeScriptRuntime.Location<SourceFile> | undefined {
         const __gotots_receiver_1 = v;
         const __gotots_store_0 = NodeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase);
-        const __gotots_argument_24 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), ($go$storage: NodeDefault__from_ast$Storage): NodeDefault => {
-            return NodeDefault.$fromStorage($go$storage);
-        }, ($go$value: NodeDefault): NodeDefault__from_ast$Storage => {
-            return NodeDefault.$storageOf($go$value);
-        }));
+        const __gotots_argument_24 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault.$fromStorage, NodeDefault.$storageOf));
         return Node.AsSourceFile(NodeVisitor.VisitNode(__gotots_receiver_1, __gotots_argument_24));
     }
     static $go$private$ast$liftToBlock(v: {

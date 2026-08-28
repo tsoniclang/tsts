@@ -76,7 +76,9 @@ export class prioritizedOptions {
         return this.$value.length;
     }
     Less(i: int, j: int): bool {
-        return Option.$storageOf(Option.$fromStorage(this.$value.get(i))).priority < Option.$storageOf(Option.$fromStorage(this.$value.get(j))).priority;
+        return (void Option.$storageOf, (void Option.$fromStorage,
+            this.$value.get(i))).priority < (void Option.$storageOf, (void Option.$fromStorage,
+            this.$value.get(j))).priority;
     }
     Swap(i: int, j: int): void {
         const __gotots_store_0 = this.$value;

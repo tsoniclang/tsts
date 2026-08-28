@@ -82,7 +82,7 @@ export class importAdder {
     static AddImportFix(adder: importAdder | undefined, fix: {
         value: Fix;
     } | undefined): void {
-        let symbolName = ((fix ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AutoImportFix ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name;
+        let symbolName: AutoImportFix__from_lsproto["Name"] = ((fix ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AutoImportFix ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name;
         let compilerOptions: {
             value: CompilerOptions__from_core;
         } | undefined = Program__from_compiler.Options(((adder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).view ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program);

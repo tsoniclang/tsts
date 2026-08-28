@@ -432,7 +432,7 @@ export class NameResolver {
         }
         if (isUse && !(result === undefined) && (lastSelfReferenceLocation === undefined || !tsonicTypeScriptRuntime.sameLocation(result, Node__from_ast.Symbol(lastSelfReferenceLocation)))) {
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SymbolReferenced === undefined)) {
-                const __gotots_callee_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SymbolReferenced;
+                const __gotots_callee_0: NameResolver["SymbolReferenced"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SymbolReferenced;
                 const __gotots_argument_0 = result;
                 const __gotots_argument_1 = meaning;
                 (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0, __gotots_argument_1);
@@ -451,7 +451,7 @@ export class NameResolver {
         if (!(nameNotFoundMessage === undefined)) {
             let __gotots_logical_result_0 = !(propertyWithInvalidInitializer === undefined) && !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnPropertyWithInvalidInitializer === undefined);
             if (__gotots_logical_result_0) {
-                const __gotots_callee_1 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnPropertyWithInvalidInitializer;
+                const __gotots_callee_1: NameResolver["OnPropertyWithInvalidInitializer"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnPropertyWithInvalidInitializer;
                 const __gotots_argument_2 = originalLocation;
                 const __gotots_argument_3 = name;
                 const __gotots_argument_4 = propertyWithInvalidInitializer;
@@ -463,7 +463,7 @@ export class NameResolver {
             }
             if (result === undefined) {
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnFailedToResolveSymbol === undefined)) {
-                    const __gotots_callee_2 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnFailedToResolveSymbol;
+                    const __gotots_callee_2: NameResolver["OnFailedToResolveSymbol"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnFailedToResolveSymbol;
                     const __gotots_argument_6 = originalLocation;
                     const __gotots_argument_7 = name;
                     const __gotots_argument_8 = meaning;
@@ -473,7 +473,7 @@ export class NameResolver {
             }
             else {
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnSuccessfullyResolvedSymbol === undefined)) {
-                    const __gotots_callee_3 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnSuccessfullyResolvedSymbol;
+                    const __gotots_callee_3: NameResolver["OnSuccessfullyResolvedSymbol"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OnSuccessfullyResolvedSymbol;
                     const __gotots_argument_10 = originalLocation;
                     const __gotots_argument_11 = result;
                     const __gotots_argument_12 = meaning;
@@ -506,7 +506,7 @@ export class NameResolver {
         value: Message__from_diagnostics;
     } | undefined, args: RuntimeSlice<GoInterface | undefined>): void {
         if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Error === undefined)) {
-            const __gotots_callee_8 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Error;
+            const __gotots_callee_8: NameResolver["Error"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Error;
             const __gotots_argument_28 = location;
             const __gotots_argument_29 = message;
             const __gotots_argument_30 = args;
@@ -517,7 +517,7 @@ export class NameResolver {
         value: NameResolver;
     } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
         if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetSymbolOfDeclaration === undefined)) {
-            const __gotots_callee_7 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetSymbolOfDeclaration;
+            const __gotots_callee_7: NameResolver["GetSymbolOfDeclaration"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetSymbolOfDeclaration;
             const __gotots_argument_27 = node;
             return (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_27);
         }
@@ -527,7 +527,7 @@ export class NameResolver {
         value: NameResolver;
     } | undefined, symbols: SymbolTable__from_ast, name: gostring, meaning: SymbolFlags__from_ast): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
         if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lookup === undefined)) {
-            const __gotots_callee_4 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lookup;
+            const __gotots_callee_4: NameResolver["Lookup"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lookup;
             const __gotots_argument_16 = symbols;
             const __gotots_argument_17 = name;
             const __gotots_argument_18 = meaning;
@@ -603,7 +603,7 @@ export class NameResolver {
                 let functionLocation: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = location;
                 let declarationRequiresScopeChange = TSUnknown$constant__from_core();
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetRequiresScopeChangeCache === undefined)) {
-                    const __gotots_callee_5 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetRequiresScopeChangeCache;
+                    const __gotots_callee_5: NameResolver["GetRequiresScopeChangeCache"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GetRequiresScopeChangeCache;
                     const __gotots_argument_19 = functionLocation;
                     declarationRequiresScopeChange = (__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_19);
                 }
@@ -618,7 +618,7 @@ export class NameResolver {
                     const __gotots_argument_24 = TSFalse$constant__from_core();
                     declarationRequiresScopeChange = IfElse$Named_core$Tristate(__gotots_argument_22, __gotots_argument_23, __gotots_argument_24);
                     if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SetRequiresScopeChangeCache === undefined)) {
-                        const __gotots_callee_6 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SetRequiresScopeChangeCache;
+                        const __gotots_callee_6: NameResolver["SetRequiresScopeChangeCache"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SetRequiresScopeChangeCache;
                         const __gotots_argument_25 = functionLocation;
                         const __gotots_argument_26 = declarationRequiresScopeChange;
                         (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_25, __gotots_argument_26);

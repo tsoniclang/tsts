@@ -21,7 +21,7 @@ export class MapBuilder<K, VBase, VBuilder> {
         return new MapBuilder<K, VBase, VBuilder>($source);
     }
     declare private readonly then?: never;
-    static Build$kernel<K, VBase, VBuilder>(mb: MapBuilder<K, VBase, VBuilder> | undefined, $go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1: ($0: GoMapValue<K, VBase>) => GoMapValue<K, VBase>, $go$copy$T2_to_T2: ($0: VBuilder) => VBuilder, $go$copy$T1_to_T1: ($0: VBase) => VBase, $go$copy$T0_to_T0: ($0: K) => K, $go$length$MapOf_T0_To_T2_to_int: ($0: GoMapValue<K, VBuilder>) => int, $go$length$MapOf_T0_To_Struct_void_to_int: ($0: GoMapValue<K, GoEmptyStruct>) => int, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: VBase) => GoMapValue<K, VBase>, $go$zero$void_to_T1: () => VBase): GoMapValue<K, VBase> {
+    static Build$kernel<K, VBase, VBuilder>(mb: MapBuilder<K, VBase, VBuilder> | undefined, $go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1: ($0: GoMapValue<K, VBase>) => GoMapValue<K, VBase>, $go$copy$T1_to_T1: ($0: VBase) => VBase, $go$copy$T0_to_T0: ($0: K) => K, $go$length$MapOf_T0_To_T2_to_int: ($0: GoMapValue<K, VBuilder>) => int, $go$length$MapOf_T0_To_Struct_void_to_int: ($0: GoMapValue<K, GoEmptyStruct>) => int, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: VBase) => GoMapValue<K, VBase>, $go$zero$void_to_T1: () => VBase): GoMapValue<K, VBase> {
         if ($go$length$MapOf_T0_To_T2_to_int(MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).dirty) === 0 && $go$length$MapOf_T0_To_Struct_void_to_int(MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).deleted) === 0) {
             return MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).base;
         }
@@ -54,12 +54,12 @@ export class MapBuilder<K, VBase, VBuilder> {
             const __gotots_store_0 = result;
             const __gotots_store_1 = key;
             const __gotots_callee_0 = MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).build;
-            const __gotots_argument_0 = $go$copy$T2_to_T2(value);
+            const __gotots_argument_0 = value;
             __gotots_store_0.store(__gotots_store_1, (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0));
         }
         return result;
     }
-    static Clear$kernel<K, VBase, VBuilder>(mb: MapBuilder<K, VBase, VBuilder> | undefined, $go$copy$T0_to_T0: ($0: K) => K, $go$length$MapOf_T0_To_T1_to_int: ($0: GoMapValue<K, VBase>) => int, $go$map_construct$T2_to_MapOf_T0_To_T2: ($0: VBuilder) => GoMapValue<K, VBuilder>, $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct, $1: int) => GoMapValue<K, GoEmptyStruct>, $go$zero$void_to_T2: () => VBuilder): void {
+    static Clear$kernel<K, VBase, VBuilder>(mb: MapBuilder<K, VBase, VBuilder> | undefined, $go$length$MapOf_T0_To_T1_to_int: ($0: GoMapValue<K, VBase>) => int, $go$map_construct$T2_to_MapOf_T0_To_T2: ($0: VBuilder) => GoMapValue<K, VBuilder>, $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct, $1: int) => GoMapValue<K, GoEmptyStruct>, $go$zero$void_to_T2: () => VBuilder): void {
         MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).dirty = $go$map_construct$T2_to_MapOf_T0_To_T2($go$zero$void_to_T2());
         MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).deleted = $go$map_construct$Struct_void_int_to_MapOf_T0_To_Struct_void(GoEmptyStruct.$zero(), $go$length$MapOf_T0_To_T1_to_int(MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).base));
         const __gotots_range_0 = MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).base;
@@ -69,7 +69,7 @@ export class MapBuilder<K, VBase, VBuilder> {
             if (!__gotots_range_value_1[1]) {
                 continue;
             }
-            const __gotots_range_value_2 = $go$copy$T0_to_T0(__gotots_range_value_0);
+            const __gotots_range_value_2 = __gotots_range_value_0;
             let key: K = __gotots_range_value_2;
             MapBuilder.$storageOf((mb ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).deleted.store(key, new GoEmptyStruct);
         }

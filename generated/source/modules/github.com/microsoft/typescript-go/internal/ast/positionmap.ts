@@ -26,7 +26,9 @@ export class PositionMap {
         let hi = __gotots_assign_1;
         for (; lo < hi;) {
             let mid = lo + goNumberIntegerDivide((hi - lo), 2);
-            let utf16Pos = positionMapEntry.$storageOf(positionMapEntry.$fromStorage((pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).utf8Pos - positionMapEntry.$storageOf(positionMapEntry.$fromStorage((pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).delta;
+            let utf16Pos = (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+                (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).utf8Pos - (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+                (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).delta;
             if (utf16Pos <= utf16Offset) {
                 lo = mid + 1;
             }
@@ -37,7 +39,8 @@ export class PositionMap {
         if (lo === 0) {
             return utf16Offset;
         }
-        return utf16Offset + positionMapEntry.$storageOf(positionMapEntry.$fromStorage((pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(lo - 1))).delta;
+        return utf16Offset + (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+            (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(lo - 1))).delta;
     }
     static UTF8ToUTF16(pm: {
         value: PositionMap;
@@ -51,7 +54,8 @@ export class PositionMap {
         let hi = __gotots_assign_3;
         for (; lo < hi;) {
             let mid = lo + goNumberIntegerDivide((hi - lo), 2);
-            if (positionMapEntry.$storageOf(positionMapEntry.$fromStorage((pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).utf8Pos <= utf8Offset) {
+            if ((void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+                (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(mid))).utf8Pos <= utf8Offset) {
                 lo = mid + 1;
             }
             else {
@@ -61,7 +65,8 @@ export class PositionMap {
         if (lo === 0) {
             return utf8Offset;
         }
-        return utf8Offset - positionMapEntry.$storageOf(positionMapEntry.$fromStorage((pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(lo - 1))).delta;
+        return utf8Offset - (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+            (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries.get(lo - 1))).delta;
     }
 }
 export type positionMapEntry$Storage = {
@@ -138,25 +143,27 @@ export function ComputePositionMap(text: gostring): {
             utf16Size = 2;
         }
         delta += size - utf16Size;
-        const __gotots_slice_build_0 = (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries;
+        const __gotots_slice_build_0: PositionMap["entries"] = (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries;
         const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
             __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, positionMapEntry.$storageOf(positionMapEntry.$fromStorage({
-                utf8Pos: i + size,
-                delta: delta
-            })));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+                {
+                    utf8Pos: i + size,
+                    delta: delta
+                })));
         }
         else {
             __gotots_slice_build_1 = goSliceAllocate<positionMapEntry$Storage>(__gotots_slice_build_2, RuntimeSlice.$grownCapacity(__gotots_slice_build_0.capacity, __gotots_slice_build_2));
             for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_0.length; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.set(__gotots_slice_build_3, positionMapEntry.$storageOf(positionMapEntry.$copy(positionMapEntry.$fromStorage(__gotots_slice_build_0.get(__gotots_slice_build_3)))));
             }
-            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, positionMapEntry.$storageOf(positionMapEntry.$fromStorage({
-                utf8Pos: i + size,
-                delta: delta
-            })));
+            __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void positionMapEntry.$storageOf, (void positionMapEntry.$fromStorage,
+                {
+                    utf8Pos: i + size,
+                    delta: delta
+                })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
                 __gotots_slice_build_1.$initialize(__gotots_slice_build_3, positionMapEntry.$storageOf(positionMapEntry.$zero()));
             }

@@ -42,7 +42,7 @@ export class host {
     static SetMTime(b: {
         value: host;
     } | undefined, fileName: gostring, mTime: time__from_gostdlib.Time): GoInterface | undefined {
-        const __gotots_receiver_3 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
+        const __gotots_receiver_3: host["host"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host;
         const __gotots_receiver_4 = goInterfaceNonNil<CompilerHost__from_compiler>(__gotots_receiver_3).FS();
         const __gotots_argument_1 = fileName;
         const __gotots_struct_0 = named_time.TimeOperations.$zero();

@@ -441,7 +441,7 @@ export class Project {
         value: Project;
     } | undefined, fileName: gostring): Path__from_tspath {
         const __gotots_argument_7 = fileName;
-        const __gotots_argument_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentDirectory;
+        const __gotots_argument_8: Project["currentDirectory"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentDirectory;
         const __gotots_receiver_10 = compilerHost.FS((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host);
         const __gotots_argument_9 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_10).UseCaseSensitiveFileNames();
         return ToPath__from_tspath(__gotots_argument_7, __gotots_argument_8, __gotots_argument_9);
@@ -497,7 +497,7 @@ export function NewInferredProject(currentDirectory: gostring, compilerOptions: 
     }
     const __gotots_argument_1 = compilerOptions;
     const __gotots_argument_2 = rootFileNames;
-    const __gotots_receiver_8 = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+    const __gotots_receiver_8: snapshotFSBuilder["fs"] = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
     const __gotots_field_11 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_8).UseCaseSensitiveFileNames();
     const __gotots_argument_3 = new ComparePathsOptions__from_tspath(__gotots_field_11, currentDirectory);
     (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CommandLine = NewParsedCommandLine__from_tsoptions(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
@@ -518,16 +518,16 @@ export function NewProject(configFileName: gostring, kind: Kind, currentDirector
     } | undefined = { value: new Project(kind, currentDirectory, configFileName, new Path__from_tspath(""), true, new Path__from_tspath(""), void 0, void 0, void 0, named_sync.SyncOnceOperations.$zero(), void 0, new ProgramUpdateKind(0), 0n, void 0, void 0, void 0, void 0, void 0, RuntimeSlice.nil<gostring>()) };
     const __gotots_argument_10 = configFileName;
     const __gotots_argument_11 = currentDirectory;
-    const __gotots_receiver_11 = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+    const __gotots_receiver_11: snapshotFSBuilder["fs"] = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
     const __gotots_argument_12 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_11).UseCaseSensitiveFileNames();
     (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath = ToPath__from_tspath(__gotots_argument_10, __gotots_argument_11, __gotots_argument_12);
     const __gotots_argument_17 = "program files for " + configFileName;
     const __gotots_argument_18 = 7;
     const __gotots_argument_19 = ((GetClientCapabilities__from_lsproto((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedClientCapabilities__from_lsproto>).value.Workspace.DidChangeWatchedFiles.RelativePatternSupport;
-    const __gotots_argument_13 = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
-    const __gotots_argument_14 = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DefaultLibraryPath;
-    const __gotots_argument_15 = (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentDirectory;
-    const __gotots_receiver_12 = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
+    const __gotots_argument_13: SessionOptions["CurrentDirectory"] = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CurrentDirectory;
+    const __gotots_argument_14: SessionOptions["DefaultLibraryPath"] = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DefaultLibraryPath;
+    const __gotots_argument_15: Project["currentDirectory"] = (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.currentDirectory;
+    const __gotots_receiver_12: snapshotFSBuilder["fs"] = ((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
     const __gotots_argument_16 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_12).UseCaseSensitiveFileNames();
     const __gotots_argument_20 = createResolutionLookupGlobMapper(__gotots_argument_13, __gotots_argument_14, __gotots_argument_15, __gotots_argument_16);
     (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programFilesWatch = NewWatchedFiles$PointerTo_Named_collections$SyncSetOf_Named_tspath$Path(__gotots_argument_17, __gotots_argument_18, __gotots_argument_19, __gotots_argument_20);

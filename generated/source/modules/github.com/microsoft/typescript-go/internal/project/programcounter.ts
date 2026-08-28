@@ -30,7 +30,7 @@ export class programCounter {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: programCounter["mu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -95,7 +95,7 @@ export class programCounter {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: programCounter["mu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
@@ -143,14 +143,14 @@ export class programCounter {
             try {
                 __gotots_return_block_0: {
                     sync__from_gostdlib.Mutex.Lock((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    const __gotots_receiver_0: programCounter["mu"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
                     if ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refs.isNil()) {
                         (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refs = GoMap.make(0, []);
                     }
-                    const __gotots_store_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refs;
+                    const __gotots_store_0: programCounter["refs"] = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refs;
                     const __gotots_store_1 = program;
                     __gotots_store_0.store(__gotots_store_1, __gotots_store_0.lookup(__gotots_store_1) + 1);
                 }

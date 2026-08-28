@@ -123,70 +123,93 @@ export function $initialize(): void {
         $state.organizeImportsComparers = RuntimeSlice.literal<(($0: gostring, $1: gostring) => int) | undefined>([$state.caseInsensitiveOrganizeImportsComparer.get(0), $state.caseSensitiveOrganizeImportsComparer.get(0)]);
     }
     {
-        $state.scriptElementKindModifierNames = RuntimeSlice.literal<$goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_$Storage>([$goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierPublic$constant(),
-                name: "public"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierPrivate$constant(),
-                name: "private"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierProtected$constant(),
-                name: "protected"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierExported$constant(),
-                name: "export"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierAmbient$constant(),
-                name: "declare"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierStatic$constant(),
-                name: "static"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierAbstract$constant(),
-                name: "abstract"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierOptional$constant(),
-                name: "optional"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierDeprecated$constant(),
-                name: "deprecated"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierDts$constant(),
-                name: ".d.ts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierTs$constant(),
-                name: ".ts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierTsx$constant(),
-                name: ".tsx"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierJs$constant(),
-                name: ".js"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierJsx$constant(),
-                name: ".jsx"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierJson$constant(),
-                name: ".json"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierDmts$constant(),
-                name: ".d.mts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierMts$constant(),
-                name: ".mts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierMjs$constant(),
-                name: ".mjs"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierDcts$constant(),
-                name: ".d.cts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierCts$constant(),
-                name: ".cts"
-            })), $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf($goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage({
-                flag: ScriptElementKindModifierCjs$constant(),
-                name: ".cjs"
-            }))]);
+        $state.scriptElementKindModifierNames = RuntimeSlice.literal<$goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_$Storage>([
+            (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierPublic$constant(),
+                    name: "public"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierPrivate$constant(),
+                    name: "private"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierProtected$constant(),
+                    name: "protected"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierExported$constant(),
+                    name: "export"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierAmbient$constant(),
+                    name: "declare"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierStatic$constant(),
+                    name: "static"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierAbstract$constant(),
+                    name: "abstract"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierOptional$constant(),
+                    name: "optional"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierDeprecated$constant(),
+                    name: "deprecated"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierDts$constant(),
+                    name: ".d.ts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierTs$constant(),
+                    name: ".ts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierTsx$constant(),
+                    name: ".tsx"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierJs$constant(),
+                    name: ".js"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierJsx$constant(),
+                    name: ".jsx"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierJson$constant(),
+                    name: ".json"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierDmts$constant(),
+                    name: ".d.mts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierMts$constant(),
+                    name: ".mts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierMjs$constant(),
+                    name: ".mjs"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierDcts$constant(),
+                    name: ".d.cts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierCts$constant(),
+                    name: ".cts"
+                })), (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$storageOf, (void $goStruct$Struct_Field_lsutil_u24_flag_Named_lsutil$ScriptElementKindModifier_Tag__empty__Field_lsutil_u24_name_string_Tag__empty_.$fromStorage,
+                {
+                    flag: ScriptElementKindModifierCjs$constant(),
+                    name: ".cjs"
+                })),
+        ]);
     }
     {
         $state.FileExtensionKindModifiers = 4193280;

@@ -138,11 +138,7 @@ export class encoderState {
                     const __gotots_argument_5 = b.slice(0, pos, null);
                     const __gotots_argument_6 = b2;
                     const __gotots_store_21 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                    const __gotots_argument_7 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                        return Flags__from_jsonflags.$fromStorage($go$storage);
-                    }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                        return Flags__from_jsonflags.$storageOf($go$value);
-                    });
+                    const __gotots_argument_7 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     const __gotots_results_4 = AppendQuote__from_jsonwire(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7);
                     b = __gotots_results_4[0];
                     err__shadow_1 = __gotots_results_4[1];
@@ -230,7 +226,9 @@ export class encoderState {
                 {
                     let m = ((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.state.Tokens.NeedIndent(next);
                     if (m > 0) {
-                        n += 1 + CoderValues__from_jsonopts.$storageOf(CoderValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct).CoderValues)).IndentPrefix.length + (m - 1) * CoderValues__from_jsonopts.$storageOf(CoderValues__from_jsonopts.$fromStorage(Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct).CoderValues)).Indent.length;
+                        n += 1 + (void CoderValues__from_jsonopts.$storageOf, (void CoderValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct).CoderValues)).IndentPrefix.length + (m - 1) * (void CoderValues__from_jsonopts.$storageOf, (void CoderValues__from_jsonopts.$fromStorage,
+                            Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct).CoderValues)).Indent.length;
                     }
                 }
             }
@@ -473,11 +471,7 @@ export class encoderState {
                     const __gotots_receiver_0 = t;
                     const __gotots_argument_0 = b;
                     const __gotots_store_4 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                        return Flags__from_jsonflags.$fromStorage($go$storage);
-                    }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                        return Flags__from_jsonflags.$storageOf($go$value);
-                    });
+                    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     const __gotots_results_0 = __gotots_receiver_0.$go$private$jsontext$appendString(__gotots_argument_0, __gotots_argument_1);
                     b = __gotots_results_0[0];
                     err = __gotots_results_0[1];
@@ -508,11 +502,7 @@ export class encoderState {
                     const __gotots_receiver_1 = t;
                     const __gotots_argument_2 = b;
                     const __gotots_store_7 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                    const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                        return Flags__from_jsonflags.$fromStorage($go$storage);
-                    }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                        return Flags__from_jsonflags.$storageOf($go$value);
-                    });
+                    const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     const __gotots_results_1 = __gotots_receiver_1.$go$private$jsontext$appendNumber(__gotots_argument_2, __gotots_argument_3);
                     b = __gotots_results_1[0];
                     err = __gotots_results_1[1];
@@ -540,11 +530,7 @@ export class encoderState {
                     objectNamespaceStack.$go$private$jsontext$push(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "Namespaces"));
                 }
                 const __gotots_store_12 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                    return Flags__from_jsonflags.$fromStorage($go$storage);
-                }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                    return Flags__from_jsonflags.$storageOf($go$value);
-                }), TagFlags$constant__from_jsonflags());
+                Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), TagFlags$constant__from_jsonflags());
                 break;
             }
             case 125: {
@@ -569,11 +555,7 @@ export class encoderState {
                 const __gotots_store_16 = ((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.state;
                 err = stateMachine.$go$private$jsontext$pushArray(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "Tokens"));
                 const __gotots_store_17 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                    return Flags__from_jsonflags.$fromStorage($go$storage);
-                }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                    return Flags__from_jsonflags.$storageOf($go$value);
-                }), TagFlags$constant__from_jsonflags());
+                Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), TagFlags$constant__from_jsonflags());
                 break;
             }
             case 93: {
@@ -902,11 +884,7 @@ export class encoderState {
                             const __gotots_argument_22 = dst;
                             const __gotots_argument_23 = new Value(src.$value.slice(n, null, null)).$value;
                             const __gotots_store_54 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                            const __gotots_argument_24 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_54, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                                return Flags__from_jsonflags.$fromStorage($go$storage);
-                            }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                                return Flags__from_jsonflags.$storageOf($go$value);
-                            });
+                            const __gotots_argument_24 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_54, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                             const __gotots_results_23 = ReformatString__from_jsonwire(__gotots_argument_22, __gotots_argument_23, __gotots_argument_24);
                             dst = __gotots_results_23[0];
                             m = __gotots_results_23[1];
@@ -1094,11 +1072,7 @@ export class encoderState {
                     const __gotots_argument_15 = dst;
                     const __gotots_argument_16 = src.$value;
                     const __gotots_store_50 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                    const __gotots_argument_17 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                        return Flags__from_jsonflags.$fromStorage($go$storage);
-                    }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                        return Flags__from_jsonflags.$storageOf($go$value);
-                    });
+                    const __gotots_argument_17 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     return ReformatString__from_jsonwire(__gotots_argument_15, __gotots_argument_16, __gotots_argument_17);
                     break;
                 }
@@ -1113,11 +1087,7 @@ export class encoderState {
                     const __gotots_argument_18 = dst;
                     const __gotots_argument_19 = src.$value;
                     const __gotots_store_51 = Struct__from_jsonopts.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState>).value.Struct);
-                    const __gotots_argument_20 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_51, "Flags"), ($go$storage: Flags__from_jsonflags$Storage): Flags__from_jsonflags => {
-                        return Flags__from_jsonflags.$fromStorage($go$storage);
-                    }, ($go$value: Flags__from_jsonflags): Flags__from_jsonflags$Storage => {
-                        return Flags__from_jsonflags.$storageOf($go$value);
-                    });
+                    const __gotots_argument_20 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_51, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     return ReformatNumber__from_jsonwire(__gotots_argument_18, __gotots_argument_19, __gotots_argument_20);
                     break;
                 }
