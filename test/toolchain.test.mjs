@@ -175,11 +175,16 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
     run(reopened.binaries.npm, ["--version"], toolchainEnvironment(reopened)).trim(),
     "10.0.0",
   );
+  assert.equal(
+    run(reopened.binaries.esbuild, ["--version"], toolchainEnvironment(reopened)).trim(),
+    "0.28.0",
+  );
 
   const module = reopened.manifest.goModules.modules[0];
   for (const path of [
     join(reopened.packages.host.root, "dist", "index.js"),
     reopened.binaries.gotots,
+    reopened.binaries.esbuild,
     reopened.binaries.tsgoAstPrinter,
     reopened.binaries.tsgo,
     reopened.binaries.go,
@@ -400,7 +405,8 @@ test("product consumers have one immutable path and a closed environment", async
 
   const repositoryRoot = resolve(".");
   for (const script of [
-    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs", "target.mjs",
+    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs",
+    "seal-executable.mjs", "target.mjs",
     "verify-target-manifest.mjs", "verify-typescript-target.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
@@ -408,6 +414,7 @@ test("product consumers have one immutable path and a closed environment", async
   for (const script of [
     "build.sh", "check-scalar.sh", "replay.sh", "run-exact-toolchain.sh", "target.mjs",
     "verify-typescript-target.mjs", "assemble.mjs", "differential.mjs",
+    "seal-executable.mjs",
   ]) {
     const text = await readFile(join(repositoryRoot, "scripts", script), "utf8");
     assert.doesNotMatch(text, /\.temp\/tool-runtime|\.temp\/bin|go tool tsgo|hostPlatform/u, script);

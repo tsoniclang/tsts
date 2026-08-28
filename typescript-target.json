@@ -1,6 +1,9 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "execution": "synchronous",
+  "assembly": {
+    "modulePackaging": "single-esm"
+  },
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",

@@ -78,6 +78,25 @@ inline, and a channel or synchronization operation that would suspend fails
 loudly at its typed owner. This is a bounded serial product semantics, not a
 claim of Go concurrency parity, and no alternate execution profile exists.
 
+`typescript-target.json` also selects one executable packaging route:
+`single-esm`. After strict TypeScript checking and JavaScript emission, TSTS
+verifies implementation contracts against the unbundled graph, then invokes
+the exact esbuild binary sealed in the immutable toolchain. The bundler
+aggregates the reachable ESM graph without minification and leaves only
+`node:` built-ins external. The committed TypeScript remains the reviewable
+product source; the transient executable is `out/tsts.mjs` plus one canonical
+manifest containing the exact input graph, external set, bundler identity, and
+output digest. The superseded multi-file JavaScript graph is removed only by
+the successful atomic packaging transaction. No text rewrite or second
+executable route survives.
+
+Module aggregation is a bounded internal equivalence envelope. It may remove
+loader and per-module initialization overhead, but it must preserve ESM
+dependency initialization order and may not change the compiler's exit status,
+stdout, stderr, or emitted files. Deterministic bundle bytes, side-effect
+ordering, exact input membership, external membership, output mutation, and
+failed-transaction retention are permanent gates.
+
 ## Product Implementations
 
 `implementations/xxh3` atomically replaces
@@ -164,7 +183,8 @@ once must fail before publication.
 
 `npm run replay` resumes from the current certified generated source and runs
 only JavaScript emission from `.temp/target`, provider/runtime assembly,
-native TS-Go construction, and the exact runtime differential. It uses the
+implementation verification, deterministic executable bundling, native TS-Go
+construction, and the exact runtime differential. It uses the
 same guarded execution and output preservation policy as the full check.
 
 `npm run generate` executes that complete checkpoint in publication mode and

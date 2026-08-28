@@ -16,14 +16,28 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "execution", "optimizations"]),
+    new Set(["schemaVersion", "execution", "assembly", "optimizations"]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 5) {
-    throw new Error("TypeScript target profile schemaVersion must be 5");
+  if (parsed["schemaVersion"] !== 6) {
+    throw new Error("TypeScript target profile schemaVersion must be 6");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
+  }
+  const assembly = parsed["assembly"];
+  if (!isRecord(assembly)) {
+    throw new Error("TypeScript target profile assembly must be an object");
+  }
+  rejectUnknownKeys(
+    assembly,
+    new Set(["modulePackaging"]),
+    "TypeScript target profile assembly",
+  );
+  if (assembly["modulePackaging"] !== "single-esm") {
+    throw new Error(
+      "TSTS TypeScript target modulePackaging must be 'single-esm'",
+    );
   }
   const optimizations = parsed["optimizations"];
   if (!isRecord(optimizations)) {
@@ -60,6 +74,7 @@ export async function readTypeScriptTargetProfile(path) {
   return Object.freeze({
     digest,
     execution: parsed["execution"],
+    assembly: freezeJson(assembly),
     optimizations: freezeJson(optimizations),
   });
 }

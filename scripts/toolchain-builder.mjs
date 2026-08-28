@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import {
+  copyFile,
   lstat,
   mkdir,
   readFile,
@@ -49,6 +50,7 @@ import {
 } from "./toolchain-snapshots.mjs";
 
 const installRoots = Object.freeze([
+  ".",
   "tools/gotots/gostdlib",
   "tools/typescript-runtime",
   "tools/tsts-legacy",
@@ -144,6 +146,7 @@ export async function createToolchainCandidate(
     node,
     buildEnvironment,
   );
+  await stageEsbuild(repositoryRoot, stagedRoot, buildEnvironment);
   const afterBuild = await verifyRepositoryAuthority(repositoryRoot, authorityEnvironment);
   if (!isDeepStrictEqual(afterBuild, selection)) {
     throw new Error("Committed authority changed while the toolchain was built");
@@ -407,6 +410,27 @@ async function buildJavaScriptPackages(repositoryRoot, tsgo, node, environment) 
       `build ${path}`,
     );
   }
+}
+
+async function stageEsbuild(repositoryRoot, stagedRoot, environment) {
+  const source = join(repositoryRoot, "node_modules", "esbuild", "bin", "esbuild");
+  const selected = await lstat(source);
+  if (!selected.isFile() || selected.nlink !== 1 || (selected.mode & 0o111) === 0) {
+    throw new Error("Installed esbuild is not a unique executable file");
+  }
+  const version = runCapture(
+    source,
+    ["--version"],
+    repositoryRoot,
+    environment,
+    "inspect esbuild executable",
+  ).trim();
+  if (version !== "0.28.0") {
+    throw new Error(`Installed esbuild version '${version}' is not 0.28.0`);
+  }
+  const target = join(stagedRoot, componentByKey.get("esbuild").target);
+  await mkdir(dirname(target), { recursive: true });
+  await copyFile(source, target);
 }
 
 async function assemblePackages(repositoryRoot, stagedRoot, node, environment) {

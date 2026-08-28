@@ -11,5 +11,8 @@
     "generate": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check.sh publish",
     "replay": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/replay.sh",
     "test:assembly": "\"$TSTS_NODE_BUILDER\" --test 'test/*.test.mjs'"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.0"
   }
 }

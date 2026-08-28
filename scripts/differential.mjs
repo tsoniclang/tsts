@@ -18,7 +18,7 @@ const generatedCompiler = join(
   ".temp",
   "target",
   "out",
-  "runner.js",
+  "tsts.mjs",
 );
 
 function execute(command, arguments_) {

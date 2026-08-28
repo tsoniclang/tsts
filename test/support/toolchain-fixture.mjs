@@ -63,7 +63,11 @@ export async function createToolchainFixture(prefix) {
   await mkdir(scratchRoot, { recursive: true });
   const repositoryRoot = await mkdtemp(join(scratchRoot, prefix));
   runGit(repositoryRoot, ["init", "--quiet"]);
-  await writeFile(join(repositoryRoot, ".gitignore"), ".temp/\n", "utf8");
+  await writeFile(
+    join(repositoryRoot, ".gitignore"),
+    ".temp/\nnode_modules/\n",
+    "utf8",
+  );
   await writeFile(join(repositoryRoot, "AGENTS.md"), "fixture authority\n", "utf8");
   await writeFile(join(repositoryRoot, "CLAUDE.md"), "fixture authority\n", "utf8");
   await writeFile(join(repositoryRoot, "gotots.json"), `${JSON.stringify({
@@ -478,7 +482,7 @@ process.exit(0);
 `;
 
 const fakeNpmProgram = `import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 const args = process.argv.slice(2);
 const npmRoot = resolve(dirname(new URL(import.meta.url).pathname), "..");
@@ -510,6 +514,12 @@ if (args[0] === "pack") {
 const prefixIndex = args.indexOf("--prefix");
 const prefix = prefixIndex === -1 ? process.cwd() : resolve(args[prefixIndex + 1]);
 if (args.includes("ci")) {
+  if (!prefix.includes("/tools/")) {
+    const esbuild = join(prefix, "node_modules", "esbuild", "bin", "esbuild");
+    mkdirSync(dirname(esbuild), { recursive: true });
+    writeFileSync(esbuild, "#!/usr/bin/env node\\nprocess.stdout.write('0.28.0\\\\n');\\n");
+    chmodSync(esbuild, 0o755);
+  }
   if (prefix.endsWith("/tools/gotots/gostdlib")) {
     const node = join(prefix, "node_modules", "@types", "node");
     const undici = join(prefix, "node_modules", "undici-types");
