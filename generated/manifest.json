@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "product": "@tsoniclang/tsts",
-  "canonicalSemanticDigest": "a3a86944267e41877ab54f798340439bd80038e34687c5dedb5dc7dbc857565b",
-  "targetProfileDigest": "79a7eab9bcaa6635dc69e7855a10ad6be96a885a38b44c0b0286e8e556363cff",
-  "toolchainDigest": "3fc8c3384b1e882296e949b574d4ce904c33ba4b57556123d592893504a1a12f",
+  "canonicalSemanticDigest": "2cd7e24b0c6632891d30abefad6e201cadb5ea31606aaa3aac38139b9d0c0275",
+  "targetProfileDigest": "5e7dc3d38340d9d30083da2fe0a596b80f70aee65adc04b694533a82e4537133",
+  "toolchainDigest": "fd63f37149884d35c34f46c7bd88d4ec1c339e37b81dc0cd158fe087ae0a0420",
   "source": {
-    "digest": "8a95f98ee24559d3a6ed0222ca4eb860aaeb5969a345559815b2e22822359106",
-    "files": 1413,
-    "bytes": 90205216
+    "digest": "5d6bcc6ee1e5a9223172b01cee4b81ab366d3f03993d9c0d5df54ccd18dc420e",
+    "files": 1415,
+    "bytes": 90204058
   },
   "entrypoint": "source/runner.ts"
 }

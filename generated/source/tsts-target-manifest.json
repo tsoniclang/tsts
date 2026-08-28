@@ -1,9 +1,21 @@
 {
   "schemaVersion": 3,
-  "canonicalSemanticDigest": "a3a86944267e41877ab54f798340439bd80038e34687c5dedb5dc7dbc857565b",
-  "targetProfileDigest": "79a7eab9bcaa6635dc69e7855a10ad6be96a885a38b44c0b0286e8e556363cff",
-  "toolchainDigest": "3fc8c3384b1e882296e949b574d4ce904c33ba4b57556123d592893504a1a12f",
+  "canonicalSemanticDigest": "2cd7e24b0c6632891d30abefad6e201cadb5ea31606aaa3aac38139b9d0c0275",
+  "targetProfileDigest": "5e7dc3d38340d9d30083da2fe0a596b80f70aee65adc04b694533a82e4537133",
+  "toolchainDigest": "fd63f37149884d35c34f46c7bd88d4ec1c339e37b81dc0cd158fe087ae0a0420",
   "members": [
+    {
+      "path": "implementations/tsts/checker-hotpaths.ts",
+      "type": "file",
+      "size": 3656,
+      "digest": "f87b7752fee6799e9796fe61359a4f41994e74c6ec856295493ca8d6b4d772c5"
+    },
+    {
+      "path": "implementations/tsts/core-hotpaths.ts",
+      "type": "file",
+      "size": 3832,
+      "digest": "5999ef22f2b679958c29054296c3db65c8e16ab41006b50584d4bd2757fa8ec2"
+    },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
       "type": "file",
@@ -511,8 +523,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
       "type": "file",
-      "size": 5705357,
-      "digest": "15ceead06b4c06a1b97f0775f4ded1a31cbb4c15a8fa8615bc90832af7336522"
+      "size": 5701993,
+      "digest": "1a9ff36cfae068bfe4a422e1b2d79e76e1d958bc702b39b795d0fc540f8aa4f2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/emitresolver.ts",
@@ -577,8 +589,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
       "type": "file",
-      "size": 806233,
-      "digest": "808c90b0714b7531650003071b99dedf42be110954b6c341421227ac75c7f0b9"
+      "size": 805969,
+      "digest": "fcfbfb8c05c662147688605657760adc8efdc1a00cec97bccab2455345475d7d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderscopes.ts",
@@ -769,8 +781,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/arena.ts",
       "type": "file",
-      "size": 10745,
-      "digest": "ae1ac7e7bff1925f1c748b20b70a15321e2bdece02330fcd64f4b10a3d909ff7"
+      "size": 9135,
+      "digest": "fc4bd7fc66cec9bb90b7513f78ba716cf887e09b4fe047ce6e66da44654d2b64"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/bfs.ts",
@@ -823,8 +835,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/linkstore.ts",
       "type": "file",
-      "size": 5412,
-      "digest": "8cf901e20f5ee50ed72a17e7eb2a38268ef3445d147b43469a89f8a77d4bb01d"
+      "size": 3958,
+      "digest": "641141298082e5f7f99cf7be0663abf17b59ccd603eb4c0e160ede842e3e31a8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/modulekind_stringer_generated.ts",
@@ -2239,8 +2251,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/destructuring.ts",
       "type": "file",
-      "size": 76867,
-      "digest": "b5d3a283ea67da15ff18dfb9630285433fe067cfc5aaa9780e78556160ced338"
+      "size": 76647,
+      "digest": "02ab290da394b387ba18abb8ae1a96b7180555dfa5a97c7accce9618ac519307"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/async.ts",
@@ -2587,8 +2599,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/vfs/vfsmatch/vfsmatch.ts",
       "type": "file",
-      "size": 65465,
-      "digest": "54ab68a54d0e0563b09c529a59461655653e068ee6fb61e82e4ebd2fc481b634"
+      "size": 64241,
+      "digest": "6d9cc0f9fd7ccbdde586f050fdc638b6d980d0b2dcdd77480cab3da9641589ae"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/vfs/wrapvfs/wrapvfs.ts",
@@ -8383,8 +8395,8 @@
     {
       "path": "support/generics/concretizations/slices/SortFunc.ts",
       "type": "file",
-      "size": 45004,
-      "digest": "11abbf502ae46743066aabcdf1045981c2eee0c60b29eab893823772a4aeb60c"
+      "size": 43241,
+      "digest": "1f0d1ae96c129b596687ec3222a65d6c059fb7ff0b5ad1aa599e8a1860d940f7"
     },
     {
       "path": "support/generics/concretizations/slices/SortStableFunc.ts",
@@ -8473,8 +8485,8 @@
     {
       "path": "tsonic-typescript-optimization.json",
       "type": "file",
-      "size": 166099,
-      "digest": "f8119214f0fc600bdbf261cdd8fd2cfb69a58951aa8efe93fce3eb87b67ba6f3"
+      "size": 166964,
+      "digest": "6db7fdebbf07559f76dcfaf13912088dfcdb257e2a0efdceb9294633de692de7"
     }
   ]
 }

@@ -830,11 +830,7 @@ export class globMatcher {
         for (let __gotots_range_index_16 = 0; __gotots_range_index_16 < __gotots_range_16.length; __gotots_range_index_16++) {
             const __gotots_range_value_16 = __gotots_range_index_16;
             let i = __gotots_range_value_16;
-            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).excludes, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), prefix, suffix)) {
+            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).excludes, i), globPattern.$fromStorage, globPattern.$storageOf), prefix, suffix)) {
                 return false;
             }
         }
@@ -845,11 +841,7 @@ export class globMatcher {
         for (let __gotots_range_index_17 = 0; __gotots_range_index_17 < __gotots_range_17.length; __gotots_range_index_17++) {
             const __gotots_range_value_17 = __gotots_range_index_17;
             let i = __gotots_range_value_17;
-            if (globPattern.$go$private$vfsmatch$matchesPrefixParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).includes, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), prefix, suffix)) {
+            if (globPattern.$go$private$vfsmatch$matchesPrefixParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).includes, i), globPattern.$fromStorage, globPattern.$storageOf), prefix, suffix)) {
                 return true;
             }
         }
@@ -863,11 +855,7 @@ export class globMatcher {
         for (let __gotots_range_index_14 = 0; __gotots_range_index_14 < __gotots_range_14.length; __gotots_range_index_14++) {
             const __gotots_range_value_14 = __gotots_range_index_14;
             let i = __gotots_range_value_14;
-            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).excludes, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), prefix, suffix)) {
+            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).excludes, i), globPattern.$fromStorage, globPattern.$storageOf), prefix, suffix)) {
                 return [0, false];
             }
         }
@@ -881,11 +869,7 @@ export class globMatcher {
         for (let __gotots_range_index_15 = 0; __gotots_range_index_15 < __gotots_range_15.length; __gotots_range_index_15++) {
             const __gotots_range_value_15 = __gotots_range_index_15;
             let i = __gotots_range_value_15;
-            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).includes, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), prefix, suffix)) {
+            if (globPattern.$go$private$vfsmatch$matchesParts(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).includes, i), globPattern.$fromStorage, globPattern.$storageOf), prefix, suffix)) {
                 return [i, true];
             }
         }
@@ -1068,11 +1052,7 @@ export class SpecMatcher {
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_2 = __gotots_range_index_2;
             let i = __gotots_range_value_2;
-            if (globPattern.$go$private$vfsmatch$matches(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).patterns, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), path)) {
+            if (globPattern.$go$private$vfsmatch$matches(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).patterns, i), globPattern.$fromStorage, globPattern.$storageOf), path)) {
                 return i;
             }
         }
@@ -1083,11 +1063,7 @@ export class SpecMatcher {
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_1 = __gotots_range_index_1;
             let i = __gotots_range_value_1;
-            if (globPattern.$go$private$vfsmatch$matches(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).patterns, i), ($go$storage: globPattern$Storage): globPattern => {
-                return globPattern.$fromStorage($go$storage);
-            }, ($go$value: globPattern): globPattern$Storage => {
-                return globPattern.$storageOf($go$value);
-            }), path)) {
+            if (globPattern.$go$private$vfsmatch$matches(tsonicTypeScriptRuntime.projectLocation<globPattern$Storage, globPattern>(goSliceAddress<globPattern$Storage>((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).patterns, i), globPattern.$fromStorage, globPattern.$storageOf), path)) {
                 return true;
             }
         }

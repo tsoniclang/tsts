@@ -1,6 +1,7 @@
 import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { int } from "@gotots/runtime/scalars.js";
 import type { GoContainerStorage } from "@gotots/runtime/storage.js";
+import { arenaNew } from "../../../../../../implementations/tsts/core-hotpaths.js";
 import * as generic_slices_kernel from "@gotots/gostdlib/internal/facets/generic-slices-kernel.js";
 import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
@@ -51,13 +52,7 @@ export class Arena<T> {
         return slice;
     }
     static New$kernel<T>(a: tsonicTypeScriptRuntime.Location<Arena<T>> | undefined, $go$capacity$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$convert$SliceOf_T0_to_SliceOf_T0: ($0: RuntimeSlice<GoContainerStorage<T>>) => RuntimeSlice<GoContainerStorage<T>>, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$index_address$SliceOf_T0_int_to_PointerTo_T0: ($0: RuntimeSlice<GoContainerStorage<T>>, $1: int) => tsonicTypeScriptRuntime.Location<T> | undefined, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T): tsonicTypeScriptRuntime.Location<T> | undefined {
-        if ($go$length$SliceOf_T0_to_int(Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data) === $go$capacity$SliceOf_T0_to_int(Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data)) {
-            let nextSize = nextArenaSize($go$length$SliceOf_T0_to_int(Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data));
-            Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data = generic_slices_kernel.SlicesGrowKernel<RuntimeSlice<GoContainerStorage<T>>, T, GoContainerStorage<T>>($go$convert$SliceOf_T0_to_SliceOf_T0, $go$convert$SliceOf_T0_to_SliceOf_T0, $go$copy$T0_to_T0, $go$from_container_storage$T0_to_T0, $go$to_container_storage$T0_to_T0, $go$zero$void_to_T0, RuntimeSlice.nil<GoContainerStorage<T>>(), BigInt.asIntN(64, goNumberToBigInt(nextSize)));
-        }
-        let index = $go$length$SliceOf_T0_to_int(Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data);
-        Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data = Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data.slice(0, index + 1, null);
-        return $go$index_address$SliceOf_T0_int_to_PointerTo_T0(Arena.$storageOf(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Arena<T>>).value).data, index);
+        return arenaNew(a, $go$capacity$SliceOf_T0_to_int, $go$convert$SliceOf_T0_to_SliceOf_T0, $go$copy$T0_to_T0, $go$from_container_storage$T0_to_T0, $go$index_address$SliceOf_T0_int_to_PointerTo_T0, $go$length$SliceOf_T0_to_int, $go$to_container_storage$T0_to_T0, $go$zero$void_to_T0);
     }
     static NewSlice$kernel<T>(a: tsonicTypeScriptRuntime.Location<Arena<T>> | undefined, $go$capacity$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$convert$SliceOf_T0_to_SliceOf_T0: ($0: RuntimeSlice<GoContainerStorage<T>>) => RuntimeSlice<GoContainerStorage<T>>, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, size: int): RuntimeSlice<GoContainerStorage<T>> {
         if (size === 0) {

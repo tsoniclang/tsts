@@ -2033,11 +2033,7 @@ export class NodeBuilderImpl {
                     for (let __gotots_range_index_47 = 0; __gotots_range_index_47 < __gotots_range_50.length; __gotots_range_index_47++) {
                         const __gotots_range_value_60 = __gotots_range_index_47;
                         let i = __gotots_range_value_60;
-                        let s: tsonicTypeScriptRuntime.Location<hoverStatement> | undefined = tsonicTypeScriptRuntime.projectLocation<hoverStatement$Storage, hoverStatement>(goSliceAddress<hoverStatement$Storage>(bodyStmts, i), ($go$storage: hoverStatement$Storage): hoverStatement => {
-                            return hoverStatement.$fromStorage($go$storage);
-                        }, ($go$value: hoverStatement): hoverStatement$Storage => {
-                            return hoverStatement.$storageOf($go$value);
-                        });
+                        let s: tsonicTypeScriptRuntime.Location<hoverStatement> | undefined = tsonicTypeScriptRuntime.projectLocation<hoverStatement$Storage, hoverStatement>(goSliceAddress<hoverStatement$Storage>(bodyStmts, i), hoverStatement.$fromStorage, hoverStatement.$storageOf);
                         if (hoverStatement.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<hoverStatement>).value).isLocal || IsExportDeclaration__from_ast(hoverStatement.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<hoverStatement>).value).node)) {
                             continue;
                         }
