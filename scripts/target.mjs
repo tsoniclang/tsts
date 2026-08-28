@@ -79,6 +79,7 @@ const project = {
       printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
       execution: targetProfile.execution,
       optimizations: targetProfile.optimizations,
+      representationTransports: targetProfile.representationTransports.callables,
     },
   }],
 };
@@ -202,11 +203,12 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
       "pointer",
       "scalar",
       "representationProjections",
+      "representationTransports",
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 26) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 26");
+  if (evidence["schemaVersion"] !== 27) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 27");
   }
   if (evidence["sourceExecution"] !== profile.execution) {
     throw new Error("TypeScript optimization evidence execution differs from the selected profile");
@@ -219,6 +221,19 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
   ].join("/");
   if (evidence["profileIdentity"] !== expectedIdentity) {
     throw new Error("TypeScript optimization evidence profile differs from the selected profile");
+  }
+  const transports = evidence["representationTransports"];
+  if (
+    !isRecord(transports) ||
+    transports["digest"] !== profile.representationTransports.digest ||
+    transports["contractCount"] !== profile.representationTransports.callables.length ||
+    typeof transports["selectedCallCount"] !== "number" ||
+    !Number.isSafeInteger(transports["selectedCallCount"]) ||
+    transports["selectedCallCount"] <= 0
+  ) {
+    throw new Error(
+      "TypeScript optimization evidence representation transports differ from the selected certified profile",
+    );
   }
   const membership = evidence["sourceMembership"];
   if (!Array.isArray(membership) || !membership.every((path) => typeof path === "string")) {

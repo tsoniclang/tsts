@@ -90,6 +90,17 @@ output digest. The superseded multi-file JavaScript graph is removed only by
 the successful atomic packaging transaction. No text rewrite or second
 executable route survives.
 
+The same profile derives its representation-transport callable set from the
+exact pinned GoToTS gostdlib manifest. Only signature-certified synchronous
+generic kernels with generated-caller representation facets enter that set.
+TSTS passes the immutable, canonically ordered module/export identities to the
+TypeScript target; it does not maintain a product-specific callable list. The
+target exact-joins each selected call and admits only generic-owned parameter
+shapes. Its sealed evidence must match the profile digest and callable count
+and must report at least one selected call for this product. A stale manifest,
+duplicate identity, concrete parameter, or same-spelled ordinary call remains
+an external boundary rather than becoming an optimization exception.
+
 Module aggregation is a bounded internal equivalence envelope. It may remove
 loader and per-module initialization overhead, but it must preserve ESM
 dependency initialization order and may not change the compiler's exit status,
@@ -175,8 +186,10 @@ Promise-bearing ABI. GoToTS owns the callable contract; the TypeScript target
 independently rejects authored suspension nodes from the exact checked tree
 before planning or printing. Its sealed evidence exact-joins
 `sourceExecution: "synchronous"`, the selected optimization identity, and the
-complete source membership. Neither gate decides semantics by marker spelling
-or repairs generated source. Adding an obsolete concurrency selector, changing
+complete source membership. Representation evidence separately exact-joins
+the certified generic-kernel transport digest, denominator, and selected-call
+count. Neither gate decides semantics by marker spelling or repairs generated
+source. Adding an obsolete concurrency selector, changing
 the target execution contract away from `synchronous`, removing the product
 runner's source-owned serial selection, or supplying that selection more than
 once must fail before publication.

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
+import { readRepresentationTransportContract } from "./representation-transport-contract.mjs";
 
 export async function readTypeScriptTargetProfile(path) {
   const text = await readFile(path, "utf8");
@@ -16,11 +17,17 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "execution", "assembly", "optimizations"]),
+    new Set([
+      "schemaVersion",
+      "execution",
+      "assembly",
+      "optimizations",
+      "evidence",
+    ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 6) {
-    throw new Error("TypeScript target profile schemaVersion must be 6");
+  if (parsed["schemaVersion"] !== 7) {
+    throw new Error("TypeScript target profile schemaVersion must be 7");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -67,7 +74,14 @@ export async function readTypeScriptTargetProfile(path) {
     "representationProjections",
     "preserve",
   );
-  const normalized = normalizeJson(parsed);
+  const representationTransports = await readRepresentationTransportContract(
+    path,
+    parsed["evidence"],
+  );
+  const normalized = normalizeJson({
+    profile: parsed,
+    representationTransports,
+  });
   const digest = createHash("sha256")
     .update(JSON.stringify(normalized))
     .digest("hex");
@@ -76,6 +90,7 @@ export async function readTypeScriptTargetProfile(path) {
     execution: parsed["execution"],
     assembly: freezeJson(assembly),
     optimizations: freezeJson(optimizations),
+    representationTransports,
   });
 }
 

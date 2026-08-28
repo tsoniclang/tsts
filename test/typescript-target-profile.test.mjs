@@ -13,8 +13,9 @@ test("target profile has one stable semantic identity", async () => {
   const root = await createScratch("identity-");
   const first = join(root, "first.json");
   const second = join(root, "second.json");
+  await writeRepresentationTransportManifest(root);
   await writeFile(first, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {
@@ -22,8 +23,10 @@ test("target profile has one stable semantic identity", async () => {
       scalarProjections: "closed-direct",
       representationProjections: "closed-direct",
     },
+    evidence: representationTransportEvidence(),
   }), "utf8");
   await writeFile(second, JSON.stringify({
+    evidence: representationTransportEvidence(),
     optimizations: {
       representationProjections: "closed-direct",
       scalarProjections: "closed-direct",
@@ -31,7 +34,7 @@ test("target profile has one stable semantic identity", async () => {
     },
     assembly: { modulePackaging: "single-esm" },
     execution: "synchronous",
-    schemaVersion: 6,
+    schemaVersion: 7,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
@@ -42,6 +45,14 @@ test("target profile has one stable semantic identity", async () => {
   assert.equal(Object.isFrozen(left.assembly), true);
   assert.deepEqual(left.optimizations, right.optimizations);
   assert.equal(Object.isFrozen(left.optimizations), true);
+  assert.deepEqual(left.representationTransports.callables, [{
+    kind: "generic-kernel",
+    moduleSpecifier: "@provider/kernel.js",
+    exportName: "Kernel",
+  }]);
+  assert.match(left.representationTransports.digest, /^[0-9a-f]{64}$/u);
+  assert.equal(Object.isFrozen(left.representationTransports), true);
+  assert.equal(Object.isFrozen(left.representationTransports.callables), true);
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
@@ -49,7 +60,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
   const root = await createScratch("removed-fields-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: { cooperativeEffects: "closed-program" },
@@ -59,7 +70,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
     /unsupported field 'cooperativeEffects'/u,
   );
   await writeFile(path, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {},
@@ -76,7 +87,7 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {},
@@ -93,7 +104,7 @@ test("target profile rejects non-synchronous execution", async () => {
   const root = await createScratch("execution-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "unrestricted",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {
@@ -113,7 +124,7 @@ test("target profile rejects alternate executable packaging", async () => {
   const root = await createScratch("packaging-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 6,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "multi-esm" },
     optimizations: {
@@ -125,6 +136,64 @@ test("target profile rejects alternate executable packaging", async () => {
   await assert.rejects(
     readTypeScriptTargetProfile(path),
     /modulePackaging must be 'single-esm'/u,
+  );
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile derives only certified generic-kernel transports", async () => {
+  const root = await createScratch("transports-");
+  await writeRepresentationTransportManifest(root, [
+    genericKernel("@provider/z.js", "Z"),
+    {
+      kind: "ordinary-facet",
+      export: "Ignored",
+    },
+    genericKernel("@provider/a.js", "A"),
+  ]);
+  const path = join(root, "profile.json");
+  await writeFile(path, JSON.stringify(canonicalProfile()), "utf8");
+
+  const profile = await readTypeScriptTargetProfile(path);
+  assert.deepEqual(profile.representationTransports.callables, [{
+    kind: "generic-kernel",
+    moduleSpecifier: "@provider/a.js",
+    exportName: "A",
+  }, {
+    kind: "generic-kernel",
+    moduleSpecifier: "@provider/z.js",
+    exportName: "Z",
+  }]);
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile rejects uncertified, duplicate, and escaping transports", async () => {
+  const root = await createScratch("transport-invalid-");
+  const path = join(root, "profile.json");
+  const invalid = {
+    ...genericKernel("@provider/kernel.js", "Kernel"),
+    effect: "async",
+  };
+  await writeRepresentationTransportManifest(root, [invalid]);
+  await writeFile(path, JSON.stringify(canonicalProfile()), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /generic kernel 0:0 is uncertified/u,
+  );
+
+  const duplicate = genericKernel("@provider/kernel.js", "Kernel");
+  await writeRepresentationTransportManifest(root, [duplicate, duplicate]);
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /callable identity is duplicated/u,
+  );
+
+  await writeFile(path, JSON.stringify({
+    ...canonicalProfile(),
+    evidence: { representationTransportManifest: "../manifest.json" },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /must be a repository-relative path/u,
   );
   await removeSuccessfulScratchTree(resolve("."), root);
 });
@@ -205,4 +274,65 @@ test("target manifest ordering is locale independent code-unit order", async () 
 async function createScratch(prefix) {
   await mkdir(scratchRoot, { recursive: true });
   return mkdtemp(join(scratchRoot, prefix));
+}
+
+function canonicalProfile() {
+  return {
+    schemaVersion: 7,
+    execution: "synchronous",
+    assembly: { modulePackaging: "single-esm" },
+    optimizations: {
+      pointerFlows: "closed-direct",
+      scalarProjections: "closed-direct",
+      representationProjections: "closed-direct",
+    },
+    evidence: representationTransportEvidence(),
+  };
+}
+
+function representationTransportEvidence() {
+  return { representationTransportManifest: "manifest.json" };
+}
+
+function genericKernel(moduleSpecifier, exportName) {
+  return {
+    kind: "generic-callable-kernel",
+    moduleSpecifier,
+    exportName,
+    capabilities: ["kernel"],
+    effect: "sync",
+    genericTypeArguments: [{ typeParameter: 0, facet: "logical" }],
+    implementationSites: ["src/kernel.ts#Kernel@1"],
+    targetFingerprint: "b".repeat(64),
+  };
+}
+
+async function writeRepresentationTransportManifest(
+  root,
+  facets = [genericKernel("@provider/kernel.js", "Kernel")],
+) {
+  const byModule = new Map();
+  for (const facet of facets) {
+    const specifier = facet.moduleSpecifier ?? "@provider/kernel.js";
+    const selected = { ...facet };
+    delete selected.moduleSpecifier;
+    delete selected.exportName;
+    if (facet.exportName !== undefined) {
+      selected.export = facet.exportName;
+    }
+    const existing = byModule.get(specifier);
+    if (existing === undefined) {
+      byModule.set(specifier, [selected]);
+    } else {
+      existing.push(selected);
+    }
+  }
+  await writeFile(join(root, "manifest.json"), JSON.stringify({
+    schemaVersion: 32,
+    manifestDigest: "a".repeat(64),
+    facetModules: [...byModule].map(([specifier, moduleFacets]) => ({
+      specifier,
+      facets: moduleFacets,
+    })),
+  }), "utf8");
 }
