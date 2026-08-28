@@ -44,12 +44,15 @@ test("callable implementations use exact source and body identities", async () =
 
   const identities = new Set();
   const outputs = new Set();
+  const sourcePrograms = new Set();
   for (const relativeContract of contracts) {
     const contractPath = join(repositoryRoot, relativeContract);
     const contractRoot = dirname(contractPath);
     const contract = await readJson(contractPath);
     assert.deepEqual(contract.compilation, product.semantics, relativeContract);
-    assert.equal(contract.schemaVersion, 2, relativeContract);
+    assert.equal(contract.schemaVersion, 3, relativeContract);
+    assert.match(contract.sourceProgramDigest, /^[0-9a-f]{64}$/u);
+    sourcePrograms.add(contract.sourceProgramDigest);
     assert.match(contract.output, /^implementations\/tsts\/.+\.ts$/u);
     assert.ok(!outputs.has(contract.output), contract.output);
     outputs.add(contract.output);
@@ -85,6 +88,7 @@ test("callable implementations use exact source and body identities", async () =
       assert.ok(callable.variant === "source" || callable.variant === "kernel");
     }
   }
+  assert.equal(sourcePrograms.size, 1, "callable contracts select different source programs");
 });
 
 test("product runner imports the selected semantic package", async () => {
