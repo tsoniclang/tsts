@@ -52,8 +52,10 @@ spelling heuristic, source scan, dynamic semantic dispatch, `any` recovery,
 
 The selected Go and TypeScript target profiles are explicit and versioned in
 `gotots.json` and `typescript-target.json`. They must not come from ambient
-shell state. Every implementation bundle is package-atomic,
-signature-certified, strict-ESM, and selected before output is sealed.
+shell state. Every package implementation bundle is package-atomic. Every
+callable implementation is certified against the exact selected-source
+snapshot, declaration identity, signature, and canonical source-body digest.
+Both are strict-ESM and selected before output is sealed.
 
 The selected TSTS product is synchronous. `gotots.json` owns that language
 decision with concurrency disabled. GoToTS must emit synchronous callable

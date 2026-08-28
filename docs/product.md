@@ -91,12 +91,25 @@ The generated package implementation and every generated package body are
 absent when the bundle is selected. Consumers retain ordinary generated
 imports and source-facing signatures.
 
-Performance substitutions for product-only hot paths are package-atomic,
-signature-certified implementations under `implementations/`. A generic
+Performance substitutions for product-only hot paths are complete callable
+body replacements under `implementations/`. Each one exact-joins the
+load-owned selected-source snapshot, canonical Go callable identity, generated
+TypeScript signature, and canonical source-body digest before the translated
+body is omitted. Package implementations remain package-atomic. A generic
 translation or representation optimization remains owned by the selected
 GoToTS or TypeScript-target profile. Neither class may patch the committed
 generated tree: its result becomes visible only by regenerating the complete
 product and passing the differential gates.
+
+The selected callable set is exactly `Checker.compareNodes`,
+`Checker.compareSymbolsWorker`, `Checker.sortSymbols`, `Arena.New`, and
+`LinkStore.Get`. The comparison and storage replacements preserve their source
+algorithms while removing generated representation overhead.
+`Checker.sortSymbols` replaces Go's generic `slices.SortFunc` machinery with
+native `Array.sort` under the same total `compareSymbols` order. A zero
+comparison identifies the same symbol value, so target sort stability cannot
+change an observable result. No source-file, node-wrapper, or member-partition
+cache is selected.
 
 The product check executes the selected implementation itself over a fixed
 10,012-input collision corpus and verifies deterministic hashing, incremental
