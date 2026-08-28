@@ -415,8 +415,8 @@ async function buildJavaScriptPackages(repositoryRoot, tsgo, node, environment) 
 async function stageEsbuild(repositoryRoot, stagedRoot, environment) {
   const source = join(repositoryRoot, "node_modules", "esbuild", "bin", "esbuild");
   const selected = await lstat(source);
-  if (!selected.isFile() || selected.nlink !== 1 || (selected.mode & 0o111) === 0) {
-    throw new Error("Installed esbuild is not a unique executable file");
+  if (!selected.isFile() || (selected.mode & 0o111) === 0) {
+    throw new Error("Installed esbuild is not an executable file");
   }
   const version = runCapture(
     source,
