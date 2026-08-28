@@ -205,8 +205,8 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 24) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 24");
+  if (evidence["schemaVersion"] !== 25) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 25");
   }
   if (evidence["sourceExecution"] !== profile.execution) {
     throw new Error("TypeScript optimization evidence execution differs from the selected profile");
