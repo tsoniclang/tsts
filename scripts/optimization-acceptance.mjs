@@ -3,10 +3,27 @@ export function verifyOptimizationAcceptance(evidence, acceptance) {
     evidence["pointer"],
     "TypeScript optimization pointer evidence",
   );
-  const actual = pointer["optimizedPointerKeyMapCount"];
-  if (actual !== acceptance.pointerKeyMapCount) {
+  verifyDenominator(
+    pointer["optimizedPointerKeyMapCount"],
+    acceptance.pointerKeyMapCount,
+    "pointer-key map",
+  );
+  verifyDenominator(
+    pointer["optimizedStaticPropertyLocationCount"],
+    acceptance.staticPropertyLocationCount,
+    "static property-location",
+  );
+  verifyDenominator(
+    pointer["staticPropertyLocationClassCount"],
+    acceptance.staticPropertyLocationClassCount,
+    "static property-location class",
+  );
+}
+
+function verifyDenominator(actual, accepted, subject) {
+  if (actual !== accepted) {
     throw new Error(
-      `TypeScript pointer-key map denominator ${String(actual)} differs from accepted ${acceptance.pointerKeyMapCount}`,
+      `TypeScript ${subject} denominator ${String(actual)} differs from accepted ${String(accepted)}`,
     );
   }
 }
