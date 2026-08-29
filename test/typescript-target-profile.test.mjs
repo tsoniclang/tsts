@@ -1,13 +1,10 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { link, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
-import { readCanonicalGoToTSManifest } from "../scripts/canonical-gotots-manifest.mjs";
 import { sealTargetManifest, verifyTargetManifest } from "../scripts/target-manifest.mjs";
 import { removeSuccessfulScratchTree } from "../scripts/scratch-lifecycle.mjs";
-import { readGeneratedRepresentationTransportContract } from "../scripts/representation-transport-contract.mjs";
 import { readTypeScriptTargetProfile } from "../scripts/typescript-target-profile.mjs";
 
 const scratchRoot = resolve(".temp", "profile-tests");
@@ -18,7 +15,7 @@ test("target profile has one stable semantic identity", async () => {
   const second = join(root, "second.json");
   await writeRepresentationTransportManifest(root);
   await writeFile(first, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {
@@ -37,7 +34,7 @@ test("target profile has one stable semantic identity", async () => {
     },
     assembly: { modulePackaging: "single-esm" },
     execution: "synchronous",
-    schemaVersion: 8,
+    schemaVersion: 7,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
@@ -63,7 +60,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
   const root = await createScratch("removed-fields-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: { cooperativeEffects: "closed-program" },
@@ -73,7 +70,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
     /unsupported field 'cooperativeEffects'/u,
   );
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {},
@@ -90,7 +87,7 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {},
@@ -107,7 +104,7 @@ test("target profile rejects non-synchronous execution", async () => {
   const root = await createScratch("execution-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "unrestricted",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {
@@ -127,7 +124,7 @@ test("target profile rejects alternate executable packaging", async () => {
   const root = await createScratch("packaging-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "multi-esm" },
     optimizations: {
@@ -166,88 +163,6 @@ test("target profile derives only certified generic-kernel transports", async ()
     moduleSpecifier: "@provider/z.js",
     exportName: "Z",
   }]);
-  await removeSuccessfulScratchTree(resolve("."), root);
-});
-
-test("target profile composes exact generated function and member kernels", async () => {
-  const root = await createScratch("generated-transports-");
-  await writeRepresentationTransportManifest(root);
-  const path = join(root, "profile.json");
-  await writeFile(path, JSON.stringify(canonicalProfile()), "utf8");
-  const generated = generatedTransportContract([{
-    kind: "generated-generic-function-kernel",
-    sourcePath: "core/generic.ts",
-    exportName: "Apply$kernel",
-  }, {
-    kind: "generated-generic-member-kernel",
-    sourcePath: "core/store.ts",
-    exportName: "Store",
-    memberName: "Get$kernel",
-  }]);
-  const selected = readGeneratedRepresentationTransportContract(
-    generated,
-    new Set(["core/generic.ts", "core/store.ts"]),
-  );
-
-  const profile = await readTypeScriptTargetProfile(path, selected);
-  assert.equal(profile.representationTransports.schemaVersion, 2);
-  assert.deepEqual(profile.representationTransports.callables, [
-    ...generated.callables,
-    {
-      kind: "generic-kernel",
-      moduleSpecifier: "@provider/kernel.js",
-      exportName: "Kernel",
-    },
-  ]);
-
-  const drifted = structuredClone(generated);
-  drifted.callables[0].exportName = "Wrong";
-  assert.throws(
-    () => readGeneratedRepresentationTransportContract(
-      drifted,
-      new Set(["core/generic.ts", "core/store.ts"]),
-    ),
-    /digest differs/u,
-  );
-  await removeSuccessfulScratchTree(resolve("."), root);
-});
-
-test("canonical GoToTS manifest owns generated transports and physical membership", async () => {
-  const root = await createScratch("canonical-gotots-");
-  const generated = generatedTransportContract([{
-    kind: "generated-generic-function-kernel",
-    sourcePath: "source.ts",
-    exportName: "Apply$kernel",
-  }]);
-  const manifest = {
-    schemaVersion: 2,
-    semanticDigest: "c".repeat(64),
-    files: ["gotots-manifest.json", "source.ts"],
-    representationTransports: generated,
-  };
-  await writeFile(join(root, "source.ts"), "export function Apply$kernel<T>(value: T): T;\n", "utf8");
-  await writeFile(
-    join(root, "gotots-manifest.json"),
-    JSON.stringify(manifest),
-    "utf8",
-  );
-
-  const selected = await readCanonicalGoToTSManifest(root);
-  assert.equal(selected.semanticDigest, manifest.semanticDigest);
-  assert.deepEqual(selected.files, manifest.files);
-  assert.deepEqual(selected.representationTransports.callables, generated.callables);
-
-  const drifted = structuredClone(manifest);
-  drifted.representationTransports.digest = "d".repeat(64);
-  await writeFile(
-    join(root, "gotots-manifest.json"),
-    JSON.stringify(drifted),
-    "utf8",
-  );
-  await assert.rejects(
-    readCanonicalGoToTSManifest(root),
-    /contract digest differs/u,
-  );
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
@@ -363,7 +278,7 @@ async function createScratch(prefix) {
 
 function canonicalProfile() {
   return {
-    schemaVersion: 8,
+    schemaVersion: 7,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm" },
     optimizations: {
@@ -376,18 +291,7 @@ function canonicalProfile() {
 }
 
 function representationTransportEvidence() {
-  return {
-    representationTransportManifest: "manifest.json",
-    generatedRepresentationTransports: "canonical-output",
-  };
-}
-
-function generatedTransportContract(callables) {
-  const body = { schemaVersion: 1, callables };
-  return {
-    ...body,
-    digest: createHash("sha256").update(JSON.stringify(body)).digest("hex"),
-  };
+  return { representationTransportManifest: "manifest.json" };
 }
 
 function genericKernel(moduleSpecifier, exportName) {

@@ -90,20 +90,16 @@ output digest. The superseded multi-file JavaScript graph is removed only by
 the successful atomic packaging transaction. No text rewrite or second
 executable route survives.
 
-The same profile composes its representation-transport callable set from two
-disjoint exact authorities: the pinned GoToTS gostdlib manifest owns provider
-module/export kernels, and the canonical GoToTS build manifest owns generated
-source function and class/member kernels. Only signature-certified synchronous
+The same profile derives its representation-transport callable set from the
+exact pinned GoToTS gostdlib manifest. Only signature-certified synchronous
 generic kernels with generated-caller representation facets enter that set.
-TSTS validates both content digests, exact-joins generated source paths to the
-canonical output membership, and passes one immutable, canonically ordered
-contract to the TypeScript target; it does not maintain a product-specific
-callable list. The target exact-joins each selected declaration and call and
-admits only generic-owned parameter shapes. Its sealed evidence must match the
-profile digest and callable count and must report at least one selected call
-for this product. A stale manifest, duplicate identity, wrong source/member,
-concrete parameter, or same-spelled ordinary call remains an external boundary
-rather than becoming an optimization exception.
+TSTS passes the immutable, canonically ordered module/export identities to the
+TypeScript target; it does not maintain a product-specific callable list. The
+target exact-joins each selected call and admits only generic-owned parameter
+shapes. Its sealed evidence must match the profile digest and callable count
+and must report at least one selected call for this product. A stale manifest,
+duplicate identity, concrete parameter, or same-spelled ordinary call remains
+an external boundary rather than becoming an optimization exception.
 
 Module aggregation is a bounded internal equivalence envelope. It may remove
 loader and per-module initialization overhead, but it must preserve ESM

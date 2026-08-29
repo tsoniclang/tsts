@@ -8,7 +8,6 @@ import {
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
-import { readCanonicalGoToTSManifest } from "./canonical-gotots-manifest.mjs";
 import { replaceDirectory } from "./directory-transaction.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
@@ -55,11 +54,11 @@ activateToolchainEnvironment(toolchain);
 const { compileProject } = await importPackage("host");
 const { createTargetRegistry } = await importPackage("target-api");
 const { createTypeScriptTargetPack } = await importPackage("target-typescript");
-const canonical = await readCanonicalGoToTSManifest(canonicalRoot);
 const targetProfile = await readTypeScriptTargetProfile(
   join(repositoryRoot, "typescript-target.json"),
-  canonical.representationTransports,
 );
+
+const canonical = await readCanonicalManifest(canonicalRoot);
 const canonicalSources = canonical.files
   .filter((path) => path.endsWith(".ts"))
   .sort(compareCodeUnits);
@@ -248,6 +247,32 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     canonicalMembership,
     sourceLayout.expectedArtifacts,
   );
+}
+
+async function readCanonicalManifest(root) {
+  const document = parseRecord(
+    await readFile(join(root, "gotots-manifest.json"), "utf8"),
+    "GoToTS manifest",
+  );
+  if (document["schemaVersion"] !== 1 || typeof document["semanticDigest"] !== "string") {
+    throw new Error("GoToTS manifest identity is invalid");
+  }
+  const files = document["files"];
+  if (!Array.isArray(files) || !files.every((path) => typeof path === "string")) {
+    throw new Error("GoToTS manifest files are invalid");
+  }
+  const normalized = files.map(validateRelativePath);
+  const sorted = [...normalized].sort(compareCodeUnits);
+  assertEqualPaths("GoToTS manifest ordering", normalized, sorted);
+  if (new Set(normalized).size !== normalized.length) {
+    throw new Error("GoToTS manifest files are duplicated");
+  }
+  const physical = await listPhysicalFiles(root);
+  assertEqualPaths("GoToTS manifest and physical output", normalized, physical);
+  return {
+    semanticDigest: document["semanticDigest"],
+    files: normalized,
+  };
 }
 
 async function copyCanonicalProject(source, target, paths) {
