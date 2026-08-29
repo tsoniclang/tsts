@@ -1,6 +1,6 @@
-import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
+import { readCanonicalGoToTSManifest } from "./canonical-gotots-manifest.mjs";
 import { verifyTargetManifest } from "./target-manifest.mjs";
 import { formatToolchainHandle, openToolchain } from "./toolchain.mjs";
 import { readTypeScriptTargetProfile } from "./typescript-target-profile.mjs";
@@ -20,14 +20,10 @@ if (
 const repositoryRoot = resolve(repositoryArgument);
 const canonicalRoot = resolve(canonicalArgument);
 const targetRoot = resolve(targetArgument);
-const canonical = JSON.parse(
-  await readFile(join(canonicalRoot, "gotots-manifest.json"), "utf8"),
-);
-if (!isRecord(canonical) || typeof canonical.semanticDigest !== "string") {
-  throw new Error("GoToTS manifest semantic digest is invalid");
-}
+const canonical = await readCanonicalGoToTSManifest(canonicalRoot);
 const profile = await readTypeScriptTargetProfile(
   join(repositoryRoot, "typescript-target.json"),
+  canonical.representationTransports,
 );
 const target = await verifyTargetManifest(
   targetRoot,
@@ -43,7 +39,3 @@ const handle = await openToolchain(repositoryRoot, {
   root: exact[1],
 });
 process.stdout.write(`${formatToolchainHandle(handle)}\n`);
-
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}

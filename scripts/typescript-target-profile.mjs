@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { readRepresentationTransportContract } from "./representation-transport-contract.mjs";
 
-export async function readTypeScriptTargetProfile(path) {
+export async function readTypeScriptTargetProfile(path, generatedTransports) {
   const text = await readFile(path, "utf8");
   let parsed;
   try {
@@ -26,8 +26,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 7) {
-    throw new Error("TypeScript target profile schemaVersion must be 7");
+  if (parsed["schemaVersion"] !== 8) {
+    throw new Error("TypeScript target profile schemaVersion must be 8");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -77,6 +77,7 @@ export async function readTypeScriptTargetProfile(path) {
   const representationTransports = await readRepresentationTransportContract(
     path,
     parsed["evidence"],
+    generatedTransports,
   );
   const normalized = normalizeJson({
     profile: parsed,

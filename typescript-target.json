@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "execution": "synchronous",
   "assembly": {
     "modulePackaging": "single-esm"
@@ -10,6 +10,7 @@
     "representationProjections": "closed-direct"
   },
   "evidence": {
-    "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"
+    "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json",
+    "generatedRepresentationTransports": "canonical-output"
   }
 }
