@@ -9,6 +9,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { replaceDirectory } from "./directory-transaction.mjs";
+import { verifyOptimizationAcceptance } from "./optimization-acceptance.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   canonicalTargetSourcePath,
@@ -210,6 +211,7 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
   if (evidence["schemaVersion"] !== 29) {
     throw new Error("TypeScript optimization evidence schemaVersion must be 29");
   }
+  verifyOptimizationAcceptance(evidence, profile.acceptance);
   if (evidence["sourceExecution"] !== profile.execution) {
     throw new Error("TypeScript optimization evidence execution differs from the selected profile");
   }

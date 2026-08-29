@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "execution": "synchronous",
   "assembly": {
     "modulePackaging": "single-esm"
@@ -8,6 +8,9 @@
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
     "representationProjections": "closed-direct"
+  },
+  "acceptance": {
+    "pointerKeyMapCount": 69
   },
   "evidence": {
     "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"

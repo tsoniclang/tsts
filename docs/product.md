@@ -101,6 +101,15 @@ and must report at least one selected call for this product. A stale manifest,
 duplicate identity, concrete parameter, or same-spelled ordinary call remains
 an external boundary rather than becoming an optimization exception.
 
+The profile separately records exact product-acceptance denominators for
+measured target optimizations. These values never select source or permit an
+optimization: the target decides solely from finalized facts and emits its own
+count. TSTS exact-joins that count before installing output. The current pinned
+product accepts exactly 69 complete canonical pointer-key map rewrites; a
+source, compiler, or target-pin change that produces any other denominator
+must be re-reviewed and recertified rather than silently widening or shrinking
+the optimized class.
+
 Module aggregation is a bounded internal equivalence envelope. It may remove
 loader and per-module initialization overhead, but it must preserve ESM
 dependency initialization order and may not change the compiler's exit status,

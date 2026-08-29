@@ -58,6 +58,10 @@ Product-specific hot-path rewrites remain authoritative under
 then flow into this snapshot through regeneration. Generated files are never
 the editing surface.
 
+The target profile also pins measured product-acceptance denominators. They
+verify the target's independently fact-selected output; they never act as
+source-name allowlists or optimization selectors.
+
 Run the smallest Go pointer -> canonical marker -> TSTS fact -> target AST ->
 executable TypeScript proof with:
 

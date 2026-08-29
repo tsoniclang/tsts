@@ -22,12 +22,13 @@ export async function readTypeScriptTargetProfile(path) {
       "execution",
       "assembly",
       "optimizations",
+      "acceptance",
       "evidence",
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 7) {
-    throw new Error("TypeScript target profile schemaVersion must be 7");
+  if (parsed["schemaVersion"] !== 8) {
+    throw new Error("TypeScript target profile schemaVersion must be 8");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -69,6 +70,23 @@ export async function readTypeScriptTargetProfile(path) {
     "scalarProjections",
     "preserve",
   );
+  const acceptance = parsed["acceptance"];
+  if (!isRecord(acceptance)) {
+    throw new Error("TypeScript target profile acceptance must be an object");
+  }
+  rejectUnknownKeys(
+    acceptance,
+    new Set(["pointerKeyMapCount"]),
+    "TypeScript target profile acceptance",
+  );
+  if (
+    !Number.isSafeInteger(acceptance["pointerKeyMapCount"]) ||
+    acceptance["pointerKeyMapCount"] <= 0
+  ) {
+    throw new Error(
+      "TypeScript target profile pointerKeyMapCount must be a positive safe integer",
+    );
+  }
   assertOptimizationChoice(
     optimizations["representationProjections"],
     "representationProjections",
@@ -90,6 +108,7 @@ export async function readTypeScriptTargetProfile(path) {
     execution: parsed["execution"],
     assembly: freezeJson(assembly),
     optimizations: freezeJson(optimizations),
+    acceptance: freezeJson(acceptance),
     representationTransports,
   });
 }
