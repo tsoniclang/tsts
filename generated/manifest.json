@@ -3,11 +3,11 @@
   "product": "@tsoniclang/tsts",
   "canonicalSemanticDigest": "94ef87fc403124800d3ac2fa540e9253c830c0eda245e55047388d3e17f8e2cd",
   "targetProfileDigest": "8de740e33201a974cdc786927ba367f65c905a82346481821f030b3a6dd2f247",
-  "toolchainDigest": "151426d1c1938430364885ed7d372b47c3a27b430922565904ccb20b0edf18fc",
+  "toolchainDigest": "55cdd612d525cd3b303c077196ac57de43276c85d7aaa7b404cb978bb8a611ca",
   "source": {
-    "digest": "034231477fdebb71c338f8a17130cce0b3dc351050499ab4c43419152fe012c6",
+    "digest": "b49b020dccb6175ab8cae6fd3891ab6eb38474f032930089be66401058f10a0e",
     "files": 1417,
-    "bytes": 87648723
+    "bytes": 87408450
   },
   "entrypoint": "source/runner.ts"
 }

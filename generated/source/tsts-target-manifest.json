@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "canonicalSemanticDigest": "94ef87fc403124800d3ac2fa540e9253c830c0eda245e55047388d3e17f8e2cd",
   "targetProfileDigest": "8de740e33201a974cdc786927ba367f65c905a82346481821f030b3a6dd2f247",
-  "toolchainDigest": "151426d1c1938430364885ed7d372b47c3a27b430922565904ccb20b0edf18fc",
+  "toolchainDigest": "55cdd612d525cd3b303c077196ac57de43276c85d7aaa7b404cb978bb8a611ca",
   "members": [
     {
       "path": "implementations/tsts/checker-hotpaths.ts",
@@ -1861,8 +1861,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/namegenerator.ts",
       "type": "file",
-      "size": 42742,
-      "digest": "0cba2b3fa52531c444566ed2aa53be4e070009eb297b153b36f105715c8d5dc0"
+      "size": 42582,
+      "digest": "2cd68cc6ccec3d2c9fc0047e84490df08459ff24729ca23b81e5838cc5c1e294"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/printer.ts",
@@ -2017,8 +2017,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/overlayfs.ts",
       "type": "file",
-      "size": 60272,
-      "digest": "55a9855d1cf8e375e93ed5882721c1357a453f37925ddfc6edc56f75e9a540a9"
+      "size": 56425,
+      "digest": "7df3690f0b7832dc9f752ec2410056e8529627c99b3b76e37e48669f8ac5627b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/ownercache.ts",
@@ -5929,8 +5929,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/core/package.ts",
       "type": "file",
-      "size": 30556,
-      "digest": "0b8ca719959e63870bc43e6afd0cf1d9aa0b75fdbe298b6f94911465fed51ff9"
+      "size": 30523,
+      "digest": "a741ff560436c013f5a0096045d53f06eac71056529dea1a3a0f9640010058c1"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/core/state.ts",
@@ -6121,8 +6121,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/ls/package.ts",
       "type": "file",
-      "size": 39363,
-      "digest": "88cbc3bb787412f4f6f0b1919ea53791fa93dc3bf746a0f1b5fc650b4ede27a3"
+      "size": 39373,
+      "digest": "2a4ee6d76a46a612793670818b371318fe111ffb5f53a6e890269fcaf34a6e61"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/ls/state.ts",
@@ -6301,8 +6301,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/scanner/package.ts",
       "type": "file",
-      "size": 33501,
-      "digest": "5cc451e82aeb76168eb19905fa9e33c5ef17179c6bb9dd95af1c3ff11be1eebc"
+      "size": 33449,
+      "digest": "6b4f573ef7c280ab9811997eb4339073da838d500e6d9cead614b8186467d2de"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/scanner/state.ts",
@@ -6415,8 +6415,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
       "type": "file",
-      "size": 322052,
-      "digest": "ba4f688dcc68a74db57f74ce327935230a8af87be0e8b74057969129bec112df"
+      "size": 322148,
+      "digest": "ecf0227c5b4f48d6c0fdb0ea9c914a89ccd94572c285ee24b3f74d0c85de19e2"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/tsoptions/state.ts",
@@ -8461,8 +8461,8 @@
     {
       "path": "support/maps.ts",
       "type": "file",
-      "size": 2076690,
-      "digest": "c93e45bae17a1df4bfc14dfd63b3d92f853040318927db863a18cbdde1c1f14f"
+      "size": 1840403,
+      "digest": "217a649f4b6baad30d8b45865de28515babb34266ccb57e5108db8ba31843ca9"
     },
     {
       "path": "support/provider-interface-bridges.ts",
@@ -8498,7 +8498,7 @@
       "path": "tsonic-typescript-optimization.json",
       "type": "file",
       "size": 336674,
-      "digest": "62ab5fceb686daac4dc011895e53351715bff1b886d563f85decfbe22542ec07"
+      "digest": "43c37fcf0ddcf26826c399317612a197baf3a660137e9a346a7d1f52f632373b"
     }
   ]
 }

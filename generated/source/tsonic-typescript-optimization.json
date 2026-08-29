@@ -940,29 +940,29 @@
     "support/reflection-types.ts"
   ],
   "programIndex": {
-    "nodeVisits": 7331912,
-    "childEdges": 7330977,
-    "kindEntries": 7331912,
-    "identifierEntries": 2726373,
+    "nodeVisits": 7306921,
+    "childEdges": 7305986,
+    "kindEntries": 7306921,
+    "identifierEntries": 2718625,
     "sourceReferenceIndex": {
       "constructionPasses": 1,
       "sourceFiles": 935,
-      "nodesVisited": 7331912,
-      "referenceCandidates": 2762179,
-      "selectedReferences": 2682832,
-      "selectedDeclarations": 469686,
-      "reverseEdges": 2214132,
-      "indexedSymbols": 308357,
-      "moduleExportsExamined": 34833
+      "nodesVisited": 7306921,
+      "referenceCandidates": 2753601,
+      "selectedReferences": 2675499,
+      "selectedDeclarations": 468131,
+      "reverseEdges": 2208354,
+      "indexedSymbols": 306669,
+      "moduleExportsExamined": 34828
     },
-    "bindingCandidates": 395708,
-    "bindingWrites": 44980
+    "bindingCandidates": 393832,
+    "bindingWrites": 44530
   },
   "pointer": {
     "profile": "closed-direct",
     "analyzed": true,
-    "componentCount": 147718,
-    "optimizedComponentCount": 36797,
+    "componentCount": 147382,
+    "optimizedComponentCount": 36683,
     "optimizedFamilyCount": 899,
     "retainedFamilyCount": 798,
     "retainedFamilyHotspots": [
@@ -974,7 +974,7 @@
           "end": 258741,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 20519,
+        "pointerTypeCount": 20510,
         "operationCount": 7195,
         "reasons": [
           {
@@ -1240,7 +1240,7 @@
           "end": 120199,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 7326,
+        "pointerTypeCount": 7320,
         "operationCount": 2320,
         "reasons": [
           {
@@ -1327,7 +1327,7 @@
           "end": 7214,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 5426,
+        "pointerTypeCount": 5414,
         "operationCount": 2270,
         "reasons": [
           {
@@ -2113,7 +2113,7 @@
           "end": 379557,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 2300,
+        "pointerTypeCount": 2297,
         "operationCount": 758,
         "reasons": [
           {
@@ -2286,8 +2286,8 @@
               {
                 "kind": "authored",
                 "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/printer/namegenerator.ts",
-                "start": 22582,
-                "end": 22733,
+                "start": 22506,
+                "end": 22657,
                 "syntaxKind": "KindCallExpression"
               },
               {
@@ -2555,7 +2555,7 @@
           "end": 169900,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 1073,
+        "pointerTypeCount": 1070,
         "operationCount": 439,
         "reasons": [
           {
@@ -3174,7 +3174,7 @@
           "end": 9202,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 679,
+        "pointerTypeCount": 676,
         "operationCount": 366,
         "reasons": [
           {
@@ -3414,7 +3414,7 @@
           "end": 11271,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 572,
+        "pointerTypeCount": 563,
         "operationCount": 407,
         "reasons": [
           {
@@ -4062,8 +4062,8 @@
               {
                 "kind": "authored",
                 "documentIdentity": "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
-                "start": 35729,
-                "end": 35750,
+                "start": 35824,
+                "end": 35845,
                 "syntaxKind": "KindPropertyAccessExpression"
               }
             ]
@@ -4075,8 +4075,8 @@
               {
                 "kind": "authored",
                 "documentIdentity": "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
-                "start": 35686,
-                "end": 35727,
+                "start": 35781,
+                "end": 35822,
                 "syntaxKind": "KindTypeReference"
               }
             ]
@@ -4116,8 +4116,8 @@
               {
                 "kind": "authored",
                 "documentIdentity": "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
-                "start": 35599,
-                "end": 36074,
+                "start": 35694,
+                "end": 36169,
                 "syntaxKind": "KindCallExpression"
               }
             ]
@@ -4275,7 +4275,7 @@
           "end": 44042,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 357,
+        "pointerTypeCount": 354,
         "operationCount": 147,
         "reasons": [
           {
@@ -4646,7 +4646,7 @@
           "end": 11112,
           "syntaxKind": "KindClassDeclaration"
         },
-        "pointerTypeCount": 316,
+        "pointerTypeCount": 313,
         "operationCount": 80,
         "reasons": [
           {
@@ -5528,15 +5528,15 @@
     "representations": [
       {
         "value": "direct-object",
-        "count": 6487
+        "count": 6427
       },
       {
         "value": "location",
-        "count": 110921
+        "count": 110699
       },
       {
         "value": "mutable-cell",
-        "count": 30310
+        "count": 30256
       }
     ],
     "fallbackReasons": [
@@ -5666,7 +5666,7 @@
       },
       {
         "reason": "declaration-boundary",
-        "count": 82021,
+        "count": 81799,
         "examples": [
           {
             "kind": "authored",
@@ -7277,14 +7277,14 @@
   },
   "representationProjections": {
     "profile": "closed-direct",
-    "identityCandidateCount": 1771,
+    "identityCandidateCount": 1729,
     "inverseCandidateCount": 52881,
     "optimizedCount": 19142,
-    "retainedCount": 35510,
+    "retainedCount": 35468,
     "fallbackReasons": [
       {
         "reason": "unstable-binding",
-        "count": 1708,
+        "count": 1666,
         "examples": [
           {
             "kind": "authored",

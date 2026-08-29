@@ -1,3 +1,4 @@
+import type { ModuleKind, ModuleResolutionKind } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/core/compileroptions.js";
 import type { $goInterface$Interface_void as GoInterface } from "../../../../../../support/interface-contracts.js";
 import type { GoMapValue } from "@gotots/runtime/map.js";
 import type { bool, float64, gostring, int32, uint8 } from "@gotots/runtime/scalars.js";
@@ -11,7 +12,6 @@ import { TSFalse$constant, TSTrue$constant, TSUnknown$constant } from "../../../
 import { PollingKindDynamicPriority$constant, PollingKindFixedChunkSize$constant, PollingKindFixedInterval$constant, PollingKindPriorityInterval$constant, WatchDirectoryKindDynamicPriorityPolling$constant, WatchDirectoryKindFixedChunkSizePolling$constant, WatchDirectoryKindFixedPollingInterval$constant, WatchDirectoryKindUseFsEvents$constant, WatchFileKindDynamicPriorityPolling$constant, WatchFileKindFixedChunkSizePolling$constant, WatchFileKindFixedPollingInterval$constant, WatchFileKindPriorityPollingInterval$constant, WatchFileKindUseFsEvents$constant, WatchFileKindUseFsEventsOnParentDirectory$constant } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/core/watchoptions.js";
 import { Copy$MapOf_string_To_bool$MapOf_string_To_bool$string$bool } from "../../../../../../support/generics/concretizations/maps/Copy.js";
 import { $goInterfaceAdapter$string, $goInterfaceAdapter$PointerTo_Named_core$levenshteinBuffers as GoInterfaceAdapter } from "../../../../../../support/interface-adapters.js";
-import { $goMap$MapOf_Named_core$ModuleKind_To_Named_core$ModuleResolutionKind } from "../../../../../../support/maps.js";
 import { $goReflectType$Named_core$CompilerOptions } from "../../../../../../support/reflection-types.js";
 import { $state } from "./state.js";
 import * as named_sync from "@gotots/gostdlib/internal/facets/named-sync.js";
@@ -108,7 +108,7 @@ export function $initialize(): void {
     WatchFileKindUseFsEventsOnParentDirectory = WatchFileKindUseFsEventsOnParentDirectory$constant();
     $state.EmptyCompilerOptions = void 0;
     $state.ExclusivelyPrefixedNodeCoreModules = GoMap.nil<gostring, bool>(false);
-    $state.ModuleKindToModuleResolutionKind = $goMap$MapOf_Named_core$ModuleKind_To_Named_core$ModuleResolutionKind.nil();
+    $state.ModuleKindToModuleResolutionKind = GoMap.nil<ModuleKind, ModuleResolutionKind>(0);
     $state.NodeCoreModules = void 0;
     $state.UnprefixedNodeCoreModules = GoMap.nil<gostring, bool>(false);
     $state._LanguageVariant_index = GoArray.zero<uint8, 3>(3, 0);
@@ -131,7 +131,7 @@ export function $initialize(): void {
         $state.optionsType = $goReflectType$Named_core$CompilerOptions;
     }
     {
-        $state.ModuleKindToModuleResolutionKind = $goMap$MapOf_Named_core$ModuleKind_To_Named_core$ModuleResolutionKind.make(2, [[ModuleKindNode16$constant(), ModuleResolutionKindNode16$constant()], [ModuleKindNodeNext$constant(), ModuleResolutionKindNodeNext$constant()]]);
+        $state.ModuleKindToModuleResolutionKind = GoMap.make<int32, ModuleResolutionKind>(0, 2, [[ModuleKindNode16$constant(), ModuleResolutionKindNode16$constant()], [ModuleKindNodeNext$constant(), ModuleResolutionKindNodeNext$constant()]]);
     }
     {
         const __gotots_field_0 = (): GoInterface | undefined => {

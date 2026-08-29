@@ -325,23 +325,13 @@ export class overlayFS {
                         declare private readonly then?: never;
                     }
                     class $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents extends GoMapValue<DocumentUri__from_lsproto, fileEvents | undefined> {
-                        private constructor(private readonly zeroValue: fileEvents | undefined, private readonly buckets: Map<number, [
-                            gostring,
+                        private constructor(private readonly zeroValue: fileEvents | undefined, private readonly values: Map<gostring, [
                             fileEvents | undefined
-                        ][]> | undefined, private count: number) {
+                        ]> | undefined) {
                             super();
                         }
                         private static $zeroValue(): fileEvents | undefined {
                             return void 0;
-                        }
-                        private static $hash($key: gostring): number {
-                            return GoMapHash.string($key);
-                        }
-                        private static $equal($left: gostring, $right: gostring): boolean {
-                            return $left === $right;
-                        }
-                        private static $copyKey($key: gostring): gostring {
-                            return $key;
                         }
                         private static $copyValue($value: fileEvents | undefined): fileEvents | undefined {
                             return $value;
@@ -353,162 +343,92 @@ export class overlayFS {
                             return new DocumentUri__from_lsproto($storageKey);
                         }
                         static nil(): $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents {
-                            return new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), undefined, 0);
+                            return new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), undefined);
                         }
                         static make(size: number | bigint, entries: [
                             DocumentUri__from_lsproto,
                             fileEvents | undefined
                         ][]): $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents {
-                            const result: $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents = new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), new Map<number, [
-                                gostring,
+                            const result: $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents = new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), new Map<gostring, [
                                 fileEvents | undefined
-                            ][]>, 0);
+                            ]>);
                             for (const entry of entries) {
                                 result.store(entry[0], entry[1]);
                             }
                             return result;
                         }
-                        private $find(key: gostring): [
-                            [
-                                gostring,
-                                fileEvents | undefined
-                            ],
-                            [
-                                gostring,
-                                fileEvents | undefined
-                            ][],
-                            number
-                        ] | undefined {
-                            const buckets = this.buckets;
-                            if (buckets === undefined) {
-                                return undefined;
-                            }
-                            const bucket = buckets.get($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$hash(key));
-                            if (bucket === undefined) {
-                                return undefined;
-                            }
-                            let index = 0;
-                            for (const entry of bucket) {
-                                if ($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$equal(entry[0], key)) {
-                                    return [entry, bucket, index];
-                                }
-                                index++;
-                            }
-                            return undefined;
-                        }
                         lookup(key: DocumentUri__from_lsproto): fileEvents | undefined {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const found: [
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ],
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ][],
-                                number
-                            ] | undefined = this.$find(storageKey);
-                            return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(found === undefined ? this.zeroValue : found[0][1]);
+                            const values: Map<gostring, [
+                                fileEvents | undefined
+                            ]> | undefined = this.values;
+                            if (values === undefined) {
+                                return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue);
+                            }
+                            const entry: [
+                                fileEvents | undefined
+                            ] | undefined = values.get(storageKey);
+                            return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(entry === undefined ? this.zeroValue : entry[0]);
                         }
                         lookupOk(key: DocumentUri__from_lsproto): [
                             fileEvents | undefined,
                             boolean
                         ] {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const found: [
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ],
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ][],
-                                number
-                            ] | undefined = this.$find(storageKey);
-                            if (found === undefined) {
+                            const values: Map<gostring, [
+                                fileEvents | undefined
+                            ]> | undefined = this.values;
+                            if (values === undefined) {
                                 return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), false];
                             }
-                            return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(found[0][1]), true];
+                            const entry: [
+                                fileEvents | undefined
+                            ] | undefined = values.get(storageKey);
+                            if (entry === undefined) {
+                                return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), false];
+                            }
+                            return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(entry[0]), true];
                         }
                         store(key: DocumentUri__from_lsproto, value: fileEvents | undefined): void {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const buckets: Map<number, [
-                                gostring,
+                            const values: Map<gostring, [
                                 fileEvents | undefined
-                            ][]> | undefined = this.buckets;
-                            if (buckets === undefined) {
+                            ]> | undefined = this.values;
+                            if (values === undefined)
                                 GoPanic.raiseRuntime("assignment to entry in nil map");
-                            }
-                            const hash: number = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$hash(storageKey);
-                            let bucket: [
-                                gostring,
-                                fileEvents | undefined
-                            ][] | undefined = buckets.get(hash);
-                            if (bucket === undefined) {
-                                bucket = [];
-                                buckets.set(hash, bucket);
-                            }
-                            for (const entry of bucket) {
-                                if ($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$equal(entry[0], storageKey)) {
-                                    entry[1] = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(value);
-                                    return;
-                                }
-                            }
-                            bucket.push([$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyKey(storageKey), $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(value)]);
-                            this.count++;
+                            values.set(storageKey, [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(value)]);
                         }
                         delete(key: DocumentUri__from_lsproto): void {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const found: [
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ],
-                                [
-                                    gostring,
-                                    fileEvents | undefined
-                                ][],
-                                number
-                            ] | undefined = this.$find(storageKey);
-                            if (found === undefined) {
-                                return;
-                            }
-                            found[1].splice(found[2], 1);
-                            if (found[1].length === 0) {
-                                if (!(this.buckets === undefined)) {
-                                    this.buckets.delete($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$hash(storageKey));
-                                }
-                            }
-                            this.count--;
+                            const values: Map<gostring, [
+                                fileEvents | undefined
+                            ]> | undefined = this.values;
+                            if (!(values === undefined))
+                                values.delete(storageKey);
                         }
                         length(): number {
-                            return this.count;
+                            return this.values === undefined ? 0 : this.values.size;
                         }
                         isNil(): boolean {
-                            return this.buckets === undefined;
+                            return this.values === undefined;
                         }
                         clear(): void {
-                            if (this.buckets === undefined) {
-                                return;
-                            }
-                            this.buckets.clear();
-                            this.count = 0;
+                            const values: Map<gostring, [
+                                fileEvents | undefined
+                            ]> | undefined = this.values;
+                            if (!(values === undefined))
+                                values.clear();
                         }
                         keys(): DocumentUri__from_lsproto[] {
                             const result: DocumentUri__from_lsproto[] = [];
-                            const buckets: Map<number, [
-                                gostring,
+                            const values: Map<gostring, [
                                 fileEvents | undefined
-                            ][]> | undefined = this.buckets;
-                            if (buckets === undefined) {
+                            ]> | undefined = this.values;
+                            if (values === undefined) {
                                 return result;
                             }
-                            for (const bucket of buckets.values()) {
-                                for (const entry of bucket) {
-                                    result.push($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$reifyKey(entry[0]));
-                                }
+                            for (const storageKey of values.keys()) {
+                                result.push($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$reifyKey(storageKey));
                             }
                             return result;
                         }
