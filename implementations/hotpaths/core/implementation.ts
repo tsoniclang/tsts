@@ -3,7 +3,6 @@ import type { int } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import type { GoContainerStorage } from "@gotots/runtime/storage.js";
 import type { Pointer } from "@tsonic/core/types.js";
-import type { Arena$Storage } from "../../modules/github.com/microsoft/typescript-go/internal/core/arena.js";
 import * as genericSlicesKernel from "@gotots/gostdlib/internal/facets/generic-slices-kernel.js";
 import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { LinkStore } from "../../modules/github.com/microsoft/typescript-go/internal/core/linkstore.js";
@@ -12,7 +11,7 @@ import {
   nextArenaSize,
 } from "../../modules/github.com/microsoft/typescript-go/internal/core/arena.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
-import { addressOf, loadPointer, projectPointer } from "@tsonic/core/lang.js";
+import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
 
 export function arenaNew<T>(
   arenaPointer: Pointer<Arena<T>> | undefined,
@@ -62,21 +61,21 @@ export function arenaNew<T>(
 
 export function linkStoreGet<K, V>(
   storePointer: Pointer<LinkStore<K, V>> | undefined,
-  sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<V>>) => int,
-  convertSlice: (
+  _sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<V>>) => int,
+  _convertSlice: (
     slice: RuntimeSlice<GoContainerStorage<V>>,
   ) => RuntimeSlice<GoContainerStorage<V>>,
-  copyValue: (value: V) => V,
-  fromContainerStorage: (value: GoContainerStorage<V>) => V,
-  indexAddress: (
+  _copyValue: (value: V) => V,
+  _fromContainerStorage: (value: GoContainerStorage<V>) => V,
+  _indexAddress: (
     slice: RuntimeSlice<GoContainerStorage<V>>,
     index: int,
   ) => Pointer<V> | undefined,
-  sliceLength: (slice: RuntimeSlice<GoContainerStorage<V>>) => int,
+  _sliceLength: (slice: RuntimeSlice<GoContainerStorage<V>>) => int,
   constructMap: (
     zero: Pointer<V> | undefined,
   ) => GoMapValue<K, Pointer<V> | undefined>,
-  toContainerStorage: (value: V) => GoContainerStorage<V>,
+  _toContainerStorage: (value: V) => GoContainerStorage<V>,
   zeroValue: () => V,
   key: K,
 ): Pointer<V> | undefined {
@@ -94,21 +93,7 @@ export function linkStoreGet<K, V>(
     store.entries = constructMap(undefined);
   }
 
-  value = Arena.New$kernel(
-    projectPointer<Arena$Storage<V>, Arena<V>>(
-      addressOf(store.arena),
-      (storage) => Arena.$fromStorage(storage),
-      (arena) => Arena.$storageOf(arena),
-    ),
-    sliceCapacity,
-    convertSlice,
-    copyValue,
-    fromContainerStorage,
-    indexAddress,
-    sliceLength,
-    toContainerStorage,
-    zeroValue,
-  );
+  value = allocatePointer(zeroValue());
   store.entries.store(key, value);
   return value;
 }
