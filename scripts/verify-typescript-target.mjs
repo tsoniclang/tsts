@@ -138,6 +138,7 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
       candidateCount: 0,
       optimizedCount: 0,
       retainedCount: 0,
+      exactProjectionCount: 0,
       fallbackReasons: [],
     },
   },
