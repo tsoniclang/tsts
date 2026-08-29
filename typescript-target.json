@@ -10,7 +10,7 @@
     "representationProjections": "closed-direct"
   },
   "acceptance": {
-    "pointerKeyMapCount": 69
+    "pointerKeyMapCount": 72
   },
   "evidence": {
     "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"
