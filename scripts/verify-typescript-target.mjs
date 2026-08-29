@@ -107,7 +107,7 @@ const optimizationArtifact = compiled.artifacts.find((artifact) =>
 );
 assert.ok(optimizationArtifact !== undefined);
 assert.deepEqual(JSON.parse(optimizationArtifact.text), {
-  schemaVersion: 27,
+  schemaVersion: 28,
   sourceExecution: "synchronous",
   profileIdentity:
     "typescript-optimization-v4/pointer=location/scalar=preserve/representations=preserve",
@@ -138,6 +138,7 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
       candidateCount: 0,
       optimizedCount: 0,
       retainedCount: 0,
+      exactProjectionCount: 0,
       fallbackReasons: [],
     },
   },
