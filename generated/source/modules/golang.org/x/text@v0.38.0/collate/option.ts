@@ -1,4 +1,3 @@
-import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Weighter as Weighter__from_colltab } from "../../../../../packages/golang.org/x/text@v0.38.0/internal/colltab/package.js";
 import type { Form as Form__from_norm } from "../../../../../packages/golang.org/x/text@v0.38.0/unicode/norm/package.js";
 import type { $goProviderProfileBridge$Named_sort$Interface$Using$sort_Interface$Direct$ProviderContract as GoProviderProfileBridge$ProviderContract } from "../../../../../support/provider-interface-bridges.js";
@@ -20,7 +19,7 @@ export function newCollator(t: Weighter__from_colltab | undefined): Collator | u
     const __gotots_field_0 = new options(GoArray.literal<bool, 5>(5, false, [3, 4], [true, true]), false, false, false, new alternateHandling(0), 0, t, NFD$constant__from_norm());
     const __gotots_array_build_0 = goArrayAllocate<iter__from_collate$Storage, 2>(2);
     for (let __gotots_array_build_1 = 0; __gotots_array_build_1 < 2; __gotots_array_build_1++) {
-        __gotots_array_build_0.set(__gotots_array_build_1, iter.$storageOf(iter.$zero()));
+        __gotots_array_build_0.set(__gotots_array_build_1, iter.$zeroStorage());
     }
     let c: Collator | undefined = new Collator(__gotots_field_0, sorter.$zero(), __gotots_array_build_0);
     const __gotots_receiver_0 = t;
@@ -29,7 +28,7 @@ export function newCollator(t: Weighter__from_colltab | undefined): Collator | u
 }
 export type Option$Storage = {
     priority: int;
-    f: (($0: tsonicTypeScriptRuntime.Location<options> | undefined) => void) | undefined;
+    f: (($0: options | undefined) => void) | undefined;
 };
 export class Option {
     declare private readonly $goType: void;
@@ -47,23 +46,23 @@ export class Option {
     public set priority($value: int) {
         this.$storage.priority = $value;
     }
-    public get f(): (($0: tsonicTypeScriptRuntime.Location<options> | undefined) => void) | undefined {
+    public get f(): (($0: options | undefined) => void) | undefined {
         return this.$storage.f;
     }
-    public set f($value: (($0: tsonicTypeScriptRuntime.Location<options> | undefined) => void) | undefined) {
+    public set f($value: (($0: options | undefined) => void) | undefined) {
         this.$storage.f = $value;
-    }
-    static $zero(): Option {
-        return new Option({
-            priority: 0,
-            f: void 0
-        });
     }
     static $copy($source: Option): Option {
         return new Option({
             priority: $source.$storage.priority,
             f: $source.$storage.f
         });
+    }
+    static $zeroStorage(): Option$Storage {
+        return {
+            priority: 0,
+            f: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -96,18 +95,18 @@ export class options {
     public constructor(public ignore: GoArray<bool, 5>, public caseLevel: bool, public backwards: bool, public numeric: bool, public alternate: alternateHandling, public variableTop: uint32, public t: Weighter__from_colltab | undefined, public f: Form__from_norm) {
     }
     declare private readonly then?: never;
-    static $go$private$collate$setFromTag(o: tsonicTypeScriptRuntime.Location<options> | undefined, t: Tag__from_language__package_1): void {
-        ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.caseLevel = ldmlBool(Tag__from_language__package_1.$copy(t), ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.caseLevel, "kc");
-        ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.backwards = ldmlBool(Tag__from_language__package_1.$copy(t), ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.backwards, "kb");
-        ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.numeric = ldmlBool(Tag__from_language__package_1.$copy(t), ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.numeric, "kn");
+    static $go$private$collate$setFromTag(o: options | undefined, t: Tag__from_language__package_1): void {
+        (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).caseLevel = ldmlBool(Tag__from_language__package_1.$copy(t), (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).caseLevel, "kc");
+        (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).backwards = ldmlBool(Tag__from_language__package_1.$copy(t), (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).backwards, "kb");
+        (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numeric = ldmlBool(Tag__from_language__package_1.$copy(t), (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numeric, "kn");
         switch (t.TypeForKey("ks")) {
             case "level1": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Secondary$constant__from_colltab().$value, true);
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Tertiary$constant__from_colltab().$value, true);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Secondary$constant__from_colltab().$value, true);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Tertiary$constant__from_colltab().$value, true);
                 break;
             }
             case "level2": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Tertiary$constant__from_colltab().$value, true);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Tertiary$constant__from_colltab().$value, true);
                 break;
             }
             case "level3":
@@ -115,31 +114,31 @@ export class options {
                 break;
             }
             case "level4": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Quaternary$constant__from_colltab().$value, false);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Quaternary$constant__from_colltab().$value, false);
                 break;
             }
             case "identic": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Quaternary$constant__from_colltab().$value, false);
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Identity$constant__from_colltab().$value, false);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Quaternary$constant__from_colltab().$value, false);
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Identity$constant__from_colltab().$value, false);
                 break;
             }
         }
         switch (t.TypeForKey("ka")) {
             case "shifted": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.alternate = altShifted$constant();
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).alternate = altShifted$constant();
                 break;
             }
             case "blanked": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.alternate = altBlanked$constant();
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).alternate = altBlanked$constant();
                 break;
             }
             case "posix": {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.alternate = altShiftTrimmed$constant();
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).alternate = altShiftTrimmed$constant();
                 break;
             }
         }
     }
-    static $go$private$collate$setOptions(o: tsonicTypeScriptRuntime.Location<options> | undefined, opts: RuntimeSlice<Option$Storage>): void {
+    static $go$private$collate$setOptions(o: options | undefined, opts: RuntimeSlice<Option$Storage>): void {
         const __gotots_argument_0 = new GoInterfaceAdapter(new prioritizedOptions(opts));
         provider_sort.SortDirect(GoProviderProfileBridge.$to(__gotots_argument_0));
         const __gotots_range_0 = opts;
@@ -168,27 +167,27 @@ export function ldmlBool(t: Tag__from_language__package_1, old: bool, key: gostr
         }
     }
 }
-export function ignoreWidthF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Tertiary$constant__from_colltab().$value, true);
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.caseLevel = true;
+export function ignoreWidthF(o: options | undefined): void {
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Tertiary$constant__from_colltab().$value, true);
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).caseLevel = true;
 }
-export function ignoreDiacriticsF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Secondary$constant__from_colltab().$value, true);
+export function ignoreDiacriticsF(o: options | undefined): void {
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Secondary$constant__from_colltab().$value, true);
 }
-export function ignoreCaseF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Tertiary$constant__from_colltab().$value, true);
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.caseLevel = false;
+export function ignoreCaseF(o: options | undefined): void {
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Tertiary$constant__from_colltab().$value, true);
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).caseLevel = false;
 }
-export function looseF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
+export function looseF(o: options | undefined): void {
     ignoreWidthF(o);
     ignoreDiacriticsF(o);
     ignoreCaseF(o);
 }
-export function forceF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.ignore.set(Identity$constant__from_colltab().$value, false);
+export function forceF(o: options | undefined): void {
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ignore.set(Identity$constant__from_colltab().$value, false);
 }
-export function numericF(o: tsonicTypeScriptRuntime.Location<options> | undefined): void {
-    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<options>).value.numeric = true;
+export function numericF(o: options | undefined): void {
+    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numeric = true;
 }
 export class alternateHandling {
     declare private readonly $goType: void;

@@ -38,6 +38,13 @@ export class SyncMap<K, V> {
             m: named_sync.SyncMapOperations.$copy($source.$storage.m)
         });
     }
+    static $zeroStorage<K, V>(): SyncMap$Storage<K, V> {
+        return {
+            $blank0: goArrayAllocate<GoContainerStorage<K>, 0>(0),
+            $blank1: goArrayAllocate<GoContainerStorage<V>, 0>(0),
+            m: named_sync.SyncMapOperations.$zero()
+        };
+    }
     declare private readonly then?: never;
     static Clear<K, V>(s: tsonicTypeScriptRuntime.Location<SyncMap<K, V>> | undefined): void {
         sync__from_gostdlib.Map.Clear(SyncMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMap<K, V>>).value).m);

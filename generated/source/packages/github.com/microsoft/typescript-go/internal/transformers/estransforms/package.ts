@@ -29,19 +29,19 @@ export function $initialize(): void {
     $state.esDecoratorAndClassFields = void 0;
     $state.newlineNormalizer = void 0;
     {
-        $state.esDecoratorAndClassFields = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([newESDecoratorTransformer, newClassFieldsTransformer]));
+        $state.esDecoratorAndClassFields = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([newESDecoratorTransformer, newClassFieldsTransformer]));
     }
     {
-        $state.NewESNextTransformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([newUsingDeclarationTransformer, $state.esDecoratorAndClassFields]));
+        $state.NewESNextTransformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([newUsingDeclarationTransformer, $state.esDecoratorAndClassFields]));
     }
     {
-        $state.NewES2021Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewESNextTransformer, newLogicalAssignmentTransformer]));
+        $state.NewES2021Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewESNextTransformer, newLogicalAssignmentTransformer]));
     }
     {
-        $state.NewES2020Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewES2021Transformer, newNullishCoalescingTransformer, newOptionalChainTransformer]));
+        $state.NewES2020Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewES2021Transformer, newNullishCoalescingTransformer, newOptionalChainTransformer]));
     }
     {
-        $state.NewES2019Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewES2020Transformer, newOptionalCatchTransformer]));
+        $state.NewES2019Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewES2020Transformer, newOptionalCatchTransformer]));
     }
     {
         const __gotots_conversion_0 = strings__from_gostdlib.NewReplacer(RuntimeSlice.literal<gostring>(["\r\n", "\n", "\r", "\n"]));
@@ -53,13 +53,13 @@ export function $initialize(): void {
             });
     }
     {
-        $state.NewES2018Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewES2019Transformer, newObjectRestSpreadTransformer, newforawaitTransformer, newTaggedTemplateLiftRestrictionTransformer]));
+        $state.NewES2018Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewES2019Transformer, newObjectRestSpreadTransformer, newforawaitTransformer, newTaggedTemplateLiftRestrictionTransformer]));
     }
     {
-        $state.NewES2017Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewES2018Transformer, newAsyncTransformer]));
+        $state.NewES2017Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewES2018Transformer, newAsyncTransformer]));
     }
     {
-        $state.NewES2016Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) | undefined>([$state.NewES2017Transformer, newExponentiationTransformer]));
+        $state.NewES2016Transformer = Chain__from_transformers(RuntimeSlice.literal<(($0: TransformOptions__from_transformers | undefined) => Transformer__from_transformers | undefined) | undefined>([$state.NewES2017Transformer, newExponentiationTransformer]));
     }
 }
 export { GetESTransformer } from "../../../../../../../modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/definitions.js";

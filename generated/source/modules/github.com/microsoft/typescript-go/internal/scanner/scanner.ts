@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { CommentDirective$Storage as CommentDirective__from_ast$Storage, CommentRange as CommentRange__from_ast, JSDocSatisfiesTag as JSDocSatisfiesTag__from_ast, Kind as Kind__from_ast, SatisfiesExpression as SatisfiesExpression__from_ast, SourceFileLike as SourceFileLike__from_ast, TokenFlags as TokenFlags__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { LanguageVariant as LanguageVariant__from_core, ScriptTarget as ScriptTarget__from_core, TextPos as TextPos__from_core, TextRange$Storage as TextRange__from_core$Storage } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/core/package.js";
 import type { Message as Message__from_diagnostics } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/diagnostics/package.js";
@@ -89,11 +89,11 @@ export class Scanner {
         return new Scanner($source.text, $source.end, $source.languageVariant, $source.scriptTarget, $source.onError, $source.skipTrivia, ScannerState.$copy($source.ScannerState), $source.containsNonASCII, $source.numberCache, $source.hexNumberCache, $source.hexDigitCache);
     }
     declare private readonly then?: never;
-    static CanFollowJSDocAt(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length) {
+    static CanFollowJSDocAt(s: Scanner | undefined): bool {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length) {
             return true;
         }
-        const __gotots_results_48 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+        const __gotots_results_48 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
         const __gotots_results_49 = [__gotots_results_48[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_48[1]))] satisfies [
             int32,
             int
@@ -101,103 +101,103 @@ export class Scanner {
         let ch = __gotots_results_49[0];
         return IsIdentifierStart(ch) || IsWhiteSpaceSingleLine__from_stringutil(ch) || IsLineBreak__from_stringutil(ch);
     }
-    static CommentDirectives(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): RuntimeSlice<CommentDirective__from_ast$Storage> {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.commentDirectives;
+    static CommentDirectives(s: Scanner | undefined): RuntimeSlice<CommentDirective__from_ast$Storage> {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.commentDirectives;
     }
-    static ContainsNonASCII(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.containsNonASCII;
+    static ContainsNonASCII(s: Scanner | undefined): bool {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containsNonASCII;
     }
-    static HasExtendedUnicodeEscape(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsExtendedUnicodeEscape$constant__from_ast()) === 0);
+    static HasExtendedUnicodeEscape(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsExtendedUnicodeEscape$constant__from_ast()) === 0);
     }
-    static HasPrecedingJSDocComment(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocComment$constant__from_ast()) === 0);
+    static HasPrecedingJSDocComment(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocComment$constant__from_ast()) === 0);
     }
-    static HasPrecedingJSDocLeadingAsterisks(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocLeadingAsterisks$constant__from_ast()) === 0);
+    static HasPrecedingJSDocLeadingAsterisks(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocLeadingAsterisks$constant__from_ast()) === 0);
     }
-    static HasPrecedingJSDocWithDeprecatedTag(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithDeprecated$constant__from_ast()) === 0);
+    static HasPrecedingJSDocWithDeprecatedTag(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithDeprecated$constant__from_ast()) === 0);
     }
-    static HasPrecedingJSDocWithSeeOrLink(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithSeeOrLink$constant__from_ast()) === 0);
+    static HasPrecedingJSDocWithSeeOrLink(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithSeeOrLink$constant__from_ast()) === 0);
     }
-    static HasPrecedingLineBreak(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingLineBreak$constant__from_ast()) === 0);
+    static HasPrecedingLineBreak(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingLineBreak$constant__from_ast()) === 0);
     }
-    static HasUnicodeEscape(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): bool {
-        return !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsUnicodeEscape$constant__from_ast()) === 0);
+    static HasUnicodeEscape(s: Scanner | undefined): bool {
+        return !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsUnicodeEscape$constant__from_ast()) === 0);
     }
-    static Mark(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): ScannerState {
-        return ScannerState.$copy(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState);
+    static Mark(s: Scanner | undefined): ScannerState {
+        return ScannerState.$copy((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState);
     }
-    static ReScanAsteriskEqualsToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindAsteriskEqualsToken$constant__from_ast())) {
+    static ReScanAsteriskEqualsToken(s: Scanner | undefined): Kind__from_ast {
+        if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindAsteriskEqualsToken$constant__from_ast())) {
             const __gotots_argument_32 = new $goInterfaceAdapter$string("'ReScanAsteriskEqualsToken' should only be called on a '*='");
             GoPanic.raise(__gotots_argument_32 === undefined ? GoPanicNilValue.create() : __gotots_argument_32);
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsToken$constant__from_ast();
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsToken$constant__from_ast();
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanGreaterThanToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindGreaterThanToken$constant__from_ast()) {
+    static ReScanGreaterThanToken(s: Scanner | undefined): Kind__from_ast {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindGreaterThanToken$constant__from_ast()) {
             Scanner.$go$private$scanner$reScanGreaterThanTokenInner(s);
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanHashToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindPrivateIdentifier$constant__from_ast()) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindHashToken$constant__from_ast();
+    static ReScanHashToken(s: Scanner | undefined): Kind__from_ast {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindPrivateIdentifier$constant__from_ast()) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindHashToken$constant__from_ast();
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanJsxAttributeValue(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos;
+    static ReScanJsxAttributeValue(s: Scanner | undefined): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos;
         return Scanner.ScanJsxAttributeValue(s);
     }
-    static ReScanJsxToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, allowMultilineJsxText: bool): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.ScanJsxTokenEx(s, allowMultilineJsxText);
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    static ReScanJsxToken(s: Scanner | undefined, allowMultilineJsxText: bool): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.ScanJsxTokenEx(s, allowMultilineJsxText);
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanLessThanToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindLessThanLessThanToken$constant__from_ast()) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanToken$constant__from_ast();
+    static ReScanLessThanToken(s: Scanner | undefined): Kind__from_ast {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindLessThanLessThanToken$constant__from_ast()) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanToken$constant__from_ast();
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanQuestionToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindQuestionQuestionToken$constant__from_ast())) {
+    static ReScanQuestionToken(s: Scanner | undefined): Kind__from_ast {
+        if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindQuestionQuestionToken$constant__from_ast())) {
             const __gotots_argument_33 = new $goInterfaceAdapter$string("'reScanQuestionToken' should only be called on a '??'");
             GoPanic.raise(__gotots_argument_33 === undefined ? GoPanicNilValue.create() : __gotots_argument_33);
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindQuestionToken$constant__from_ast();
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindQuestionToken$constant__from_ast();
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanSlashToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, reportErrors: RuntimeSlice<bool>): Kind__from_ast {
+    static ReScanSlashToken(s: Scanner | undefined, reportErrors: RuntimeSlice<bool>): Kind__from_ast {
         let shouldReportErrors = reportErrors.length > 0 && reportErrors.get(0);
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindSlashToken$constant__from_ast() || ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindSlashEqualsToken$constant__from_ast()) {
-            let startOfRegExpBody = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindSlashToken$constant__from_ast() || (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindSlashEqualsToken$constant__from_ast()) {
+            let startOfRegExpBody = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
             let p = startOfRegExpBody;
             let inEscape = false;
             let namedCaptureGroups = false;
             let inCharacterClass = false;
             loop: for (;;) {
-                if (p >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end) {
-                    const __gotots_store_173 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                if (p >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end) {
+                    const __gotots_store_173 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_173.tokenFlags = __gotots_store_173.tokenFlags | 4;
                     break loop;
                 }
-                let ch = goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p);
+                let ch = goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p);
                 __gotots_control_target_8: {
                     if (IsLineBreak__from_stringutil(ch)) {
-                        const __gotots_store_174 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_174 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_174.tokenFlags = __gotots_store_174.tokenFlags | 4;
                         break loop;
                     }
@@ -216,21 +216,21 @@ export class Scanner {
                     else if (ch === 93) {
                         inCharacterClass = false;
                     }
-                    else if (!inCharacterClass && ch === 40 && p + 1 < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p + 1) === 63 && p + 2 < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p + 2) === 60 && (p + 3 >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end || (goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p + 3) !== 61 && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p + 3) !== 33))) {
+                    else if (!inCharacterClass && ch === 40 && p + 1 < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p + 1) === 63 && p + 2 < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p + 2) === 60 && (p + 3 >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end || (goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p + 3) !== 61 && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p + 3) !== 33))) {
                         namedCaptureGroups = true;
                     }
                 }
                 p++;
             }
             let endOfRegExpBody = p;
-            if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsUnterminated$constant__from_ast()) === 0)) {
+            if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsUnterminated$constant__from_ast()) === 0)) {
                 p = startOfRegExpBody;
                 inEscape = false;
                 let characterClassDepth = 0;
                 let inDecimalQuantifier = false;
                 let groupDepth = 0;
                 for (; p < endOfRegExpBody;) {
-                    let ch = goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p);
+                    let ch = goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p);
                     if (inEscape) {
                         inEscape = false;
                     }
@@ -265,7 +265,7 @@ export class Scanner {
                     p++;
                 }
                 for (; p > startOfRegExpBody;) {
-                    const __gotots_results_61 = utf8__from_gostdlib.DecodeLastRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, 0, p));
+                    const __gotots_results_61 = utf8__from_gostdlib.DecodeLastRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, 0, p));
                     const __gotots_results_62 = [__gotots_results_61[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_61[1]))] satisfies [
                         int32,
                         int
@@ -279,13 +279,13 @@ export class Scanner {
                         break;
                     }
                 }
-                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unterminated_regular_expression_literal, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, p - ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, RuntimeSlice.nil<GoInterface | undefined>());
+                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unterminated_regular_expression_literal, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, p - (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, RuntimeSlice.nil<GoInterface | undefined>());
             }
             else {
                 p++;
                 let regExpFlags = 0;
-                for (; p < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end;) {
-                    const __gotots_results_63 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, p));
+                for (; p < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end;) {
+                    const __gotots_results_63 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, p));
                     const __gotots_results_64 = [__gotots_results_63[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_63[1]))] satisfies [
                         int32,
                         int
@@ -316,67 +316,66 @@ export class Scanner {
                     p += size;
                 }
                 if (shouldReportErrors) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = startOfRegExpBody;
-                    let saveEnd = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end;
-                    let saveTokenPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart;
-                    let saveTokenFlags = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end = endOfRegExpBody;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = startOfRegExpBody;
+                    let saveEnd = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end;
+                    let saveTokenPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart;
+                    let saveTokenFlags = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end = endOfRegExpBody;
                     let parser: regExpParser | undefined = new regExpParser(s, endOfRegExpBody, regExpFlags, !((regExpFlags & regularExpressionFlagsAnyUnicodeMode$constant()) === 0), !((regExpFlags & regularExpressionFlagsUnicodeSets$constant()) === 0), true, false, namedCaptureGroups, false, 0, GoMap.make<gostring, bool>(false, 0, []), RuntimeSlice.nil<groupNameReference__from_scanner$Storage>(), RuntimeSlice.nil<decimalEscapeValue__from_scanner$Storage>(), RuntimeSlice.nil<GoMapValue<gostring, bool>>(), 0);
                     regExpParser.$go$private$scanner$run(parser);
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end = saveEnd;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = p;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = saveTokenPos;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = saveTokenFlags;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end = saveEnd;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = p;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = saveTokenPos;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = saveTokenFlags;
                 }
                 else {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = p;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = p;
                 }
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = p;
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindRegularExpressionLiteral$constant__from_ast();
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = p;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindRegularExpressionLiteral$constant__from_ast();
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ReScanTemplateToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, isTaggedTemplate: bool): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanTemplateAndSetTokenValue(s, !isTaggedTemplate);
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    static ReScanTemplateToken(s: Scanner | undefined, isTaggedTemplate: bool): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanTemplateAndSetTokenValue(s, !isTaggedTemplate);
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static Reset(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): void {
-        let numberCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache);
-        let hexNumberCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache);
-        let hexDigitCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache);
-        void ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value =
-            defaultScanner());
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache = numberCache;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache = hexNumberCache;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache = hexDigitCache;
+    static Reset(s: Scanner | undefined): void {
+        let numberCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache);
+        let hexNumberCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache);
+        let hexDigitCache: GoMapValue<gostring, gostring> = cleared$MapOf_string_To_string$string$string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache);
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$tsonicReplace(defaultScanner());
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache = numberCache;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache = hexNumberCache;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache = hexDigitCache;
     }
-    static ResetPos(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, pos: int): void {
+    static ResetPos(s: Scanner | undefined, pos: int): void {
         if (pos < 0) {
             const __gotots_argument_25 = new $goInterfaceAdapter$string("Cannot reset token state to negative position");
             GoPanic.raise(__gotots_argument_25 === undefined ? GoPanicNilValue.create() : __gotots_argument_25);
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = pos;
     }
-    static ResetTokenState(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, pos: int): void {
+    static ResetTokenState(s: Scanner | undefined, pos: int): void {
         Scanner.ResetPos(s, pos);
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindUnknown$constant__from_ast();
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "";
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindUnknown$constant__from_ast();
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "";
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
     }
-    static Rewind(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, state: ScannerState): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState = ScannerState.$copy(state);
+    static Rewind(s: Scanner | undefined, state: ScannerState): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState = ScannerState.$copy(state);
     }
-    static Scan(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
+    static Scan(s: Scanner | undefined): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
         for (;;) {
             let ch = Scanner.$go$private$scanner$char(s);
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
             {
                 const __gotots_switch_tag_0 = ch;
                 let __gotots_switch_selection_0 = -1;
@@ -721,9 +720,9 @@ export class Scanner {
                 }
                 __gotots_control_target_0: {
                     if (__gotots_switch_selection_0 === 0) {
-                        const __gotots_store_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_0.pos = __gotots_store_0.pos + 1;
-                        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                             continue;
                         }
                         for (;;) {
@@ -733,17 +732,17 @@ export class Scanner {
                             if (!IsWhiteSpaceSingleLine__from_stringutil(ch__shadow_1)) {
                                 break;
                             }
-                            const __gotots_store_1 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_1.pos = __gotots_store_1.pos + size;
                         }
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 1) {
-                        const __gotots_store_2 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_2.tokenFlags = __gotots_store_2.tokenFlags | 1;
-                        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
-                            const __gotots_store_3 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
+                            const __gotots_store_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_3.pos = __gotots_store_3.pos + 1;
                             Scanner.$go$private$scanner$scanASCIIWhile(s, (b: uint8): bool => {
                                 return b === 32 || (b >= 9 && b <= 13);
@@ -751,55 +750,55 @@ export class Scanner {
                             continue;
                         }
                         if (ch === 13 && Scanner.$go$private$scanner$charAt(s, 1) === 10) {
-                            const __gotots_store_4 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_4.pos = __gotots_store_4.pos + 2;
                         }
                         else {
-                            const __gotots_store_5 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_5.pos = __gotots_store_5.pos + 1;
                         }
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindNewLineTrivia$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindNewLineTrivia$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 2) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_6 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_6 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_6.pos = __gotots_store_6.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindExclamationEqualsEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindExclamationEqualsEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_7 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_7 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_7.pos = __gotots_store_7.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindExclamationEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindExclamationEqualsToken$constant__from_ast();
                             }
                         }
                         else {
-                            const __gotots_store_8 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_8 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_8.pos = __gotots_store_8.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindExclamationToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindExclamationToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 3) {
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = Scanner.$go$private$scanner$scanString(s, false);
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindStringLiteral$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = Scanner.$go$private$scanner$scanString(s, false);
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindStringLiteral$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 4) {
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanTemplateAndSetTokenValue(s, false);
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanTemplateAndSetTokenValue(s, false);
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 5) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                            const __gotots_store_9 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_9 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_9.pos = __gotots_store_9.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPercentEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPercentEqualsToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_10 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_10 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_10.pos = __gotots_store_10.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPercentToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPercentToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
@@ -807,135 +806,135 @@ export class Scanner {
                         let next = Scanner.$go$private$scanner$charAt(s, 1);
                         if (next === 38) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_11 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_11 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_11.pos = __gotots_store_11.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAmpersandAmpersandEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAmpersandAmpersandEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_12 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_12 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_12.pos = __gotots_store_12.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAmpersandAmpersandToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAmpersandAmpersandToken$constant__from_ast();
                             }
                         }
                         else if (next === 61) {
-                            const __gotots_store_13 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_13 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_13.pos = __gotots_store_13.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAmpersandEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAmpersandEqualsToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_14 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_14 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_14.pos = __gotots_store_14.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAmpersandToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAmpersandToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 7) {
-                        const __gotots_store_15 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_15 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_15.pos = __gotots_store_15.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenParenToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenParenToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 8) {
-                        const __gotots_store_16 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_16 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_16.pos = __gotots_store_16.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseParenToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseParenToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 9) {
                         let next = Scanner.$go$private$scanner$charAt(s, 1);
                         if (next === 61) {
-                            const __gotots_store_17 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_17 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_17.pos = __gotots_store_17.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAsteriskEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAsteriskEqualsToken$constant__from_ast();
                         }
                         else if (next === 42) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_18 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_18 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_18.pos = __gotots_store_18.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAsteriskAsteriskEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAsteriskAsteriskEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_19 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_19 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_19.pos = __gotots_store_19.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAsteriskAsteriskToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAsteriskAsteriskToken$constant__from_ast();
                             }
                         }
                         else {
-                            const __gotots_store_20 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_20 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_20.pos = __gotots_store_20.pos + 1;
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.skipJSDocLeadingAsterisks !== 0 && (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocLeadingAsterisks$constant__from_ast()) === 0 && !((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingLineBreak$constant__from_ast()) === 0)) {
-                                const __gotots_store_21 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.skipJSDocLeadingAsterisks !== 0 && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocLeadingAsterisks$constant__from_ast()) === 0 && !(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingLineBreak$constant__from_ast()) === 0)) {
+                                const __gotots_store_21 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_21.tokenFlags = __gotots_store_21.tokenFlags | 32768;
                                 continue;
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAsteriskToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAsteriskToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 10) {
                         let next = Scanner.$go$private$scanner$charAt(s, 1);
                         if (next === 61) {
-                            const __gotots_store_22 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_22 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_22.pos = __gotots_store_22.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPlusEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPlusEqualsToken$constant__from_ast();
                         }
                         else if (next === 43) {
-                            const __gotots_store_23 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_23 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_23.pos = __gotots_store_23.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPlusPlusToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPlusPlusToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_24 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_24 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_24.pos = __gotots_store_24.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPlusToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPlusToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 11) {
-                        const __gotots_store_25 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_25 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_25.pos = __gotots_store_25.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCommaToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCommaToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 12) {
                         let next = Scanner.$go$private$scanner$charAt(s, 1);
                         if (next === 61) {
-                            const __gotots_store_26 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_26 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_26.pos = __gotots_store_26.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindMinusEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindMinusEqualsToken$constant__from_ast();
                         }
                         else if (next === 45) {
-                            const __gotots_store_27 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_27 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_27.pos = __gotots_store_27.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindMinusMinusToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindMinusMinusToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_28 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_28 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_28.pos = __gotots_store_28.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindMinusToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindMinusToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 13) {
                         let next = Scanner.$go$private$scanner$charAt(s, 1);
                         if (IsDigit__from_stringutil(next)) {
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanNumber(s);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanNumber(s);
                         }
                         else if (next === 46 && Scanner.$go$private$scanner$charAt(s, 2) === 46) {
-                            const __gotots_store_29 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_29 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_29.pos = __gotots_store_29.pos + 3;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindDotDotDotToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindDotDotDotToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_30 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_30 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_30.pos = __gotots_store_30.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindDotToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindDotToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 14) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 47) {
-                            const __gotots_store_31 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_31 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_31.pos = __gotots_store_31.pos + 2;
                             for (;;) {
                                 Scanner.$go$private$scanner$scanASCIIWhile(s, (b: uint8): bool => {
@@ -947,22 +946,22 @@ export class Scanner {
                                 if (size === 0 || IsLineBreak__from_stringutil(ch1)) {
                                     break;
                                 }
-                                const __gotots_store_32 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_32 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_32.pos = __gotots_store_32.pos + size;
                             }
-                            Scanner.$go$private$scanner$processCommentDirective(s, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, false);
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            Scanner.$go$private$scanner$processCommentDirective(s, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, false);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindSingleLineCommentTrivia$constant__from_ast();
-                            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindSingleLineCommentTrivia$constant__from_ast();
+                            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 42) {
-                            const __gotots_store_33 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_33 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_33.pos = __gotots_store_33.pos + 2;
                             let isJSDoc = Scanner.$go$private$scanner$char(s) === 42 && Scanner.$go$private$scanner$charAt(s, 1) !== 47;
                             let commentClosed = false;
-                            let lastLineStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart;
+                            let lastLineStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart;
                             for (;;) {
                                 Scanner.$go$private$scanner$scanASCIIWhile(s, (b: uint8): bool => {
                                     return b !== 42 && b !== 10 && b !== 13;
@@ -974,369 +973,369 @@ export class Scanner {
                                     break;
                                 }
                                 if (ch1 === 42 && Scanner.$go$private$scanner$charAt(s, 1) === 47) {
-                                    const __gotots_store_34 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                    const __gotots_store_34 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                     __gotots_store_34.pos = __gotots_store_34.pos + 2;
                                     commentClosed = true;
                                     break;
                                 }
-                                const __gotots_store_35 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_35 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_35.pos = __gotots_store_35.pos + size;
                                 if (IsLineBreak__from_stringutil(ch1)) {
-                                    lastLineStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-                                    const __gotots_store_36 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                    lastLineStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+                                    const __gotots_store_36 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                     __gotots_store_36.tokenFlags = __gotots_store_36.tokenFlags | 1;
                                 }
                             }
                             if (isJSDoc) {
-                                const __gotots_store_37 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_37 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_37.tokenFlags = __gotots_store_37.tokenFlags | 2;
-                                Scanner.$go$private$scanner$scanJSDocCommentForTags(s, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                                Scanner.$go$private$scanner$scanJSDocCommentForTags(s, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                             }
-                            Scanner.$go$private$scanner$processCommentDirective(s, lastLineStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, true);
+                            Scanner.$go$private$scanner$processCommentDirective(s, lastLineStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, true);
                             if (!commentClosed) {
                                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Asterisk_Slash_expected);
                             }
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             if (!commentClosed) {
-                                const __gotots_store_38 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_38 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_38.tokenFlags = __gotots_store_38.tokenFlags | 4;
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindMultiLineCommentTrivia$constant__from_ast();
-                            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindMultiLineCommentTrivia$constant__from_ast();
+                            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                            const __gotots_store_39 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_39 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_39.pos = __gotots_store_39.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindSlashEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindSlashEqualsToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_40 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_40 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_40.pos = __gotots_store_40.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindSlashToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindSlashToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 15) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 88 || Scanner.$go$private$scanner$charAt(s, 1) === 120) {
-                            let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-                            const __gotots_store_41 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+                            const __gotots_store_41 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_41.pos = __gotots_store_41.pos + 2;
                             let digits = Scanner.$go$private$scanner$scanHexDigits(s, 1, true, true);
                             if (digits === "") {
                                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Hexadecimal_digit_expected);
                                 digits = "0";
                             }
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache.isNil()) {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache = GoMap.make<gostring, gostring>("", 0, []);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache.isNil()) {
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache = GoMap.make<gostring, gostring>("", 0, []);
                             }
                             {
-                                const __gotots_results_3 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache.lookupOk(digits);
+                                const __gotots_results_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache.lookupOk(digits);
                                 let cachedValue = __gotots_results_3[0];
                                 let ok = __gotots_results_3[1];
                                 if (ok) {
-                                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = cachedValue;
+                                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = cachedValue;
                                 }
                                 else {
-                                    let rawText = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                                    let rawText = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                                     if (strings__from_gostdlib.HasPrefix(rawText, "0x") && goStringSlice(rawText, 2) === digits) {
-                                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = rawText;
+                                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = rawText;
                                     }
                                     else {
-                                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "0x" + digits;
+                                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "0x" + digits;
                                     }
-                                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexNumberCache.store(digits, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+                                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexNumberCache.store(digits, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
                                 }
                             }
-                            const __gotots_store_42 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_42 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_42.tokenFlags = __gotots_store_42.tokenFlags | 64;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
                             break __gotots_control_target_0;
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 66 || Scanner.$go$private$scanner$charAt(s, 1) === 98) {
-                            const __gotots_store_43 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_43 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_43.pos = __gotots_store_43.pos + 2;
                             let digits = Scanner.$go$private$scanner$scanBinaryOrOctalDigits(s, 2);
                             if (digits === "") {
                                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Binary_digit_expected);
                                 digits = "0";
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "0b" + digits;
-                            const __gotots_store_44 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "0b" + digits;
+                            const __gotots_store_44 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_44.tokenFlags = __gotots_store_44.tokenFlags | 128;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
                             break __gotots_control_target_0;
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 79 || Scanner.$go$private$scanner$charAt(s, 1) === 111) {
-                            const __gotots_store_45 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_45 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_45.pos = __gotots_store_45.pos + 2;
                             let digits = Scanner.$go$private$scanner$scanBinaryOrOctalDigits(s, 8);
                             if (digits === "") {
                                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Octal_digit_expected);
                                 digits = "0";
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "0o" + digits;
-                            const __gotots_store_46 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "0o" + digits;
+                            const __gotots_store_46 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_46.tokenFlags = __gotots_store_46.tokenFlags | 256;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanBigIntSuffix(s);
                             break __gotots_control_target_0;
                         }
                         __gotots_switch_selection_0 = 16;
                     }
                     if (__gotots_switch_selection_0 === 16) {
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = Scanner.$go$private$scanner$scanNumber(s);
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = Scanner.$go$private$scanner$scanNumber(s);
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 17) {
-                        const __gotots_store_47 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_47 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_47.pos = __gotots_store_47.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindColonToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindColonToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 18) {
-                        const __gotots_store_48 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_48 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_48.pos = __gotots_store_48.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindSemicolonToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindSemicolonToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 19) {
-                        if (Scanner.$go$private$scanner$charAt(s, 1) === 60 && isConflictMarkerTrivia(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)) {
-                            const __gotots_argument_1 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
-                            const __gotots_argument_2 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        if (Scanner.$go$private$scanner$charAt(s, 1) === 60 && isConflictMarkerTrivia((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)) {
+                            const __gotots_argument_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
+                            const __gotots_argument_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             const __gotots_receiver_2 = s;
                             const __gotots_argument_3 = ($argument0: {
                                 value: Message__from_diagnostics;
                             } | undefined, $argument1: int, $argument2: int, $argument3: RuntimeSlice<GoInterface | undefined>): void => {
                                 Scanner.$go$private$scanner$errorAt(__gotots_receiver_2, $argument0, $argument1, $argument2, $argument3);
                             };
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             else {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
-                                return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
+                                return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                             }
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 60) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_49 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_49 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_49.pos = __gotots_store_49.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanLessThanEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanLessThanEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_50 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_50 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_50.pos = __gotots_store_50.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanLessThanToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanLessThanToken$constant__from_ast();
                             }
                         }
                         else if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                            const __gotots_store_51 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_51 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_51.pos = __gotots_store_51.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanEqualsToken$constant__from_ast();
                         }
-                        else if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.languageVariant === LanguageVariantJSX$constant__from_core() && Scanner.$go$private$scanner$charAt(s, 1) === 47 && Scanner.$go$private$scanner$charAt(s, 2) !== 42) {
-                            const __gotots_store_52 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        else if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).languageVariant === LanguageVariantJSX$constant__from_core() && Scanner.$go$private$scanner$charAt(s, 1) === 47 && Scanner.$go$private$scanner$charAt(s, 2) !== 42) {
+                            const __gotots_store_52 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_52.pos = __gotots_store_52.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanSlashToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanSlashToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_53 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_53 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_53.pos = __gotots_store_53.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 20) {
-                        if (Scanner.$go$private$scanner$charAt(s, 1) === 61 && isConflictMarkerTrivia(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)) {
-                            const __gotots_argument_4 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
-                            const __gotots_argument_5 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        if (Scanner.$go$private$scanner$charAt(s, 1) === 61 && isConflictMarkerTrivia((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)) {
+                            const __gotots_argument_4 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
+                            const __gotots_argument_5 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             const __gotots_receiver_3 = s;
                             const __gotots_argument_6 = ($argument0: {
                                 value: Message__from_diagnostics;
                             } | undefined, $argument1: int, $argument2: int, $argument3: RuntimeSlice<GoInterface | undefined>): void => {
                                 Scanner.$go$private$scanner$errorAt(__gotots_receiver_3, $argument0, $argument1, $argument2, $argument3);
                             };
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_4, __gotots_argument_5, __gotots_argument_6);
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_4, __gotots_argument_5, __gotots_argument_6);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             else {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
-                                return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
+                                return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                             }
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_54 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_54 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_54.pos = __gotots_store_54.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsEqualsEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsEqualsEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_55 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_55 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_55.pos = __gotots_store_55.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsEqualsToken$constant__from_ast();
                             }
                         }
                         else if (Scanner.$go$private$scanner$charAt(s, 1) === 62) {
-                            const __gotots_store_56 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_56 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_56.pos = __gotots_store_56.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsGreaterThanToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsGreaterThanToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_57 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_57 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_57.pos = __gotots_store_57.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 21) {
-                        if (Scanner.$go$private$scanner$charAt(s, 1) === 62 && isConflictMarkerTrivia(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)) {
-                            const __gotots_argument_7 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
-                            const __gotots_argument_8 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        if (Scanner.$go$private$scanner$charAt(s, 1) === 62 && isConflictMarkerTrivia((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)) {
+                            const __gotots_argument_7 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
+                            const __gotots_argument_8 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             const __gotots_receiver_4 = s;
                             const __gotots_argument_9 = ($argument0: {
                                 value: Message__from_diagnostics;
                             } | undefined, $argument1: int, $argument2: int, $argument3: RuntimeSlice<GoInterface | undefined>): void => {
                                 Scanner.$go$private$scanner$errorAt(__gotots_receiver_4, $argument0, $argument1, $argument2, $argument3);
                             };
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_7, __gotots_argument_8, __gotots_argument_9);
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_7, __gotots_argument_8, __gotots_argument_9);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             else {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
-                                return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
+                                return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                             }
                         }
-                        const __gotots_store_58 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_58 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_58.pos = __gotots_store_58.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 22) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 46 && !IsDigit__from_stringutil(Scanner.$go$private$scanner$charAt(s, 2))) {
-                            const __gotots_store_59 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_59 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_59.pos = __gotots_store_59.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindQuestionDotToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindQuestionDotToken$constant__from_ast();
                         }
                         else if (Scanner.$go$private$scanner$charAt(s, 1) === 63) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_60 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_60 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_60.pos = __gotots_store_60.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindQuestionQuestionEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindQuestionQuestionEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_61 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_61 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_61.pos = __gotots_store_61.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindQuestionQuestionToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindQuestionQuestionToken$constant__from_ast();
                             }
                         }
                         else {
-                            const __gotots_store_62 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_62 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_62.pos = __gotots_store_62.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindQuestionToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindQuestionToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 23) {
-                        const __gotots_store_63 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_63 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_63.pos = __gotots_store_63.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenBracketToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenBracketToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 24) {
-                        const __gotots_store_64 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_64 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_64.pos = __gotots_store_64.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseBracketToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseBracketToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 25) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                            const __gotots_store_65 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_65 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_65.pos = __gotots_store_65.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCaretEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCaretEqualsToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_66 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_66 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_66.pos = __gotots_store_66.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCaretToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCaretToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 26) {
-                        const __gotots_store_67 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_67 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_67.pos = __gotots_store_67.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenBraceToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenBraceToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 27) {
-                        if (Scanner.$go$private$scanner$charAt(s, 1) === 124 && isConflictMarkerTrivia(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)) {
-                            const __gotots_argument_10 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
-                            const __gotots_argument_11 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        if (Scanner.$go$private$scanner$charAt(s, 1) === 124 && isConflictMarkerTrivia((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)) {
+                            const __gotots_argument_10 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
+                            const __gotots_argument_11 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             const __gotots_receiver_5 = s;
                             const __gotots_argument_12 = ($argument0: {
                                 value: Message__from_diagnostics;
                             } | undefined, $argument1: int, $argument2: int, $argument3: RuntimeSlice<GoInterface | undefined>): void => {
                                 Scanner.$go$private$scanner$errorAt(__gotots_receiver_5, $argument0, $argument1, $argument2, $argument3);
                             };
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_10, __gotots_argument_11, __gotots_argument_12);
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_10, __gotots_argument_11, __gotots_argument_12);
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             else {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
-                                return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
+                                return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                             }
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 124) {
                             if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                                const __gotots_store_68 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_68 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_68.pos = __gotots_store_68.pos + 3;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindBarBarEqualsToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindBarBarEqualsToken$constant__from_ast();
                             }
                             else {
-                                const __gotots_store_69 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_69 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_69.pos = __gotots_store_69.pos + 2;
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindBarBarToken$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindBarBarToken$constant__from_ast();
                             }
                         }
                         else if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                            const __gotots_store_70 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_70 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_70.pos = __gotots_store_70.pos + 2;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindBarEqualsToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindBarEqualsToken$constant__from_ast();
                         }
                         else {
-                            const __gotots_store_71 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_71 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_71.pos = __gotots_store_71.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindBarToken$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindBarToken$constant__from_ast();
                         }
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 28) {
-                        const __gotots_store_72 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_72 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_72.pos = __gotots_store_72.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseBraceToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseBraceToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 29) {
-                        const __gotots_store_73 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_73 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_73.pos = __gotots_store_73.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindTildeToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindTildeToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 30) {
-                        const __gotots_store_74 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_74 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_74.pos = __gotots_store_74.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAtToken$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAtToken$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 31) {
                         let cp = Scanner.$go$private$scanner$peekUnicodeEscape(s);
                         if (cp >= 0 && IsIdentifierStart(cp)) {
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = GetIdentifierToken(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = GetIdentifierToken((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
                         }
                         else {
                             Scanner.$go$private$scanner$scanInvalidCharacter(s);
@@ -1345,8 +1344,8 @@ export class Scanner {
                     }
                     if (__gotots_switch_selection_0 === 32) {
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 33) {
-                            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos === 0) {
-                                const __gotots_store_75 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos === 0) {
+                                const __gotots_store_75 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_75.pos = __gotots_store_75.pos + 2;
                                 {
                                     const __gotots_results_4 = Scanner.$go$private$scanner$charAndSize(s);
@@ -1366,45 +1365,45 @@ export class Scanner {
                                             break;
                                         }
                                         {
-                                            const __gotots_store_76 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                            const __gotots_store_76 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                             __gotots_store_76.pos = __gotots_store_76.pos + size;
                                         }
                                     }
                                 }
                                 continue;
                             }
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.X_can_only_be_used_at_the_start_of_a_file, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 2, RuntimeSlice.nil<GoInterface | undefined>());
-                            const __gotots_store_77 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.X_can_only_be_used_at_the_start_of_a_file, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 2, RuntimeSlice.nil<GoInterface | undefined>());
+                            const __gotots_store_77 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_77.pos = __gotots_store_77.pos + 1;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindUnknown$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindUnknown$constant__from_ast();
                             break __gotots_control_target_0;
                         }
                         if (Scanner.$go$private$scanner$charAt(s, 1) === 92) {
-                            const __gotots_store_78 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_78 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_78.pos = __gotots_store_78.pos + 1;
                             let cp = Scanner.$go$private$scanner$peekUnicodeEscape(s);
                             if (cp >= 0 && IsIdentifierStart(cp)) {
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "#" + goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
-                                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPrivateIdentifier$constant__from_ast();
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "#" + goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
+                                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPrivateIdentifier$constant__from_ast();
                                 break __gotots_control_target_0;
                             }
-                            const __gotots_store_79 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_79 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_79.pos = __gotots_store_79.pos - 1;
                         }
                         if (!Scanner.$go$private$scanner$scanIdentifier(s, 1)) {
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Invalid_character, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = "#";
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Invalid_character, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = "#";
                         }
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindPrivateIdentifier$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindPrivateIdentifier$constant__from_ast();
                         break __gotots_control_target_0;
                     }
                     if (__gotots_switch_selection_0 === 33) {
                         if (ch < 0) {
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEndOfFile$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEndOfFile$constant__from_ast();
                             break __gotots_control_target_0;
                         }
                         if (Scanner.$go$private$scanner$scanIdentifier(s, 0)) {
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = GetIdentifierToken(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = GetIdentifierToken((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
                             break __gotots_control_target_0;
                         }
                         const __gotots_results_6 = Scanner.$go$private$scanner$charAndSize(s);
@@ -1412,14 +1411,14 @@ export class Scanner {
                         let size = __gotots_results_6[1];
                         if (ch__shadow_1 === RuneError$int32__from_utf8) {
                             Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.File_appears_to_be_binary, 0, 0, RuntimeSlice.nil<GoInterface | undefined>());
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length;
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindNonTextFileMarkerTrivia$constant__from_ast();
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindNonTextFileMarkerTrivia$constant__from_ast();
                             break __gotots_control_target_0;
                         }
                         if (IsWhiteSpaceSingleLine__from_stringutil(ch__shadow_1)) {
-                            const __gotots_store_80 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_80 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_80.pos = __gotots_store_80.pos + size;
-                            if (ch__shadow_1 === 133 || ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia) {
+                            if (ch__shadow_1 === 133 || (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia) {
                                 continue;
                             }
                             for (;;) {
@@ -1429,16 +1428,16 @@ export class Scanner {
                                 if (!IsWhiteSpaceSingleLine__from_stringutil(ch__shadow_1)) {
                                     break;
                                 }
-                                const __gotots_store_81 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_81 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_81.pos = __gotots_store_81.pos + size;
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
-                            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
+                            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                         }
                         if (IsLineBreak__from_stringutil(ch__shadow_1)) {
-                            const __gotots_store_82 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_82 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_82.tokenFlags = __gotots_store_82.tokenFlags | 1;
-                            const __gotots_store_83 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_83 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_83.pos = __gotots_store_83.pos + size;
                             continue;
                         }
@@ -1447,17 +1446,17 @@ export class Scanner {
                     }
                 }
             }
-            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
         }
     }
-    static ScanJSDocCommentTextToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, inBackticks: bool): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEndOfFile$constant__from_ast();
-            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    static ScanJSDocCommentTextToken(s: Scanner | undefined, inBackticks: bool): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEndOfFile$constant__from_ast();
+            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         {
             const __gotots_results_54 = Scanner.$go$private$scanner$charAndSize(s);
             let ch = __gotots_results_54[0];
@@ -1472,7 +1471,7 @@ export class Scanner {
                     ch = __gotots_results_55[0];
                     size = __gotots_results_55[1];
                 }
-                if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length && !IsLineBreak__from_stringutil(ch) && ch !== 96)) {
+                if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length && !IsLineBreak__from_stringutil(ch) && ch !== 96)) {
                     break;
                 }
                 {
@@ -1480,15 +1479,15 @@ export class Scanner {
                         if (ch === 123) {
                             break;
                         }
-                        else if (ch === 64 && ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= 0) {
-                            const __gotots_results_56 = utf8__from_gostdlib.DecodeLastRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, 0, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                        else if (ch === 64 && (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= 0) {
+                            const __gotots_results_56 = utf8__from_gostdlib.DecodeLastRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, 0, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                             const __gotots_results_57 = [__gotots_results_56[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_56[1]))] satisfies [
                                 int32,
                                 int
                             ];
                             let previous = __gotots_results_57[0];
                             if (IsWhiteSpaceSingleLine__from_stringutil(previous)) {
-                                const __gotots_results_58 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos + size));
+                                const __gotots_results_58 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos + size));
                                 const __gotots_results_59 = [__gotots_results_58[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_58[1]))] satisfies [
                                     int32,
                                     int
@@ -1500,30 +1499,30 @@ export class Scanner {
                             }
                         }
                     }
-                    const __gotots_store_158 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_158 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_158.pos = __gotots_store_158.pos + size;
                 }
             }
         }
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos === ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart) {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos === (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart) {
             return Scanner.ScanJSDocToken(s);
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindJSDocCommentTextToken$constant__from_ast();
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindJSDocCommentTextToken$constant__from_ast();
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ScanJSDocToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEndOfFile$constant__from_ast();
-            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    static ScanJSDocToken(s: Scanner | undefined): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = TokenFlagsNone$constant__from_ast();
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEndOfFile$constant__from_ast();
+            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         const __gotots_results_50 = Scanner.$go$private$scanner$charAndSize(s);
         let ch = __gotots_results_50[0];
         let size = __gotots_results_50[1];
-        const __gotots_store_150 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_150 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_150.pos = __gotots_store_150.pos + size;
         {
             const __gotots_switch_tag_4 = ch;
@@ -1728,118 +1727,118 @@ export class Scanner {
                                 break;
                             }
                             {
-                                const __gotots_store_151 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_151 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_151.pos = __gotots_store_151.pos + size2;
                             }
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindWhitespaceTrivia$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 1) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAtToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAtToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 2) {
                     if (Scanner.$go$private$scanner$char(s) === 10) {
-                        const __gotots_store_152 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_152 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_152.pos = __gotots_store_152.pos + 1;
                     }
                     __gotots_switch_selection_4 = 3;
                 }
                 if (__gotots_switch_selection_4 === 3) {
-                    const __gotots_store_153 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_153 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_153.tokenFlags = __gotots_store_153.tokenFlags | 1;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindNewLineTrivia$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindNewLineTrivia$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 4) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindAsteriskToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindAsteriskToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 5) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenBraceToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenBraceToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 6) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseBraceToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseBraceToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 7) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenBracketToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenBracketToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 8) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseBracketToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseBracketToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 9) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenParenToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenParenToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 10) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCloseParenToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCloseParenToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 11) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 12) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 13) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEqualsToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEqualsToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 14) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindCommaToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindCommaToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 15) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindDotToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindDotToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 16) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindBacktickToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindBacktickToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 17) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindHashToken$constant__from_ast();
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindHashToken$constant__from_ast();
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
                 if (__gotots_switch_selection_4 === 18) {
-                    const __gotots_store_154 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_154 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_154.pos = __gotots_store_154.pos - 1;
                     let cp = Scanner.$go$private$scanner$peekUnicodeEscape(s);
                     if (cp >= 0 && IsIdentifierStart(cp)) {
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = GetIdentifierToken(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringEncodeRune(Scanner.$go$private$scanner$scanUnicodeEscape(s, true)) + Scanner.$go$private$scanner$scanIdentifierParts(s);
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = GetIdentifierToken((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
                     }
                     else {
-                        const __gotots_store_155 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_155 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_155.pos = __gotots_store_155.pos + 1;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindUnknown$constant__from_ast();
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindUnknown$constant__from_ast();
                     }
-                    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                     break __gotots_control_target_5;
                 }
             }
@@ -1847,7 +1846,7 @@ export class Scanner {
         if (IsIdentifierStart(ch)) {
             let char = ch;
             for (;;) {
-                if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length) {
+                if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length) {
                     break;
                 }
                 const __gotots_results_53 = Scanner.$go$private$scanner$charAndSize(s);
@@ -1856,24 +1855,24 @@ export class Scanner {
                 if (!IsIdentifierPart(char) && char !== 45) {
                     break;
                 }
-                const __gotots_store_156 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_156 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_156.pos = __gotots_store_156.pos + size;
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
             if (char === 92) {
-                const __gotots_store_157 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_157 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_157.tokenValue = __gotots_store_157.tokenValue + Scanner.$go$private$scanner$scanIdentifierParts(s);
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = GetIdentifierToken(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
-            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = GetIdentifierToken((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
+            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
         }
         else {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindUnknown$constant__from_ast();
-            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindUnknown$constant__from_ast();
+            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
         }
     }
-    static ScanJsxAttributeValue(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+    static ScanJsxAttributeValue(s: Scanner | undefined): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         {
             const __gotots_results_66 = Scanner.$go$private$scanner$charAndSize(s);
             let ch = __gotots_results_66[0];
@@ -1892,18 +1891,18 @@ export class Scanner {
                     break;
                 }
                 {
-                    const __gotots_store_175 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_175 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_175.pos = __gotots_store_175.pos + size;
                 }
             }
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         switch (Scanner.$go$private$scanner$char(s)) {
             case 34:
             case 39: {
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = Scanner.$go$private$scanner$scanString(s, true);
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindStringLiteral$constant__from_ast();
-                return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = Scanner.$go$private$scanner$scanString(s, true);
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindStringLiteral$constant__from_ast();
+                return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                 break;
             }
             default: {
@@ -1912,58 +1911,58 @@ export class Scanner {
             }
         }
     }
-    static ScanJsxIdentifier(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        if (tokenIsIdentifierOrKeyword(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token)) {
+    static ScanJsxIdentifier(s: Scanner | undefined): Kind__from_ast {
+        if (tokenIsIdentifierOrKeyword((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token)) {
             for (;;) {
                 let ch = Scanner.$go$private$scanner$char(s);
                 if (ch < 0) {
                     break;
                 }
                 if (ch === 45) {
-                    const __gotots_store_170 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_170 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_170.tokenValue = __gotots_store_170.tokenValue + "-";
-                    const __gotots_store_171 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_171 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_171.pos = __gotots_store_171.pos + 1;
                     continue;
                 }
-                let oldPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-                const __gotots_store_172 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                let oldPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+                const __gotots_store_172 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_172.tokenValue = __gotots_store_172.tokenValue + Scanner.$go$private$scanner$scanIdentifierParts(s);
-                if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos === oldPos) {
+                if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos === oldPos) {
                     break;
                 }
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = GetIdentifierToken(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = GetIdentifierToken((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static ScanJsxToken(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
+    static ScanJsxToken(s: Scanner | undefined): Kind__from_ast {
         return Scanner.ScanJsxTokenEx(s, true);
     }
-    static ScanJsxTokenEx(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, allowMultilineJsxText: bool): Kind__from_ast {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+    static ScanJsxTokenEx(s: Scanner | undefined, allowMultilineJsxText: bool): Kind__from_ast {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let ch = Scanner.$go$private$scanner$char(s);
         __gotots_control_target_6: {
             if (ch < 0) {
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindEndOfFile$constant__from_ast();
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindEndOfFile$constant__from_ast();
             }
             else if (ch === 60) {
                 if (Scanner.$go$private$scanner$charAt(s, 1) === 47) {
-                    const __gotots_store_159 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_159 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_159.pos = __gotots_store_159.pos + 2;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanSlashToken$constant__from_ast();
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanSlashToken$constant__from_ast();
                 }
                 else {
-                    const __gotots_store_160 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_160 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_160.pos = __gotots_store_160.pos + 1;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindLessThanToken$constant__from_ast();
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindLessThanToken$constant__from_ast();
                 }
             }
             else if (ch === 123) {
-                const __gotots_store_161 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_161 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_161.pos = __gotots_store_161.pos + 1;
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindOpenBraceToken$constant__from_ast();
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindOpenBraceToken$constant__from_ast();
             }
             else {
                 let firstNonWhitespace = 0;
@@ -1975,26 +1974,26 @@ export class Scanner {
                         break;
                     }
                     if (ch__shadow_1 === 60) {
-                        if (isConflictMarkerTrivia(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)) {
-                            const __gotots_argument_29 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
-                            const __gotots_argument_30 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        if (isConflictMarkerTrivia((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)) {
+                            const __gotots_argument_29 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
+                            const __gotots_argument_30 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             const __gotots_receiver_6 = s;
                             const __gotots_argument_31 = ($argument0: {
                                 value: Message__from_diagnostics;
                             } | undefined, $argument1: int, $argument2: int, $argument3: RuntimeSlice<GoInterface | undefined>): void => {
                                 Scanner.$go$private$scanner$errorAt(__gotots_receiver_6, $argument0, $argument1, $argument2, $argument3);
                             };
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_29, __gotots_argument_30, __gotots_argument_31);
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
-                            return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = scanConflictMarkerTrivia(__gotots_argument_29, __gotots_argument_30, __gotots_argument_31);
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindConflictMarkerTrivia$constant__from_ast();
+                            return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
                         }
                         break;
                     }
                     if (ch__shadow_1 === 62) {
-                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unexpected_token_Did_you_mean_or_gt, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unexpected_token_Did_you_mean_or_gt, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                     }
                     else if (ch__shadow_1 === 125) {
-                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unexpected_token_Did_you_mean_or_rbrace, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unexpected_token_Did_you_mean_or_rbrace, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                     }
                     if (IsLineBreak__from_stringutil(ch__shadow_1) && firstNonWhitespace === 0) {
                         firstNonWhitespace = -1;
@@ -2003,90 +2002,90 @@ export class Scanner {
                         break;
                     }
                     else if (!IsWhiteSpaceLike__from_stringutil(ch__shadow_1)) {
-                        firstNonWhitespace = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                        firstNonWhitespace = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                     }
-                    const __gotots_store_162 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_162 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_162.pos = __gotots_store_162.pos + size;
                 }
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindJsxText$constant__from_ast();
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindJsxText$constant__from_ast();
                 if (firstNonWhitespace === -1) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindJsxTextAllWhiteSpaces$constant__from_ast();
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindJsxTextAllWhiteSpaces$constant__from_ast();
                 }
             }
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static SetLanguageVariant(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, languageVariant: LanguageVariant__from_core): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.languageVariant = languageVariant;
+    static SetLanguageVariant(s: Scanner | undefined, languageVariant: LanguageVariant__from_core): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).languageVariant = languageVariant;
     }
-    static SetOnError(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, errorCallback: ErrorCallback): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.onError = errorCallback;
+    static SetOnError(s: Scanner | undefined, errorCallback: ErrorCallback): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).onError = errorCallback;
     }
-    static SetScriptTarget(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, scriptTarget: ScriptTarget__from_core): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.scriptTarget = scriptTarget;
+    static SetScriptTarget(s: Scanner | undefined, scriptTarget: ScriptTarget__from_core): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scriptTarget = scriptTarget;
     }
-    static SetSkipJSDocLeadingAsterisks(scanner: tsonicTypeScriptRuntime.Location<Scanner> | undefined, skip: bool): void {
+    static SetSkipJSDocLeadingAsterisks(scanner: Scanner | undefined, skip: bool): void {
         if (skip) {
-            const __gotots_store_168 = ((scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_168 = (scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_168.skipJSDocLeadingAsterisks = __gotots_store_168.skipJSDocLeadingAsterisks + 1;
         }
         else {
-            const __gotots_store_169 = ((scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_169 = (scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_169.skipJSDocLeadingAsterisks = __gotots_store_169.skipJSDocLeadingAsterisks + -1;
         }
     }
-    static SetSkipTrivia(scanner: tsonicTypeScriptRuntime.Location<Scanner> | undefined, skip: bool): void {
-        ((scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.skipTrivia = skip;
+    static SetSkipTrivia(scanner: Scanner | undefined, skip: bool): void {
+        (scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skipTrivia = skip;
     }
-    static SetText(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, text: gostring): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text = text;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end = text.length;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState = new ScannerState(0, 0, 0, 0, "", 0, RuntimeSlice.nil<CommentDirective__from_ast$Storage>(), 0);
+    static SetText(s: Scanner | undefined, text: gostring): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text = text;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end = text.length;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState = new ScannerState(0, 0, 0, 0, "", 0, RuntimeSlice.nil<CommentDirective__from_ast$Storage>(), 0);
     }
-    static Token(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    static Token(s: Scanner | undefined): Kind__from_ast {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
     }
-    static TokenEnd(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): int {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+    static TokenEnd(s: Scanner | undefined): int {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
     }
-    static TokenFlags(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): TokenFlags__from_ast {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags;
+    static TokenFlags(s: Scanner | undefined): TokenFlags__from_ast {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags;
     }
-    static TokenFullStart(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): int {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.fullStartPos;
+    static TokenFullStart(s: Scanner | undefined): int {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.fullStartPos;
     }
-    static TokenRange(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): TextRange__from_core {
-        return NewTextRange__from_core(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+    static TokenRange(s: Scanner | undefined): TextRange__from_core {
+        return NewTextRange__from_core((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
     }
-    static TokenStart(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): int {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart;
+    static TokenStart(s: Scanner | undefined): int {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart;
     }
-    static TokenText(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): gostring {
-        return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+    static TokenText(s: Scanner | undefined): gostring {
+        return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
     }
-    static TokenValue(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): gostring {
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue;
+    static TokenValue(s: Scanner | undefined): gostring {
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue;
     }
-    static $go$private$scanner$char(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): int32 {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end) {
-            return goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+    static $go$private$scanner$char(s: Scanner | undefined): int32 {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end) {
+            return goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
         }
         return -1;
     }
-    static $go$private$scanner$charAndSize(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): [
+    static $go$private$scanner$charAndSize(s: Scanner | undefined): [
         int32,
         int
     ] {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end) {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end) {
             {
-                let b = goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                let b = goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                 if (b < RuneSelf$uint8__from_utf8) {
                     return [b, 1];
                 }
             }
         }
-        const __gotots_results_14 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+        const __gotots_results_14 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
         const __gotots_results_15 = [__gotots_results_14[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_14[1]))] satisfies [
             int32,
             int
@@ -2094,17 +2093,17 @@ export class Scanner {
         let r = __gotots_results_15[0];
         let size = __gotots_results_15[1];
         if (size > 1) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.containsNonASCII = true;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containsNonASCII = true;
         }
         return [r, size];
     }
-    static $go$private$scanner$charAt(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, offset: int): int32 {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos + offset < ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end) {
-            return goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos + offset);
+    static $go$private$scanner$charAt(s: Scanner | undefined, offset: int): int32 {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos + offset < (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end) {
+            return goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos + offset);
         }
         return -1;
     }
-    static $go$private$scanner$checkRegularExpressionFlagAvailability(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, flag: regularExpressionFlags, pos: int, size: int): void {
+    static $go$private$scanner$checkRegularExpressionFlagAvailability(s: Scanner | undefined, flag: regularExpressionFlags, pos: int, size: int): void {
         {
             const __gotots_results_68 = $state.regExpFlagToFirstAvailableLanguageVersion.lookupOk(flag);
             let availableFrom = __gotots_results_68[0];
@@ -2114,16 +2113,16 @@ export class Scanner {
             }
         }
     }
-    static $go$private$scanner$error(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, diagnostic: {
+    static $go$private$scanner$error(s: Scanner | undefined, diagnostic: {
         value: Message__from_diagnostics;
     } | undefined): void {
-        Scanner.$go$private$scanner$errorAt(s, diagnostic, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 0, RuntimeSlice.nil<GoInterface | undefined>());
+        Scanner.$go$private$scanner$errorAt(s, diagnostic, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 0, RuntimeSlice.nil<GoInterface | undefined>());
     }
-    static $go$private$scanner$errorAt(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, diagnostic: {
+    static $go$private$scanner$errorAt(s: Scanner | undefined, diagnostic: {
         value: Message__from_diagnostics;
     } | undefined, pos: int, length: int, args: RuntimeSlice<GoInterface | undefined>): void {
-        if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.onError.$value === undefined)) {
-            const __gotots_callee_2 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.onError.$value;
+        if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).onError.$value === undefined)) {
+            const __gotots_callee_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).onError.$value;
             const __gotots_argument_21 = diagnostic;
             const __gotots_argument_22 = pos;
             const __gotots_argument_23 = length;
@@ -2131,59 +2130,59 @@ export class Scanner {
             (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_21, __gotots_argument_22, __gotots_argument_23, __gotots_argument_24);
         }
     }
-    static $go$private$scanner$languageVersion(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): ScriptTarget__from_core {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.scriptTarget === ScriptTargetNone$constant__from_core()) {
+    static $go$private$scanner$languageVersion(s: Scanner | undefined): ScriptTarget__from_core {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scriptTarget === ScriptTargetNone$constant__from_core()) {
             return ScriptTargetLatest$constant__from_core();
         }
-        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.scriptTarget;
+        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scriptTarget;
     }
-    static $go$private$scanner$peekUnicodeEscape(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): int32 {
+    static $go$private$scanner$peekUnicodeEscape(s: Scanner | undefined): int32 {
         if (Scanner.$go$private$scanner$charAt(s, 1) === 117) {
-            let savePos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-            let saveTokenFlags = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags;
+            let savePos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+            let saveTokenFlags = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags;
             let codePoint = Scanner.$go$private$scanner$scanUnicodeEscape(s, false);
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = savePos;
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = saveTokenFlags;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = savePos;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = saveTokenFlags;
             return codePoint;
         }
         return -1;
     }
-    static $go$private$scanner$processCommentDirective(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, start: int, end: int, multiline: bool): void {
+    static $go$private$scanner$processCommentDirective(s: Scanner | undefined, start: int, end: int, multiline: bool): void {
         let pos = start;
         if (multiline) {
-            for (; pos < end && (goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 32 || goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 9);) {
+            for (; pos < end && (goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 32 || goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 9);) {
                 pos++;
             }
-            for (; pos < end && (goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 47 || goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 42);) {
+            for (; pos < end && (goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 47 || goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 42);) {
                 pos++;
             }
         }
         else {
             pos += 2;
-            for (; pos < end && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 47;) {
+            for (; pos < end && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 47;) {
                 pos++;
             }
         }
-        for (; pos < end && (goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 32 || goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 9);) {
+        for (; pos < end && (goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 32 || goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 9);) {
             pos++;
         }
-        if (!(pos < end && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos) === 64)) {
+        if (!(pos < end && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos) === 64)) {
             return;
         }
         pos++;
         let kind = 0;
         __gotots_control_target_1: {
-            if (strings__from_gostdlib.HasPrefix(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos), "ts-expect-error")) {
+            if (strings__from_gostdlib.HasPrefix(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos), "ts-expect-error")) {
                 kind = CommentDirectiveKindExpectError$constant__from_ast();
             }
-            else if (strings__from_gostdlib.HasPrefix(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, pos), "ts-ignore")) {
+            else if (strings__from_gostdlib.HasPrefix(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, pos), "ts-ignore")) {
                 kind = CommentDirectiveKindIgnore$constant__from_ast();
             }
             else {
                 return;
             }
         }
-        const __gotots_slice_build_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.commentDirectives;
+        const __gotots_slice_build_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.commentDirectives;
         const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
@@ -2205,45 +2204,45 @@ export class Scanner {
                     Kind: kind
                 })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentDirective__from_ast.$storageOf(CommentDirective__from_ast.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentDirective__from_ast.$zeroStorage());
             }
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.commentDirectives = __gotots_slice_build_1;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.commentDirectives = __gotots_slice_build_1;
     }
-    static $go$private$scanner$reScanGreaterThanTokenInner(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart + 1;
+    static $go$private$scanner$reScanGreaterThanTokenInner(s: Scanner | undefined): void {
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart + 1;
         if (Scanner.$go$private$scanner$char(s) === 62) {
             if (Scanner.$go$private$scanner$charAt(s, 1) === 62) {
                 if (Scanner.$go$private$scanner$charAt(s, 2) === 61) {
-                    const __gotots_store_163 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_163 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_163.pos = __gotots_store_163.pos + 3;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanGreaterThanGreaterThanEqualsToken$constant__from_ast();
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanGreaterThanGreaterThanEqualsToken$constant__from_ast();
                 }
                 else {
-                    const __gotots_store_164 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_164 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_164.pos = __gotots_store_164.pos + 2;
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanGreaterThanGreaterThanToken$constant__from_ast();
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanGreaterThanGreaterThanToken$constant__from_ast();
                 }
             }
             else if (Scanner.$go$private$scanner$charAt(s, 1) === 61) {
-                const __gotots_store_165 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_165 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_165.pos = __gotots_store_165.pos + 2;
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanGreaterThanEqualsToken$constant__from_ast();
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanGreaterThanEqualsToken$constant__from_ast();
             }
             else {
-                const __gotots_store_166 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_166 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_166.pos = __gotots_store_166.pos + 1;
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanGreaterThanToken$constant__from_ast();
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanGreaterThanToken$constant__from_ast();
             }
         }
         else if (Scanner.$go$private$scanner$char(s) === 61) {
-            const __gotots_store_167 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_167 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_167.pos = __gotots_store_167.pos + 1;
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindGreaterThanEqualsToken$constant__from_ast();
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindGreaterThanEqualsToken$constant__from_ast();
         }
     }
-    static $go$private$scanner$scanASCIIWhile(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, pred: (($0: uint8) => bool) | undefined): void {
-        let text = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end);
+    static $go$private$scanner$scanASCIIWhile(s: Scanner | undefined, pred: (($0: uint8) => bool) | undefined): void {
+        let text = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end);
         let i = 0;
         for (; i < text.length;) {
             let b = goStringIndex(text, i);
@@ -2258,42 +2257,42 @@ export class Scanner {
             }
             i++;
         }
-        const __gotots_store_84 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_84.pos = __gotots_store_84.pos + i;
     }
-    static $go$private$scanner$scanBigIntSuffix(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
+    static $go$private$scanner$scanBigIntSuffix(s: Scanner | undefined): Kind__from_ast {
         if (Scanner.$go$private$scanner$char(s) === 110) {
-            const __gotots_store_114 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_114 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_114.tokenValue = __gotots_store_114.tokenValue + "n";
-            if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsBinaryOrOctalSpecifier$constant__from_ast()) === 0)) {
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = ParsePseudoBigInt__from_jsnum(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue) + "n";
+            if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsBinaryOrOctalSpecifier$constant__from_ast()) === 0)) {
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = ParsePseudoBigInt__from_jsnum((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue) + "n";
             }
-            const __gotots_store_115 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_115 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_115.pos = __gotots_store_115.pos + 1;
             return KindBigIntLiteral$constant__from_ast();
         }
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache.isNil()) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache = GoMap.make<gostring, gostring>("", 0, []);
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache.isNil()) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache = GoMap.make<gostring, gostring>("", 0, []);
         }
         {
-            const __gotots_results_21 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache.lookupOk(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+            const __gotots_results_21 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache.lookupOk((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
             let cached = __gotots_results_21[0];
             let ok = __gotots_results_21[1];
             if (ok) {
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = cached;
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = cached;
             }
             else {
-                let tokenValue = FromString__from_jsnum(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue).String();
-                if (tokenValue === ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue) {
-                    tokenValue = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue;
+                let tokenValue = FromString__from_jsnum((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue).String();
+                if (tokenValue === (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue) {
+                    tokenValue = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue;
                 }
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.numberCache.store(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue, tokenValue);
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = tokenValue;
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).numberCache.store((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue, tokenValue);
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = tokenValue;
             }
         }
         return KindNumericLiteral$constant__from_ast();
     }
-    static $go$private$scanner$scanBinaryOrOctalDigits(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, base: int32): gostring {
+    static $go$private$scanner$scanBinaryOrOctalDigits(s: Scanner | undefined, base: int32): gostring {
         let sb = named_strings.StringsBuilderOperations.$zero();
         let allowSeparator = false;
         let isPreviousTokenSeparator = false;
@@ -2305,55 +2304,55 @@ export class Scanner {
                 isPreviousTokenSeparator = false;
             }
             else if (ch === 95) {
-                const __gotots_store_116 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_116 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_116.tokenFlags = __gotots_store_116.tokenFlags | 512;
                 if (allowSeparator) {
                     allowSeparator = false;
                     isPreviousTokenSeparator = true;
                 }
                 else if (isPreviousTokenSeparator) {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                 }
                 else {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                 }
             }
             else {
                 break;
             }
-            const __gotots_store_117 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_117 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_117.pos = __gotots_store_117.pos + 1;
         }
         if (isPreviousTokenSeparator) {
-            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
+            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
         }
         return strings__from_gostdlib.Builder.String(sb);
     }
-    static $go$private$scanner$scanDigits(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): [
+    static $go$private$scanner$scanDigits(s: Scanner | undefined): [
         gostring,
         bool
     ] {
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let isOctal = true;
         for (; IsDigit__from_stringutil(Scanner.$go$private$scanner$char(s));) {
             if (!IsOctalDigit__from_stringutil(Scanner.$go$private$scanner$char(s))) {
                 isOctal = false;
             }
-            const __gotots_store_149 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_149 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_149.pos = __gotots_store_149.pos + 1;
         }
-        return [goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos), isOctal];
+        return [goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos), isOctal];
     }
-    static $go$private$scanner$scanEscapeSequence(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, flags: EscapeSequenceScanningFlags): gostring {
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        const __gotots_store_131 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+    static $go$private$scanner$scanEscapeSequence(s: Scanner | undefined, flags: EscapeSequenceScanningFlags): gostring {
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        const __gotots_store_131 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_131.pos = __gotots_store_131.pos + 1;
         let ch = Scanner.$go$private$scanner$char(s);
         if (ch < 0) {
             Scanner.$go$private$scanner$error(s, $state__diagnostics.Unexpected_end_of_text);
             return "";
         }
-        const __gotots_store_132 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_132 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_132.pos = __gotots_store_132.pos + 1;
         {
             const __gotots_switch_tag_2 = ch;
@@ -2532,49 +2531,49 @@ export class Scanner {
                 }
                 if (__gotots_switch_selection_2 === 1) {
                     if (IsOctalDigit__from_stringutil(Scanner.$go$private$scanner$char(s))) {
-                        const __gotots_store_133 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_133 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_133.pos = __gotots_store_133.pos + 1;
                     }
                     __gotots_switch_selection_2 = 2;
                 }
                 if (__gotots_switch_selection_2 === 2) {
                     if (IsOctalDigit__from_stringutil(Scanner.$go$private$scanner$char(s))) {
-                        const __gotots_store_134 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_134 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_134.pos = __gotots_store_134.pos + 1;
                     }
-                    const __gotots_store_135 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_135 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_135.tokenFlags = __gotots_store_135.tokenFlags | 2048;
                     if (!((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0)) {
-                        const __gotots_results_34 = strconv__from_gostdlib.ParseInt(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start + 1, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos), BigInt.asIntN(64, goNumberToBigInt(8)), BigInt.asIntN(64, goNumberToBigInt(32)));
+                        const __gotots_results_34 = strconv__from_gostdlib.ParseInt(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start + 1, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos), BigInt.asIntN(64, goNumberToBigInt(8)), BigInt.asIntN(64, goNumberToBigInt(32)));
                         const __gotots_results_35 = [__gotots_results_34[0], GoProviderInterfaceBridge.$from(__gotots_results_34[1])] satisfies [
                             int64,
                             $goInterface$Interface_Method_Error_void_to_string | undefined
                         ];
                         let code = __gotots_results_35[0];
                         if (!((flags & EscapeSequenceScanningFlagsRegularExpression$constant()) === 0) && (flags & EscapeSequenceScanningFlagsAtomEscape$constant()) === 0 && ch !== 48) {
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class_If_this_was_intended_as_an_escape_sequence_use_the_syntax_0_instead, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("\\x%02x", RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$int64(code)])))]));
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class_If_this_was_intended_as_an_escape_sequence_use_the_syntax_0_instead, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("\\x%02x", RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$int64(code)])))]));
                         }
                         else {
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_escape_sequences_are_not_allowed_Use_the_syntax_0, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("\\x%02x", RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$int64(code)])))]));
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_escape_sequences_are_not_allowed_Use_the_syntax_0, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("\\x%02x", RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$int64(code)])))]));
                         }
                         return goStringEncodeRune(globalThis.Number(BigInt.asIntN(32, code)));
                     }
-                    return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                    return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                     break __gotots_control_target_3;
                 }
                 if (__gotots_switch_selection_2 === 3) {
-                    const __gotots_store_136 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_136 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_136.tokenFlags = __gotots_store_136.tokenFlags | 2048;
                     if (!((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0)) {
                         if (!((flags & EscapeSequenceScanningFlagsRegularExpression$constant()) === 0) && (flags & EscapeSequenceScanningFlagsAtomEscape$constant()) === 0) {
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Decimal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Decimal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
                         }
                         else {
-                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Escape_sequence_0_is_not_allowed, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos))]));
+                            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Escape_sequence_0_is_not_allowed, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos))]));
                         }
                         return goStringEncodeRune(ch);
                     }
-                    return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                    return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                     break __gotots_control_target_3;
                 }
                 if (__gotots_switch_selection_2 === 4) {
@@ -2611,19 +2610,19 @@ export class Scanner {
                 }
                 if (__gotots_switch_selection_2 === 12) {
                     let extended = Scanner.$go$private$scanner$char(s) === 123;
-                    const __gotots_store_137 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_137 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_137.pos = __gotots_store_137.pos - 2;
                     let codePoint = Scanner.$go$private$scanner$scanUnicodeEscape(s, !((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0));
                     if (extended) {
                         if ((flags & EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape$constant()) === 0) {
-                            const __gotots_store_138 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                            const __gotots_store_138 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                             __gotots_store_138.tokenFlags = __gotots_store_138.tokenFlags | 2048;
                             if (!((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0)) {
-                                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unicode_escape_sequences_are_only_available_when_the_Unicode_u_flag_or_the_Unicode_Sets_v_flag_is_set, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+                                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Unicode_escape_sequences_are_only_available_when_the_Unicode_u_flag_or_the_Unicode_Sets_v_flag_is_set, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
                             }
                         }
                         if (codePoint < 0) {
-                            return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                            return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                         }
                         if ((flags & EscapeSequenceScanningFlagsRegularExpression$constant()) === 0 && IsHighSurrogate__from_stringutil(codePoint)) {
                             {
@@ -2638,7 +2637,7 @@ export class Scanner {
                         return EncodeJSStringRune__from_stringutil(codePoint);
                     }
                     if (codePoint < 0) {
-                        return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                        return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                     }
                     else if (IsHighSurrogate__from_stringutil(codePoint)) {
                         if ((flags & EscapeSequenceScanningFlagsRegularExpression$constant()) === 0) {
@@ -2652,12 +2651,12 @@ export class Scanner {
                             }
                         }
                         else if (!((flags & EscapeSequenceScanningFlagsAnyUnicodeMode$constant()) === 0) && Scanner.$go$private$scanner$char(s) === 92 && Scanner.$go$private$scanner$charAt(s, 1) === 117 && Scanner.$go$private$scanner$charAt(s, 2) !== 123) {
-                            let savedPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                            let savedPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                             let nextCodePoint = Scanner.$go$private$scanner$scanUnicodeEscape(s, !((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0));
                             if (IsLowSurrogate__from_stringutil(nextCodePoint)) {
                                 return goStringEncodeRune(SurrogatePairToCodePoint__from_stringutil(codePoint, nextCodePoint));
                             }
-                            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = savedPos;
+                            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = savedPos;
                         }
                     }
                     return EncodeJSStringRune__from_stringutil(codePoint);
@@ -2671,27 +2670,27 @@ export class Scanner {
                                 __gotots_for_first_1 = false;
                             }
                             else {
-                                const __gotots_store_139 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                const __gotots_store_139 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                 __gotots_store_139.pos = __gotots_store_139.pos + 1;
                             }
-                            if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos < start + 4)) {
+                            if (!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos < start + 4)) {
                                 break;
                             }
                             {
                                 if (!IsHexDigit__from_stringutil(Scanner.$go$private$scanner$char(s))) {
-                                    const __gotots_store_140 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                                    const __gotots_store_140 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                                     __gotots_store_140.tokenFlags = __gotots_store_140.tokenFlags | 2048;
                                     if (!((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors$constant()) === 0)) {
                                         Scanner.$go$private$scanner$error(s, $state__diagnostics.Hexadecimal_digit_expected);
                                     }
-                                    return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                                    return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                                 }
                             }
                         }
                     }
-                    const __gotots_store_141 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_141 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_141.tokenFlags = __gotots_store_141.tokenFlags | 4096;
-                    const __gotots_results_38 = strconv__from_gostdlib.ParseInt(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start + 2, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos), BigInt.asIntN(64, goNumberToBigInt(16)), BigInt.asIntN(64, goNumberToBigInt(32)));
+                    const __gotots_results_38 = strconv__from_gostdlib.ParseInt(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start + 2, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos), BigInt.asIntN(64, goNumberToBigInt(16)), BigInt.asIntN(64, goNumberToBigInt(32)));
                     const __gotots_results_39 = [__gotots_results_38[0], GoProviderInterfaceBridge.$from(__gotots_results_38[1])] satisfies [
                         int64,
                         $goInterface$Interface_Method_Error_void_to_string | undefined
@@ -2702,7 +2701,7 @@ export class Scanner {
                 }
                 if (__gotots_switch_selection_2 === 14) {
                     if (Scanner.$go$private$scanner$char(s) === 10) {
-                        const __gotots_store_142 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_142 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_142.pos = __gotots_store_142.pos + 1;
                     }
                     __gotots_switch_selection_2 = 15;
@@ -2713,25 +2712,25 @@ export class Scanner {
                 }
                 if (__gotots_switch_selection_2 === 16) {
                     if (ch >= RuneSelf$int32__from_utf8) {
-                        const __gotots_store_143 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_143 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_143.pos = __gotots_store_143.pos - 1;
                         let size = 0;
-                        const __gotots_results_40 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                        const __gotots_results_40 = utf8__from_gostdlib.DecodeRuneInString(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                         const __gotots_results_41 = [__gotots_results_40[0], globalThis.Number(BigInt.asIntN(64, __gotots_results_40[1]))] satisfies [
                             int32,
                             int
                         ];
                         ch = __gotots_results_41[0];
                         size = __gotots_results_41[1];
-                        const __gotots_store_144 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                        const __gotots_store_144 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                         __gotots_store_144.pos = __gotots_store_144.pos + size;
-                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.containsNonASCII = true;
+                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containsNonASCII = true;
                     }
                     if (ch === 8232 || ch === 8233) {
                         return "";
                     }
                     if (!((flags & EscapeSequenceScanningFlagsAnyUnicodeMode$constant()) === 0) || !((flags & EscapeSequenceScanningFlagsRegularExpression$constant()) === 0) && (flags & EscapeSequenceScanningFlagsAnnexB$constant()) === 0 && IsIdentifierPart(ch)) {
-                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
                     }
                     return goStringEncodeRune(ch);
                     break __gotots_control_target_3;
@@ -2740,9 +2739,9 @@ export class Scanner {
         }
         GoPanic.raiseRuntime("unreachable Go function end");
     }
-    static $go$private$scanner$scanHexDigits(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, minCount: int, scanAsManyAsPossible: bool, canHaveSeparators: bool): gostring {
+    static $go$private$scanner$scanHexDigits(s: Scanner | undefined, minCount: int, scanAsManyAsPossible: bool, canHaveSeparators: bool): gostring {
         let digitCount = 0;
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let allowSeparator = false;
         let isPreviousTokenSeparator = false;
         for (; digitCount < minCount || scanAsManyAsPossible;) {
@@ -2753,37 +2752,37 @@ export class Scanner {
                 digitCount++;
             }
             else if (canHaveSeparators && ch === 95) {
-                const __gotots_store_112 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_112 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_112.tokenFlags = __gotots_store_112.tokenFlags | 512;
                 if (allowSeparator) {
                     allowSeparator = false;
                     isPreviousTokenSeparator = true;
                 }
                 else if (isPreviousTokenSeparator) {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                 }
                 else {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                 }
             }
             else {
                 break;
             }
-            const __gotots_store_113 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_113 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_113.pos = __gotots_store_113.pos + 1;
         }
         if (isPreviousTokenSeparator) {
-            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
+            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
         }
         if (digitCount < minCount) {
             return "";
         }
-        let digits = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache.isNil()) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache = GoMap.make<gostring, gostring>("", 0, []);
+        let digits = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache.isNil()) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache = GoMap.make<gostring, gostring>("", 0, []);
         }
         {
-            const __gotots_results_20 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache.lookupOk(digits);
+            const __gotots_results_20 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache.lookupOk(digits);
             let cached = __gotots_results_20[0];
             let ok = __gotots_results_20[1];
             if (ok) {
@@ -2791,39 +2790,39 @@ export class Scanner {
             }
             else {
                 let original = digits;
-                if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsContainsSeparator$constant__from_ast()) === 0)) {
+                if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsContainsSeparator$constant__from_ast()) === 0)) {
                     digits = strings__from_gostdlib.ReplaceAll(digits, "_", "");
                 }
                 digits = strings__from_gostdlib.ToLower(digits);
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.hexDigitCache.store(original, digits);
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hexDigitCache.store(original, digits);
                 return digits;
             }
         }
     }
-    static $go$private$scanner$scanIdentifier(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, prefixLength: int): bool {
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        const __gotots_store_127 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+    static $go$private$scanner$scanIdentifier(s: Scanner | undefined, prefixLength: int): bool {
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        const __gotots_store_127 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_127.pos = __gotots_store_127.pos + prefixLength;
         let ch = Scanner.$go$private$scanner$char(s);
         if (IsASCIILetter__from_stringutil(ch) || ch === 95 || ch === 36) {
-            const __gotots_store_128 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_128 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_128.pos = __gotots_store_128.pos + 1;
             Scanner.$go$private$scanner$scanASCIIWhile(s, (b: uint8): bool => {
                 return (b >= 97 && b <= 122) || (b >= 65 && b <= 90) || (b >= 48 && b <= 57) || b === 95 || b === 36;
             });
             ch = Scanner.$go$private$scanner$char(s);
             if (ch < RuneSelf$int32__from_utf8 && ch !== 92) {
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
                 return true;
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = start + prefixLength;
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = start + prefixLength;
         }
         const __gotots_results_26 = Scanner.$go$private$scanner$charAndSize(s);
         ch = __gotots_results_26[0];
         let size = __gotots_results_26[1];
         if (IsIdentifierStart(ch)) {
             for (;;) {
-                const __gotots_store_129 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_129 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_129.pos = __gotots_store_129.pos + size;
                 const __gotots_results_27 = Scanner.$go$private$scanner$charAndSize(s);
                 ch = __gotots_results_27[0];
@@ -2832,97 +2831,97 @@ export class Scanner {
                     break;
                 }
             }
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
             if (ch === 92) {
-                const __gotots_store_130 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_130 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_130.tokenValue = __gotots_store_130.tokenValue + Scanner.$go$private$scanner$scanIdentifierParts(s);
             }
             return true;
         }
         return false;
     }
-    static $go$private$scanner$scanIdentifierParts(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): gostring {
+    static $go$private$scanner$scanIdentifierParts(s: Scanner | undefined): gostring {
         let sb = named_strings.StringsBuilderOperations.$zero();
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         for (;;) {
             const __gotots_results_24 = Scanner.$go$private$scanner$charAndSize(s);
             let ch = __gotots_results_24[0];
             let size = __gotots_results_24[1];
             if (IsIdentifierPart(ch)) {
-                const __gotots_store_125 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_125 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_125.pos = __gotots_store_125.pos + size;
                 continue;
             }
             if (ch === 92) {
                 let escaped = Scanner.$go$private$scanner$peekUnicodeEscape(s);
                 if (escaped >= 0 && IsIdentifierPart(escaped)) {
-                    strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                    strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                     strings__from_gostdlib.Builder.WriteRune(sb, Scanner.$go$private$scanner$scanUnicodeEscape(s, true));
-                    start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                    start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                     continue;
                 }
             }
             break;
         }
-        strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+        strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
         return strings__from_gostdlib.Builder.String(sb);
     }
-    static $go$private$scanner$scanInvalidCharacter(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): void {
+    static $go$private$scanner$scanInvalidCharacter(s: Scanner | undefined): void {
         const __gotots_results_25 = Scanner.$go$private$scanner$charAndSize(s);
         let size = __gotots_results_25[1];
-        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Invalid_character, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, size, RuntimeSlice.nil<GoInterface | undefined>());
-        const __gotots_store_126 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Invalid_character, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, size, RuntimeSlice.nil<GoInterface | undefined>());
+        const __gotots_store_126 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_126.pos = __gotots_store_126.pos + size;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token = KindUnknown$constant__from_ast();
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token = KindUnknown$constant__from_ast();
     }
-    static $go$private$scanner$scanJSDocCommentForTags(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, commentText: gostring): void {
+    static $go$private$scanner$scanJSDocCommentForTags(s: Scanner | undefined, commentText: gostring): void {
         for (;;) {
             let i = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(commentText, 64)));
             if (i < 0) {
                 return;
             }
             commentText = goStringSlice(commentText, i + 1);
-            if ((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithDeprecated$constant__from_ast()) === 0 && hasJSDocTag(commentText, RuntimeSlice.literal<gostring>(["deprecated"]))) {
-                const __gotots_store_110 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithDeprecated$constant__from_ast()) === 0 && hasJSDocTag(commentText, RuntimeSlice.literal<gostring>(["deprecated"]))) {
+                const __gotots_store_110 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_110.tokenFlags = __gotots_store_110.tokenFlags | 131072;
             }
-            if ((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithSeeOrLink$constant__from_ast()) === 0 && hasJSDocTag(commentText, RuntimeSlice.literal<gostring>(["see", "link", "linkcode", "linkplain"]))) {
-                const __gotots_store_111 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsPrecedingJSDocWithSeeOrLink$constant__from_ast()) === 0 && hasJSDocTag(commentText, RuntimeSlice.literal<gostring>(["see", "link", "linkcode", "linkplain"]))) {
+                const __gotots_store_111 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_111.tokenFlags = __gotots_store_111.tokenFlags | 262144;
             }
-            if ((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & (393216)) === (393216)) {
+            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & (393216)) === (393216)) {
                 return;
             }
         }
     }
-    static $go$private$scanner$scanLowSurrogateEscape(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, high: int32): [
+    static $go$private$scanner$scanLowSurrogateEscape(s: Scanner | undefined, high: int32): [
         int32,
         bool
     ] {
         if (Scanner.$go$private$scanner$char(s) !== 92 || Scanner.$go$private$scanner$charAt(s, 1) !== 117) {
             return [0, false];
         }
-        let savedPos = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
-        let savedTokenFlags = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags;
+        let savedPos = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
+        let savedTokenFlags = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags;
         let low = Scanner.$go$private$scanner$scanUnicodeEscape(s, false);
         if (IsLowSurrogate__from_stringutil(low)) {
             return [SurrogatePairToCodePoint__from_stringutil(high, low), true];
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = savedPos;
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags = savedTokenFlags;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = savedPos;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags = savedTokenFlags;
         return [0, false];
     }
-    static $go$private$scanner$scanNumber(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): Kind__from_ast {
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+    static $go$private$scanner$scanNumber(s: Scanner | undefined): Kind__from_ast {
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let fixedPart = "";
         if (Scanner.$go$private$scanner$char(s) === 48) {
-            const __gotots_store_100 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_100 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_100.pos = __gotots_store_100.pos + 1;
             if (Scanner.$go$private$scanner$char(s) === 95) {
-                const __gotots_store_101 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_101 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_101.tokenFlags = __gotots_store_101.tokenFlags | 16896;
-                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
-                ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = start;
+                Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = start;
                 fixedPart = Scanner.$go$private$scanner$scanNumberFragment(s);
             }
             else {
@@ -2933,7 +2932,7 @@ export class Scanner {
                     fixedPart = "0";
                 }
                 else if (!isOctal) {
-                    const __gotots_store_102 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_102 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_102.tokenFlags = __gotots_store_102.tokenFlags | 8192;
                     fixedPart = digits;
                 }
@@ -2944,15 +2943,15 @@ export class Scanner {
                         $goInterface$Interface_Method_Error_void_to_string | undefined
                     ];
                     let val = __gotots_results_18[0];
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = strconv__from_gostdlib.FormatInt(val, BigInt.asIntN(64, goNumberToBigInt(10)));
-                    const __gotots_store_103 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = strconv__from_gostdlib.FormatInt(val, BigInt.asIntN(64, goNumberToBigInt(10)));
+                    const __gotots_store_103 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_103.tokenFlags = __gotots_store_103.tokenFlags | 32;
-                    let withMinus = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token === KindMinusToken$constant__from_ast();
+                    let withMinus = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token === KindMinusToken$constant__from_ast();
                     let literal = IfElse$string(withMinus, "-", "") + "0o" + strconv__from_gostdlib.FormatInt(val, BigInt.asIntN(64, goNumberToBigInt(8)));
                     if (withMinus) {
                         start--;
                     }
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_literals_are_not_allowed_Use_the_syntax_0, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(literal)]));
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Octal_literals_are_not_allowed_Use_the_syntax_0, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(literal)]));
                     return KindNumericLiteral$constant__from_ast();
                 }
             }
@@ -2960,195 +2959,195 @@ export class Scanner {
         else {
             fixedPart = Scanner.$go$private$scanner$scanNumberFragment(s);
         }
-        let fixedPartEnd = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let fixedPartEnd = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let fractionalPart = "";
         let exponentPreamble = "";
         let exponentPart = "";
         if (Scanner.$go$private$scanner$char(s) === 46) {
-            const __gotots_store_104 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_104 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_104.pos = __gotots_store_104.pos + 1;
             fractionalPart = Scanner.$go$private$scanner$scanNumberFragment(s);
         }
-        let end = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let end = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         if (Scanner.$go$private$scanner$char(s) === 69 || Scanner.$go$private$scanner$char(s) === 101) {
-            const __gotots_store_105 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_105 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_105.pos = __gotots_store_105.pos + 1;
-            const __gotots_store_106 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_106 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_106.tokenFlags = __gotots_store_106.tokenFlags | 16;
             if (Scanner.$go$private$scanner$char(s) === 43 || Scanner.$go$private$scanner$char(s) === 45) {
-                const __gotots_store_107 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_107 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_107.pos = __gotots_store_107.pos + 1;
             }
-            let startNumericPart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+            let startNumericPart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
             exponentPart = Scanner.$go$private$scanner$scanNumberFragment(s);
             if (exponentPart === "") {
                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Digit_expected);
             }
             else {
-                exponentPreamble = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, end, startNumericPart);
-                end = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                exponentPreamble = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, end, startNumericPart);
+                end = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
             }
         }
-        if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsContainsSeparator$constant__from_ast()) === 0)) {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = fixedPart;
+        if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsContainsSeparator$constant__from_ast()) === 0)) {
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = fixedPart;
             if (fractionalPart !== "") {
-                const __gotots_store_108 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_108 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_108.tokenValue = __gotots_store_108.tokenValue + ("." + fractionalPart);
             }
             if (exponentPart !== "") {
-                const __gotots_store_109 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_109 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_109.tokenValue = __gotots_store_109.tokenValue + (exponentPreamble + exponentPart);
             }
         }
         else {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, end);
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, end);
         }
-        if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsContainsLeadingZero$constant__from_ast()) === 0)) {
-            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Decimals_with_leading_zeros_are_not_allowed, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = FromString__from_jsnum(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue).String();
+        if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsContainsLeadingZero$constant__from_ast()) === 0)) {
+            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Decimals_with_leading_zeros_are_not_allowed, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = FromString__from_jsnum((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue).String();
             return KindNumericLiteral$constant__from_ast();
         }
         let result = 0;
-        if (fixedPartEnd === ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos) {
+        if (fixedPartEnd === (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos) {
             result = Scanner.$go$private$scanner$scanBigIntSuffix(s);
         }
         else {
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = FromString__from_jsnum(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue).String();
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = FromString__from_jsnum((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue).String();
             result = KindNumericLiteral$constant__from_ast();
         }
         const __gotots_results_19 = Scanner.$go$private$scanner$charAndSize(s);
         let ch = __gotots_results_19[0];
         if (IsIdentifierStart(ch)) {
-            let idStart = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+            let idStart = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
             let id = Scanner.$go$private$scanner$scanIdentifierParts(s);
-            if (!(result === KindBigIntLiteral$constant__from_ast()) && id.length === 1 && goStringIndex(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, idStart) === 110) {
-                if (!((((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenFlags & TokenFlagsScientific$constant__from_ast()) === 0)) {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.A_bigint_literal_cannot_use_exponential_notation, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+            if (!(result === KindBigIntLiteral$constant__from_ast()) && id.length === 1 && goStringIndex((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, idStart) === 110) {
+                if (!(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenFlags & TokenFlagsScientific$constant__from_ast()) === 0)) {
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.A_bigint_literal_cannot_use_exponential_notation, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
                     return result;
                 }
                 if (fixedPartEnd < idStart) {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.A_bigint_literal_must_be_an_integer, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.A_bigint_literal_must_be_an_integer, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start, RuntimeSlice.nil<GoInterface | undefined>());
                     return result;
                 }
             }
-            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.An_identifier_or_keyword_cannot_immediately_follow_a_numeric_literal, idStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - idStart, RuntimeSlice.nil<GoInterface | undefined>());
-            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = idStart;
+            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.An_identifier_or_keyword_cannot_immediately_follow_a_numeric_literal, idStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - idStart, RuntimeSlice.nil<GoInterface | undefined>());
+            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = idStart;
         }
         return result;
     }
-    static $go$private$scanner$scanNumberFragment(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined): gostring {
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+    static $go$private$scanner$scanNumberFragment(s: Scanner | undefined): gostring {
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let allowSeparator = false;
         let isPreviousTokenSeparator = false;
         let result = named_strings.StringsBuilderOperations.$zero();
         for (;;) {
-            let before = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+            let before = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
             Scanner.$go$private$scanner$scanASCIIWhile(s, (b: uint8): bool => {
                 return b >= 48 && b <= 57;
             });
-            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos > before) {
+            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos > before) {
                 allowSeparator = true;
                 isPreviousTokenSeparator = false;
             }
             let ch = Scanner.$go$private$scanner$char(s);
             if (ch === 95) {
-                const __gotots_store_145 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_145 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_145.tokenFlags = __gotots_store_145.tokenFlags | 512;
                 if (allowSeparator) {
                     allowSeparator = false;
                     isPreviousTokenSeparator = true;
-                    strings__from_gostdlib.Builder.WriteString(result, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                    strings__from_gostdlib.Builder.WriteString(result, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                 }
                 else {
-                    const __gotots_store_146 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_146 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_146.tokenFlags = __gotots_store_146.tokenFlags | 16384;
                     if (isPreviousTokenSeparator) {
-                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Multiple_consecutive_numeric_separators_are_not_permitted, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                     }
                     else {
-                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
+                        Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, 1, RuntimeSlice.nil<GoInterface | undefined>());
                     }
                 }
-                const __gotots_store_147 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_147 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_147.pos = __gotots_store_147.pos + 1;
-                start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                 continue;
             }
             break;
         }
         if (isPreviousTokenSeparator) {
-            const __gotots_store_148 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_148 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_148.tokenFlags = __gotots_store_148.tokenFlags | 16384;
-            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
+            Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.Numeric_separators_are_not_allowed_here, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - 1, 1, RuntimeSlice.nil<GoInterface | undefined>());
         }
         if (globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Builder.Len(result))) === 0) {
-            return goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+            return goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
         }
-        strings__from_gostdlib.Builder.WriteString(result, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+        strings__from_gostdlib.Builder.WriteString(result, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
         return strings__from_gostdlib.Builder.String(result);
     }
-    static $go$private$scanner$scanString(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, jsxAttributeString: bool): gostring {
+    static $go$private$scanner$scanString(s: Scanner | undefined, jsxAttributeString: bool): gostring {
         let quote = Scanner.$go$private$scanner$char(s);
         if (quote === 39) {
-            const __gotots_store_85 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_85 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_85.tokenFlags = __gotots_store_85.tokenFlags | 65536;
         }
-        const __gotots_store_86 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_86 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_86.pos = __gotots_store_86.pos + 1;
-        let strLen = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos), quote & 255)));
+        let strLen = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos), quote & 255)));
         if (strLen === 0) {
-            const __gotots_store_87 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_87 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_87.pos = __gotots_store_87.pos + 1;
             return "";
         }
         if (strLen > 0) {
-            let str = goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos + strLen);
+            let str = goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos + strLen);
             if (jsxAttributeString || globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(str, 92))) < 0 && globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(str, 13))) < 0 && globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.IndexByte(str, 10))) < 0) {
-                const __gotots_store_88 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_88 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_88.pos = __gotots_store_88.pos + (strLen + 1);
                 return str;
             }
         }
         let sb = named_strings.StringsBuilderOperations.$zero();
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         for (;;) {
             let ch = Scanner.$go$private$scanner$char(s);
             if (ch < 0) {
-                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
-                const __gotots_store_89 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
+                const __gotots_store_89 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_89.tokenFlags = __gotots_store_89.tokenFlags | 4;
                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Unterminated_string_literal);
                 break;
             }
             if (ch === quote) {
-                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
-                const __gotots_store_90 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
+                const __gotots_store_90 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_90.pos = __gotots_store_90.pos + 1;
                 break;
             }
             if (ch === 92 && !jsxAttributeString) {
-                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
+                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
                 strings__from_gostdlib.Builder.WriteString(sb, Scanner.$go$private$scanner$scanEscapeSequence(s, 3));
-                start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                 continue;
             }
             if ((ch === 10 || ch === 13) && !jsxAttributeString) {
-                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos));
-                const __gotots_store_91 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                strings__from_gostdlib.Builder.WriteString(sb, goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos));
+                const __gotots_store_91 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_91.tokenFlags = __gotots_store_91.tokenFlags | 4;
                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Unterminated_string_literal);
                 break;
             }
-            const __gotots_store_92 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_92 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_92.pos = __gotots_store_92.pos + 1;
         }
         return strings__from_gostdlib.Builder.String(sb);
     }
-    static $go$private$scanner$scanTemplateAndSetTokenValue(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, shouldEmitInvalidEscapeError: bool): Kind__from_ast {
+    static $go$private$scanner$scanTemplateAndSetTokenValue(s: Scanner | undefined, shouldEmitInvalidEscapeError: bool): Kind__from_ast {
         let startedWithBacktick = Scanner.$go$private$scanner$char(s) === 96;
-        const __gotots_store_93 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_93 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_93.pos = __gotots_store_93.pos + 1;
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let parts = RuntimeSlice.make<gostring>(0, 4, "");
         let token = 0;
         for (;;) {
@@ -3157,13 +3156,13 @@ export class Scanner {
             });
             let ch = Scanner.$go$private$scanner$char(s);
             if (ch < 0 || ch === 96) {
-                parts = parts.append("", [goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)]);
+                parts = parts.append("", [goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)]);
                 if (ch === 96) {
-                    const __gotots_store_94 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_94 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_94.pos = __gotots_store_94.pos + 1;
                 }
                 else {
-                    const __gotots_store_95 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_95 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_95.tokenFlags = __gotots_store_95.tokenFlags | 4;
                     Scanner.$go$private$scanner$error(s, $state__diagnostics.Unterminated_template_literal);
                 }
@@ -3171,54 +3170,54 @@ export class Scanner {
                 break;
             }
             if (ch === 36 && Scanner.$go$private$scanner$charAt(s, 1) === 123) {
-                parts = parts.append("", [goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)]);
-                const __gotots_store_96 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                parts = parts.append("", [goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)]);
+                const __gotots_store_96 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_96.pos = __gotots_store_96.pos + 2;
                 token = IfElse$Named_ast$Kind(startedWithBacktick, KindTemplateHead$constant__from_ast(), KindTemplateMiddle$constant__from_ast());
                 break;
             }
             if (ch === 92) {
-                parts = parts.append("", [goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)]);
+                parts = parts.append("", [goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)]);
                 parts = parts.append("", [Scanner.$go$private$scanner$scanEscapeSequence(s, EscapeSequenceScanningFlagsString$constant() | IfElse$Named_scanner$EscapeSequenceScanningFlags(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors$constant(), 0))]);
-                start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                 continue;
             }
             if (ch === 13) {
-                parts = parts.append("", [goStringSlice(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text, start, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos)]);
-                const __gotots_store_97 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                parts = parts.append("", [goStringSlice((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text, start, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos)]);
+                const __gotots_store_97 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_97.pos = __gotots_store_97.pos + 1;
                 if (Scanner.$go$private$scanner$char(s) === 10) {
-                    const __gotots_store_98 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                    const __gotots_store_98 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                     __gotots_store_98.pos = __gotots_store_98.pos + 1;
                 }
                 parts = parts.append("", ["\n"]);
-                start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+                start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
                 continue;
             }
-            const __gotots_store_99 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_99 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_99.pos = __gotots_store_99.pos + 1;
         }
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = strings__from_gostdlib.Join(parts, "");
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = strings__from_gostdlib.Join(parts, "");
         return token;
     }
-    static $go$private$scanner$scanUnicodeEscape(s: tsonicTypeScriptRuntime.Location<Scanner> | undefined, shouldEmitInvalidEscapeError: bool): int32 {
-        const __gotots_store_118 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+    static $go$private$scanner$scanUnicodeEscape(s: Scanner | undefined, shouldEmitInvalidEscapeError: bool): int32 {
+        const __gotots_store_118 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_118.pos = __gotots_store_118.pos + 2;
-        let start = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        let start = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
         let extended = Scanner.$go$private$scanner$char(s) === 123;
         let hexDigits = "";
         if (extended) {
-            const __gotots_store_119 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_119 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_119.pos = __gotots_store_119.pos + 1;
             hexDigits = Scanner.$go$private$scanner$scanHexDigits(s, 1, true, false);
         }
         else {
-            const __gotots_store_120 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_120 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_120.tokenFlags = __gotots_store_120.tokenFlags | 1024;
             hexDigits = Scanner.$go$private$scanner$scanHexDigits(s, 4, false, false);
         }
         if (hexDigits === "") {
-            const __gotots_store_121 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_121 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_121.tokenFlags = __gotots_store_121.tokenFlags | 2048;
             if (shouldEmitInvalidEscapeError) {
                 Scanner.$go$private$scanner$error(s, $state__diagnostics.Hexadecimal_digit_expected);
@@ -3235,18 +3234,18 @@ export class Scanner {
             let isInvalidExtendedEscape = false;
             if (hexValue > 1114111n) {
                 if (shouldEmitInvalidEscapeError) {
-                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.An_extended_Unicode_escape_value_must_be_between_0x0_and_0x10FFFF_inclusive, start + 1, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos - start - 1, RuntimeSlice.nil<GoInterface | undefined>());
+                    Scanner.$go$private$scanner$errorAt(s, $state__diagnostics.An_extended_Unicode_escape_value_must_be_between_0x0_and_0x10FFFF_inclusive, start + 1, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos - start - 1, RuntimeSlice.nil<GoInterface | undefined>());
                 }
                 isInvalidExtendedEscape = true;
             }
-            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos >= ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end) {
+            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos >= (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end) {
                 if (shouldEmitInvalidEscapeError) {
                     Scanner.$go$private$scanner$error(s, $state__diagnostics.Unexpected_end_of_text);
                 }
                 isInvalidExtendedEscape = true;
             }
             else if (Scanner.$go$private$scanner$char(s) === 125) {
-                const __gotots_store_122 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_122 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_122.pos = __gotots_store_122.pos + 1;
             }
             else {
@@ -3256,23 +3255,35 @@ export class Scanner {
                 isInvalidExtendedEscape = true;
             }
             if (isInvalidExtendedEscape) {
-                const __gotots_store_123 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+                const __gotots_store_123 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
                 __gotots_store_123.tokenFlags = __gotots_store_123.tokenFlags | 2048;
                 return -1;
             }
-            const __gotots_store_124 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+            const __gotots_store_124 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
             __gotots_store_124.tokenFlags = __gotots_store_124.tokenFlags | 8;
         }
         return globalThis.Number(BigInt.asIntN(32, hexValue));
+    }
+    $tsonicReplace($value: Scanner): void {
+        this.text = $value.text;
+        this.end = $value.end;
+        this.languageVariant = $value.languageVariant;
+        this.scriptTarget = $value.scriptTarget;
+        this.onError = $value.onError;
+        this.skipTrivia = $value.skipTrivia;
+        this.ScannerState = $value.ScannerState;
+        this.containsNonASCII = $value.containsNonASCII;
+        this.numberCache = $value.numberCache;
+        this.hexNumberCache = $value.hexNumberCache;
+        this.hexDigitCache = $value.hexDigitCache;
     }
 }
 export function defaultScanner(): Scanner {
     return new Scanner("", 0, 0, 0, new ErrorCallback(void 0), true, ScannerState.$zero(), false, GoMap.nil<gostring, gostring>(""), GoMap.nil<gostring, gostring>(""), GoMap.nil<gostring, gostring>(""));
 }
-export function NewScanner(): tsonicTypeScriptRuntime.Location<Scanner> | undefined {
+export function NewScanner(): Scanner | undefined {
     let s = defaultScanner();
-    const s$location = tsonicTypeScriptRuntime.boundLocation({}, () => s, s$next => s = s$next);
-    return s$location;
+    return s;
 }
 export function cleared$kernel<M, K, V>($go$clear$T0_to_void: ($0: M) => void, m: M): M {
     $go$clear$T0_to_void(m);
@@ -3695,22 +3706,22 @@ export function GetShebang(text: gostring): gostring {
     let end = scanShebangTrivia(text, 0);
     return goStringSlice(text, 0, end);
 }
-export function GetScannerForSourceFile(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, pos: int): tsonicTypeScriptRuntime.Location<Scanner> | undefined {
-    let s: tsonicTypeScriptRuntime.Location<Scanner> | undefined = NewScanner();
-    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text = SourceFile__from_ast.Text(sourceFile);
-    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos = pos;
-    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.end = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text.length;
-    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.languageVariant = ((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.LanguageVariant;
+export function GetScannerForSourceFile(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, pos: int): Scanner | undefined {
+    let s: Scanner | undefined = NewScanner();
+    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text = SourceFile__from_ast.Text(sourceFile);
+    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos = pos;
+    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text.length;
+    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).languageVariant = ((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.LanguageVariant;
     Scanner.Scan(s);
     return s;
 }
 export function ScanTokenAtPosition(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, pos: int): Kind__from_ast {
-    let s: tsonicTypeScriptRuntime.Location<Scanner> | undefined = GetScannerForSourceFile(sourceFile, pos);
-    return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.token;
+    let s: Scanner | undefined = GetScannerForSourceFile(sourceFile, pos);
+    return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.token;
 }
 export function GetRangeOfTokenAtPosition(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, pos: int): TextRange__from_core {
-    let s: tsonicTypeScriptRuntime.Location<Scanner> | undefined = GetScannerForSourceFile(sourceFile, pos);
-    return NewTextRange__from_core(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos);
+    let s: Scanner | undefined = GetScannerForSourceFile(sourceFile, pos);
+    return NewTextRange__from_core((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos);
 }
 export function GetTokenPosOfNode(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, includeJSDoc: bool): int {
     if (NodeIsMissing__from_ast(node)) {
@@ -3979,7 +3990,7 @@ export function GetErrorRangeForNode(sourceFile: tsonicTypeScriptRuntime.Locatio
                     errorNode = node;
                     break __gotots_control_target_7;
                 }
-                let scanner: tsonicTypeScriptRuntime.Location<Scanner> | undefined = GetScannerForSourceFile(sourceFile, Node__from_ast.Pos(node));
+                let scanner: Scanner | undefined = GetScannerForSourceFile(sourceFile, Node__from_ast.Pos(node));
                 let start = Scanner.TokenStart(scanner);
                 for (; !(Scanner.Token(scanner) === KindConstructorKeyword$constant__from_ast()) && !(Scanner.Token(scanner) === KindStringLiteral$constant__from_ast()) && !(Scanner.Token(scanner) === KindEndOfFile$constant__from_ast());) {
                     Scanner.Scan(scanner);

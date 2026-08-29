@@ -89,12 +89,12 @@ export class superAccessState {
         return new superAccessState(void 0, void 0, false, false, void 0, void 0, void 0);
     }
     declare private readonly then?: never;
-    static $go$private$estransforms$createSuperAccessVariableStatement(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+    static $go$private$estransforms$createSuperAccessVariableStatement(s: superAccessState | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         let f: {
             value: NodeFactory__from_printer;
-        } | undefined = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory;
+        } | undefined = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory;
         let accessors = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
-        const __gotots_range_0 = named_iter.IterSeqValueOperations.$project(OrderedSet$Values$string(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.capturedSuperProperties));
+        const __gotots_range_0 = named_iter.IterSeqValueOperations.$project(OrderedSet$Values$string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).capturedSuperProperties));
         if (__gotots_range_0 === void 0) {
             GoPanic.raiseRuntime("call of nil function");
         }
@@ -147,7 +147,7 @@ export class superAccessState {
             const __gotots_argument_50 = getterArrow;
             let getter: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewPropertyAssignment(__gotots_receiver_12, __gotots_argument_46, __gotots_argument_47, __gotots_argument_48, __gotots_argument_49, __gotots_argument_50);
             descriptorProperties = descriptorProperties.append(void 0, [getter]);
-            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperPropertyAssignment) {
+            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperPropertyAssignment) {
                 const __gotots_store_27 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 const __gotots_receiver_13 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "NodeFactory");
                 const __gotots_argument_51 = void 0;
@@ -247,7 +247,7 @@ export class superAccessState {
         const __gotots_argument_93 = NodeFlagsNone$constant__from_ast();
         let objectCreateCall: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewCallExpression(__gotots_receiver_23, __gotots_argument_89, __gotots_argument_90, __gotots_argument_91, __gotots_argument_92, __gotots_argument_93);
         const __gotots_store_50 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-        let decl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewVariableDeclaration(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "NodeFactory"), ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superBinding, void 0, void 0, objectCreateCall);
+        let decl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewVariableDeclaration(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "NodeFactory"), (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superBinding, void 0, void 0, objectCreateCall);
         const __gotots_store_51 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_receiver_24 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_51, "NodeFactory");
         const __gotots_store_52 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -257,49 +257,49 @@ export class superAccessState {
         const __gotots_store_53 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         return NodeFactory__from_ast.NewVariableStatement(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "NodeFactory"), void 0, declList);
     }
-    static $go$private$estransforms$createSuperElementAccessInAsyncMethod(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, argumentExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
-        const __gotots_store_15 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+    static $go$private$estransforms$createSuperElementAccessInAsyncMethod(s: superAccessState | undefined, argumentExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+        const __gotots_store_15 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_receiver_8 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeFactory");
-        const __gotots_argument_26 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superIndexBinding;
+        const __gotots_argument_26 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superIndexBinding;
         const __gotots_argument_27 = void 0;
         const __gotots_argument_28 = void 0;
-        const __gotots_store_16 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_16 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_29 = NodeFactory__from_ast.NewNodeList(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeFactory"), RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([argumentExpression]));
         const __gotots_argument_30 = NodeFlagsNone$constant__from_ast();
         let superIndexCall: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewCallExpression(__gotots_receiver_8, __gotots_argument_26, __gotots_argument_27, __gotots_argument_28, __gotots_argument_29, __gotots_argument_30);
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperPropertyAssignment) {
-            const __gotots_store_17 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperPropertyAssignment) {
+            const __gotots_store_17 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_9 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeFactory");
             const __gotots_argument_31 = superIndexCall;
             const __gotots_argument_32 = void 0;
-            const __gotots_store_18 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_18 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_33 = NodeFactory__from_ast.NewIdentifier(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeFactory"), "value");
             const __gotots_argument_34 = NodeFlagsNone$constant__from_ast();
             return NodeFactory__from_ast.NewPropertyAccessExpression(__gotots_receiver_9, __gotots_argument_31, __gotots_argument_32, __gotots_argument_33, __gotots_argument_34);
         }
         return superIndexCall;
     }
-    static $go$private$estransforms$initSuperAccessVisitor(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, emitContext: {
+    static $go$private$estransforms$initSuperAccessVisitor(s: superAccessState | undefined, emitContext: {
         value: EmitContext__from_printer;
     } | undefined, factory: {
         value: NodeFactory__from_printer;
     } | undefined): void {
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory = factory;
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory = factory;
         const __gotots_receiver_1 = emitContext;
         const __gotots_receiver_0 = s;
         const __gotots_argument_0 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
             return superAccessState.$go$private$estransforms$visitSuperAccessNode(__gotots_receiver_0, $argument0);
         };
-        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor = EmitContext__from_printer.NewNodeVisitor(__gotots_receiver_1, __gotots_argument_0);
+        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor = EmitContext__from_printer.NewNodeVisitor(__gotots_receiver_1, __gotots_argument_0);
     }
-    static $go$private$estransforms$substituteCallExpressionWithSuperAccess(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, call: tsonicTypeScriptRuntime.Location<CallExpression__from_ast> | undefined, visitor: {
+    static $go$private$estransforms$substituteCallExpressionWithSuperAccess(s: superAccessState | undefined, call: tsonicTypeScriptRuntime.Location<CallExpression__from_ast> | undefined, visitor: {
         value: NodeVisitor__from_ast;
     } | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         let expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Expression;
         let target: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (IsPropertyAccessExpression__from_ast(expression)) {
-            const __gotots_store_9 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-            target = NodeFactory__from_ast.NewPropertyAccessExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeFactory"), ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superBinding, void 0, PropertyAccessExpression__from_ast.Name(Node__from_ast.AsPropertyAccessExpression(expression)), NodeFlagsNone$constant__from_ast());
+            const __gotots_store_9 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            target = NodeFactory__from_ast.NewPropertyAccessExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeFactory"), (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superBinding, void 0, PropertyAccessExpression__from_ast.Name(Node__from_ast.AsPropertyAccessExpression(expression)), NodeFlagsNone$constant__from_ast());
         }
         else if (IsElementAccessExpression__from_ast(expression)) {
             target = superAccessState.$go$private$estransforms$createSuperElementAccessInAsyncMethod(s, ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression);
@@ -315,28 +315,28 @@ export class superAccessState {
             const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_5, __gotots_argument_16);
         }
-        const __gotots_store_11 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_11 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_receiver_6 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "NodeFactory");
         const __gotots_argument_17 = target;
         const __gotots_argument_18 = void 0;
-        const __gotots_store_12 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_12 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_19 = NodeFactory__from_ast.NewIdentifier(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "NodeFactory"), "call");
         const __gotots_argument_20 = NodeFlagsNone$constant__from_ast();
         let callTarget: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewPropertyAccessExpression(__gotots_receiver_6, __gotots_argument_17, __gotots_argument_18, __gotots_argument_19, __gotots_argument_20);
         let allArgs = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
-        allArgs = allArgs.append(void 0, [NodeFactory__from_printer.NewThisExpression(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory)]);
+        allArgs = allArgs.append(void 0, [NodeFactory__from_printer.NewThisExpression((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory)]);
         if (!(CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments === undefined)) {
             let visitedArgs: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeVisitor__from_ast.VisitNodes(visitor, CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments);
             if (!(visitedArgs === undefined)) {
                 allArgs = goSliceAppendSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(allArgs, NodeList__from_ast.$storageOf(((visitedArgs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes, void 0);
             }
         }
-        const __gotots_store_13 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_13 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_receiver_7 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NodeFactory");
         const __gotots_argument_21 = callTarget;
         const __gotots_argument_22 = void 0;
         const __gotots_argument_23 = void 0;
-        const __gotots_store_14 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_14 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_24 = NodeFactory__from_ast.NewNodeList(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "NodeFactory"), allArgs);
         const __gotots_argument_25 = NodeFlagsNone$constant__from_ast();
         let result: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewCallExpression(__gotots_receiver_7, __gotots_argument_21, __gotots_argument_22, __gotots_argument_23, __gotots_argument_24, __gotots_argument_25);
@@ -350,69 +350,69 @@ export class superAccessState {
                                     CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Loc)));
         return result;
     }
-    static $go$private$estransforms$substituteSuperAccessesInBody(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
-        return NodeVisitor__from_ast.VisitNode(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor, body);
+    static $go$private$estransforms$substituteSuperAccessesInBody(s: superAccessState | undefined, body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+        return NodeVisitor__from_ast.VisitNode((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor, body);
     }
-    static $go$private$estransforms$trackSuperAccess(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
-        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.capturedSuperProperties === undefined) {
+    static $go$private$estransforms$trackSuperAccess(s: superAccessState | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
+        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).capturedSuperProperties === undefined) {
             return;
         }
         switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
             case KindPropertyAccessExpression$constant__from_ast(): {
                 if (Node__from_ast.$storageOf(((Node__from_ast.Expression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindSuperKeyword$constant__from_ast()) {
-                    OrderedSet$Add$string(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.capturedSuperProperties, Node__from_ast.Text(Node__from_ast.Name(node)));
+                    OrderedSet$Add$string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).capturedSuperProperties, Node__from_ast.Text(Node__from_ast.Name(node)));
                 }
                 break;
             }
             case KindElementAccessExpression$constant__from_ast(): {
                 if (Node__from_ast.$storageOf(((Node__from_ast.Expression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindSuperKeyword$constant__from_ast()) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperElementAccess = true;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperElementAccess = true;
                 }
                 break;
             }
             case KindBinaryExpression$constant__from_ast(): {
                 if (IsAssignmentOperator__from_ast(Node__from_ast.$storageOf(((BinaryExpression__from_ast.$storageOf(((Node__from_ast.AsBinaryExpression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).OperatorToken ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) && assignmentTargetContainsSuperProperty(BinaryExpression__from_ast.$storageOf(((Node__from_ast.AsBinaryExpression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Left)) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperPropertyAssignment = true;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperPropertyAssignment = true;
                 }
                 break;
             }
             case KindPrefixUnaryExpression$constant__from_ast(): {
                 if (isUpdateExpression(node) && assignmentTargetContainsSuperProperty(PrefixUnaryExpression__from_ast.$storageOf(((Node__from_ast.AsPrefixUnaryExpression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).Operand)) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperPropertyAssignment = true;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperPropertyAssignment = true;
                 }
                 break;
             }
             case KindPostfixUnaryExpression$constant__from_ast(): {
                 if (isUpdateExpression(node) && assignmentTargetContainsSuperProperty((Node__from_ast.AsPostfixUnaryExpression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Operand)) {
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.hasSuperPropertyAssignment = true;
+                    (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasSuperPropertyAssignment = true;
                 }
                 break;
             }
         }
     }
-    static $go$private$estransforms$visitSuperAccessNode(s: tsonicTypeScriptRuntime.Location<superAccessState> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+    static $go$private$estransforms$visitSuperAccessNode(s: superAccessState | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
             case KindCallExpression$constant__from_ast(): {
                 let call: tsonicTypeScriptRuntime.Location<CallExpression__from_ast> | undefined = Node__from_ast.AsCallExpression(node);
                 if (IsSuperProperty__from_ast(CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Expression)) {
-                    return superAccessState.$go$private$estransforms$substituteCallExpressionWithSuperAccess(s, call, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor);
+                    return superAccessState.$go$private$estransforms$substituteCallExpressionWithSuperAccess(s, call, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor);
                 }
-                return NodeVisitor__from_ast.VisitEachChild(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor, node);
+                return NodeVisitor__from_ast.VisitEachChild((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor, node);
                 break;
             }
             case KindPropertyAccessExpression$constant__from_ast(): {
                 if (Node__from_ast.$storageOf(((Node__from_ast.Expression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindSuperKeyword$constant__from_ast()) {
-                    const __gotots_store_0 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-                    return NodeFactory__from_ast.NewPropertyAccessExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeFactory"), ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superBinding, void 0, Node__from_ast.Name(node), NodeFlagsNone$constant__from_ast());
+                    const __gotots_store_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    return NodeFactory__from_ast.NewPropertyAccessExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeFactory"), (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superBinding, void 0, Node__from_ast.Name(node), NodeFlagsNone$constant__from_ast());
                 }
-                return NodeVisitor__from_ast.VisitEachChild(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor, node);
+                return NodeVisitor__from_ast.VisitEachChild((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor, node);
                 break;
             }
             case KindElementAccessExpression$constant__from_ast(): {
                 if (Node__from_ast.$storageOf(((Node__from_ast.Expression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindSuperKeyword$constant__from_ast()) {
                     return superAccessState.$go$private$estransforms$createSuperElementAccessInAsyncMethod(s, ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression);
                 }
-                return NodeVisitor__from_ast.VisitEachChild(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor, node);
+                return NodeVisitor__from_ast.VisitEachChild((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor, node);
                 break;
             }
             case KindFunctionExpression$constant__from_ast():
@@ -427,7 +427,7 @@ export class superAccessState {
                 break;
             }
             default: {
-                return NodeVisitor__from_ast.VisitEachChild(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<superAccessState>).value.superAccessVisitor, node);
+                return NodeVisitor__from_ast.VisitEachChild((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).superAccessVisitor, node);
                 break;
             }
         }

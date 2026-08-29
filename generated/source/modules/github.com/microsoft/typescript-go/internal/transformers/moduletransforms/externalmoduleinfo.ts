@@ -44,7 +44,7 @@ export class externalModuleInfoCollector {
     declare private readonly then?: never;
     static $go$private$moduletransforms$addExportedBinding(c: externalModuleInfoCollector | undefined, decl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         const __gotots_store_22 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        MultiMap$Add$PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_22, "exportedBindings"), EmitContext__from_printer.MostOriginal((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext, decl), name);
+        MultiMap$Add$PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(__gotots_store_22.exportedBindings, EmitContext__from_printer.MostOriginal((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext, decl), name);
     }
     static $go$private$moduletransforms$addExportedFunctionDeclaration(c: externalModuleInfoCollector | undefined, node: tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, isDefault: bool): void {
         const __gotots_store_23 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -108,7 +108,7 @@ export class externalModuleInfoCollector {
                 if (!(Node__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindStringLiteral$constant__from_ast())) {
                     if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier === undefined) {
                         const __gotots_store_18 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        MultiMap$Add$string$PointerTo_Named_ast$ExportSpecifier(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "exportSpecifiers"), Node__from_ast.Text(name), Node__from_ast.AsExportSpecifier(specifier));
+                        MultiMap$Add$string$PointerTo_Named_ast$ExportSpecifier(__gotots_store_18.exportSpecifiers, Node__from_ast.Text(name), Node__from_ast.AsExportSpecifier(specifier));
                     }
                     const __gotots_receiver_8 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver;
                     const __gotots_argument_22 = EmitContext__from_printer.MostOriginal((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext, name);

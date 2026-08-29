@@ -119,8 +119,8 @@ export function tryRenameExternalModule(factory: {
 export function isFileLevelReservedGeneratedIdentifier(emitContext: {
     value: EmitContext__from_printer;
 } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
-    let info: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined = EmitContext__from_printer.GetAutoGenerateInfo(emitContext, name);
-    return !(info === undefined) && ((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer>).value.Flags.IsFileLevel() && ((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer>).value.Flags.IsOptimistic() && ((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer>).value.Flags.IsReservedInNestedScopes();
+    let info: AutoGenerateInfo__from_printer | undefined = EmitContext__from_printer.GetAutoGenerateInfo(emitContext, name);
+    return !(info === undefined) && (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsFileLevel() && (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsOptimistic() && (info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsReservedInNestedScopes();
 }
 export function isSimpleInlineableExpression(expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     return !IsIdentifier__from_ast(expression) && IsSimpleCopiableExpression__from_transformers(expression);

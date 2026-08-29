@@ -30,17 +30,17 @@ export class FromTo {
     public set To($value: uint16) {
         this.$storage.To = $value;
     }
-    static $zero(): FromTo {
-        return new FromTo({
-            From: 0,
-            To: 0
-        });
-    }
     static $copy($source: FromTo): FromTo {
         return new FromTo({
             From: $source.$storage.From,
             To: $source.$storage.To
         });
+    }
+    static $zeroStorage(): FromTo$Storage {
+        return {
+            From: 0,
+            To: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -111,17 +111,17 @@ export class likelyLangRegion {
     public set region($value: uint16) {
         this.$storage.region = $value;
     }
-    static $zero(): likelyLangRegion {
-        return new likelyLangRegion({
-            lang: 0,
-            region: 0
-        });
-    }
     static $copy($source: likelyLangRegion): likelyLangRegion {
         return new likelyLangRegion({
             lang: $source.$storage.lang,
             region: $source.$storage.region
         });
+    }
+    static $zeroStorage(): likelyLangRegion$Storage {
+        return {
+            lang: 0,
+            region: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -158,19 +158,19 @@ export class likelyScriptRegion {
     public set flags($value: uint8) {
         this.$storage.flags = $value;
     }
-    static $zero(): likelyScriptRegion {
-        return new likelyScriptRegion({
-            region: 0,
-            script: 0,
-            flags: 0
-        });
-    }
     static $copy($source: likelyScriptRegion): likelyScriptRegion {
         return new likelyScriptRegion({
             region: $source.$storage.region,
             script: $source.$storage.script,
             flags: $source.$storage.flags
         });
+    }
+    static $zeroStorage(): likelyScriptRegion$Storage {
+        return {
+            region: 0,
+            script: 0,
+            flags: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -207,19 +207,19 @@ export class likelyLangScript {
     public set flags($value: uint8) {
         this.$storage.flags = $value;
     }
-    static $zero(): likelyLangScript {
-        return new likelyLangScript({
-            lang: 0,
-            script: 0,
-            flags: 0
-        });
-    }
     static $copy($source: likelyLangScript): likelyLangScript {
         return new likelyLangScript({
             lang: $source.$storage.lang,
             script: $source.$storage.script,
             flags: $source.$storage.flags
         });
+    }
+    static $zeroStorage(): likelyLangScript$Storage {
+        return {
+            lang: 0,
+            script: 0,
+            flags: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -256,19 +256,19 @@ export class likelyTag {
     public set script($value: uint16) {
         this.$storage.script = $value;
     }
-    static $zero(): likelyTag {
-        return new likelyTag({
-            lang: 0,
-            region: 0,
-            script: 0
-        });
-    }
     static $copy($source: likelyTag): likelyTag {
         return new likelyTag({
             lang: $source.$storage.lang,
             region: $source.$storage.region,
             script: $source.$storage.script
         });
+    }
+    static $zeroStorage(): likelyTag$Storage {
+        return {
+            lang: 0,
+            region: 0,
+            script: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -319,14 +319,14 @@ export class parentRel {
     public set fromRegion($value: RuntimeSlice<uint16>) {
         this.$storage.fromRegion = $value;
     }
-    static $zero(): parentRel {
-        return new parentRel({
+    static $zeroStorage(): parentRel$Storage {
+        return {
             lang: 0,
             script: 0,
             maxScript: 0,
             toRegion: 0,
             fromRegion: RuntimeSlice.nil<uint16>()
-        });
+        };
     }
     declare private readonly then?: never;
 }

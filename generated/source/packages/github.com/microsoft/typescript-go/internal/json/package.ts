@@ -4,11 +4,11 @@ import { $state as $state__jsontext, AllowInvalidUTF8 as AllowInvalidUTF8__from_
 import { $state } from "./state.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function $initialize(): void {
-    $state.BeginArray = Token__from_jsontext.$storageOf(Token__from_jsontext.$zero());
-    $state.BeginObject = Token__from_jsontext.$storageOf(Token__from_jsontext.$zero());
-    $state.EndArray = Token__from_jsontext.$storageOf(Token__from_jsontext.$zero());
-    $state.EndObject = Token__from_jsontext.$storageOf(Token__from_jsontext.$zero());
-    $state.Null = Token__from_jsontext.$storageOf(Token__from_jsontext.$zero());
+    $state.BeginArray = Token__from_jsontext.$zeroStorage();
+    $state.BeginObject = Token__from_jsontext.$zeroStorage();
+    $state.EndArray = Token__from_jsontext.$zeroStorage();
+    $state.EndObject = Token__from_jsontext.$zeroStorage();
+    $state.Null = Token__from_jsontext.$zeroStorage();
     $state.allowInvalid = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
     {
         $state.allowInvalid = Clip$SliceOf_Named_jsonopts$Options$Named_jsonopts$Options(RuntimeSlice.literal<Options__from_jsonopts | undefined>([AllowInvalidUTF8__from_jsontext(true)]));

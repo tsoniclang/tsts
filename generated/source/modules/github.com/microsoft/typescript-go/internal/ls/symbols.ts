@@ -50,7 +50,6 @@ export function mergeExpandos(symbols: RuntimeSlice<{
     let nameToExpandoTargetIndex = MultiMap__from_collections.$fromStorage<gostring, int>({
         M: $goMap$MapOf_string_To_SliceOf_int.nil()
     });
-    const nameToExpandoTargetIndex$location = tsonicTypeScriptRuntime.boundLocation({}, () => nameToExpandoTargetIndex, nameToExpandoTargetIndex$next => nameToExpandoTargetIndex = nameToExpandoTargetIndex$next);
     let nameToNamespaceIndex: GoMapValue<gostring, int> = GoMap__from_gotots_runtime.make<gostring, int>(0, 0, []);
     const __gotots_range_7 = symbols;
     for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_7.length; __gotots_range_index_5++) {
@@ -64,7 +63,7 @@ export function mergeExpandos(symbols: RuntimeSlice<{
             continue;
         }
         if ((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind === SymbolKindClass$constant__from_lsproto() || (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind === SymbolKindFunction$constant__from_lsproto() || (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind === SymbolKindVariable$constant__from_lsproto()) {
-            MultiMap$Add$string$int(nameToExpandoTargetIndex$location, (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name, i);
+            MultiMap$Add$string$int(nameToExpandoTargetIndex, (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name, i);
         }
         if ((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind === SymbolKindNamespace$constant__from_lsproto()) {
             {
@@ -96,7 +95,7 @@ export function mergeExpandos(symbols: RuntimeSlice<{
             continue;
         }
         if ((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind === SymbolKindProperty$constant__from_lsproto()) {
-            let symbolsWithSameName = MultiMap__from_collections.Get<gostring, int>(nameToExpandoTargetIndex$location, (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name);
+            let symbolsWithSameName = MultiMap__from_collections.Get<gostring, int>(nameToExpandoTargetIndex, (__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name);
             for (let j = symbolsWithSameName.length - 1; j >= 0; j--) {
                 let targetIndex = symbolsWithSameName.get(j);
                 let targetSymbol: {
@@ -340,19 +339,19 @@ export class DeclarationInfo implements GoContainerStoredValue<DeclarationInfo$S
         this.$storage.matchScore = $value;
     }
     declare readonly [$goContainerStorageType]: DeclarationInfo$Storage;
-    static $zero(): DeclarationInfo {
-        return new DeclarationInfo({
-            name: "",
-            declaration: void 0,
-            matchScore: 0
-        });
-    }
     static $copy($source: DeclarationInfo): DeclarationInfo {
         return new DeclarationInfo({
             name: $source.$storage.name,
             declaration: $source.$storage.declaration,
             matchScore: $source.$storage.matchScore
         });
+    }
+    static $zeroStorage(): DeclarationInfo$Storage {
+        return {
+            name: "",
+            declaration: void 0,
+            matchScore: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -440,7 +439,7 @@ export function ProvideWorkspaceSymbols(ctx: GoInterface | undefined, programs: 
                                 matchScore: score
                             })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DeclarationInfo.$storageOf(DeclarationInfo.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DeclarationInfo.$zeroStorage());
                         }
                     }
                     infos = __gotots_slice_build_1;

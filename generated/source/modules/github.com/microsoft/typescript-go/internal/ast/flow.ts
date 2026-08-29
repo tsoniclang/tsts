@@ -121,6 +121,14 @@ export class FlowNode implements GoContainerStoredValue<FlowNode$Storage> {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Antecedents));
         return $hash;
     }
+    static $zeroStorage(): FlowNode$Storage {
+        return {
+            Flags: 0,
+            Node: void 0,
+            Antecedent: void 0,
+            Antecedents: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type FlowList$Storage = {
@@ -172,6 +180,12 @@ export class FlowList implements GoContainerStoredValue<FlowList$Storage> {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Flow));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Next));
         return $hash;
+    }
+    static $zeroStorage(): FlowList$Storage {
+        return {
+            Flow: void 0,
+            Next: void 0
+        };
     }
     declare private readonly then?: never;
 }

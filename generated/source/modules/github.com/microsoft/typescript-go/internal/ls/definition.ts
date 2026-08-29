@@ -68,7 +68,9 @@ export function createLocationsFromLinks(links: RuntimeSlice<{
         DefinitionLinks: void 0
     });
 }
-export function getDeclarationsFromLocation(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
+export function getDeclarationsFromLocation(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     if (IsIdentifier__from_ast(node) && IsShorthandPropertyAssignment__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent)) {
         let shorthandSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetResolvedSymbol(c, node);
         let declarations = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
@@ -150,7 +152,9 @@ export function getDeclarationsFromLocation(c: tsonicTypeScriptRuntime.Location<
     }
     return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
 }
-export function getDeclarationsFromObjectLiteralElement(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
+export function getDeclarationsFromObjectLiteralElement(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     let element: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getContainingObjectLiteralElement(node);
     if (element === undefined) {
         return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
@@ -196,7 +200,9 @@ export function getAncestorCallLikeExpression(node: tsonicTypeScriptRuntime.Loca
     }
     return void 0;
 }
-export function tryGetSignatureDeclaration(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function tryGetSignatureDeclaration(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let signature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined = void 0;
     let callLike: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getAncestorCallLikeExpression(node);
     if (!(callLike === undefined)) {
@@ -235,7 +241,9 @@ export function symbolMatchesSignature(__go_symbol: tsonicTypeScriptRuntime.Loca
     return !(parent === undefined) && (IsAssignmentExpression__from_ast(parent, false) || !IsCallLikeExpression__from_ast(parent) && CanHaveSymbol__from_ast(parent) &&
         tsonicTypeScriptRuntime.sameLocation(__go_symbol, Node__from_ast.Symbol(parent)));
 }
-export function getSymbolForOverriddenMember(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getSymbolForOverriddenMember(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     let classElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, IsClassElement__from_ast);
     if (classElement === undefined || Node__from_ast.Name(classElement) === undefined) {
         return void 0;
@@ -265,7 +273,9 @@ export function getSymbolForOverriddenMember(typeChecker: tsonicTypeScriptRuntim
     }
     return Checker__from_checker.GetPropertyOfType(typeChecker, Checker__from_checker.GetDeclaredTypeOfSymbol(typeChecker, base), name);
 }
-export function getTypeOfSymbolAtLocation(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
+export function getTypeOfSymbolAtLocation(c: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
     let t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeOfSymbolAtLocation(c, __go_symbol, node);
     if (tsonicTypeScriptRuntime.sameLocation(Type__from_checker.Symbol(t), __go_symbol)
         || !(Type__from_checker.Symbol(t) === undefined) && !(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration === undefined) && IsVariableDeclaration__from_ast(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration) &&

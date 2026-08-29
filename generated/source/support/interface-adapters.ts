@@ -1981,17 +1981,17 @@ export const $goInterfaceAdapter$MapOf_Interface_void_To_Struct_void: {
     return GoInterfaceFormat.formatOther("map[any]struct{}", verb);
 });
 export const $goInterfaceAdapter$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges: {
-    new ($go$value: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>): GoInterfaceValue & {
-        readonly $go$value: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>;
+    new ($go$value: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>): GoInterfaceValue & {
+        readonly $go$value: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>;
+        readonly $go$value: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>;
     };
-} = createGoInterfaceAdapter<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>>($goDynamicType$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges, (left: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>, right: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>): boolean => {
+} = createGoInterfaceAdapter<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>>($goDynamicType$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges, (left: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>, right: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>): number => {
+}, (value: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("map[api.ProjectID]*api.ProjectFileChanges", verb);
 });
 export const $goInterfaceAdapter$MapOf_Named_api$SnapshotID_To_PointerTo_Named_api$snapshotData: {
@@ -3555,17 +3555,17 @@ export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Nam
     return GoInterfaceFormat.formatOther("map[*ast.Node]*checker.TypeNodeLinks", verb);
 });
 export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo: {
-    new ($go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>): GoInterfaceValue & {
-        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>;
+    new ($go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>): GoInterfaceValue & {
+        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>;
+        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>;
     };
-} = createGoInterfaceAdapter<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>>($goDynamicType$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo, (left: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>, right: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>): boolean => {
+} = createGoInterfaceAdapter<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>>($goDynamicType$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo, (left: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>, right: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>): number => {
+}, (value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("map[*ast.MemberName]*printer.AutoGenerateInfo", verb);
 });
 export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$emitNode: {
@@ -3625,17 +3625,33 @@ export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$Node_To_bool: {
     return GoInterfaceFormat.formatOther("map[*ast.Node]bool", verb);
 });
 export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker: {
-    new ($go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): GoInterfaceValue & {
-        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>;
+    new ($go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+        value: Checker__from_checker;
+    } | undefined>): GoInterfaceValue & {
+        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+            value: Checker__from_checker;
+        } | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>;
+        readonly $go$value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+            value: Checker__from_checker;
+        } | undefined>;
     };
-} = createGoInterfaceAdapter<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>>($goDynamicType$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker, (left: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, right: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): boolean => {
+} = createGoInterfaceAdapter<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>>($goDynamicType$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker, (left: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>, right: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): number => {
+}, (value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("map[*ast.SourceFile]*checker.Checker", verb);
 });
 export const $goInterfaceAdapter$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$SourceFileLinks: {
@@ -34136,17 +34152,17 @@ export const $goInterfaceAdapter$PointerTo_MapOf_Interface_void_To_Struct_void: 
     return GoInterfaceFormat.formatOther("*map[any]struct{}", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges, (left: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges, (left: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*map[api.ProjectID]*api.ProjectFileChanges", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_Named_api$SnapshotID_To_PointerTo_Named_api$snapshotData: {
@@ -35710,17 +35726,17 @@ export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$Node_To_Poi
     return GoInterfaceFormat.formatOther("*map[*ast.Node]*checker.TypeNodeLinks", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo, (left: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo, (left: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*map[*ast.MemberName]*printer.AutoGenerateInfo", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$emitNode: {
@@ -35780,17 +35796,33 @@ export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$Node_To_boo
     return GoInterfaceFormat.formatOther("*map[*ast.Node]bool", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+        value: Checker__from_checker;
+    } | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+            value: Checker__from_checker;
+        } | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+            value: Checker__from_checker;
+        } | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>> | undefined>($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*map[*ast.SourceFile]*checker.Checker", verb);
 });
 export const $goInterfaceAdapter$PointerTo_MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$SourceFileLinks: {
@@ -38004,17 +38036,19 @@ export const $goInterfaceAdapter$PointerTo_Named_api$ProfileResult: {
     return GoInterfaceFormat.formatOther("*api.ProfileResult", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_api$ProjectFileChanges: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined;
+    new ($go$value: ProjectFileChanges__from_api | undefined): GoInterfaceValue & {
+        readonly $go$value: ProjectFileChanges__from_api | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined;
+        readonly $go$value: ProjectFileChanges__from_api | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined>($goDynamicType$PointerTo_Named_api$ProjectFileChanges, (left: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined, right: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$ProjectFileChanges), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<ProjectFileChanges__from_api | undefined>($goDynamicType$PointerTo_Named_api$ProjectFileChanges, (left: ProjectFileChanges__from_api | undefined, right: ProjectFileChanges__from_api | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: ProjectFileChanges__from_api | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$ProjectFileChanges), (($pointer32: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer32 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer32)))(value));
+}, false, (value: ProjectFileChanges__from_api | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*api.ProjectFileChanges", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_api$ProjectID: {
@@ -38057,7 +38091,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$ProjectResponse: {
 }, (value: {
     value: ProjectResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$ProjectResponse), (($pointer32: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer32 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer32)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$ProjectResponse), (($pointer33: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer33 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer33)))(value));
 }, false, (value: {
     value: ProjectResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38145,7 +38179,7 @@ export class $goInterfaceAdapter$PointerTo_Named_api$Session extends GoInterface
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$Session), (($pointer33: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer33 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer33)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$Session), (($pointer34: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer34 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer34)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -38201,7 +38235,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$SignatureResponse: {
 }, (value: {
     value: SignatureResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SignatureResponse), (($pointer34: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer34 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer34)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SignatureResponse), (($pointer35: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer35 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer35)))(value));
 }, false, (value: {
     value: SignatureResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38236,17 +38270,19 @@ export const $goInterfaceAdapter$PointerTo_Named_api$SignatureUsageResponse: {
     return GoInterfaceFormat.formatOther("*api.SignatureUsageResponse", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_api$SnapshotChanges: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined;
+    new ($go$value: SnapshotChanges__from_api | undefined): GoInterfaceValue & {
+        readonly $go$value: SnapshotChanges__from_api | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined;
+        readonly $go$value: SnapshotChanges__from_api | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined>($goDynamicType$PointerTo_Named_api$SnapshotChanges, (left: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined, right: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SnapshotChanges), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<SnapshotChanges__from_api | undefined>($goDynamicType$PointerTo_Named_api$SnapshotChanges, (left: SnapshotChanges__from_api | undefined, right: SnapshotChanges__from_api | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: SnapshotChanges__from_api | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SnapshotChanges), (($pointer36: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer36 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer36)))(value));
+}, false, (value: SnapshotChanges__from_api | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*api.SnapshotChanges", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_api$SnapshotID: {
@@ -38289,7 +38325,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$SourceFileResponse: {
 }, (value: {
     value: SourceFileResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SourceFileResponse), (($pointer35: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer35 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer35)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SourceFileResponse), (($pointer37: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer37 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer37)))(value));
 }, false, (value: {
     value: SourceFileResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38319,7 +38355,7 @@ export class $goInterfaceAdapter$PointerTo_Named_api$StdioTransport extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$StdioTransport), (($pointer36: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer36 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer36)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$StdioTransport), (($pointer38: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer38 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer38)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -38375,7 +38411,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$SymbolResponse: {
 }, (value: {
     value: SymbolResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SymbolResponse), (($pointer37: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer37 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer37)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SymbolResponse), (($pointer39: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer39 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer39)))(value));
 }, false, (value: {
     value: SymbolResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38407,7 +38443,7 @@ export class $goInterfaceAdapter$PointerTo_Named_api$SyncConn extends GoInterfac
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SyncConn), (($pointer38: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer38 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer38)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$SyncConn), (($pointer40: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer40 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer40)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -38466,7 +38502,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$TypePredicateResponse: {
 }, (value: {
     value: TypePredicateResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$TypePredicateResponse), (($pointer39: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer39 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer39)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$TypePredicateResponse), (($pointer41: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer41 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer41)))(value));
 }, false, (value: {
     value: TypePredicateResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38540,7 +38576,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$UpdateSnapshotResponse: {
 }, (value: {
     value: UpdateSnapshotResponse__from_api;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$UpdateSnapshotResponse), (($pointer40: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer40 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer40)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$UpdateSnapshotResponse), (($pointer42: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer42 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer42)))(value));
 }, false, (value: {
     value: UpdateSnapshotResponse__from_api;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -38572,7 +38608,7 @@ export class $goInterfaceAdapter$PointerTo_Named_api$callbackFS extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$callbackFS), (($pointer41: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer41 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer41)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$callbackFS), (($pointer43: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer43 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer43)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -38630,7 +38666,7 @@ export const $goInterfaceAdapter$PointerTo_Named_api$snapshotData: {
         ===
             right;
 }, (value: snapshotData__from_api | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$snapshotData), (($pointer42: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer42 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer42)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$snapshotData), (($pointer44: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer44 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer44)))(value));
 }, false, (value: snapshotData__from_api | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*api.snapshotData", verb);
 });
@@ -38660,7 +38696,7 @@ export class $goInterfaceAdapter$PointerTo_Named_api$stdioConn extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$stdioConn), (($pointer43: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer43 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer43)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_api$stdioConn), (($pointer45: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer45 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer45)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -38786,7 +38822,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ArrayLiteralExpression exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ArrayLiteralExpression), (($pointer44: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer44 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer44)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ArrayLiteralExpression), (($pointer46: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer46 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer46)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -39154,7 +39190,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ArrowFunction extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ArrowFunction), (($pointer45: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer45 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer45)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ArrowFunction), (($pointer47: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer47 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer47)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -39282,7 +39318,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$AsExpression extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$AsExpression), (($pointer46: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer46 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer46)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$AsExpression), (($pointer48: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer48 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer48)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -39418,7 +39454,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$AwaitExpression extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$AwaitExpression), (($pointer47: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer47 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer47)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$AwaitExpression), (($pointer49: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer49 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer49)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -39574,7 +39610,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$BigIntLiteral extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BigIntLiteral), (($pointer48: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer48 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer48)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BigIntLiteral), (($pointer50: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer50 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer50)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -39972,7 +40008,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$BindingElement extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BindingElement), (($pointer49: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer49 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer49)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BindingElement), (($pointer51: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer51 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer51)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -40091,7 +40127,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$BindingPattern extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BindingPattern), (($pointer50: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer50 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer50)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BindingPattern), (($pointer52: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer52 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer52)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -40371,7 +40407,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$BreakStatement extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BreakStatement), (($pointer51: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer51 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer51)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$BreakStatement), (($pointer53: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer53 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer53)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -40700,7 +40736,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$CallSignatureDeclaration ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CallSignatureDeclaration), (($pointer52: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer52 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer52)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CallSignatureDeclaration), (($pointer54: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer54 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer54)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -40821,7 +40857,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$CaseBlock extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CaseBlock), (($pointer53: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer53 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer53)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CaseBlock), (($pointer55: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer55 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer55)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -40941,7 +40977,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$CaseOrDefaultClause extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CaseOrDefaultClause), (($pointer54: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer54 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer54)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CaseOrDefaultClause), (($pointer56: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer56 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer56)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -41061,7 +41097,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$CatchClause extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CatchClause), (($pointer55: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer55 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer55)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CatchClause), (($pointer57: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer57 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer57)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -41194,7 +41230,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$CheckJsDirective: {
 }, (value: {
     value: CheckJsDirective__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CheckJsDirective), (($pointer56: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer56 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer56)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$CheckJsDirective), (($pointer58: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer58 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer58)))(value));
 }, false, (value: {
     value: CheckJsDirective__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -41226,7 +41262,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ClassDeclaration extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassDeclaration), (($pointer57: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer57 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer57)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassDeclaration), (($pointer59: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer59 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer59)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -41367,7 +41403,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ClassExpression extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassExpression), (($pointer58: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer58 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer58)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassExpression), (($pointer60: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer60 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer60)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -41554,7 +41590,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ClassStaticBlockDeclaration
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassStaticBlockDeclaration), (($pointer59: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer59 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer59)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ClassStaticBlockDeclaration), (($pointer61: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer61 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer61)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -41730,7 +41766,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ComputedPropertyName extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ComputedPropertyName), (($pointer60: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer60 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer60)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ComputedPropertyName), (($pointer62: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer62 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer62)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42000,7 +42036,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ConditionalTypeNode extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConditionalTypeNode), (($pointer61: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer61 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer61)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConditionalTypeNode), (($pointer63: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer63 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer63)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42268,7 +42304,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ConstructorDeclaration exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConstructorDeclaration), (($pointer62: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer62 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer62)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConstructorDeclaration), (($pointer64: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer64 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer64)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42387,7 +42423,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ConstructorTypeNode extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConstructorTypeNode), (($pointer63: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer63 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer63)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ConstructorTypeNode), (($pointer65: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer65 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer65)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42520,7 +42556,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ContinueStatement extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ContinueStatement), (($pointer64: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer64 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer64)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ContinueStatement), (($pointer66: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer66 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer66)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42659,7 +42695,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$DebuggerStatement extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DebuggerStatement), (($pointer65: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer65 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer65)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DebuggerStatement), (($pointer67: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer67 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer67)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42816,7 +42852,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$Decorator extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$Decorator), (($pointer66: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer66 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer66)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$Decorator), (($pointer68: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer68 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer68)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -42936,7 +42972,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$DeleteExpression extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DeleteExpression), (($pointer67: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer67 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer67)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DeleteExpression), (($pointer69: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer69 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer69)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -43152,7 +43188,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$DoStatement extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DoStatement), (($pointer68: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer68 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer68)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$DoStatement), (($pointer70: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer70 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer70)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -43531,7 +43567,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$EmptyStatement extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EmptyStatement), (($pointer69: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer69 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer69)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EmptyStatement), (($pointer71: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer71 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer71)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -43674,7 +43710,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$EnumDeclaration extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EnumDeclaration), (($pointer70: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer70 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer70)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EnumDeclaration), (($pointer72: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer72 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer72)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -43804,7 +43840,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$EnumMember extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EnumMember), (($pointer71: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer71 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer71)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$EnumMember), (($pointer73: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer73 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer73)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -43923,7 +43959,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ExportAssignment extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportAssignment), (($pointer72: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer72 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer72)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportAssignment), (($pointer74: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer74 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer74)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -44056,7 +44092,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ExportDeclaration extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportDeclaration), (($pointer73: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer73 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer73)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportDeclaration), (($pointer75: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer75 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer75)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -44189,7 +44225,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ExportSpecifier extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportSpecifier), (($pointer74: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer74 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer74)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExportSpecifier), (($pointer76: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer76 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer76)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -44740,7 +44776,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ExternalModuleReference ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExternalModuleReference), (($pointer75: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer75 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer75)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ExternalModuleReference), (($pointer77: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer77 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer77)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -44860,7 +44896,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$FileReference: {
 }, (value: {
     value: FileReference__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FileReference), (($pointer76: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer76 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer76)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FileReference), (($pointer78: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer78 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer78)))(value));
 }, false, (value: {
     value: FileReference__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -44948,7 +44984,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$FlowReduceLabelData extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FlowReduceLabelData), (($pointer77: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer77 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer77)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FlowReduceLabelData), (($pointer79: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer79 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer79)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -45072,7 +45108,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$FlowSwitchClauseData extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FlowSwitchClauseData), (($pointer78: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer78 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer78)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FlowSwitchClauseData), (($pointer80: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer80 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer80)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -45196,7 +45232,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ForInOrOfStatement extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ForInOrOfStatement), (($pointer79: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer79 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer79)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ForInOrOfStatement), (($pointer81: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer81 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer81)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -45331,7 +45367,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ForStatement extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ForStatement), (($pointer80: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer80 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer80)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ForStatement), (($pointer82: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer82 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer82)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -45595,7 +45631,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$FunctionExpression extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FunctionExpression), (($pointer81: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer81 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer81)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$FunctionExpression), (($pointer83: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer83 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer83)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -45972,7 +46008,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$GetAccessorDeclaration exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$GetAccessorDeclaration), (($pointer82: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer82 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer82)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$GetAccessorDeclaration), (($pointer84: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer84 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer84)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -46639,7 +46675,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportAttribute extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportAttribute), (($pointer83: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer83 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer83)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportAttribute), (($pointer85: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer85 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer85)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -46758,7 +46794,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportAttributes extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportAttributes), (($pointer84: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer84 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer84)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportAttributes), (($pointer86: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer86 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer86)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -46878,7 +46914,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportClause extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportClause), (($pointer85: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer85 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer85)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportClause), (($pointer87: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer87 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer87)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -46997,7 +47033,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportDeclaration extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportDeclaration), (($pointer86: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer86 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer86)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportDeclaration), (($pointer88: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer88 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer88)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -47130,7 +47166,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportEqualsDeclaration ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportEqualsDeclaration), (($pointer87: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer87 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer87)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportEqualsDeclaration), (($pointer89: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer89 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer89)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -47389,7 +47425,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ImportTypeNode extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportTypeNode), (($pointer88: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer88 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer88)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ImportTypeNode), (($pointer90: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer90 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer90)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -47546,7 +47582,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$IndexSignatureDeclaration e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$IndexSignatureDeclaration), (($pointer89: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer89 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer89)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$IndexSignatureDeclaration), (($pointer91: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer91 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer91)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -47820,7 +47856,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$InferTypeNode extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$InferTypeNode), (($pointer90: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer90 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer90)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$InferTypeNode), (($pointer92: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer92 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer92)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -48421,7 +48457,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocAllType extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocAllType), (($pointer91: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer91 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer91)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocAllType), (($pointer93: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer93 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer93)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -48563,7 +48599,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocAugmentsTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocAugmentsTag), (($pointer92: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer92 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer92)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocAugmentsTag), (($pointer94: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer94 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer94)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -48703,7 +48739,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocCallbackTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocCallbackTag), (($pointer93: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer93 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer93)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocCallbackTag), (($pointer95: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer95 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer95)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49031,7 +49067,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocImplementsTag extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocImplementsTag), (($pointer94: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer94 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer94)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocImplementsTag), (($pointer96: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer96 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer96)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49171,7 +49207,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocImportTag extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocImportTag), (($pointer95: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer95 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer95)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocImportTag), (($pointer97: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer97 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer97)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49311,7 +49347,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocLink extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLink), (($pointer96: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer96 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer96)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLink), (($pointer98: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer98 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer98)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49449,7 +49485,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocLinkCode extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLinkCode), (($pointer97: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer97 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer97)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLinkCode), (($pointer99: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer99 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer99)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49587,7 +49623,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocLinkPlain extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLinkPlain), (($pointer98: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer98 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer98)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocLinkPlain), (($pointer100: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer100 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer100)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49725,7 +49761,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocNameReference extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNameReference), (($pointer99: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer99 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer99)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNameReference), (($pointer101: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer101 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer101)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49861,7 +49897,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocNonNullableType extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNonNullableType), (($pointer100: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer100 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer100)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNonNullableType), (($pointer102: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer102 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer102)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -49999,7 +50035,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocNullableType extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNullableType), (($pointer101: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer101 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer101)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocNullableType), (($pointer103: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer103 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer103)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50137,7 +50173,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocOptionalType extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOptionalType), (($pointer102: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer102 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer102)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOptionalType), (($pointer104: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer104 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer104)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50275,7 +50311,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocOverloadTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOverloadTag), (($pointer103: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer103 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer103)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOverloadTag), (($pointer105: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer105 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer105)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50415,7 +50451,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocOverrideTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOverrideTag), (($pointer104: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer104 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer104)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocOverrideTag), (($pointer106: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer106 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer106)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50555,7 +50591,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocParameterOrPropertyTag
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocParameterOrPropertyTag), (($pointer105: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer105 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer105)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocParameterOrPropertyTag), (($pointer107: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer107 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer107)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50693,7 +50729,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocPrivateTag extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocPrivateTag), (($pointer106: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer106 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer106)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocPrivateTag), (($pointer108: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer108 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer108)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50833,7 +50869,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocProtectedTag extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocProtectedTag), (($pointer107: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer107 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer107)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocProtectedTag), (($pointer109: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer109 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer109)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -50973,7 +51009,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocPublicTag extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocPublicTag), (($pointer108: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer108 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer108)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocPublicTag), (($pointer110: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer110 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer110)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51113,7 +51149,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocReadonlyTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocReadonlyTag), (($pointer109: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer109 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer109)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocReadonlyTag), (($pointer111: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer111 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer111)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51253,7 +51289,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocReturnTag extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocReturnTag), (($pointer110: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer110 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer110)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocReturnTag), (($pointer112: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer112 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer112)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51393,7 +51429,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocSatisfiesTag extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSatisfiesTag), (($pointer111: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer111 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer111)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSatisfiesTag), (($pointer113: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer113 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer113)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51533,7 +51569,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocSeeTag extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSeeTag), (($pointer112: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer112 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer112)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSeeTag), (($pointer114: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer114 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer114)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51673,7 +51709,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocSignature extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSignature), (($pointer113: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer113 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer113)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocSignature), (($pointer115: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer115 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer115)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -51843,7 +51879,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocTemplateTag extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTemplateTag), (($pointer114: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer114 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer114)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTemplateTag), (($pointer116: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer116 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer116)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52144,7 +52180,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocThisTag extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocThisTag), (($pointer115: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer115 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer115)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocThisTag), (($pointer117: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer117 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer117)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52284,7 +52320,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocThrowsTag extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocThrowsTag), (($pointer116: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer116 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer116)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocThrowsTag), (($pointer118: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer118 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer118)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52459,7 +52495,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocTypeExpression extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeExpression), (($pointer117: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer117 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer117)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeExpression), (($pointer119: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer119 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer119)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52597,7 +52633,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocTypeLiteral extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeLiteral), (($pointer118: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer118 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer118)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeLiteral), (($pointer120: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer120 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer120)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52734,7 +52770,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocTypeTag extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeTag), (($pointer119: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer119 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer119)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypeTag), (($pointer121: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer121 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer121)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -52874,7 +52910,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocTypedefTag extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypedefTag), (($pointer120: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer120 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer120)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocTypedefTag), (($pointer122: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer122 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer122)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53167,7 +53203,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JSDocVariadicType extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocVariadicType), (($pointer121: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer121 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer121)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JSDocVariadicType), (($pointer123: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer123 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer123)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53305,7 +53341,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxAttribute extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxAttribute), (($pointer122: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer122 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer122)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxAttribute), (($pointer124: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer124 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer124)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53424,7 +53460,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxAttributes extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxAttributes), (($pointer123: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer123 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer123)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxAttributes), (($pointer125: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer125 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer125)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53640,7 +53676,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxClosingElement extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxClosingElement), (($pointer124: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer124 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer124)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxClosingElement), (($pointer126: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer126 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer126)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53760,7 +53796,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxClosingFragment extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxClosingFragment), (($pointer125: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer125 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer125)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxClosingFragment), (($pointer127: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer127 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer127)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -53902,7 +53938,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxElement extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxElement), (($pointer126: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer126 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer126)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxElement), (($pointer128: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer128 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer128)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54124,7 +54160,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxExpression extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxExpression), (($pointer127: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer127 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer127)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxExpression), (($pointer129: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer129 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer129)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54262,7 +54298,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxFragment extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxFragment), (($pointer128: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer128 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer128)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxFragment), (($pointer130: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer130 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer130)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54484,7 +54520,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxNamespacedName extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxNamespacedName), (($pointer129: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer129 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer129)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxNamespacedName), (($pointer131: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer131 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer131)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54619,7 +54655,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxOpeningElement extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxOpeningElement), (($pointer130: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer130 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer130)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxOpeningElement), (($pointer132: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer132 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer132)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54756,7 +54792,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxOpeningFragment extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxOpeningFragment), (($pointer131: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer131 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer131)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxOpeningFragment), (($pointer133: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer133 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer133)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -54898,7 +54934,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxSelfClosingElement exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxSelfClosingElement), (($pointer132: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer132 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer132)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxSelfClosingElement), (($pointer134: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer134 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer134)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -55120,7 +55156,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxSpreadAttribute extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxSpreadAttribute), (($pointer133: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer133 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer133)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxSpreadAttribute), (($pointer135: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer135 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer135)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -55240,7 +55276,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$JsxText extends GoInterface
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxText), (($pointer134: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer134 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer134)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$JsxText), (($pointer136: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer136 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer136)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -55728,7 +55764,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$LabeledStatement extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$LabeledStatement), (($pointer135: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer135 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer135)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$LabeledStatement), (($pointer137: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer137 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer137)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -56125,7 +56161,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$MappedTypeNode extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MappedTypeNode), (($pointer136: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer136 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer136)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MappedTypeNode), (($pointer138: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer138 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer138)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -56300,7 +56336,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$MetaProperty extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MetaProperty), (($pointer137: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer137 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer137)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MetaProperty), (($pointer139: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer139 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer139)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -56509,7 +56545,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$MethodDeclaration extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MethodDeclaration), (($pointer138: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer138 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer138)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MethodDeclaration), (($pointer140: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer140 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer140)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -56754,7 +56790,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$MissingDeclaration extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MissingDeclaration), (($pointer139: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer139 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer139)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$MissingDeclaration), (($pointer141: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer141 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer141)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -56981,7 +57017,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ModuleBlock extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ModuleBlock), (($pointer140: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer140 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer140)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ModuleBlock), (($pointer142: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer142 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer142)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57117,7 +57153,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ModuleDeclaration extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ModuleDeclaration), (($pointer141: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer141 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer141)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ModuleDeclaration), (($pointer143: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer143 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer143)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57243,7 +57279,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamedExports extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedExports), (($pointer142: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer142 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer142)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedExports), (($pointer144: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer144 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer144)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57363,7 +57399,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamedImports extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedImports), (($pointer143: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer143 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer143)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedImports), (($pointer145: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer145 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer145)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57497,7 +57533,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamedTupleMember extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedTupleMember), (($pointer144: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer144 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer144)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamedTupleMember), (($pointer146: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer146 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer146)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57632,7 +57668,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamespaceExport extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceExport), (($pointer145: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer145 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer145)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceExport), (($pointer147: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer147 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer147)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57751,7 +57787,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamespaceExportDeclaration 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceExportDeclaration), (($pointer146: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer146 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer146)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceExportDeclaration), (($pointer148: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer148 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer148)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -57883,7 +57919,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NamespaceImport extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceImport), (($pointer147: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer147 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer147)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NamespaceImport), (($pointer149: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer149 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer149)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -58002,7 +58038,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NewExpression extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NewExpression), (($pointer148: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer148 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer148)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NewExpression), (($pointer150: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer150 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer150)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -58217,7 +58253,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NoSubstitutionTemplateLiter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NoSubstitutionTemplateLiteral), (($pointer149: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer149 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer149)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NoSubstitutionTemplateLiteral), (($pointer151: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer151 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer151)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -58587,7 +58623,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$NodeVisitor: {
 }, (value: {
     value: NodeVisitor__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NodeVisitor), (($pointer150: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer150 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer150)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NodeVisitor), (($pointer152: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer152 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer152)))(value));
 }, false, (value: {
     value: NodeVisitor__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -58929,7 +58965,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NonNullExpression extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NonNullExpression), (($pointer151: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer151 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer151)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NonNullExpression), (($pointer153: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer153 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer153)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -59121,7 +59157,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NotEmittedStatement extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NotEmittedStatement), (($pointer152: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer152 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer152)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NotEmittedStatement), (($pointer154: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer154 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer154)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -59264,7 +59300,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$NotEmittedTypeElement exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NotEmittedTypeElement), (($pointer153: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer153 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer153)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$NotEmittedTypeElement), (($pointer155: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer155 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer155)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -59681,7 +59717,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ObjectLiteralExpression ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ObjectLiteralExpression), (($pointer154: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer154 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer154)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ObjectLiteralExpression), (($pointer156: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer156 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer156)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -59890,7 +59926,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$OmittedExpression extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$OmittedExpression), (($pointer155: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer155 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer155)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$OmittedExpression), (($pointer157: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer157 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer157)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -60034,7 +60070,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$OptionalTypeNode extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$OptionalTypeNode), (($pointer156: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer156 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer156)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$OptionalTypeNode), (($pointer158: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer158 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer158)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -60693,7 +60729,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$PartiallyEmittedExpression 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PartiallyEmittedExpression), (($pointer157: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer157 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer157)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PartiallyEmittedExpression), (($pointer159: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer159 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer159)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -60885,7 +60921,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$PatternAmbientModule: {
 }, (value: {
     value: PatternAmbientModule__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PatternAmbientModule), (($pointer158: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer158 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer158)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PatternAmbientModule), (($pointer160: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer160 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer160)))(value));
 }, false, (value: {
     value: PatternAmbientModule__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -60917,7 +60953,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$PositionMap: {
 }, (value: {
     value: PositionMap__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PositionMap), (($pointer159: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer159 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer159)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PositionMap), (($pointer161: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer161 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer161)))(value));
 }, false, (value: {
     value: PositionMap__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -60949,7 +60985,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$PostfixUnaryExpression exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PostfixUnaryExpression), (($pointer160: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer160 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer160)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PostfixUnaryExpression), (($pointer162: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer162 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer162)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -61365,7 +61401,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$PrivateIdentifier extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PrivateIdentifier), (($pointer161: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer161 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer161)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PrivateIdentifier), (($pointer163: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer163 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer163)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -61933,7 +61969,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$PropertyDeclaration extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PropertyDeclaration), (($pointer162: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer162 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer162)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$PropertyDeclaration), (($pointer164: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer164 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer164)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -62180,7 +62216,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$QualifiedName extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$QualifiedName), (($pointer163: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer163 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer163)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$QualifiedName), (($pointer165: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer165 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer165)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -62300,7 +62336,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$RegularExpressionLiteral ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RegularExpressionLiteral), (($pointer164: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer164 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer164)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RegularExpressionLiteral), (($pointer166: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer166 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer166)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -62563,7 +62599,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ast$RepopulateDiagnosticInfo: {
 }, (value: {
     value: RepopulateDiagnosticInfo__from_ast;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RepopulateDiagnosticInfo), (($pointer165: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer165 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer165)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RepopulateDiagnosticInfo), (($pointer167: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer167 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer167)))(value));
 }, false, (value: {
     value: RepopulateDiagnosticInfo__from_ast;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -62609,7 +62645,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$RestTypeNode extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RestTypeNode), (($pointer166: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer166 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer166)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$RestTypeNode), (($pointer168: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer168 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer168)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -62896,7 +62932,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SatisfiesExpression extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SatisfiesExpression), (($pointer167: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer167 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer167)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SatisfiesExpression), (($pointer169: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer169 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer169)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -63032,7 +63068,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SemicolonClassElement exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SemicolonClassElement), (($pointer168: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer168 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer168)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SemicolonClassElement), (($pointer170: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer170 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer170)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -63155,7 +63191,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SetAccessorDeclaration exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SetAccessorDeclaration), (($pointer169: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer169 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer169)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SetAccessorDeclaration), (($pointer171: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer171 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer171)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -63275,7 +63311,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ShorthandPropertyAssignment
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ShorthandPropertyAssignment), (($pointer170: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer170 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer170)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ShorthandPropertyAssignment), (($pointer172: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer172 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer172)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -63556,7 +63592,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SpreadAssignment extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SpreadAssignment), (($pointer171: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer171 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer171)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SpreadAssignment), (($pointer173: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer173 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer173)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -63676,7 +63712,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SpreadElement extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SpreadElement), (($pointer172: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer172 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer172)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SpreadElement), (($pointer174: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer174 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer174)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64129,7 +64165,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SwitchStatement extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SwitchStatement), (($pointer173: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer173 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer173)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SwitchStatement), (($pointer175: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer175 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer175)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64377,7 +64413,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SyntaxList extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntaxList), (($pointer174: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer174 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer174)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntaxList), (($pointer176: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer176 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer176)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64498,7 +64534,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SyntheticExpression extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntheticExpression), (($pointer175: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer175 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer175)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntheticExpression), (($pointer177: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer177 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer177)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64638,7 +64674,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$SyntheticReferenceExpressio
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntheticReferenceExpression), (($pointer176: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer176 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer176)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$SyntheticReferenceExpression), (($pointer178: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer178 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer178)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64776,7 +64812,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TaggedTemplateExpression ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TaggedTemplateExpression), (($pointer177: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer177 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer177)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TaggedTemplateExpression), (($pointer179: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer179 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer179)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -64981,7 +65017,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateExpression extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateExpression), (($pointer178: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer178 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer178)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateExpression), (($pointer180: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer180 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer180)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65203,7 +65239,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateHead extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateHead), (($pointer179: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer179 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer179)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateHead), (($pointer181: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer181 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer181)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65339,7 +65375,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateLiteralTypeNode ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateLiteralTypeNode), (($pointer180: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer180 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer180)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateLiteralTypeNode), (($pointer182: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer182 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer182)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65477,7 +65513,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateLiteralTypeSpan ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateLiteralTypeSpan), (($pointer181: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer181 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer181)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateLiteralTypeSpan), (($pointer183: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer183 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer183)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65615,7 +65651,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateMiddle extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateMiddle), (($pointer182: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer182 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer182)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateMiddle), (($pointer184: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer184 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer184)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65737,7 +65773,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateSpan extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateSpan), (($pointer183: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer183 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer183)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateSpan), (($pointer185: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer185 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer185)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65857,7 +65893,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TemplateTail extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateTail), (($pointer184: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer184 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer184)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TemplateTail), (($pointer186: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer186 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer186)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -65979,7 +66015,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ThisTypeNode extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ThisTypeNode), (($pointer185: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer185 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer185)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ThisTypeNode), (($pointer187: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer187 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer187)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -66121,7 +66157,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$ThrowStatement extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ThrowStatement), (($pointer186: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer186 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer186)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$ThrowStatement), (($pointer188: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer188 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer188)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -66409,7 +66445,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TryStatement extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TryStatement), (($pointer187: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer187 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer187)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TryStatement), (($pointer189: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer189 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer189)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -66545,7 +66581,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TupleTypeNode extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TupleTypeNode), (($pointer188: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer188 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer188)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TupleTypeNode), (($pointer190: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer190 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer190)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -66820,7 +66856,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TypeAssertion extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeAssertion), (($pointer189: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer189 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer189)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeAssertion), (($pointer191: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer191 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer191)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -67173,7 +67209,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TypeOfExpression extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeOfExpression), (($pointer190: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer190 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer190)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeOfExpression), (($pointer192: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer192 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer192)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -67611,7 +67647,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TypePredicateNode extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypePredicateNode), (($pointer191: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer191 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer191)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypePredicateNode), (($pointer193: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer193 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer193)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -67749,7 +67785,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$TypeQueryNode extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeQueryNode), (($pointer192: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer192 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer192)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$TypeQueryNode), (($pointer194: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer194 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer194)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -68773,7 +68809,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$VoidExpression extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$VoidExpression), (($pointer193: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer193 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer193)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$VoidExpression), (($pointer195: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer195 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer195)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -68929,7 +68965,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$WhileStatement extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$WhileStatement), (($pointer194: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer194 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer194)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$WhileStatement), (($pointer196: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer196 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer196)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69065,7 +69101,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$WithStatement extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$WithStatement), (($pointer195: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer195 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer195)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$WithStatement), (($pointer197: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer197 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer197)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69201,7 +69237,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$YieldExpression extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$YieldExpression), (($pointer196: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer196 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer196)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$YieldExpression), (($pointer198: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer198 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer198)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69337,7 +69373,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ast$hasFileNameImpl extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$hasFileNameImpl), (($pointer197: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer197 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer197)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ast$hasFileNameImpl), (($pointer199: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer199 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer199)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69404,7 +69440,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ata$CachedTyping: {
 }, (value: {
     value: CachedTyping__from_ata;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ata$CachedTyping), (($pointer198: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer198 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer198)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ata$CachedTyping), (($pointer200: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer200 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer200)))(value));
 }, false, (value: {
     value: CachedTyping__from_ata;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -69464,7 +69500,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ata$TypingsInstaller: {
 }, (value: {
     value: TypingsInstaller__from_ata;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ata$TypingsInstaller), (($pointer199: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer199 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer199)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ata$TypingsInstaller), (($pointer201: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer201 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer201)))(value));
 }, false, (value: {
     value: TypingsInstaller__from_ata;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -69608,7 +69644,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$Export extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Export), (($pointer200: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer200 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer200)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Export), (($pointer202: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer202 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer202)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69690,7 +69726,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$Fix extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Fix), (($pointer201: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer201 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer201)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Fix), (($pointer203: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer203 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer203)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69726,7 +69762,7 @@ export const $goInterfaceAdapter$PointerTo_Named_autoimport$FixAndExport: {
 }, (value: {
     value: FixAndExport__from_autoimport;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$FixAndExport), (($pointer202: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer202 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer202)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$FixAndExport), (($pointer204: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer204 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer204)))(value));
 }, false, (value: {
     value: FixAndExport__from_autoimport;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -69772,7 +69808,7 @@ export const $goInterfaceAdapter$PointerTo_Named_autoimport$Registry: {
 }, (value: {
     value: Registry__from_autoimport;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Registry), (($pointer203: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer203 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer203)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$Registry), (($pointer205: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer205 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer205)))(value));
 }, false, (value: {
     value: Registry__from_autoimport;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -69802,7 +69838,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$RegistryBucket exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$RegistryBucket), (($pointer204: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer204 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer204)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$RegistryBucket), (($pointer206: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer206 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer206)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69852,7 +69888,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$aliasResolver extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$aliasResolver), (($pointer205: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer205 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer205)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$aliasResolver), (($pointer207: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer207 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer207)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -69990,7 +70026,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$directory extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$directory), (($pointer206: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer206 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer206)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$directory), (($pointer208: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer208 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer208)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70026,7 +70062,7 @@ export const $goInterfaceAdapter$PointerTo_Named_autoimport$failedAmbientModuleL
 }, (value: {
     value: failedAmbientModuleLookupSource__from_autoimport;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$failedAmbientModuleLookupSource), (($pointer207: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer207 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer207)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$failedAmbientModuleLookupSource), (($pointer209: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer209 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer209)))(value));
 }, false, (value: {
     value: failedAmbientModuleLookupSource__from_autoimport;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70056,7 +70092,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$importAdder extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$importAdder), (($pointer208: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer208 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer208)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$importAdder), (($pointer210: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer210 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer210)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70105,7 +70141,7 @@ export class $goInterfaceAdapter$PointerTo_Named_autoimport$resolutionHost exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$resolutionHost), (($pointer209: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer209 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer209)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_autoimport$resolutionHost), (($pointer211: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer211 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer211)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70144,7 +70180,7 @@ export const $goInterfaceAdapter$PointerTo_Named_background$Queue: {
 }, (value: {
     value: Queue__from_background;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_background$Queue), (($pointer210: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer210 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer210)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_background$Queue), (($pointer212: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer212 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer212)))(value));
 }, false, (value: {
     value: Queue__from_background;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70176,7 +70212,7 @@ export const $goInterfaceAdapter$PointerTo_Named_binder$ActiveLabel: {
 }, (value: {
     value: ActiveLabel__from_binder;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$ActiveLabel), (($pointer211: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer211 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer211)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$ActiveLabel), (($pointer213: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer213 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer213)))(value));
 }, false, (value: {
     value: ActiveLabel__from_binder;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70208,7 +70244,7 @@ export const $goInterfaceAdapter$PointerTo_Named_binder$Binder: {
 }, (value: {
     value: Binder__from_binder;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$Binder), (($pointer212: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer212 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer212)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$Binder), (($pointer214: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer214 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer214)))(value));
 }, false, (value: {
     value: Binder__from_binder;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70254,7 +70290,7 @@ export const $goInterfaceAdapter$PointerTo_Named_binder$NameResolver: {
 }, (value: {
     value: NameResolver__from_binder;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$NameResolver), (($pointer213: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer213 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer213)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$NameResolver), (($pointer215: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer215 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer215)))(value));
 }, false, (value: {
     value: NameResolver__from_binder;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70314,7 +70350,7 @@ export class $goInterfaceAdapter$PointerTo_Named_binder$referenceResolver extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$referenceResolver), (($pointer214: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer214 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer214)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_binder$referenceResolver), (($pointer216: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer216 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer216)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70491,7 +70527,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$BuildTask: {
 }, (value: {
     value: BuildTask__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$BuildTask), (($pointer215: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer215 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer215)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$BuildTask), (($pointer217: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer217 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer217)))(value));
 }, false, (value: {
     value: BuildTask__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70537,7 +70573,7 @@ export class $goInterfaceAdapter$PointerTo_Named_build$Orchestrator extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$Orchestrator), (($pointer216: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer216 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer216)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$Orchestrator), (($pointer218: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer218 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer218)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70573,7 +70609,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$buildInfoEntry: {
 }, (value: {
     value: buildInfoEntry__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$buildInfoEntry), (($pointer217: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer217 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer217)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$buildInfoEntry), (($pointer219: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer219 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer219)))(value));
 }, false, (value: {
     value: buildInfoEntry__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70619,7 +70655,7 @@ export class $goInterfaceAdapter$PointerTo_Named_build$compilerHost extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$compilerHost), (($pointer218: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer218 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer218)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$compilerHost), (($pointer220: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer220 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer220)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70686,7 +70722,7 @@ export class $goInterfaceAdapter$PointerTo_Named_build$host extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$host), (($pointer219: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer219 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer219)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$host), (($pointer221: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer221 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer221)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -70710,7 +70746,7 @@ export class $goInterfaceAdapter$PointerTo_Named_build$host extends GoInterfaceV
     GetSourceFile($argument0: SourceFileParseOptions__from_ast): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
         return host__from_build.GetSourceFile(this.$go$value, $argument0);
     }
-    ReadBuildInfo($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined {
+    ReadBuildInfo($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): BuildInfo__from_incremental | undefined {
         return host__from_build.ReadBuildInfo(this.$go$value, $argument0);
     }
     SetMTime($argument0: gostring, $argument1: time.Time): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -70748,7 +70784,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$inputOutputFileAndTime: {
 }, (value: {
     value: inputOutputFileAndTime__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$inputOutputFileAndTime), (($pointer220: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer220 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer220)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$inputOutputFileAndTime), (($pointer222: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer222 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer222)))(value));
 }, false, (value: {
     value: inputOutputFileAndTime__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70780,7 +70816,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$inputOutputName: {
 }, (value: {
     value: inputOutputName__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$inputOutputName), (($pointer221: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer221 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer221)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$inputOutputName), (($pointer223: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer223 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer223)))(value));
 }, false, (value: {
     value: inputOutputName__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70812,7 +70848,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$parseCacheEntryOf_Pointer
 }, (value: {
     value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$parseCacheEntryOf_PointerTo_Named_ast$SourceFile), (($pointer222: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer222 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer222)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$parseCacheEntryOf_PointerTo_Named_ast$SourceFile), (($pointer224: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer224 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer224)))(value));
 }, false, (value: {
     value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70844,7 +70880,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$parseCacheEntryOf_Pointer
 }, (value: {
     value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$parseCacheEntryOf_PointerTo_Named_tsoptions$ParsedCommandLine), (($pointer223: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer223 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer223)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$parseCacheEntryOf_PointerTo_Named_tsoptions$ParsedCommandLine), (($pointer225: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer225 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer225)))(value));
 }, false, (value: {
     value: parseCacheEntry__from_build<tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70904,7 +70940,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$taskResult: {
 }, (value: {
     value: taskResult__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$taskResult), (($pointer224: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer224 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer224)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$taskResult), (($pointer226: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer226 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer226)))(value));
 }, false, (value: {
     value: taskResult__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70936,7 +70972,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$upToDateStatus: {
 }, (value: {
     value: upToDateStatus__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upToDateStatus), (($pointer225: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer225 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer225)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upToDateStatus), (($pointer227: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer227 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer227)))(value));
 }, false, (value: {
     value: upToDateStatus__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -70982,7 +71018,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$upstreamErrors: {
 }, (value: {
     value: upstreamErrors__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upstreamErrors), (($pointer226: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer226 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer226)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upstreamErrors), (($pointer228: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer228 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer228)))(value));
 }, false, (value: {
     value: upstreamErrors__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -71014,7 +71050,7 @@ export const $goInterfaceAdapter$PointerTo_Named_build$upstreamTask: {
 }, (value: {
     value: upstreamTask__from_build;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upstreamTask), (($pointer227: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer227 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer227)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_build$upstreamTask), (($pointer229: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer229 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer229)))(value));
 }, false, (value: {
     value: upstreamTask__from_build;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -71046,7 +71082,7 @@ export class $goInterfaceAdapter$PointerTo_Named_bundled$fileInfo extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_bundled$fileInfo), (($pointer228: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer228 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer228)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_bundled$fileInfo), (($pointer230: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer230 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer230)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71106,7 +71142,7 @@ export class $goInterfaceAdapter$PointerTo_Named_bundled$wrappedFS extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_bundled$wrappedFS), (($pointer229: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer229 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer229)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_bundled$wrappedFS), (($pointer231: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer231 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer231)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71280,7 +71316,7 @@ export class $goInterfaceAdapter$PointerTo_Named_cachedvfs$FS extends GoInterfac
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_cachedvfs$FS), (($pointer230: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer230 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer230)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_cachedvfs$FS), (($pointer232: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer232 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer232)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71394,7 +71430,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$ArrayToSingleTypeMapper
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ArrayToSingleTypeMapper), (($pointer231: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer231 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer231)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ArrayToSingleTypeMapper), (($pointer233: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer233 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer233)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71434,7 +71470,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$ArrayTypeMapper extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ArrayTypeMapper), (($pointer232: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer232 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer232)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ArrayTypeMapper), (($pointer234: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer234 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer234)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71495,7 +71531,9 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$CacheHashKey extends Go
 }
 const $goInterfaceAdapter$PointerTo_Named_checker$Checker$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$GetAliasedSymbol$PointerTo_Named_ast$Symbol_to_PointerTo_Named_ast$Symbol, $goInterfaceMethod$GetSymbolAtLocation$PointerTo_Named_ast$Node_to_PointerTo_Named_ast$Symbol]);
 export class $goInterfaceAdapter$PointerTo_Named_checker$Checker extends GoInterfaceValue implements CheckerShape__from_modulespecifiers, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) {
+    constructor(public readonly $go$value: {
+        value: Checker__from_checker;
+    } | undefined) {
         super();
     }
     readonly $go$type: {
@@ -71512,10 +71550,12 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$Checker extends GoInter
         if (!$goInterfaceAdapter$PointerTo_Named_checker$Checker.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Checker), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Checker), (($pointer235: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer235 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer235)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71554,7 +71594,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$CompositeSignature: {
 }, (value: {
     value: CompositeSignature__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$CompositeSignature), (($pointer233: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer233 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer233)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$CompositeSignature), (($pointer236: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer236 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer236)))(value));
 }, false, (value: {
     value: CompositeSignature__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -71586,7 +71626,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$CompositeTypeMapper ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$CompositeTypeMapper), (($pointer234: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer234 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer234)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$CompositeTypeMapper), (($pointer237: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer237 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer237)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71626,7 +71666,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$ConditionalRoot: {
 }, (value: {
     value: ConditionalRoot__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ConditionalRoot), (($pointer235: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer235 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer235)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ConditionalRoot), (($pointer238: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer238 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer238)))(value));
 }, false, (value: {
     value: ConditionalRoot__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -71658,7 +71698,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$ConditionalType extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ConditionalType), (($pointer236: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer236 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer236)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ConditionalType), (($pointer239: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer239 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer239)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71817,7 +71857,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$DeferredTypeMapper exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$DeferredTypeMapper), (($pointer237: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer237 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer237)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$DeferredTypeMapper), (($pointer240: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer240 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer240)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -71871,7 +71911,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$EmitResolver extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$EmitResolver), (($pointer238: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer238 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer238)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$EmitResolver), (($pointer241: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer241 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer241)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72060,7 +72100,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$ErrorChain: {
 }, (value: {
     value: ErrorChain__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ErrorChain), (($pointer239: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer239 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer239)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ErrorChain), (($pointer242: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer242 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer242)))(value));
 }, false, (value: {
     value: ErrorChain__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -72092,7 +72132,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$EvolvingArrayType exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$EvolvingArrayType), (($pointer240: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer240 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer240)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$EvolvingArrayType), (($pointer243: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer243 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer243)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72237,7 +72277,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$FlowState: {
 }, (value: {
     value: FlowState__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$FlowState), (($pointer241: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer241 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer241)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$FlowState), (($pointer244: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer244 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer244)))(value));
 }, false, (value: {
     value: FlowState__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -72283,7 +72323,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$FunctionTypeMapper exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$FunctionTypeMapper), (($pointer242: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer242 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer242)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$FunctionTypeMapper), (($pointer245: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer245 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer245)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72365,7 +72405,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$IndexType extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IndexType), (($pointer243: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer243 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer243)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IndexType), (($pointer246: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer246 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer246)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72426,7 +72466,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$IndexedAccessType exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IndexedAccessType), (($pointer244: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer244 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer244)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IndexedAccessType), (($pointer247: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer247 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer247)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72487,7 +72527,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$InferenceContext: {
 }, (value: {
     value: InferenceContext__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceContext), (($pointer245: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer245 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer245)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceContext), (($pointer248: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer248 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer248)))(value));
 }, false, (value: {
     value: InferenceContext__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -72547,7 +72587,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$InferenceInfo: {
 }, (value: {
     value: InferenceInfo__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceInfo), (($pointer246: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer246 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer246)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceInfo), (($pointer249: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer249 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer249)))(value));
 }, false, (value: {
     value: InferenceInfo__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -72593,7 +72633,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$InferenceState: {
 }, (value: {
     value: InferenceState__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceState), (($pointer247: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer247 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer247)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceState), (($pointer250: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer250 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer250)))(value));
 }, false, (value: {
     value: InferenceState__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -72625,7 +72665,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$InferenceTypeMapper ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceTypeMapper), (($pointer248: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer248 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer248)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InferenceTypeMapper), (($pointer251: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer251 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer251)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72665,7 +72705,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$InstantiationExpression
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InstantiationExpressionType), (($pointer249: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer249 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer249)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$InstantiationExpressionType), (($pointer252: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer252 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer252)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72783,7 +72823,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$IntersectionType extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IntersectionType), (($pointer250: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer250 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer250)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IntersectionType), (($pointer253: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer253 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer253)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72858,7 +72898,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$IntrinsicType extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IntrinsicType), (($pointer251: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer251 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer251)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IntrinsicType), (($pointer254: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer254 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer254)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -72919,7 +72959,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$IterationTypesResolver:
 }, (value: {
     value: IterationTypesResolver__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IterationTypesResolver), (($pointer252: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer252 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer252)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$IterationTypesResolver), (($pointer255: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer255 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer255)))(value));
 }, false, (value: {
     value: IterationTypesResolver__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -73007,7 +73047,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$LiteralType extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$LiteralType), (($pointer253: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer253 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer253)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$LiteralType), (($pointer256: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer256 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer256)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73085,7 +73125,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$MappedType extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$MappedType), (($pointer254: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer254 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer254)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$MappedType), (($pointer257: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer257 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer257)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73174,7 +73214,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$MergedTypeMapper extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$MergedTypeMapper), (($pointer255: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer255 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer255)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$MergedTypeMapper), (($pointer258: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer258 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer258)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73202,17 +73242,19 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$ModuleSymbolLinks: {
     return GoInterfaceFormat.formatOther("*checker.ModuleSymbolLinks", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilder: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined;
+    new ($go$value: NodeBuilder__from_checker | undefined): GoInterfaceValue & {
+        readonly $go$value: NodeBuilder__from_checker | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined;
+        readonly $go$value: NodeBuilder__from_checker | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined>($goDynamicType$PointerTo_Named_checker$NodeBuilder, (left: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined, right: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilder), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<NodeBuilder__from_checker | undefined>($goDynamicType$PointerTo_Named_checker$NodeBuilder, (left: NodeBuilder__from_checker | undefined, right: NodeBuilder__from_checker | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: NodeBuilder__from_checker | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilder), (($pointer259: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer259 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer259)))(value));
+}, false, (value: NodeBuilder__from_checker | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*checker.NodeBuilder", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderContext: {
@@ -73241,7 +73283,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderContext: {
 }, (value: {
     value: NodeBuilderContext__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilderContext), (($pointer256: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer256 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer256)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilderContext), (($pointer260: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer260 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer260)))(value));
 }, false, (value: {
     value: NodeBuilderContext__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -73273,7 +73315,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$NodeBuilderImpl: {
 }, (value: {
     value: NodeBuilderImpl__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilderImpl), (($pointer257: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer257 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer257)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$NodeBuilderImpl), (($pointer261: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer261 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer261)))(value));
 }, false, (value: {
     value: NodeBuilderImpl__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -73373,7 +73415,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$ObjectLiteralDiscrimina
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ObjectLiteralDiscriminator), (($pointer258: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer258 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer258)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ObjectLiteralDiscriminator), (($pointer262: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer262 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer262)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73486,7 +73528,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$Relater: {
 }, (value: {
     value: Relater__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Relater), (($pointer259: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer259 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer259)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Relater), (($pointer263: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer263 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer263)))(value));
 }, false, (value: {
     value: Relater__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -73518,7 +73560,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$Relation: {
 }, (value: {
     value: Relation__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Relation), (($pointer260: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer260 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer260)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Relation), (($pointer264: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer264 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer264)))(value));
 }, false, (value: {
     value: Relation__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -73578,7 +73620,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$ReverseMappedType exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ReverseMappedType), (($pointer261: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer261 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer261)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$ReverseMappedType), (($pointer265: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer265 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer265)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73625,7 +73667,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$SerializedTypeEntry: {
         ===
             right;
 }, (value: SerializedTypeEntry__from_checker | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SerializedTypeEntry), (($pointer262: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer262 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer262)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SerializedTypeEntry), (($pointer266: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer266 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer266)))(value));
 }, false, (value: SerializedTypeEntry__from_checker | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*checker.SerializedTypeEntry", verb);
 });
@@ -73711,7 +73753,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$SimpleTypeMapper extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SimpleTypeMapper), (($pointer263: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer263 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer263)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SimpleTypeMapper), (($pointer267: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer267 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer267)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73778,7 +73820,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$StringMappingType exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$StringMappingType), (($pointer264: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer264 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer264)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$StringMappingType), (($pointer268: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer268 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer268)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73853,7 +73895,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$SubstitutionType extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SubstitutionType), (($pointer265: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer265 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer265)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SubstitutionType), (($pointer269: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer269 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer269)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -73956,7 +73998,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$SymbolTrackerImpl exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SymbolTrackerImpl), (($pointer266: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer266 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer266)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$SymbolTrackerImpl), (($pointer270: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer270 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer270)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74025,7 +74067,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$TemplateLiteralType ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TemplateLiteralType), (($pointer267: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer267 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer267)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TemplateLiteralType), (($pointer271: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer271 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer271)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74086,7 +74128,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$Tracer: {
 }, (value: {
     value: Tracer__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Tracer), (($pointer268: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer268 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer268)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$Tracer), (($pointer272: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer272 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer272)))(value));
 }, false, (value: {
     value: Tracer__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74118,7 +74160,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$TrackedSymbolArgs: {
 }, (value: {
     value: TrackedSymbolArgs__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TrackedSymbolArgs), (($pointer269: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer269 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer269)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TrackedSymbolArgs), (($pointer273: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer273 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer273)))(value));
 }, false, (value: {
     value: TrackedSymbolArgs__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74164,7 +74206,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$TupleType extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TupleType), (($pointer270: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer270 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer270)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TupleType), (($pointer274: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer274 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer274)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74239,7 +74281,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$TypeAlias: {
 }, (value: {
     value: TypeAlias__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeAlias), (($pointer271: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer271 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer271)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeAlias), (($pointer275: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer275 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer275)))(value));
 }, false, (value: {
     value: TypeAlias__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74325,7 +74367,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$TypeDiscriminator exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeDiscriminator), (($pointer272: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer272 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer272)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeDiscriminator), (($pointer276: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer276 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer276)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74490,7 +74532,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$TypeParameter extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeParameter), (($pointer273: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer273 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer273)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypeParameter), (($pointer277: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer277 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer277)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74551,7 +74593,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$TypePredicate: {
 }, (value: {
     value: TypePredicate__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypePredicate), (($pointer274: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer274 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer274)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$TypePredicate), (($pointer278: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer278 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer278)))(value));
 }, false, (value: {
     value: TypePredicate__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74752,7 +74794,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$UnionType extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$UnionType), (($pointer275: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer275 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer275)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$UnionType), (($pointer279: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer279 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer279)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74813,7 +74855,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$UniqueESSymbolType exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$UniqueESSymbolType), (($pointer276: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer276 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer276)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$UniqueESSymbolType), (($pointer280: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer280 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer280)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -74934,7 +74976,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$VerbosityContext: {
 }, (value: {
     value: VerbosityContext__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$VerbosityContext), (($pointer277: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer277 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer277)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$VerbosityContext), (($pointer281: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer281 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer281)))(value));
 }, false, (value: {
     value: VerbosityContext__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74966,7 +75008,7 @@ export const $goInterfaceAdapter$PointerTo_Named_checker$recoveryBoundary: {
 }, (value: {
     value: recoveryBoundary__from_checker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$recoveryBoundary), (($pointer278: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer278 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer278)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$recoveryBoundary), (($pointer282: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer282 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer282)))(value));
 }, false, (value: {
     value: recoveryBoundary__from_checker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -74998,7 +75040,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$semicolonRemoverWriter 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$semicolonRemoverWriter), (($pointer279: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer279 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer279)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$semicolonRemoverWriter), (($pointer283: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer283 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer283)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -75109,7 +75151,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$tracedTypeAdapter exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$tracedTypeAdapter), (($pointer280: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer280 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer280)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$tracedTypeAdapter), (($pointer284: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer284 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer284)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -75232,7 +75274,7 @@ export class $goInterfaceAdapter$PointerTo_Named_checker$wrappingTracker extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$wrappingTracker), (($pointer281: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer281 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer281)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_checker$wrappingTracker), (($pointer285: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer285 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer285)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -76901,7 +76943,7 @@ export class $goInterfaceAdapter$PointerTo_Named_colltab$Table extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_colltab$Table), (($pointer282: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer282 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer282)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_colltab$Table), (($pointer286: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer286 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer286)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -76956,7 +76998,7 @@ export class $goInterfaceAdapter$PointerTo_Named_colltab$numericWeighter extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_colltab$numericWeighter), (($pointer283: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer283 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer283)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_colltab$numericWeighter), (($pointer287: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer287 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer287)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -77121,7 +77163,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$DuplicateSourceFile: {
 }, (value: {
     value: DuplicateSourceFile__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$DuplicateSourceFile), (($pointer284: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer284 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer284)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$DuplicateSourceFile), (($pointer288: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer288 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer288)))(value));
 }, false, (value: {
     value: DuplicateSourceFile__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77167,7 +77209,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$FileIncludeReason: {
 }, (value: {
     value: FileIncludeReason__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$FileIncludeReason), (($pointer285: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer285 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer285)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$FileIncludeReason), (($pointer289: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer289 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer289)))(value));
 }, false, (value: {
     value: FileIncludeReason__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77199,7 +77241,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$LibFile: {
 }, (value: {
     value: LibFile__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$LibFile), (($pointer286: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer286 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer286)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$LibFile), (($pointer290: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer290 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer290)))(value));
 }, false, (value: {
     value: LibFile__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77231,7 +77273,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$Program extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$Program), (($pointer287: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer287 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer287)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$Program), (($pointer291: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer291 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer291)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -77454,7 +77496,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$SourceMapEmitResult: {
 }, (value: {
     value: SourceMapEmitResult__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$SourceMapEmitResult), (($pointer288: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer288 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer288)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$SourceMapEmitResult), (($pointer292: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer292 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer292)))(value));
 }, false, (value: {
     value: SourceMapEmitResult__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77486,7 +77528,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$automaticTypeDirective
 }, (value: {
     value: automaticTypeDirectiveFileData__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$automaticTypeDirectiveFileData), (($pointer289: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer289 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer289)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$automaticTypeDirectiveFileData), (($pointer293: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer293 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer293)))(value));
 }, false, (value: {
     value: automaticTypeDirectiveFileData__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77518,14 +77560,16 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$checkerPool extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$checkerPool), (($pointer290: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer290 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer290)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$checkerPool), (($pointer294: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer294 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer294)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*compiler.checkerPool", verb);
     }
     GetChecker($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         return checkerPool__from_compiler.GetChecker(this.$go$value, $argument0, $argument1);
@@ -77557,7 +77601,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$compilerHost extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$compilerHost), (($pointer291: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer291 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer291)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$compilerHost), (($pointer295: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer295 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer295)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -77610,7 +77654,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$emitHost extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$emitHost), (($pointer292: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer292 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer292)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$emitHost), (($pointer296: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer296 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer296)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -77715,17 +77759,19 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$fileIncludeKind: {
     return GoInterfaceFormat.formatOther("*compiler.fileIncludeKind", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_compiler$fileLoader: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined;
+    new ($go$value: fileLoader__from_compiler | undefined): GoInterfaceValue & {
+        readonly $go$value: fileLoader__from_compiler | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined;
+        readonly $go$value: fileLoader__from_compiler | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined>($goDynamicType$PointerTo_Named_compiler$fileLoader, (left: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined, right: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$fileLoader), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<fileLoader__from_compiler | undefined>($goDynamicType$PointerTo_Named_compiler$fileLoader, (left: fileLoader__from_compiler | undefined, right: fileLoader__from_compiler | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: fileLoader__from_compiler | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$fileLoader), (($pointer297: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer297 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer297)))(value));
+}, false, (value: fileLoader__from_compiler | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*compiler.fileLoader", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_compiler$filesParser: {
@@ -77754,7 +77800,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$filesParser: {
 }, (value: {
     value: filesParser__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$filesParser), (($pointer293: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer293 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer293)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$filesParser), (($pointer298: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer298 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer298)))(value));
 }, false, (value: {
     value: filesParser__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77786,7 +77832,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$includeExplainingDiagn
 }, (value: {
     value: includeExplainingDiagnostic__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$includeExplainingDiagnostic), (($pointer294: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer294 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer294)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$includeExplainingDiagnostic), (($pointer299: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer299 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer299)))(value));
 }, false, (value: {
     value: includeExplainingDiagnostic__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77818,7 +77864,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$includeProcessor: {
 }, (value: {
     value: includeProcessor__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$includeProcessor), (($pointer295: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer295 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer295)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$includeProcessor), (($pointer300: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer300 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer300)))(value));
 }, false, (value: {
     value: includeProcessor__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77850,7 +77896,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$jsxRuntimeImportSpecif
 }, (value: {
     value: jsxRuntimeImportSpecifier__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$jsxRuntimeImportSpecifier), (($pointer296: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer296 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer296)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$jsxRuntimeImportSpecifier), (($pointer301: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer301 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer301)))(value));
 }, false, (value: {
     value: jsxRuntimeImportSpecifier__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77924,7 +77970,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$libResolution: {
 }, (value: {
     value: libResolution__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$libResolution), (($pointer297: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer297 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer297)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$libResolution), (($pointer302: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer302 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer302)))(value));
 }, false, (value: {
     value: libResolution__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -77970,7 +78016,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$parseTask extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$parseTask), (($pointer298: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer298 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer298)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$parseTask), (($pointer303: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer303 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer303)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -78009,7 +78055,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$parseTaskData: {
 }, (value: {
     value: parseTaskData__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$parseTaskData), (($pointer299: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer299 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer299)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$parseTaskData), (($pointer304: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer304 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer304)))(value));
 }, false, (value: {
     value: parseTaskData__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -78055,7 +78101,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$processingDiagnostic: 
 }, (value: {
     value: processingDiagnostic__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$processingDiagnostic), (($pointer300: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer300 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer300)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$processingDiagnostic), (($pointer305: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer305 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer305)))(value));
 }, false, (value: {
     value: processingDiagnostic__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -78101,7 +78147,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$projectReferenceDtsFak
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceDtsFakingHost), (($pointer301: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer301 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer301)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceDtsFakingHost), (($pointer306: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer306 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer306)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -78140,7 +78186,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$projectReferenceDtsFak
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceDtsFakingVfs), (($pointer302: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer302 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer302)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceDtsFakingVfs), (($pointer307: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer307 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer307)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -78212,7 +78258,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$projectReferenceFileMa
 }, (value: {
     value: projectReferenceFileMapper__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceFileMapper), (($pointer303: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer303 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer303)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceFileMapper), (($pointer308: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer308 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer308)))(value));
 }, false, (value: {
     value: projectReferenceFileMapper__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -78244,7 +78290,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$projectReferenceParseT
 }, (value: {
     value: projectReferenceParseTask__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceParseTask), (($pointer304: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer304 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer304)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$projectReferenceParseTask), (($pointer309: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer309 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer309)))(value));
 }, false, (value: {
     value: projectReferenceParseTask__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -78274,7 +78320,7 @@ export class $goInterfaceAdapter$PointerTo_Named_compiler$redirectsFile extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$redirectsFile), (($pointer305: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer305 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer305)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$redirectsFile), (($pointer310: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer310 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer310)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -78313,7 +78359,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$referenceFileLocation:
 }, (value: {
     value: referenceFileLocation__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$referenceFileLocation), (($pointer306: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer306 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer306)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$referenceFileLocation), (($pointer311: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer311 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer311)))(value));
 }, false, (value: {
     value: referenceFileLocation__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -78345,7 +78391,7 @@ export const $goInterfaceAdapter$PointerTo_Named_compiler$referencedFileData: {
 }, (value: {
     value: referencedFileData__from_compiler;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$referencedFileData), (($pointer307: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer307 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer307)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_compiler$referencedFileData), (($pointer312: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer312 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer312)))(value));
 }, false, (value: {
     value: referencedFileData__from_compiler;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -79623,7 +79669,7 @@ export const $goInterfaceAdapter$PointerTo_Named_core$BuildOptions: {
 }, (value: {
     value: BuildOptions__from_core;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$BuildOptions), (($pointer308: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer308 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer308)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$BuildOptions), (($pointer313: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer313 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer313)))(value));
 }, false, (value: {
     value: BuildOptions__from_core;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -79655,7 +79701,7 @@ export const $goInterfaceAdapter$PointerTo_Named_core$CompilerOptions: {
 }, (value: {
     value: CompilerOptions__from_core;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$CompilerOptions), (($pointer309: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer309 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer309)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$CompilerOptions), (($pointer314: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer314 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer314)))(value));
 }, false, (value: {
     value: CompilerOptions__from_core;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -80280,17 +80326,19 @@ export const $goInterfaceAdapter$PointerTo_Named_core$NewLineKind: {
     return GoInterfaceFormat.formatOther("*core.NewLineKind", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_core$ParsedOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined;
+    new ($go$value: ParsedOptions__from_core | undefined): GoInterfaceValue & {
+        readonly $go$value: ParsedOptions__from_core | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined;
+        readonly $go$value: ParsedOptions__from_core | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined>($goDynamicType$PointerTo_Named_core$ParsedOptions, (left: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined, right: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$ParsedOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<ParsedOptions__from_core | undefined>($goDynamicType$PointerTo_Named_core$ParsedOptions, (left: ParsedOptions__from_core | undefined, right: ParsedOptions__from_core | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: ParsedOptions__from_core | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$ParsedOptions), (($pointer315: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer315 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer315)))(value));
+}, false, (value: ParsedOptions__from_core | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*core.ParsedOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_core$Pattern: {
@@ -80322,17 +80370,19 @@ export const $goInterfaceAdapter$PointerTo_Named_core$PollingKind: {
     return GoInterfaceFormat.formatOther("*core.PollingKind", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_core$ProjectReference: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined;
+    new ($go$value: ProjectReference__from_core | undefined): GoInterfaceValue & {
+        readonly $go$value: ProjectReference__from_core | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined;
+        readonly $go$value: ProjectReference__from_core | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>($goDynamicType$PointerTo_Named_core$ProjectReference, (left: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined, right: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$ProjectReference), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<ProjectReference__from_core | undefined>($goDynamicType$PointerTo_Named_core$ProjectReference, (left: ProjectReference__from_core | undefined, right: ProjectReference__from_core | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: ProjectReference__from_core | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$ProjectReference), (($pointer316: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer316 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer316)))(value));
+}, false, (value: ProjectReference__from_core | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*core.ProjectReference", verb);
 });
 const $goInterfaceAdapter$PointerTo_Named_core$ScriptKind$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$String$void_to_string]);
@@ -80538,7 +80588,7 @@ export const $goInterfaceAdapter$PointerTo_Named_core$TypeAcquisition: {
 }, (value: {
     value: TypeAcquisition__from_core;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$TypeAcquisition), (($pointer310: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer310 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer310)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$TypeAcquisition), (($pointer317: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer317 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer317)))(value));
 }, false, (value: {
     value: TypeAcquisition__from_core;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -80598,7 +80648,7 @@ export const $goInterfaceAdapter$PointerTo_Named_core$WatchOptions: {
 }, (value: {
     value: WatchOptions__from_core;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$WatchOptions), (($pointer311: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer311 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer311)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$WatchOptions), (($pointer318: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer318 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer318)))(value));
 }, false, (value: {
     value: WatchOptions__from_core;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -80644,7 +80694,7 @@ export const $goInterfaceAdapter$PointerTo_Named_core$levenshteinBuffers: {
 }, (value: {
     value: levenshteinBuffers__from_core;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$levenshteinBuffers), (($pointer312: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer312 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer312)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$levenshteinBuffers), (($pointer319: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer319 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer319)))(value));
 }, false, (value: {
     value: levenshteinBuffers__from_core;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -80676,7 +80726,7 @@ export class $goInterfaceAdapter$PointerTo_Named_core$parallelWorkGroup extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$parallelWorkGroup), (($pointer313: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer313 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer313)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$parallelWorkGroup), (($pointer320: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer320 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer320)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -80715,7 +80765,7 @@ export class $goInterfaceAdapter$PointerTo_Named_core$singleThreadedWorkGroup ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$singleThreadedWorkGroup), (($pointer314: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer314 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer314)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_core$singleThreadedWorkGroup), (($pointer321: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer321 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer321)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -80768,7 +80818,7 @@ export class $goInterfaceAdapter$PointerTo_Named_declarations$SymbolTrackerImpl 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_declarations$SymbolTrackerImpl), (($pointer315: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer315 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer315)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_declarations$SymbolTrackerImpl), (($pointer322: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer322 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer322)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -80837,7 +80887,7 @@ export const $goInterfaceAdapter$PointerTo_Named_declarations$SymbolTrackerShare
 }, (value: {
     value: SymbolTrackerSharedState__from_declarations;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_declarations$SymbolTrackerSharedState), (($pointer316: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer316 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer316)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_declarations$SymbolTrackerSharedState), (($pointer323: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer323 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer323)))(value));
 }, false, (value: {
     value: SymbolTrackerSharedState__from_declarations;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -80915,7 +80965,7 @@ export class $goInterfaceAdapter$PointerTo_Named_diagnostics$Message extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_diagnostics$Message), (($pointer317: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer317 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer317)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_diagnostics$Message), (($pointer324: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer324 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer324)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -80979,7 +81029,7 @@ export class $goInterfaceAdapter$PointerTo_Named_diagnosticwriter$ASTDiagnostic 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_diagnosticwriter$ASTDiagnostic), (($pointer318: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer318 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer318)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_diagnosticwriter$ASTDiagnostic), (($pointer325: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer325 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer325)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81043,7 +81093,7 @@ export class $goInterfaceAdapter$PointerTo_Named_dirty$BoxOf_PointerTo_Named_pro
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$BoxOf_PointerTo_Named_project$Project), (($pointer319: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer319 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer319)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$BoxOf_PointerTo_Named_project$Project), (($pointer326: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer326 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer326)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81099,7 +81149,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$MapEntryOf_Named_tspath$P
         ===
             right;
 }, (value: MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string), (($pointer320: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer320 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer320)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string), (($pointer327: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer327 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer327)))(value));
 }, false, (value: MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*dirty.MapEntry[tspath.Path, dirty.CloneableMap[tspath.Path, string]]", verb);
 });
@@ -81115,7 +81165,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$MapEntryOf_Named_tspath$P
         ===
             right;
 }, (value: MapEntry__from_dirty<Path__from_tspath, configFileNames__from_project | undefined> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileNames), (($pointer321: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer321 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer321)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileNames), (($pointer328: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer328 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer328)))(value));
 }, false, (value: MapEntry__from_dirty<Path__from_tspath, configFileNames__from_project | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*dirty.MapEntry[tspath.Path, *project.configFileNames]", verb);
 });
@@ -81145,7 +81195,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$MapOf_Named_tspath$Path_A
 }, (value: {
     value: Map__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapOf_Named_tspath$Path_And_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string), (($pointer322: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer322 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer322)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapOf_Named_tspath$Path_And_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string), (($pointer329: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer329 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer329)))(value));
 }, false, (value: {
     value: Map__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -81177,7 +81227,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$MapOf_Named_tspath$Path_A
 }, (value: {
     value: Map__from_dirty<Path__from_tspath, configFileNames__from_project | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapOf_Named_tspath$Path_And_PointerTo_Named_project$configFileNames), (($pointer323: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer323 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer323)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$MapOf_Named_tspath$Path_And_PointerTo_Named_project$configFileNames), (($pointer330: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer330 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer330)))(value));
 }, false, (value: {
     value: Map__from_dirty<Path__from_tspath, configFileNames__from_project | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -81213,7 +81263,7 @@ export class $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer324: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer324 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer324)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer331: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer331 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer331)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81300,7 +81350,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspa
         value: configFileEntry__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry), (($pointer325: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer325 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer325)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry), (($pointer332: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer332 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer332)))(value));
 }, false, (value: {
     value: SyncMapEntry__from_dirty<Path__from_tspath, {
         value: configFileEntry__from_project;
@@ -81348,7 +81398,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspa
         value: diskFile__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer326: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer326 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer326)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer333: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer333 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer333)))(value));
 }, false, (value: {
     value: SyncMapEntry__from_dirty<Path__from_tspath, {
         value: diskFile__from_project;
@@ -81396,7 +81446,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspa
         value: realpathAliasSet__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer327: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer327 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer327)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer334: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer334 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer334)))(value));
 }, false, (value: {
     value: SyncMapEntry__from_dirty<Path__from_tspath, {
         value: realpathAliasSet__from_project;
@@ -81444,7 +81494,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Pa
         value: Project__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer328: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer328 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer328)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer335: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer335 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer335)))(value));
 }, false, (value: {
     value: SyncMap__from_dirty<Path__from_tspath, {
         value: Project__from_project;
@@ -81492,7 +81542,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Pa
         value: configFileEntry__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry), (($pointer329: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer329 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer329)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry), (($pointer336: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer336 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer336)))(value));
 }, false, (value: {
     value: SyncMap__from_dirty<Path__from_tspath, {
         value: configFileEntry__from_project;
@@ -81540,7 +81590,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Pa
         value: diskFile__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer330: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer330 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer330)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer337: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer337 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer337)))(value));
 }, false, (value: {
     value: SyncMap__from_dirty<Path__from_tspath, {
         value: diskFile__from_project;
@@ -81588,7 +81638,7 @@ export const $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Pa
         value: realpathAliasSet__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer331: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer331 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer331)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$SyncMapOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer338: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer338 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer338)))(value));
 }, false, (value: {
     value: SyncMap__from_dirty<Path__from_tspath, {
         value: realpathAliasSet__from_project;
@@ -81624,7 +81674,7 @@ export class $goInterfaceAdapter$PointerTo_Named_dirty$lockedEntryOf_Named_tspat
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer332: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer332 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer332)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project), (($pointer339: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer339 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer339)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81694,7 +81744,7 @@ export class $goInterfaceAdapter$PointerTo_Named_dirty$lockedEntryOf_Named_tspat
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer333: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer333 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer333)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile), (($pointer340: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer340 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer340)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81764,7 +81814,7 @@ export class $goInterfaceAdapter$PointerTo_Named_dirty$lockedEntryOf_Named_tspat
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer334: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer334 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer334)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_dirty$lockedEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet), (($pointer341: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer341 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer341)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -81994,7 +82044,7 @@ export const $goInterfaceAdapter$PointerTo_Named_estransforms$privateIdentifierI
 }, (value: {
     value: privateIdentifierInfo__from_estransforms;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_estransforms$privateIdentifierInfo), (($pointer335: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer335 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer335)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_estransforms$privateIdentifierInfo), (($pointer342: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer342 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer342)))(value));
 }, false, (value: {
     value: privateIdentifierInfo__from_estransforms;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -82052,7 +82102,7 @@ export class $goInterfaceAdapter$PointerTo_Named_execute$Watcher extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$Watcher), (($pointer336: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer336 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer336)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$Watcher), (($pointer343: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer343 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer343)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82088,7 +82138,7 @@ export const $goInterfaceAdapter$PointerTo_Named_execute$cachedSourceFile: {
 }, (value: {
     value: cachedSourceFile__from_execute;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$cachedSourceFile), (($pointer337: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer337 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer337)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$cachedSourceFile), (($pointer344: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer344 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer344)))(value));
 }, false, (value: {
     value: cachedSourceFile__from_execute;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -82118,7 +82168,7 @@ export class $goInterfaceAdapter$PointerTo_Named_execute$fswatchBackend extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$fswatchBackend), (($pointer338: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer338 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer338)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$fswatchBackend), (($pointer345: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer345 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer345)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82157,7 +82207,7 @@ export class $goInterfaceAdapter$PointerTo_Named_execute$watchCompilerHost exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$watchCompilerHost), (($pointer339: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer339 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer339)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_execute$watchCompilerHost), (($pointer346: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer346 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer346)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82394,7 +82444,7 @@ export class $goInterfaceAdapter$PointerTo_Named_glob$Glob extends GoInterfaceVa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_glob$Glob), (($pointer340: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer340 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer340)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_glob$Glob), (($pointer347: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer347 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer347)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82500,17 +82550,19 @@ export function $goInterfaceAdapter$PointerTo_Named_gzip$Reader_Read$deferred($g
 DeferredCallableRegistry.registerMethod($goInterfaceMethod$Read$SliceOf_byte_to_int_Named_error, $goDynamicType$PointerTo_Named_gzip$Reader, $goInterfaceAdapter$PointerTo_Named_gzip$Reader_Read$deferred);
 DeferredCallableRegistry.registerMethod($goInterfaceMethod$Read$SliceOf_byte_to_int_Named_error, $goDynamicType$PointerTo_Named_gzip$Reader, $goInterfaceAdapter$PointerTo_Named_gzip$Reader_Read$deferred);
 export const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfo: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined;
+    new ($go$value: BuildInfo__from_incremental | undefined): GoInterfaceValue & {
+        readonly $go$value: BuildInfo__from_incremental | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined;
+        readonly $go$value: BuildInfo__from_incremental | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined>($goDynamicType$PointerTo_Named_incremental$BuildInfo, (left: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined, right: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfo), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<BuildInfo__from_incremental | undefined>($goDynamicType$PointerTo_Named_incremental$BuildInfo, (left: BuildInfo__from_incremental | undefined, right: BuildInfo__from_incremental | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: BuildInfo__from_incremental | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfo), (($pointer348: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer348 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer348)))(value));
+}, false, (value: BuildInfo__from_incremental | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*incremental.BuildInfo", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnostic: {
@@ -82539,7 +82591,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnostic
 }, (value: {
     value: BuildInfoDiagnostic__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoDiagnostic), (($pointer341: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer341 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer341)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoDiagnostic), (($pointer349: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer349 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer349)))(value));
 }, false, (value: {
     value: BuildInfoDiagnostic__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -82547,7 +82599,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnostic
 });
 const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$MarshalJSON$void_to_SliceOf_byte_Named_error, $goInterfaceMethod$UnmarshalJSON$SliceOf_byte_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile extends GoInterfaceValue implements Unmarshaler__from_json, Marshaler__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined) {
+    constructor(public readonly $go$value: BuildInfoDiagnosticsOfFile__from_incremental | undefined) {
         super();
     }
     readonly $go$type: {
@@ -82564,10 +82616,12 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnostic
         if (!$goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile), (($pointer350: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer350 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer350)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82609,7 +82663,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoEmitSignat
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoEmitSignature), (($pointer342: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer342 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer342)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoEmitSignature), (($pointer351: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer351 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer351)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82679,7 +82733,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoFileInfo e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoFileInfo), (($pointer343: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer343 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer343)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoFileInfo), (($pointer352: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer352 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer352)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82721,7 +82775,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoFilePendin
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoFilePendingEmit), (($pointer344: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer344 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer344)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoFilePendingEmit), (($pointer353: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer353 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer353)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82763,7 +82817,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoReferenceM
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoReferenceMapEntry), (($pointer345: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer345 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer345)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoReferenceMapEntry), (($pointer354: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer354 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer354)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82805,7 +82859,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoRepopulate
 }, (value: {
     value: BuildInfoRepopulateInfo__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoRepopulateInfo), (($pointer346: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer346 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer346)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoRepopulateInfo), (($pointer355: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer355 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer355)))(value));
 }, false, (value: {
     value: BuildInfoRepopulateInfo__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -82837,7 +82891,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoResolvedRo
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoResolvedRoot), (($pointer347: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer347 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer347)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoResolvedRoot), (($pointer356: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer356 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer356)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82879,7 +82933,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoRoot exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoRoot), (($pointer348: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer348 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer348)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoRoot), (($pointer357: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer357 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer357)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82921,7 +82975,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfoSemanticDi
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoSemanticDiagnostic), (($pointer349: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer349 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer349)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$BuildInfoSemanticDiagnostic), (($pointer358: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer358 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer358)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -82963,7 +83017,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$DiagnosticsOrBuildI
 }, (value: {
     value: DiagnosticsOrBuildInfoDiagnosticsWithFileName__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$DiagnosticsOrBuildInfoDiagnosticsWithFileName), (($pointer350: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer350 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer350)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$DiagnosticsOrBuildInfoDiagnosticsWithFileName), (($pointer359: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer359 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer359)))(value));
 }, false, (value: {
     value: DiagnosticsOrBuildInfoDiagnosticsWithFileName__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83009,7 +83063,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$FileInfo: {
 }, (value: {
     value: FileInfo__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$FileInfo), (($pointer351: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer351 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer351)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$FileInfo), (($pointer360: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer360 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer360)))(value));
 }, false, (value: {
     value: FileInfo__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83055,7 +83109,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$Program extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$Program), (($pointer352: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer352 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer352)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$Program), (($pointer361: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer361 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer361)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -83151,7 +83205,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$TestingData: {
 }, (value: {
     value: TestingData__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$TestingData), (($pointer353: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer353 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer353)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$TestingData), (($pointer362: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer362 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer362)))(value));
 }, false, (value: {
     value: TestingData__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83183,38 +83237,42 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$buildInfoDiagnostic
 }, (value: {
     value: buildInfoDiagnosticWithFileName__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoDiagnosticWithFileName), (($pointer354: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer354 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer354)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoDiagnosticWithFileName), (($pointer363: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer363 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer363)))(value));
 }, false, (value: {
     value: buildInfoDiagnosticWithFileName__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*incremental.buildInfoDiagnosticWithFileName", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_incremental$buildInfoFileInfoNoSignature: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined;
+    new ($go$value: buildInfoFileInfoNoSignature__from_incremental | undefined): GoInterfaceValue & {
+        readonly $go$value: buildInfoFileInfoNoSignature__from_incremental | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined;
+        readonly $go$value: buildInfoFileInfoNoSignature__from_incremental | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined>($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoNoSignature, (left: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined, right: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoNoSignature), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<buildInfoFileInfoNoSignature__from_incremental | undefined>($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoNoSignature, (left: buildInfoFileInfoNoSignature__from_incremental | undefined, right: buildInfoFileInfoNoSignature__from_incremental | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: buildInfoFileInfoNoSignature__from_incremental | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoNoSignature), (($pointer364: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer364 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer364)))(value));
+}, false, (value: buildInfoFileInfoNoSignature__from_incremental | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*incremental.buildInfoFileInfoNoSignature", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_incremental$buildInfoFileInfoWithSignature: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined;
+    new ($go$value: buildInfoFileInfoWithSignature__from_incremental | undefined): GoInterfaceValue & {
+        readonly $go$value: buildInfoFileInfoWithSignature__from_incremental | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined;
+        readonly $go$value: buildInfoFileInfoWithSignature__from_incremental | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined>($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoWithSignature, (left: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined, right: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoWithSignature), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<buildInfoFileInfoWithSignature__from_incremental | undefined>($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoWithSignature, (left: buildInfoFileInfoWithSignature__from_incremental | undefined, right: buildInfoFileInfoWithSignature__from_incremental | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: buildInfoFileInfoWithSignature__from_incremental | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoFileInfoWithSignature), (($pointer365: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer365 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer365)))(value));
+}, false, (value: buildInfoFileInfoWithSignature__from_incremental | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*incremental.buildInfoFileInfoWithSignature", verb);
 });
 const $goInterfaceAdapter$PointerTo_Named_incremental$buildInfoReader$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$ReadBuildInfo$PointerTo_Named_tsoptions$ParsedCommandLine_to_PointerTo_Named_incremental$BuildInfo]);
@@ -83241,13 +83299,13 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$buildInfoReader ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoReader), (($pointer355: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer355 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer355)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$buildInfoReader), (($pointer366: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer366 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer366)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*incremental.buildInfoReader", verb);
     }
-    ReadBuildInfo($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined {
+    ReadBuildInfo($argument0: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): BuildInfo__from_incremental | undefined {
         return buildInfoReader__from_incremental.ReadBuildInfo(this.$go$value, $argument0);
     }
 }
@@ -83277,7 +83335,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$emitSignature: {
 }, (value: {
     value: emitSignature__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$emitSignature), (($pointer356: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer356 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer356)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$emitSignature), (($pointer367: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer367 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer367)))(value));
 }, false, (value: {
     value: emitSignature__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83309,7 +83367,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$emitUpdate: {
 }, (value: {
     value: emitUpdate__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$emitUpdate), (($pointer357: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer357 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer357)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$emitUpdate), (($pointer368: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer368 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer368)))(value));
 }, false, (value: {
     value: emitUpdate__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83341,7 +83399,7 @@ export class $goInterfaceAdapter$PointerTo_Named_incremental$host extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$host), (($pointer358: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer358 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer358)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$host), (($pointer369: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer369 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer369)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -83408,7 +83466,7 @@ export const $goInterfaceAdapter$PointerTo_Named_incremental$updatedSignature: {
 }, (value: {
     value: updatedSignature__from_incremental;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$updatedSignature), (($pointer359: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer359 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer359)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_incremental$updatedSignature), (($pointer370: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer370 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer370)))(value));
 }, false, (value: {
     value: updatedSignature__from_incremental;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83552,7 +83610,7 @@ export class $goInterfaceAdapter$PointerTo_Named_json$SemanticError extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$SemanticError), (($pointer360: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer360 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer360)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$SemanticError), (($pointer371: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer371 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer371)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -83566,17 +83624,19 @@ export class $goInterfaceAdapter$PointerTo_Named_json$SemanticError extends GoIn
     }
 }
 export const $goInterfaceAdapter$PointerTo_Named_json$arshaler: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined;
+    new ($go$value: arshaler__from_json | undefined): GoInterfaceValue & {
+        readonly $go$value: arshaler__from_json | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined;
+        readonly $go$value: arshaler__from_json | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined>($goDynamicType$PointerTo_Named_json$arshaler, (left: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined, right: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$arshaler), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<arshaler__from_json> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<arshaler__from_json | undefined>($goDynamicType$PointerTo_Named_json$arshaler, (left: arshaler__from_json | undefined, right: arshaler__from_json | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: arshaler__from_json | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$arshaler), (($pointer372: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer372 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer372)))(value));
+}, false, (value: arshaler__from_json | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*json.arshaler", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_json$marshalersOption: {
@@ -83647,7 +83707,7 @@ export const $goInterfaceAdapter$PointerTo_Named_json$stringSlice: {
 }, (value: {
     value: stringSlice__from_json;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$stringSlice), (($pointer361: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer361 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer361)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_json$stringSlice), (($pointer373: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer373 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer373)))(value));
 }, false, (value: {
     value: stringSlice__from_json;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83823,7 +83883,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsonrpc$ID extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$ID), (($pointer362: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer362 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer362)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$ID), (($pointer374: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer374 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer374)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -83934,7 +83994,7 @@ export const $goInterfaceAdapter$PointerTo_Named_jsonrpc$Reader: {
 }, (value: {
     value: Reader__from_jsonrpc;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$Reader), (($pointer363: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer363 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer363)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$Reader), (($pointer375: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer375 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer375)))(value));
 }, false, (value: {
     value: Reader__from_jsonrpc;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -83966,7 +84026,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsonrpc$ResponseError extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$ResponseError), (($pointer364: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer364 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer364)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$ResponseError), (($pointer376: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer376 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer376)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84005,7 +84065,7 @@ export const $goInterfaceAdapter$PointerTo_Named_jsonrpc$Writer: {
 }, (value: {
     value: Writer__from_jsonrpc;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$Writer), (($pointer365: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer365 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer365)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonrpc$Writer), (($pointer377: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer377 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer377)))(value));
 }, false, (value: {
     value: Writer__from_jsonrpc;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -84181,7 +84241,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsontext$SyntacticError extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$SyntacticError), (($pointer366: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer366 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer366)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$SyntacticError), (($pointer378: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer378 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer378)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84381,7 +84441,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsontext$ioError extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$ioError), (($pointer367: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer367 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer367)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$ioError), (($pointer379: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer379 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer379)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84490,7 +84550,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsontext$pointerSuffixError ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$pointerSuffixError), (($pointer368: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer368 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer368)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsontext$pointerSuffixError), (($pointer380: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer380 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer380)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84595,7 +84655,7 @@ export class $goInterfaceAdapter$PointerTo_Named_jsonwire$InvalidTextError exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonwire$InvalidTextError), (($pointer369: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer369 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer369)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_jsonwire$InvalidTextError), (($pointer381: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer381 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer381)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84757,7 +84817,7 @@ export class $goInterfaceAdapter$PointerTo_Named_language__package_1$matcher ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_language__package_1$matcher), (($pointer370: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer370 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer370)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_language__package_1$matcher), (($pointer382: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer382 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer382)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84811,7 +84871,7 @@ export class $goInterfaceAdapter$PointerTo_Named_logging$LogTree extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_logging$LogTree), (($pointer371: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer371 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer371)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_logging$LogTree), (($pointer383: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer383 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer383)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -84894,7 +84954,7 @@ export const $goInterfaceAdapter$PointerTo_Named_logging$logEntry: {
 }, (value: {
     value: logEntry__from_logging;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_logging$logEntry), (($pointer372: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer372 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer372)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_logging$logEntry), (($pointer384: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer384 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer384)))(value));
 }, false, (value: {
     value: logEntry__from_logging;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -84988,7 +85048,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$CompletionItem extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$CompletionItem), (($pointer373: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer373 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer373)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$CompletionItem), (($pointer385: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer385 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer385)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85050,7 +85110,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$LanguageService extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$LanguageService), (($pointer374: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer374 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer374)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$LanguageService), (($pointer386: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer386 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer386)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85097,7 +85157,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$callInvocation: {
 }, (value: {
     value: callInvocation__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$callInvocation), (($pointer375: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer375 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer375)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$callInvocation), (($pointer387: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer387 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer387)))(value));
 }, false, (value: {
     value: callInvocation__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85127,7 +85187,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$caseClauseTrackerState exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$caseClauseTrackerState), (($pointer376: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer376 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer376)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$caseClauseTrackerState), (($pointer388: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer388 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer388)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85166,7 +85226,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$completionDataData: {
 }, (value: {
     value: completionDataData__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataData), (($pointer377: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer377 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer377)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataData), (($pointer389: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer389 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer389)))(value));
 }, false, (value: {
     value: completionDataData__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85198,7 +85258,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$completionDataJSDocParameter
 }, (value: {
     value: completionDataJSDocParameterName__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocParameterName), (($pointer378: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer378 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer378)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocParameterName), (($pointer390: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer390 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer390)))(value));
 }, false, (value: {
     value: completionDataJSDocParameterName__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85230,7 +85290,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$completionDataJSDocTag: {
 }, (value: {
     value: completionDataJSDocTag__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocTag), (($pointer379: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer379 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer379)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocTag), (($pointer391: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer391 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer391)))(value));
 }, false, (value: {
     value: completionDataJSDocTag__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85262,7 +85322,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$completionDataJSDocTagName: 
 }, (value: {
     value: completionDataJSDocTagName__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocTagName), (($pointer380: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer380 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer380)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataJSDocTagName), (($pointer392: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer392 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer392)))(value));
 }, false, (value: {
     value: completionDataJSDocTagName__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85294,7 +85354,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$completionDataKeyword: {
 }, (value: {
     value: completionDataKeyword__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataKeyword), (($pointer381: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer381 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer381)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$completionDataKeyword), (($pointer393: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer393 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer393)))(value));
 }, false, (value: {
     value: completionDataKeyword__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85326,7 +85386,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$contextualInvocation: {
 }, (value: {
     value: contextualInvocation__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$contextualInvocation), (($pointer382: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer382 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer382)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$contextualInvocation), (($pointer394: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer394 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer394)))(value));
 }, false, (value: {
     value: contextualInvocation__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85358,7 +85418,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$displayPartsWriter extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$displayPartsWriter), (($pointer383: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer383 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer383)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$displayPartsWriter), (($pointer395: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer395 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer395)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85481,7 +85541,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$incomingEntry extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$incomingEntry), (($pointer384: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer384 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer384)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$incomingEntry), (($pointer396: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer396 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer396)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85520,7 +85580,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$invocation: {
 }, (value: {
     value: invocation__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$invocation), (($pointer385: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer385 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer385)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$invocation), (($pointer397: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer397 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer397)))(value));
 }, false, (value: {
     value: invocation__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85683,7 +85743,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$script extends GoInterfaceVa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$script), (($pointer386: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer386 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer386)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$script), (($pointer398: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer398 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer398)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85722,7 +85782,7 @@ export class $goInterfaceAdapter$PointerTo_Named_ls$snippetEmitTextWriter extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$snippetEmitTextWriter), (($pointer387: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer387 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer387)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$snippetEmitTextWriter), (($pointer399: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer399 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer399)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -85823,7 +85883,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$symbolOriginInfo: {
         ===
             right;
 }, (value: symbolOriginInfo__from_ls | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfo), (($pointer388: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer388 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer388)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfo), (($pointer400: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer400 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer400)))(value));
 }, false, (value: symbolOriginInfo__from_ls | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*ls.symbolOriginInfo", verb);
 });
@@ -85853,7 +85913,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$symbolOriginInfoComputedProp
 }, (value: {
     value: symbolOriginInfoComputedPropertyName__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfoComputedPropertyName), (($pointer389: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer389 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer389)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfoComputedPropertyName), (($pointer401: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer401 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer401)))(value));
 }, false, (value: {
     value: symbolOriginInfoComputedPropertyName__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85899,7 +85959,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$symbolOriginInfoTypeOnlyAlia
 }, (value: {
     value: symbolOriginInfoTypeOnlyAlias__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfoTypeOnlyAlias), (($pointer390: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer390 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer390)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$symbolOriginInfoTypeOnlyAlias), (($pointer402: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer402 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer402)))(value));
 }, false, (value: {
     value: symbolOriginInfoTypeOnlyAlias__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85931,7 +85991,7 @@ export const $goInterfaceAdapter$PointerTo_Named_ls$typeArgsInvocation: {
 }, (value: {
     value: typeArgsInvocation__from_ls;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$typeArgsInvocation), (($pointer391: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer391 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer391)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_ls$typeArgsInvocation), (($pointer403: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer403 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer403)))(value));
 }, false, (value: {
     value: typeArgsInvocation__from_ls;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85963,7 +86023,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsconv$Converters: {
 }, (value: {
     value: Converters__from_lsconv;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsconv$Converters), (($pointer392: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer392 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer392)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsconv$Converters), (($pointer404: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer404 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer404)))(value));
 }, false, (value: {
     value: Converters__from_lsconv;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -85995,7 +86055,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsconv$LSPLineMap: {
 }, (value: {
     value: LSPLineMap__from_lsconv;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsconv$LSPLineMap), (($pointer393: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer393 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer393)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsconv$LSPLineMap), (($pointer405: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer405 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer405)))(value));
 }, false, (value: {
     value: LSPLineMap__from_lsconv;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -86055,7 +86115,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$Server extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$Server), (($pointer394: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer394 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer394)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$Server), (($pointer406: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer406 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer406)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86142,7 +86202,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$crossProjectOrchestrator ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$crossProjectOrchestrator), (($pointer395: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer395 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer395)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$crossProjectOrchestrator), (($pointer407: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer407 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer407)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86207,7 +86267,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Na
         value: Message__from_lsproto;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Named_lsproto$Message), (($pointer396: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer396 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer396)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Named_lsproto$Message), (($pointer408: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer408 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer408)))(value));
 }, false, (value: {
     value: dynamicQueue__from_lsp<{
         value: Message__from_lsproto;
@@ -86255,7 +86315,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Na
         value: RequestMessage__from_lsproto;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Named_lsproto$RequestMessage), (($pointer397: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer397 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer397)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$dynamicQueueOf_PointerTo_Named_lsproto$RequestMessage), (($pointer409: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer409 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer409)))(value));
 }, false, (value: {
     value: dynamicQueue__from_lsp<{
         value: RequestMessage__from_lsproto;
@@ -86289,7 +86349,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$logger extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$logger), (($pointer398: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer398 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer398)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$logger), (($pointer410: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer410 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer410)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86355,7 +86415,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$lspReader extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$lspReader), (($pointer399: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer399 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer399)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$lspReader), (($pointer411: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer411 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer411)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86396,7 +86456,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$lspWriter extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$lspWriter), (($pointer400: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer400 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer400)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$lspWriter), (($pointer412: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer412 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer412)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86448,7 +86508,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsp$projectLoadingProgress: {
 }, (value: {
     value: projectLoadingProgress__from_lsp;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$projectLoadingProgress), (($pointer401: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer401 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer401)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$projectLoadingProgress), (($pointer413: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer413 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer413)))(value));
 }, false, (value: {
     value: projectLoadingProgress__from_lsp;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -86480,7 +86540,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsp$serverProgressReporter exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$serverProgressReporter), (($pointer402: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer402 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer402)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsp$serverProgressReporter), (($pointer414: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer414 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer414)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86559,7 +86619,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$AnnotatedTextEdit exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$AnnotatedTextEdit), (($pointer403: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer403 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer403)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$AnnotatedTextEdit), (($pointer415: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer415 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer415)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86691,7 +86751,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$AutoImportFix extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$AutoImportFix), (($pointer404: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer404 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer404)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$AutoImportFix), (($pointer416: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer416 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer416)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86759,7 +86819,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$BaseReader: {
 }, (value: {
     value: BaseReader__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BaseReader), (($pointer405: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer405 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer405)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BaseReader), (($pointer417: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer417 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer417)))(value));
 }, false, (value: {
     value: BaseReader__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -86791,7 +86851,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$BaseWriter: {
 }, (value: {
     value: BaseWriter__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BaseWriter), (($pointer406: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer406 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer406)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BaseWriter), (($pointer418: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer418 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer418)))(value));
 }, false, (value: {
     value: BaseWriter__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -86823,7 +86883,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrCallHierarchyO
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions), (($pointer407: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer407 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer407)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions), (($pointer419: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer419 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer419)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86897,7 +86957,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrCodeActionOpti
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrCodeActionOptions), (($pointer408: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer408 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer408)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrCodeActionOptions), (($pointer420: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer420 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer420)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -86971,7 +87031,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrDefinitionOpti
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDefinitionOptions), (($pointer409: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer409 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer409)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDefinitionOptions), (($pointer421: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer421 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer421)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87045,7 +87105,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrDocumentFormat
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentFormattingOptions), (($pointer410: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer410 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer410)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentFormattingOptions), (($pointer422: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer422 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer422)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87084,7 +87144,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrDocumentHighli
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentHighlightOptions), (($pointer411: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer411 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer411)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentHighlightOptions), (($pointer423: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer423 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer423)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87123,7 +87183,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrDocumentRangeF
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentRangeFormattingOptions), (($pointer412: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer412 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer412)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentRangeFormattingOptions), (($pointer424: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer424 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer424)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87162,7 +87222,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrDocumentSymbol
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentSymbolOptions), (($pointer413: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer413 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer413)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrDocumentSymbolOptions), (($pointer425: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer425 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer425)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87236,7 +87296,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrFoldingRangeOp
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions), (($pointer414: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer414 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer414)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions), (($pointer426: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer426 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer426)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87275,7 +87335,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrHoverOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrHoverOptions), (($pointer415: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer415 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer415)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrHoverOptions), (($pointer427: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer427 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer427)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87314,7 +87374,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrImplementation
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrImplementationOptionsOrImplementationRegistrationOptions), (($pointer416: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer416 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer416)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrImplementationOptionsOrImplementationRegistrationOptions), (($pointer428: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer428 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer428)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87353,7 +87413,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrInlayHintOptio
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions), (($pointer417: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer417 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer417)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions), (($pointer429: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer429 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer429)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87462,7 +87522,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrLinkedEditingR
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions), (($pointer418: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer418 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer418)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions), (($pointer430: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer430 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer430)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87536,7 +87596,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrReferenceOptio
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrReferenceOptions), (($pointer419: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer419 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer419)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrReferenceOptions), (($pointer431: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer431 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer431)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87575,7 +87635,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrRenameOptions 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrRenameOptions), (($pointer420: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer420 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer420)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrRenameOptions), (($pointer432: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer432 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer432)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87614,7 +87674,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrSaveOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSaveOptions), (($pointer421: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer421 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer421)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSaveOptions), (($pointer433: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer433 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer433)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87653,7 +87713,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrSelectionRange
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions), (($pointer422: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer422 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer422)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions), (($pointer434: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer434 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer434)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87692,7 +87752,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrSemanticTokens
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSemanticTokensFullDelta), (($pointer423: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer423 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer423)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrSemanticTokensFullDelta), (($pointer435: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer435 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer435)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87731,7 +87791,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrTypeDefinition
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions), (($pointer424: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer424 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer424)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions), (($pointer436: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer436 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer436)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87805,7 +87865,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$BooleanOrWorkspaceSymbo
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrWorkspaceSymbolOptions), (($pointer425: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer425 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer425)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$BooleanOrWorkspaceSymbolOptions), (($pointer437: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer437 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer437)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87876,7 +87936,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyIncomingCa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyIncomingCall), (($pointer426: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer426 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer426)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyIncomingCall), (($pointer438: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer438 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer438)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -87979,7 +88039,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyItem exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyItem), (($pointer427: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer427 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer427)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyItem), (($pointer439: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer439 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer439)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -88064,7 +88124,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyOptions), (($pointer428: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer428 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer428)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyOptions), (($pointer440: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer440 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer440)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -88100,7 +88160,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyOutgoingCa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyOutgoingCall), (($pointer429: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer429 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer429)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyOutgoingCall), (($pointer441: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer441 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer441)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -88214,7 +88274,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyPreparePar
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: CallHierarchyRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -88231,10 +88291,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrati
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions), (($pointer442: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer442 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer442)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -88796,7 +88858,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ClientSemanticTokensReq
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ClientSemanticTokensRequestFullDelta), (($pointer430: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer430 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer430)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ClientSemanticTokensRequestFullDelta), (($pointer443: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer443 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer443)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89244,7 +89306,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionOptions exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeActionOptions), (($pointer431: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer431 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer431)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeActionOptions), (($pointer444: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer444 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer444)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89291,7 +89353,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionParams extend
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: CodeActionRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -89308,10 +89370,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationO
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeActionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeActionRegistrationOptions), (($pointer445: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer445 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer445)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89539,7 +89603,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensData extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensData), (($pointer432: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer432 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer432)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensData), (($pointer446: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer446 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer446)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89589,7 +89653,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensOptions extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensOptions), (($pointer433: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer433 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer433)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensOptions), (($pointer447: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer447 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer447)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89636,7 +89700,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensParams extends 
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: CodeLensRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -89653,10 +89717,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOpt
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CodeLensRegistrationOptions), (($pointer448: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer448 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer448)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89863,7 +89929,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationParams
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: ColorPresentationRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -89880,10 +89946,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegist
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions), (($pointer449: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer449 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer449)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -89895,7 +89963,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegist
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$Command$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$Command extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: Command__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -89912,10 +89980,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Command extends GoInter
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$Command.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Command), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Command), (($pointer450: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer450 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer450)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90149,7 +90219,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionItemData exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemData), (($pointer434: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer434 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer434)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemData), (($pointer451: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer451 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer451)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90185,7 +90255,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionItemDefaults 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemDefaults), (($pointer435: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer435 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer435)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemDefaults), (($pointer452: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer452 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer452)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90267,7 +90337,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionItemLabelDeta
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemLabelDetails), (($pointer436: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer436 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer436)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionItemLabelDetails), (($pointer453: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer453 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer453)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90402,7 +90472,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionList extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionList), (($pointer437: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer437 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer437)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionList), (($pointer454: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer454 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer454)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90470,7 +90540,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionOptions exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionOptions), (($pointer438: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer438 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer438)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionOptions), (($pointer455: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer455 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer455)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90517,7 +90587,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionParams extend
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: CompletionRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -90534,10 +90604,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationO
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CompletionRegistrationOptions), (($pointer456: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer456 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer456)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90605,7 +90677,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ConfigurationItem exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ConfigurationItem), (($pointer439: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer439 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer439)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ConfigurationItem), (($pointer457: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer457 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer457)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90673,7 +90745,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$CreateFile extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CreateFile), (($pointer440: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer440 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer440)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$CreateFile), (($pointer458: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer458 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer458)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90805,7 +90877,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationOptions exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeclarationOptions), (($pointer441: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer441 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer441)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeclarationOptions), (($pointer459: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer459 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer459)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90849,7 +90921,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationParams exten
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DeclarationRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -90866,10 +90938,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistration
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeclarationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeclarationRegistrationOptions), (($pointer460: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer460 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer460)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90937,7 +91011,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionOptions exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DefinitionOptions), (($pointer442: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer442 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer442)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DefinitionOptions), (($pointer461: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer461 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer461)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -90984,7 +91058,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionParams extend
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DefinitionRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -91001,10 +91075,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationO
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DefinitionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DefinitionRegistrationOptions), (($pointer462: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer462 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer462)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91040,7 +91116,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DeleteFile extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeleteFile), (($pointer443: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer443 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer443)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DeleteFile), (($pointer463: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer463 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer463)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91140,7 +91216,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Diagnostic extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Diagnostic), (($pointer444: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer444 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer444)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Diagnostic), (($pointer464: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer464 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer464)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91222,7 +91298,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticOptions exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticOptions), (($pointer445: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer445 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer445)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticOptions), (($pointer465: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer465 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer465)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91258,7 +91334,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticOptionsOrRegi
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticOptionsOrRegistrationOptions), (($pointer446: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer446 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer446)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticOptionsOrRegistrationOptions), (($pointer466: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer466 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer466)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91273,7 +91349,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticOptionsOrRegi
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DiagnosticRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -91290,10 +91366,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationO
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticRegistrationOptions), (($pointer467: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer467 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer467)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91329,7 +91407,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRelatedInform
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticRelatedInformation), (($pointer447: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer447 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer447)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DiagnosticRelatedInformation), (($pointer468: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer468 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer468)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91501,7 +91579,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationP
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DidChangeConfigurationRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -91518,10 +91596,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationR
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions), (($pointer469: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer469 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer469)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91629,7 +91709,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesPa
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -91646,10 +91726,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRe
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions), (($pointer470: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer470 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer470)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91845,7 +91927,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentColorOptions), (($pointer448: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer448 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer448)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentColorOptions), (($pointer471: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer471 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer471)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -91889,7 +91971,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorParams ext
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentColorRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -91906,10 +91988,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrati
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentColorRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentColorRegistrationOptions), (($pointer472: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer472 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer472)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92012,7 +92096,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingOptio
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentFormattingOptions), (($pointer449: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer449 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer449)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentFormattingOptions), (($pointer473: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer473 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer473)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92059,7 +92143,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingParam
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentFormattingRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -92076,10 +92160,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegis
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions), (($pointer474: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer474 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer474)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92115,7 +92201,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlight exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlight), (($pointer450: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer450 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer450)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlight), (($pointer475: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer475 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer475)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92215,7 +92301,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightOption
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlightOptions), (($pointer451: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer451 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer451)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlightOptions), (($pointer476: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer476 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer476)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92262,7 +92348,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightParams
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentHighlightRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -92279,10 +92365,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegist
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions), (($pointer477: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer477 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer477)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92471,7 +92559,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkParams exte
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentLinkRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -92488,10 +92576,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistratio
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions), (($pointer478: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer478 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer478)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92594,7 +92684,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattin
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentOnTypeFormattingOptions), (($pointer452: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer452 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer452)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentOnTypeFormattingOptions), (($pointer479: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer479 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer479)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92641,7 +92731,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattin
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -92658,10 +92748,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattin
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions), (($pointer480: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer480 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer480)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92729,7 +92821,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormatting
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentRangeFormattingOptions), (($pointer453: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer453 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer453)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentRangeFormattingOptions), (($pointer481: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer481 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer481)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92776,7 +92868,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormatting
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -92793,10 +92885,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormatting
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions), (($pointer482: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer482 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer482)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92899,7 +92993,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbol extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbol), (($pointer454: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer454 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer454)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbol), (($pointer483: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer483 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer483)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -92967,7 +93061,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbolOptions), (($pointer455: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer455 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer455)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbolOptions), (($pointer484: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer484 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer484)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93014,7 +93108,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolParams ex
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: DocumentSymbolRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -93031,10 +93125,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions), (($pointer485: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer485 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer485)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93119,7 +93215,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$EditRangeWithInsertRepl
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$EditRangeWithInsertReplace), (($pointer456: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer456 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer456)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$EditRangeWithInsertReplace), (($pointer486: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer486 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer486)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93227,7 +93323,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandParams ex
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: ExecuteCommandRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -93244,10 +93340,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions), (($pointer487: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer487 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer487)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93315,7 +93413,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ExperimentalServerCapab
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ExperimentalServerCapabilities), (($pointer457: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer457 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer457)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ExperimentalServerCapabilities), (($pointer488: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer488 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer488)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93461,7 +93559,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileEvent extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileEvent), (($pointer458: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer458 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer458)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileEvent), (($pointer489: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer489 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer489)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93529,7 +93627,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationFilter ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationFilter), (($pointer459: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer459 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer459)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationFilter), (($pointer490: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer490 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer490)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93565,7 +93663,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationOptions), (($pointer460: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer460 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer460)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationOptions), (($pointer491: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer491 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer491)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93601,7 +93699,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationPattern ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationPattern), (($pointer461: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer461 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer461)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationPattern), (($pointer492: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer492 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer492)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93637,7 +93735,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationPatternKin
 }, (value: {
     value: FileOperationPatternKind__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationPatternKind), (($pointer462: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer462 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer462)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationPatternKind), (($pointer493: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer493 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer493)))(value));
 }, false, (value: {
     value: FileOperationPatternKind__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -93677,7 +93775,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationPatternOpt
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: FileOperationRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -93694,10 +93792,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrati
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileOperationRegistrationOptions), (($pointer494: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer494 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer494)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93733,7 +93833,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileRename extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileRename), (($pointer463: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer463 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer463)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileRename), (($pointer495: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer495 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer495)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93769,7 +93869,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FileSystemWatcher exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileSystemWatcher), (($pointer464: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer464 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer464)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FileSystemWatcher), (($pointer496: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer496 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer496)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93805,7 +93905,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRange extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRange), (($pointer465: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer465 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer465)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRange), (($pointer497: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer497 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer497)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93887,7 +93987,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeOptions ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRangeOptions), (($pointer466: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer466 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer466)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRangeOptions), (($pointer498: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer498 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer498)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -93934,7 +94034,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeParams exte
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: FoldingRangeRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -93951,10 +94051,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistratio
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions), (($pointer499: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer499 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer499)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94121,7 +94223,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Hover extends GoInterfa
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Hover), (($pointer467: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer467 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer467)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Hover), (($pointer500: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer500 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer500)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94189,7 +94291,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$HoverOptions extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$HoverOptions), (($pointer468: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer468 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer468)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$HoverOptions), (($pointer501: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer501 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer501)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94271,7 +94373,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$HoverParams extends GoI
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: HoverRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -94288,10 +94390,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOption
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$HoverRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$HoverRegistrationOptions), (($pointer502: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer502 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer502)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94359,7 +94463,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ImplementationOptions), (($pointer469: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer469 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer469)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ImplementationOptions), (($pointer503: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer503 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer503)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94409,7 +94513,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationParams ex
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: ImplementationRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -94426,10 +94530,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ImplementationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ImplementationRegistrationOptions), (($pointer504: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer504 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer504)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94497,7 +94603,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InitializationOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializationOptions), (($pointer470: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer470 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer470)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializationOptions), (($pointer505: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer505 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer505)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94600,7 +94706,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InitializeAPISessionRes
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializeAPISessionResult), (($pointer471: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer471 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer471)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializeAPISessionResult), (($pointer506: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer506 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer506)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94668,7 +94774,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InitializeResult extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializeResult), (($pointer472: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer472 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer472)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InitializeResult), (($pointer507: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer507 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer507)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94828,7 +94934,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintLabelPart exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintLabelPart), (($pointer473: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer473 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer473)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintLabelPart), (($pointer508: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer508 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer508)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94864,7 +94970,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintOptions extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintOptions), (($pointer474: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer474 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer474)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintOptions), (($pointer509: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer509 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer509)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -94911,7 +95017,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintParams extends
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: InlayHintRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -94928,10 +95034,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOp
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlayHintRegistrationOptions), (($pointer510: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer510 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer510)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95130,7 +95238,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionList ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionList), (($pointer475: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer475 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer475)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionList), (($pointer511: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer511 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer511)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95201,7 +95309,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionOptions
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionOptions), (($pointer476: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer476 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer476)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionOptions), (($pointer512: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer512 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer512)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95245,7 +95353,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionParams 
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: InlineCompletionRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -95262,10 +95370,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistr
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions), (($pointer513: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer513 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer513)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95397,7 +95507,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueEvaluatableE
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueEvaluatableExpression), (($pointer477: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer477 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer477)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueEvaluatableExpression), (($pointer514: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer514 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer514)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95433,7 +95543,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueOptions exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueOptions), (($pointer478: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer478 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer478)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueOptions), (($pointer515: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer515 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer515)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95477,7 +95587,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueParams exten
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: InlineValueRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -95494,10 +95604,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistration
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueRegistrationOptions), (($pointer516: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer516 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer516)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95533,7 +95645,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueText extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueText), (($pointer479: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer479 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer479)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueText), (($pointer517: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer517 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer517)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95604,7 +95716,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueVariableLook
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueVariableLookup), (($pointer480: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer480 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer480)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InlineValueVariableLookup), (($pointer518: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer518 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer518)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95707,7 +95819,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$InsertReplaceEdit exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InsertReplaceEdit), (($pointer481: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer481 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer481)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$InsertReplaceEdit), (($pointer519: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer519 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer519)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -95958,7 +96070,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeOptio
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRangeOptions), (($pointer482: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer482 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer482)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRangeOptions), (($pointer520: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer520 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer520)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96005,7 +96117,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeParam
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: LinkedEditingRangeRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -96022,10 +96134,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegis
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions), (($pointer521: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer521 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer521)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96061,7 +96175,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRanges ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRanges), (($pointer483: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer483 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer483)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LinkedEditingRanges), (($pointer522: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer522 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer522)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96164,7 +96278,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LocationLink extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LocationLink), (($pointer484: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer484 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer484)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LocationLink), (($pointer523: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer523 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer523)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96308,7 +96422,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$LocationUriOnly extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LocationUriOnly), (($pointer485: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer485 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer485)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$LocationUriOnly), (($pointer524: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer524 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer524)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96507,7 +96621,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MarkedStringWithLanguag
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MarkedStringWithLanguage), (($pointer486: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer486 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer486)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MarkedStringWithLanguage), (($pointer525: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer525 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer525)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96543,7 +96657,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MarkupContent extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MarkupContent), (($pointer487: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer487 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer487)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MarkupContent), (($pointer526: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer526 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer526)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96628,7 +96742,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Message extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Message), (($pointer488: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer488 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer488)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Message), (($pointer527: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer527 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer527)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96670,7 +96784,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MessageActionItem exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MessageActionItem), (($pointer489: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer489 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer489)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MessageActionItem), (($pointer528: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer528 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer528)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96851,7 +96965,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerKind: {
 }, (value: {
     value: MonikerKind__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerKind), (($pointer490: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer490 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer490)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerKind), (($pointer529: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer529 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer529)))(value));
 }, false, (value: {
     value: MonikerKind__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -96883,7 +96997,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerOptions extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerOptions), (($pointer491: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer491 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer491)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerOptions), (($pointer530: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer530 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer530)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -96927,7 +97041,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerParams extends G
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: MonikerRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -96944,10 +97058,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOpti
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MonikerRegistrationOptions), (($pointer531: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer531 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer531)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97018,7 +97134,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$MultiDocumentHighlight 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MultiDocumentHighlight), (($pointer492: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer492 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer492)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$MultiDocumentHighlight), (($pointer532: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer532 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer532)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97191,7 +97307,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ParameterInformation ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ParameterInformation), (($pointer493: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer493 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer493)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ParameterInformation), (($pointer533: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer533 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer533)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97262,7 +97378,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$PerformanceStatsTelemet
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PerformanceStatsTelemetryEvent), (($pointer494: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer494 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer494)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PerformanceStatsTelemetryEvent), (($pointer534: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer534 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer534)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97298,7 +97414,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$PerformanceStatsTelemet
 }, (value: {
     value: PerformanceStatsTelemetryMeasurements__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PerformanceStatsTelemetryMeasurements), (($pointer495: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer495 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer495)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PerformanceStatsTelemetryMeasurements), (($pointer535: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer535 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer535)))(value));
 }, false, (value: {
     value: PerformanceStatsTelemetryMeasurements__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -97376,7 +97492,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$PrepareRenameDefaultBeh
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PrepareRenameDefaultBehavior), (($pointer496: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer496 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer496)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PrepareRenameDefaultBehavior), (($pointer536: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer536 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer536)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97447,7 +97563,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$PrepareRenamePlaceholde
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PrepareRenamePlaceholder), (($pointer497: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer497 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer497)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$PrepareRenamePlaceholder), (($pointer537: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer537 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer537)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97579,7 +97695,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ProfileResult extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProfileResult), (($pointer498: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer498 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer498)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProfileResult), (($pointer538: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer538 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer538)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97679,7 +97795,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ProjectInfoResult exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoResult), (($pointer499: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer499 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer499)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoResult), (($pointer539: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer539 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer539)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97715,7 +97831,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ProjectInfoTelemetryEve
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryEvent), (($pointer500: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer500 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer500)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryEvent), (($pointer540: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer540 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer540)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97726,17 +97842,19 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ProjectInfoTelemetryEve
     }
 }
 export const $goInterfaceAdapter$PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined;
+    new ($go$value: ProjectInfoTelemetryMeasurements__from_lsproto | undefined): GoInterfaceValue & {
+        readonly $go$value: ProjectInfoTelemetryMeasurements__from_lsproto | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined;
+        readonly $go$value: ProjectInfoTelemetryMeasurements__from_lsproto | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined>($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements, (left: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined, right: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<ProjectInfoTelemetryMeasurements__from_lsproto | undefined>($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements, (left: ProjectInfoTelemetryMeasurements__from_lsproto | undefined, right: ProjectInfoTelemetryMeasurements__from_lsproto | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: ProjectInfoTelemetryMeasurements__from_lsproto | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements), (($pointer541: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer541 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer541)))(value));
+}, false, (value: ProjectInfoTelemetryMeasurements__from_lsproto | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*lsproto.ProjectInfoTelemetryMeasurements", verb);
 });
 const $goInterfaceAdapter$PointerTo_Named_lsproto$PublishDiagnosticsClientCapabilities$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
@@ -97861,7 +97979,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RangeOrEditRangeWithIns
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RangeOrEditRangeWithInsertReplace), (($pointer501: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer501 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer501)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RangeOrEditRangeWithInsertReplace), (($pointer542: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer542 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer542)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -97967,7 +98085,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceContext extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceContext), (($pointer502: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer502 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer502)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceContext), (($pointer543: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer543 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer543)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98003,7 +98121,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceOptions extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceOptions), (($pointer503: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer503 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer503)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceOptions), (($pointer544: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer544 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer544)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98053,7 +98171,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceParams extends
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: ReferenceRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -98070,10 +98188,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOp
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ReferenceRegistrationOptions), (($pointer545: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer545 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer545)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98109,7 +98229,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lsproto$RegisterOptions: {
 }, (value: {
     value: RegisterOptions__from_lsproto;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RegisterOptions), (($pointer504: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer504 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer504)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RegisterOptions), (($pointer546: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer546 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer546)))(value));
 }, false, (value: {
     value: RegisterOptions__from_lsproto;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -98141,7 +98261,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Registration extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Registration), (($pointer505: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer505 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer505)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Registration), (($pointer547: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer547 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer547)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98244,7 +98364,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RelatedFullDocumentDiag
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelatedFullDocumentDiagnosticReport), (($pointer506: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer506 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer506)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelatedFullDocumentDiagnosticReport), (($pointer548: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer548 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer548)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98315,7 +98435,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RelatedUnchangedDocumen
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelatedUnchangedDocumentDiagnosticReport), (($pointer507: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer507 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer507)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelatedUnchangedDocumentDiagnosticReport), (($pointer549: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer549 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer549)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98351,7 +98471,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RelativePattern extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelativePattern), (($pointer508: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer508 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer508)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RelativePattern), (($pointer550: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer550 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer550)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98419,7 +98539,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RenameFile extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameFile), (($pointer509: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer509 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer509)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameFile), (($pointer551: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer551 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer551)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98519,7 +98639,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RenameOptions extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameOptions), (($pointer510: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer510 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer510)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameOptions), (($pointer552: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer552 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer552)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98569,7 +98689,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RenameParams extends Go
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: RenameRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -98586,10 +98706,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptio
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RenameRegistrationOptions), (($pointer553: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer553 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer553)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98625,7 +98747,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RequestFailureTelemetry
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestFailureTelemetryEvent), (($pointer511: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer511 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer511)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestFailureTelemetryEvent), (($pointer554: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer554 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer554)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98696,7 +98818,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RequestFailureTelemetry
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestFailureTelemetryProperties), (($pointer512: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer512 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer512)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestFailureTelemetryProperties), (($pointer555: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer555 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer555)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -98732,7 +98854,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$RequestMessage extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestMessage), (($pointer513: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer513 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer513)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$RequestMessage), (($pointer556: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer556 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer556)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -99902,7 +100024,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SaveOptions extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SaveOptions), (($pointer514: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer514 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer514)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SaveOptions), (($pointer557: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer557 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer557)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -99970,7 +100092,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRange extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRange), (($pointer515: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer515 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer515)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRange), (($pointer558: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer558 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer558)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100038,7 +100160,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRangeOptions), (($pointer516: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer516 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer516)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRangeOptions), (($pointer559: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer559 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer559)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100085,7 +100207,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeParams ex
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: SelectionRangeRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -100102,10 +100224,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions), (($pointer560: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer560 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer560)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100176,7 +100300,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokens extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokens), (($pointer517: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer517 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer517)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokens), (($pointer561: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer561 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer561)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100244,7 +100368,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensDelta ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensDelta), (($pointer518: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer518 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer518)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensDelta), (($pointer562: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer562 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer562)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100344,7 +100468,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensFullDelta
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensFullDelta), (($pointer519: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer519 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer519)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensFullDelta), (($pointer563: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer563 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer563)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100380,7 +100504,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensLegend ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensLegend), (($pointer520: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer520 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer520)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensLegend), (($pointer564: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer564 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer564)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100416,7 +100540,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensOptions), (($pointer521: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer521 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer521)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensOptions), (($pointer565: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer565 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer565)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100452,7 +100576,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensOptionsOr
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensOptionsOrRegistrationOptions), (($pointer522: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer522 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer522)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensOptionsOrRegistrationOptions), (($pointer566: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer566 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer566)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100607,7 +100731,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRangePara
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: SemanticTokensRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -100624,10 +100748,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions), (($pointer567: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer567 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer567)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100695,7 +100821,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ServerCapabilities exte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ServerCapabilities), (($pointer523: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer523 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer523)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ServerCapabilities), (($pointer568: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer568 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer568)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -100763,7 +100889,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$ServerInfo extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ServerInfo), (($pointer524: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer524 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer524)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$ServerInfo), (($pointer569: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer569 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer569)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -101055,7 +101181,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelp extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelp), (($pointer525: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer525 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer525)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelp), (($pointer570: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer570 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer570)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -101155,7 +101281,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelpOptions), (($pointer526: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer526 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer526)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelpOptions), (($pointer571: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer571 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer571)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -101237,7 +101363,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpParams ext
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: SignatureHelpRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -101254,10 +101380,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrati
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions), (($pointer572: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer572 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer572)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -101325,7 +101453,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureInformation ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureInformation), (($pointer527: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer527 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer527)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SignatureInformation), (($pointer573: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer573 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer573)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -101361,7 +101489,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SnippetTextEdit extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SnippetTextEdit), (($pointer528: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer528 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer528)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$SnippetTextEdit), (($pointer574: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer574 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer574)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102199,7 +102327,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$StringOrStrings extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$StringOrStrings), (($pointer529: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer529 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer529)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$StringOrStrings), (($pointer575: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer575 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer575)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102273,7 +102401,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$StringValue extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$StringValue), (($pointer530: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer530 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer530)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$StringValue), (($pointer576: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer576 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer576)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102451,7 +102579,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$SymbolTag extends GoInt
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentChangeRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -102468,10 +102596,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegis
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions), (($pointer577: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer577 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer577)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102539,7 +102669,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentChan
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentChangePartial), (($pointer531: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer531 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer531)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentChangePartial), (($pointer578: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer578 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer578)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102610,7 +102740,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentChan
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentChangeWholeDocument), (($pointer532: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer532 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer532)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentChangeWholeDocument), (($pointer579: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer579 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer579)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102654,7 +102784,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentClie
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentContentOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -102671,10 +102801,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOpti
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentOptions), (($pointer580: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer580 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer580)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102785,7 +102917,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRefr
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentContentRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -102802,10 +102934,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegi
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions), (($pointer581: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer581 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer581)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102873,7 +103007,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentEdit extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentEdit), (($pointer533: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer533 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer533)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentEdit), (($pointer582: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer582 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer582)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -102952,7 +103086,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterClien
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguage$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguage extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentFilterLanguage__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -102969,10 +103103,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLangu
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguage.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterLanguage), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterLanguage), (($pointer583: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer583 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer583)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103019,7 +103155,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLangu
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPattern$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPattern extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentFilterPattern__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103036,10 +103172,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPatte
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPattern.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterPattern), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterPattern), (($pointer584: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer584 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer584)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103051,7 +103189,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPatte
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterScheme$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterScheme extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentFilterScheme__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103068,10 +103206,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterSchem
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterScheme.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterScheme), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentFilterScheme), (($pointer585: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer585 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer585)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103182,7 +103322,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentPositionPar
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103199,10 +103339,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistratio
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentRegistrationOptions), (($pointer586: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer586 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer586)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103246,7 +103388,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveReason 
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TextDocumentSaveRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103263,10 +103405,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistr
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions), (($pointer587: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer587 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer587)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103366,7 +103510,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSyncOptions
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSyncOptions), (($pointer534: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer534 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer534)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSyncOptions), (($pointer588: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer588 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer588)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103402,7 +103546,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSyncOptions
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSyncOptionsOrKind), (($pointer535: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer535 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer535)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextDocumentSyncOptionsOrKind), (($pointer589: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer589 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer589)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103441,7 +103585,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextEdit extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextEdit), (($pointer536: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer536 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer536)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextEdit), (($pointer590: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer590 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer590)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103512,7 +103656,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TextEditOrInsertReplace
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextEditOrInsertReplaceEdit), (($pointer537: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer537 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer537)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TextEditOrInsertReplaceEdit), (($pointer591: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer591 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer591)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103646,7 +103790,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeDefinitionOptions), (($pointer538: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer538 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer538)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeDefinitionOptions), (($pointer592: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer592 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer592)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103693,7 +103837,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionParams ex
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TypeDefinitionRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103710,10 +103854,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrat
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions), (($pointer593: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer593 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer593)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103862,7 +104008,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyOptions ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeHierarchyOptions), (($pointer539: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer539 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer539)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeHierarchyOptions), (($pointer594: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer594 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer594)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -103906,7 +104052,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyPreparePar
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: TypeHierarchyRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -103923,10 +104069,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrati
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions), (($pointer595: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer595 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer595)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104040,7 +104188,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$UintegerOrNull extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$UintegerOrNull), (($pointer540: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer540 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer540)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$UintegerOrNull), (($pointer596: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer596 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer596)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104093,7 +104241,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$Unregistration extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Unregistration), (($pointer541: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer541 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer541)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$Unregistration), (($pointer597: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer597 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer597)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104161,7 +104309,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSClassifiedTextElement
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSClassifiedTextElement), (($pointer542: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer542 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer542)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSClassifiedTextElement), (($pointer598: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer598 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer598)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104197,7 +104345,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSClassifiedTextRun ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSClassifiedTextRun), (($pointer543: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer543 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer543)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSClassifiedTextRun), (($pointer599: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer599 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer599)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104233,7 +104381,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSOnAutoInsertOptions e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSOnAutoInsertOptions), (($pointer544: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer544 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer544)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSOnAutoInsertOptions), (($pointer600: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer600 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer600)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104304,7 +104452,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSOnAutoInsertResponseI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSOnAutoInsertResponseItem), (($pointer545: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer545 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer545)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSOnAutoInsertResponseItem), (($pointer601: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer601 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer601)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104351,7 +104499,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSOnAutoInsertResponseI
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItem$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItem extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: VSReferenceItem__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -104368,10 +104516,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItem extends
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$VSReferenceItem.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSReferenceItem), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$VSReferenceItem), (($pointer602: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer602 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer602)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104602,7 +104752,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkDoneProgressBegin e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressBegin), (($pointer546: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer546 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer546)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressBegin), (($pointer603: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer603 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer603)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104737,7 +104887,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkDoneProgressEnd ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressEnd), (($pointer547: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer547 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer547)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressEnd), (($pointer604: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer604 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer604)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104773,7 +104923,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkDoneProgressReport 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressReport), (($pointer548: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer548 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer548)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkDoneProgressReport), (($pointer605: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer605 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer605)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -104905,7 +105055,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceEdit extends G
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceEdit), (($pointer549: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer549 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer549)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceEdit), (($pointer606: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer606 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer606)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105040,7 +105190,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceFolder extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceFolder), (($pointer550: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer550 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer550)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceFolder), (($pointer607: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer607 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer607)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105210,7 +105360,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceFullDocumentDi
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceFullDocumentDiagnosticReport), (($pointer551: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer551 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer551)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceFullDocumentDiagnosticReport), (($pointer608: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer608 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer608)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105281,7 +105431,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceOptions extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceOptions), (($pointer552: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer552 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer552)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceOptions), (($pointer609: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer609 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer609)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105395,7 +105545,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolOptions 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceSymbolOptions), (($pointer553: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer553 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer553)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceSymbolOptions), (($pointer610: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer610 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer610)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105439,7 +105589,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolParams e
 }
 const $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$UnmarshalJSONFrom$PointerTo_Named_jsontext$Decoder_to_Named_error]);
 export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions extends GoInterfaceValue implements UnmarshalerFrom__from_json, GoInterface, TypeSystemEntity__from_checker, CompilerOptionsValue__from_tsoptions, literalValue__from_ls {
-    constructor(public readonly $go$value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined) {
+    constructor(public readonly $go$value: WorkspaceSymbolRegistrationOptions__from_lsproto | undefined) {
         super();
     }
     readonly $go$type: {
@@ -105456,10 +105606,12 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistra
         if (!$goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions.$is(other)) {
             return false;
         }
-        return tsonicTypeScriptRuntime.sameLocation(this.$go$value, other.$go$value);
+        return this.$go$value
+            ===
+                other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions), (($pointer611: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer611 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer611)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105495,7 +105647,7 @@ export class $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceUnchangedDocum
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceUnchangedDocumentDiagnosticReport), (($pointer554: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer554 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer554)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lsproto$WorkspaceUnchangedDocumentDiagnosticReport), (($pointer612: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer612 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer612)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -105531,7 +105683,7 @@ export const $goInterfaceAdapter$PointerTo_Named_lspwatcher$Watcher: {
 }, (value: {
     value: Watcher__from_lspwatcher;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lspwatcher$Watcher), (($pointer555: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer555 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer555)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_lspwatcher$Watcher), (($pointer613: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer613 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer613)))(value));
 }, false, (value: {
     value: Watcher__from_lspwatcher;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -105808,7 +105960,7 @@ export class $goInterfaceAdapter$PointerTo_Named_main$osSys extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_main$osSys), (($pointer556: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer556 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer556)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_main$osSys), (($pointer614: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer614 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer614)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -106074,7 +106226,7 @@ export const $goInterfaceAdapter$PointerTo_Named_osvfs$limitedWalkDirFunc: {
 }, (value: {
     value: limitedWalkDirFunc__from_osvfs;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_osvfs$limitedWalkDirFunc), (($pointer557: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer557 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer557)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_osvfs$limitedWalkDirFunc), (($pointer615: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer615 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer615)))(value));
 }, false, (value: {
     value: limitedWalkDirFunc__from_osvfs;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106106,7 +106258,7 @@ export class $goInterfaceAdapter$PointerTo_Named_osvfs$osFS extends GoInterfaceV
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_osvfs$osFS), (($pointer558: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer558 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer558)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_osvfs$osFS), (($pointer616: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer616 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer616)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -106176,7 +106328,7 @@ export class $goInterfaceAdapter$PointerTo_Named_outputpaths$OutputPaths extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_outputpaths$OutputPaths), (($pointer559: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer559 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer559)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_outputpaths$OutputPaths), (($pointer617: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer617 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer617)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -106377,7 +106529,7 @@ export const $goInterfaceAdapter$PointerTo_Named_packagejson$InfoCache: {
 }, (value: {
     value: InfoCache__from_packagejson;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$InfoCache), (($pointer560: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer560 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer560)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$InfoCache), (($pointer618: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer618 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer618)))(value));
 }, false, (value: {
     value: InfoCache__from_packagejson;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106409,7 +106561,7 @@ export const $goInterfaceAdapter$PointerTo_Named_packagejson$InfoCacheEntry: {
 }, (value: {
     value: InfoCacheEntry__from_packagejson;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$InfoCacheEntry), (($pointer561: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer561 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer561)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$InfoCacheEntry), (($pointer619: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer619 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer619)))(value));
 }, false, (value: {
     value: InfoCacheEntry__from_packagejson;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106505,7 +106657,7 @@ export const $goInterfaceAdapter$PointerTo_Named_packagejson$PackageJson: {
 }, (value: {
     value: PackageJson__from_packagejson;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$PackageJson), (($pointer562: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer562 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer562)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_packagejson$PackageJson), (($pointer620: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer620 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer620)))(value));
 }, false, (value: {
     value: PackageJson__from_packagejson;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106607,7 +106759,7 @@ export const $goInterfaceAdapter$PointerTo_Named_parser$Parser: {
 }, (value: {
     value: Parser__from_parser;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_parser$Parser), (($pointer563: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer563 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer563)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_parser$Parser), (($pointer621: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer621 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer621)))(value));
 }, false, (value: {
     value: Parser__from_parser;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106667,24 +106819,26 @@ export const $goInterfaceAdapter$PointerTo_Named_pprof$ProfileSession: {
 }, (value: {
     value: ProfileSession__from_pprof;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pprof$ProfileSession), (($pointer564: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer564 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer564)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pprof$ProfileSession), (($pointer622: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer622 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer622)))(value));
 }, false, (value: {
     value: ProfileSession__from_pprof;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*pprof.ProfileSession", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_printer$AutoGenerateInfo: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined;
+    new ($go$value: AutoGenerateInfo__from_printer | undefined): GoInterfaceValue & {
+        readonly $go$value: AutoGenerateInfo__from_printer | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined;
+        readonly $go$value: AutoGenerateInfo__from_printer | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined>($goDynamicType$PointerTo_Named_printer$AutoGenerateInfo, (left: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined, right: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$AutoGenerateInfo), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<AutoGenerateInfo__from_printer | undefined>($goDynamicType$PointerTo_Named_printer$AutoGenerateInfo, (left: AutoGenerateInfo__from_printer | undefined, right: AutoGenerateInfo__from_printer | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: AutoGenerateInfo__from_printer | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$AutoGenerateInfo), (($pointer623: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer623 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer623)))(value));
+}, false, (value: AutoGenerateInfo__from_printer | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*printer.AutoGenerateInfo", verb);
 });
 const $goInterfaceAdapter$PointerTo_Named_printer$ChangeTrackerWriter$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$Clear$void_to_void, $goInterfaceMethod$DecreaseIndent$void_to_void, $goInterfaceMethod$GetColumn$void_to_Named_core$UTF16Offset, $goInterfaceMethod$GetIndent$void_to_int, $goInterfaceMethod$GetLine$void_to_int, $goInterfaceMethod$GetTextPos$void_to_int, $goInterfaceMethod$Grow$int_to_void, $goInterfaceMethod$HasTrailingComment$void_to_bool, $goInterfaceMethod$HasTrailingWhitespace$void_to_bool, $goInterfaceMethod$IncreaseIndent$void_to_void, $goInterfaceMethod$IsAtStartOfLine$void_to_bool, $goInterfaceMethod$RawWrite$string_to_void, $goInterfaceMethod$String$void_to_string, $goInterfaceMethod$Write$string_to_void, $goInterfaceMethod$WriteComment$string_to_void, $goInterfaceMethod$WriteKeyword$string_to_void, $goInterfaceMethod$WriteLine$void_to_void, $goInterfaceMethod$WriteLineForce$bool_to_void, $goInterfaceMethod$WriteLiteral$string_to_void, $goInterfaceMethod$WriteOperator$string_to_void, $goInterfaceMethod$WriteParameter$string_to_void, $goInterfaceMethod$WriteProperty$string_to_void, $goInterfaceMethod$WritePunctuation$string_to_void, $goInterfaceMethod$WriteSpace$string_to_void, $goInterfaceMethod$WriteStringLiteral$string_to_void, $goInterfaceMethod$WriteSymbol$string_PointerTo_Named_ast$Symbol_to_void, $goInterfaceMethod$WriteTrailingSemicolon$string_to_void]);
@@ -106713,7 +106867,7 @@ export class $goInterfaceAdapter$PointerTo_Named_printer$ChangeTrackerWriter ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$ChangeTrackerWriter), (($pointer565: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer565 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer565)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$ChangeTrackerWriter), (($pointer624: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer624 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer624)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -106828,7 +106982,7 @@ export const $goInterfaceAdapter$PointerTo_Named_printer$EmitContext: {
 }, (value: {
     value: EmitContext__from_printer;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$EmitContext), (($pointer566: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer566 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer566)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$EmitContext), (($pointer625: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer625 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer625)))(value));
 }, false, (value: {
     value: EmitContext__from_printer;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106874,7 +107028,7 @@ export const $goInterfaceAdapter$PointerTo_Named_printer$EmitHelper: {
 }, (value: {
     value: EmitHelper__from_printer;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$EmitHelper), (($pointer567: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer567 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer567)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$EmitHelper), (($pointer626: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer626 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer626)))(value));
 }, false, (value: {
     value: EmitHelper__from_printer;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -106934,7 +107088,7 @@ export class $goInterfaceAdapter$PointerTo_Named_printer$NodeFactory extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$NodeFactory), (($pointer568: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer568 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer568)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$NodeFactory), (($pointer627: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer627 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer627)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -106971,7 +107125,7 @@ export const $goInterfaceAdapter$PointerTo_Named_printer$Priority: {
 }, (value: {
     value: Priority__from_printer;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$Priority), (($pointer569: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer569 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer569)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$Priority), (($pointer628: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer628 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer628)))(value));
 }, false, (value: {
     value: Priority__from_printer;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107087,7 +107241,7 @@ export class $goInterfaceAdapter$PointerTo_Named_printer$singleLineStringWriter 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$singleLineStringWriter), (($pointer570: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer570 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer570)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$singleLineStringWriter), (($pointer629: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer629 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer629)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -107308,7 +107462,7 @@ export const $goInterfaceAdapter$PointerTo_Named_printer$varScope: {
 }, (value: {
     value: varScope__from_printer;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$varScope), (($pointer571: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer571 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer571)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_printer$varScope), (($pointer630: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer630 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer630)))(value));
 }, false, (value: {
     value: varScope__from_printer;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107326,7 +107480,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ATAStateChange: {
         ===
             right;
 }, (value: ATAStateChange__from_project | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ATAStateChange), (($pointer572: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer572 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer572)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ATAStateChange), (($pointer631: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer631 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer631)))(value));
 }, false, (value: ATAStateChange__from_project | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*project.ATAStateChange", verb);
 });
@@ -107384,7 +107538,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ConfigFileRegistry: {
 }, (value: {
     value: ConfigFileRegistry__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ConfigFileRegistry), (($pointer573: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer573 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer573)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ConfigFileRegistry), (($pointer632: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer632 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer632)))(value));
 }, false, (value: {
     value: ConfigFileRegistry__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107416,7 +107570,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ExtendedConfigCacheEntr
 }, (value: {
     value: ExtendedConfigCacheEntry__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ExtendedConfigCacheEntry), (($pointer574: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer574 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer574)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ExtendedConfigCacheEntry), (($pointer633: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer633 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer633)))(value));
 }, false, (value: {
     value: ExtendedConfigCacheEntry__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107522,7 +107676,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$Overlay extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Overlay), (($pointer575: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer575 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer575)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Overlay), (($pointer634: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer634 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer634)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -107608,7 +107762,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$OwnerCacheOf_Named_tspa
         value: ExtendedConfigCacheEntry__from_project;
     } | undefined, ExtendedConfigParseArgs__from_project>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$OwnerCacheOf_Named_tspath$Path_And_PointerTo_Named_project$ExtendedConfigCacheEntry_And_Named_project$ExtendedConfigParseArgs), (($pointer576: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer576 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer576)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$OwnerCacheOf_Named_tspath$Path_And_PointerTo_Named_project$ExtendedConfigCacheEntry_And_Named_project$ExtendedConfigParseArgs), (($pointer635: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer635 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer635)))(value));
 }, false, (value: {
     value: OwnerCache__from_project<Path__from_tspath, {
         value: ExtendedConfigCacheEntry__from_project;
@@ -107726,7 +107880,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$Project extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Project), (($pointer577: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer577 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer577)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Project), (($pointer636: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer636 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer636)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -107775,7 +107929,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ProjectCollection: {
 }, (value: {
     value: ProjectCollection__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ProjectCollection), (($pointer578: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer578 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer578)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ProjectCollection), (($pointer637: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer637 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer637)))(value));
 }, false, (value: {
     value: ProjectCollection__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107807,7 +107961,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ProjectCollectionBuilde
 }, (value: {
     value: ProjectCollectionBuilder__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ProjectCollectionBuilder), (($pointer579: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer579 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer579)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ProjectCollectionBuilder), (($pointer638: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer638 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer638)))(value));
 }, false, (value: {
     value: ProjectCollectionBuilder__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107839,7 +107993,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$RefCountCacheOf_Named_p
 }, (value: {
     value: RefCountCache__from_project<ParseCacheKey__from_project, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, FileHandle__from_project | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$RefCountCacheOf_Named_project$ParseCacheKey_And_PointerTo_Named_ast$SourceFile_And_Named_project$FileHandle), (($pointer580: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer580 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer580)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$RefCountCacheOf_Named_project$ParseCacheKey_And_PointerTo_Named_ast$SourceFile_And_Named_project$FileHandle), (($pointer639: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer639 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer639)))(value));
 }, false, (value: {
     value: RefCountCache__from_project<ParseCacheKey__from_project, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, FileHandle__from_project | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107885,7 +108039,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$Session extends GoInter
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Session), (($pointer581: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer581 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer581)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Session), (($pointer640: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer640 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer640)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -107930,7 +108084,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$SessionOptions: {
 }, (value: {
     value: SessionOptions__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$SessionOptions), (($pointer582: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer582 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer582)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$SessionOptions), (($pointer641: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer641 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer641)))(value));
 }, false, (value: {
     value: SessionOptions__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -107962,7 +108116,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$Snapshot extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Snapshot), (($pointer583: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer583 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer583)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$Snapshot), (($pointer642: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer642 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer642)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108034,7 +108188,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$SnapshotFS extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$SnapshotFS), (($pointer584: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer584 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer584)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$SnapshotFS), (($pointer643: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer643 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer643)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108082,7 +108236,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$WatchedFilesOf_MapOf_Na
 }, (value: {
     value: WatchedFiles__from_project<GoMapValue<Path__from_tspath, gostring>>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_MapOf_Named_tspath$Path_To_string), (($pointer585: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer585 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer585)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_MapOf_Named_tspath$Path_To_string), (($pointer644: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer644 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer644)))(value));
 }, false, (value: {
     value: WatchedFiles__from_project<GoMapValue<Path__from_tspath, gostring>>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108114,7 +108268,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$WatchedFilesOf_Named_pr
 }, (value: {
     value: WatchedFiles__from_project<PatternsAndIgnored__from_project>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_Named_project$PatternsAndIgnored), (($pointer586: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer586 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer586)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_Named_project$PatternsAndIgnored), (($pointer645: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer645 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer645)))(value));
 }, false, (value: {
     value: WatchedFiles__from_project<PatternsAndIgnored__from_project>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108146,7 +108300,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$WatchedFilesOf_PointerT
 }, (value: {
     value: WatchedFiles__from_project<tsonicTypeScriptRuntime.Location<SyncSet__from_collections<Path__from_tspath>> | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_PointerTo_Named_collections$SyncSetOf_Named_tspath$Path), (($pointer587: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer587 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer587)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$WatchedFilesOf_PointerTo_Named_collections$SyncSetOf_Named_tspath$Path), (($pointer646: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer646 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer646)))(value));
 }, false, (value: {
     value: WatchedFiles__from_project<tsonicTypeScriptRuntime.Location<SyncSet__from_collections<Path__from_tspath>> | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108178,7 +108332,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$autoImportBuilderFS ext
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$autoImportBuilderFS), (($pointer588: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer588 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer588)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$autoImportBuilderFS), (($pointer647: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer647 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer647)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108226,7 +108380,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$autoImportRegistryClone
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$autoImportRegistryCloneHost), (($pointer589: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer589 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer589)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$autoImportRegistryCloneHost), (($pointer648: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer648 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer648)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108289,14 +108443,16 @@ export class $goInterfaceAdapter$PointerTo_Named_project$checkerPool extends GoI
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$checkerPool), (($pointer590: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer590 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer590)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$checkerPool), (($pointer649: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer649 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer649)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*project.checkerPool", verb);
     }
     GetChecker($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         return checkerPool__from_project.GetChecker(this.$go$value, $argument0, $argument1);
@@ -108328,7 +108484,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$compilerHost extends Go
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$compilerHost), (($pointer591: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer591 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer591)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$compilerHost), (($pointer650: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer650 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer650)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108381,7 +108537,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$configFileEntry extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileEntry), (($pointer592: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer592 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer592)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileEntry), (($pointer651: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer651 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer651)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108417,7 +108573,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$configFileNames extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileNames), (($pointer593: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer593 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer593)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileNames), (($pointer652: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer652 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer652)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108453,7 +108609,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$configFileRegistryBuild
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileRegistryBuilder), (($pointer594: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer594 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer594)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$configFileRegistryBuilder), (($pointer653: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer653 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer653)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108497,7 +108653,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$diskFile extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$diskFile), (($pointer595: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer595 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer595)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$diskFile), (($pointer654: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer654 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer654)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108571,7 +108727,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$fileSystemWatcherValue:
         ===
             right;
 }, (value: fileSystemWatcherValue__from_project | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$fileSystemWatcherValue), (($pointer596: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer596 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer596)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$fileSystemWatcherValue), (($pointer655: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer655 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer655)))(value));
 }, false, (value: fileSystemWatcherValue__from_project | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*project.fileSystemWatcherValue", verb);
 });
@@ -108601,7 +108757,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$overlayFS: {
 }, (value: {
     value: overlayFS__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$overlayFS), (($pointer597: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer597 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer597)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$overlayFS), (($pointer656: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer656 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer656)))(value));
 }, false, (value: {
     value: overlayFS__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108647,7 +108803,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$ownerCacheEntryOf_Point
         value: ExtendedConfigCacheEntry__from_project;
     } | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ownerCacheEntryOf_PointerTo_Named_project$ExtendedConfigCacheEntry), (($pointer598: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer598 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer598)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$ownerCacheEntryOf_PointerTo_Named_project$ExtendedConfigCacheEntry), (($pointer657: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer657 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer657)))(value));
 }, false, (value: {
     value: ownerCacheEntry__from_project<{
         value: ExtendedConfigCacheEntry__from_project;
@@ -108681,7 +108837,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$programCounter: {
 }, (value: {
     value: programCounter__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$programCounter), (($pointer599: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer599 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer599)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$programCounter), (($pointer658: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer658 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer658)))(value));
 }, false, (value: {
     value: programCounter__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108727,7 +108883,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$realpathAliasSet extend
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$realpathAliasSet), (($pointer600: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer600 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer600)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$realpathAliasSet), (($pointer659: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer659 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer659)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108765,7 +108921,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$refCountCacheEntryOf_Po
 }, (value: {
     value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$refCountCacheEntryOf_PointerTo_Named_ast$SourceFile), (($pointer601: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer601 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer601)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$refCountCacheEntryOf_PointerTo_Named_ast$SourceFile), (($pointer660: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer660 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer660)))(value));
 }, false, (value: {
     value: refCountCacheEntry__from_project<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108797,7 +108953,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$snapshotFSBuilder exten
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$snapshotFSBuilder), (($pointer602: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer602 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer602)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$snapshotFSBuilder), (($pointer661: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer661 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer661)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108845,7 +109001,7 @@ export class $goInterfaceAdapter$PointerTo_Named_project$sourceFS extends GoInte
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$sourceFS), (($pointer603: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer603 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer603)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$sourceFS), (($pointer662: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer662 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer662)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -108917,7 +109073,7 @@ export const $goInterfaceAdapter$PointerTo_Named_project$watchRegistry: {
 }, (value: {
     value: watchRegistry__from_project;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$watchRegistry), (($pointer604: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer604 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer604)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_project$watchRegistry), (($pointer663: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer663 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer663)))(value));
 }, false, (value: {
     value: watchRegistry__from_project;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108949,7 +109105,7 @@ export const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoChecker: {
 }, (value: {
     value: PseudoChecker__from_pseudochecker;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoChecker), (($pointer605: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer605 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer605)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoChecker), (($pointer664: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer664 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer664)))(value));
 }, false, (value: {
     value: PseudoChecker__from_pseudochecker;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -108979,15 +109135,16 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoGetAccessor
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoGetAccessor), (($pointer606: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer606 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer606)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoGetAccessor), (($pointer665: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer665 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer665)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoGetAccessor", verb);
     }
-    AsPseudoObjectElement(): tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker> | undefined {
+    AsPseudoObjectElement(): PseudoObjectElement__from_pseudochecker | undefined {
         const __gotots_store_38 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "PseudoObjectElement"));
+        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement,
+            __gotots_store_38.PseudoObjectElement);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoObjectMethod$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoObjectElement$void_to_PointerTo_Named_pseudochecker$PseudoObjectElement]);
@@ -109014,15 +109171,16 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoObjectMetho
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoObjectMethod), (($pointer607: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer607 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer607)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoObjectMethod), (($pointer666: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer666 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer666)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoObjectMethod", verb);
     }
-    AsPseudoObjectElement(): tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker> | undefined {
+    AsPseudoObjectElement(): PseudoObjectElement__from_pseudochecker | undefined {
         const __gotots_store_1738 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1738, "PseudoObjectElement"));
+        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement,
+            __gotots_store_1738.PseudoObjectElement);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoPropertyAssignment$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoObjectElement$void_to_PointerTo_Named_pseudochecker$PseudoObjectElement]);
@@ -109049,15 +109207,16 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoPropertyAss
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoPropertyAssignment), (($pointer608: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer608 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer608)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoPropertyAssignment), (($pointer667: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer667 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer667)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoPropertyAssignment", verb);
     }
-    AsPseudoObjectElement(): tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker> | undefined {
+    AsPseudoObjectElement(): PseudoObjectElement__from_pseudochecker | undefined {
         const __gotots_store_1106 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1106, "PseudoObjectElement"));
+        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement,
+            __gotots_store_1106.PseudoObjectElement);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoSetAccessor$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoObjectElement$void_to_PointerTo_Named_pseudochecker$PseudoObjectElement]);
@@ -109084,15 +109243,16 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoSetAccessor
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoSetAccessor), (($pointer609: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer609 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer609)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoSetAccessor), (($pointer668: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer668 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer668)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoSetAccessor", verb);
     }
-    AsPseudoObjectElement(): tsonicTypeScriptRuntime.Location<PseudoObjectElement__from_pseudochecker> | undefined {
+    AsPseudoObjectElement(): PseudoObjectElement__from_pseudochecker | undefined {
         const __gotots_store_297 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement, tsonicTypeScriptRuntime.propertyLocation(__gotots_store_297, "PseudoObjectElement"));
+        return (void PseudoObjectElement__from_pseudochecker.AsPseudoObjectElement,
+            __gotots_store_297.PseudoObjectElement);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeBase$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109119,15 +109279,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeBase ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeBase), (($pointer610: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer610 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer610)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeBase), (($pointer669: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer669 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer669)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeBase", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_3726 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3726, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_3726.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeDirect$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109154,15 +109314,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeDirect 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeDirect), (($pointer611: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer611 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer611)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeDirect), (($pointer670: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer670 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer670)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeDirect", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_2309 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2309, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_2309.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeInferred$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109189,15 +109349,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeInferre
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeInferred), (($pointer612: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer612 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer612)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeInferred), (($pointer671: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer671 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer671)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeInferred", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_1677 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1677, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_1677.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeLiteral$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109224,15 +109384,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeLiteral
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeLiteral), (($pointer613: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer613 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer613)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeLiteral), (($pointer672: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer672 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer672)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeLiteral", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_1634 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1634, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_1634.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeMaybeConstLocation$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109259,15 +109419,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeMaybeCo
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeMaybeConstLocation), (($pointer614: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer614 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer614)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeMaybeConstLocation), (($pointer673: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer673 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer673)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeMaybeConstLocation", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_136 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_136, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_136.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeNoResult$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109294,15 +109454,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeNoResul
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeNoResult), (($pointer615: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer615 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer615)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeNoResult), (($pointer674: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer674 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer674)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeNoResult", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_446 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_446, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_446.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeObjectLiteral$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109329,15 +109489,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeObjectL
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeObjectLiteral), (($pointer616: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer616 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer616)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeObjectLiteral), (($pointer675: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer675 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer675)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeObjectLiteral", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_1271 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1271, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_1271.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeSingleCallSignature$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109364,15 +109524,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeSingleC
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeSingleCallSignature), (($pointer617: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer617 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer617)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeSingleCallSignature), (($pointer676: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer676 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer676)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeSingleCallSignature", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_18 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_18.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeTuple$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109399,15 +109559,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeTuple e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeTuple), (($pointer618: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer618 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer618)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeTuple), (($pointer677: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer677 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer677)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeTuple", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_271 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_271, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_271.PseudoTypeDefault);
     }
 }
 const $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeUnion$methods: ReadonlySet<object> = new Set<object>([$goInterfaceMethod$AsPseudoType$void_to_PointerTo_Named_pseudochecker$PseudoType]);
@@ -109434,15 +109594,15 @@ export class $goInterfaceAdapter$PointerTo_Named_pseudochecker$PseudoTypeUnion e
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeUnion), (($pointer619: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer619 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer619)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_pseudochecker$PseudoTypeUnion), (($pointer678: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer678 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer678)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
         return GoInterfaceFormat.formatOther("*pseudochecker.PseudoTypeUnion", verb);
     }
-    AsPseudoType(): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined {
+    AsPseudoType(): PseudoType__from_pseudochecker | undefined {
         const __gotots_store_3386 = (this.$go$value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PseudoTypeBase;
-        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3386, "PseudoTypeDefault"));
+        return PseudoTypeDefault__from_pseudochecker.AsPseudoType(__gotots_store_3386.PseudoTypeDefault);
     }
 }
 export const $goInterfaceAdapter$PointerTo_Named_reflect$Type: {
@@ -109474,17 +109634,19 @@ export const $goInterfaceAdapter$PointerTo_Named_scanner$ErrorCallback: {
     return GoInterfaceFormat.formatOther("*scanner.ErrorCallback", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_scanner$Scanner: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined;
+    new ($go$value: Scanner__from_scanner | undefined): GoInterfaceValue & {
+        readonly $go$value: Scanner__from_scanner | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined;
+        readonly $go$value: Scanner__from_scanner | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined>($goDynamicType$PointerTo_Named_scanner$Scanner, (left: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, right: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_scanner$Scanner), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<Scanner__from_scanner | undefined>($goDynamicType$PointerTo_Named_scanner$Scanner, (left: Scanner__from_scanner | undefined, right: Scanner__from_scanner | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: Scanner__from_scanner | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_scanner$Scanner), (($pointer679: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer679 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer679)))(value));
+}, false, (value: Scanner__from_scanner | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*scanner.Scanner", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_scanner$ScannerState: {
@@ -109527,7 +109689,7 @@ export class $goInterfaceAdapter$PointerTo_Named_semver$SemverParseError extends
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_semver$SemverParseError), (($pointer620: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer620 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer620)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_semver$SemverParseError), (($pointer680: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer680 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer680)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -109595,7 +109757,7 @@ export const $goInterfaceAdapter$PointerTo_Named_sourcemap$ECMALineInfo: {
 }, (value: {
     value: ECMALineInfo__from_sourcemap;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_sourcemap$ECMALineInfo), (($pointer621: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer621 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer621)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_sourcemap$ECMALineInfo), (($pointer681: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer681 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer681)))(value));
 }, false, (value: {
     value: ECMALineInfo__from_sourcemap;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -109627,7 +109789,7 @@ export const $goInterfaceAdapter$PointerTo_Named_sourcemap$RawSourceMap: {
 }, (value: {
     value: RawSourceMap__from_sourcemap;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_sourcemap$RawSourceMap), (($pointer622: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer622 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer622)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_sourcemap$RawSourceMap), (($pointer682: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer682 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer682)))(value));
 }, false, (value: {
     value: RawSourceMap__from_sourcemap;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -109790,7 +109952,7 @@ export const $goInterfaceAdapter$PointerTo_Named_symlinks$KnownDirectoryLink: {
 }, (value: {
     value: KnownDirectoryLink__from_symlinks;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_symlinks$KnownDirectoryLink), (($pointer623: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer623 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer623)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_symlinks$KnownDirectoryLink), (($pointer683: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer683 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer683)))(value));
 }, false, (value: {
     value: KnownDirectoryLink__from_symlinks;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110165,7 +110327,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tracing$LineAndChar: {
 }, (value: {
     value: LineAndChar__from_tracing;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$LineAndChar), (($pointer624: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer624 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer624)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$LineAndChar), (($pointer684: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer684 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer684)))(value));
 }, false, (value: {
     value: LineAndChar__from_tracing;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110197,7 +110359,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tracing$Location: {
 }, (value: {
     value: Location__from_tracing;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$Location), (($pointer625: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer625 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer625)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$Location), (($pointer685: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer685 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer685)))(value));
 }, false, (value: {
     value: Location__from_tracing;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110271,7 +110433,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tracing$Tracing: {
 }, (value: {
     value: Tracing__from_tracing;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$Tracing), (($pointer626: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer626 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer626)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$Tracing), (($pointer686: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer686 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer686)))(value));
 }, false, (value: {
     value: Tracing__from_tracing;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110303,7 +110465,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tracing$typeTracer extends GoIn
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$typeTracer), (($pointer627: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer627 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer627)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tracing$typeTracer), (($pointer687: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer687 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer687)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -110342,7 +110504,7 @@ export class $goInterfaceAdapter$PointerTo_Named_trackingvfs$FS extends GoInterf
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_trackingvfs$FS), (($pointer628: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer628 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer628)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_trackingvfs$FS), (($pointer688: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer688 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer688)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -110518,7 +110680,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsc$extendedConfigCacheEntry: {
 }, (value: {
     value: extendedConfigCacheEntry__from_tsc;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsc$extendedConfigCacheEntry), (($pointer629: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer629 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer629)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsc$extendedConfigCacheEntry), (($pointer689: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer689 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer689)))(value));
 }, false, (value: {
     value: extendedConfigCacheEntry__from_tsc;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110564,7 +110726,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$ExtendedConfigCacheEn
 }, (value: {
     value: ExtendedConfigCacheEntry__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$ExtendedConfigCacheEntry), (($pointer630: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer630 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer630)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$ExtendedConfigCacheEntry), (($pointer690: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer690 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer690)))(value));
 }, false, (value: {
     value: ExtendedConfigCacheEntry__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110624,7 +110786,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$ParsedBuildCommandLin
 }, (value: {
     value: ParsedBuildCommandLine__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$ParsedBuildCommandLine), (($pointer631: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer631 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer631)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$ParsedBuildCommandLine), (($pointer691: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer691 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer691)))(value));
 }, false, (value: {
     value: ParsedBuildCommandLine__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110702,7 +110864,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$SourceOutputAndProjec
 }, (value: {
     value: SourceOutputAndProjectReference__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$SourceOutputAndProjectReference), (($pointer632: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer632 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer632)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$SourceOutputAndProjectReference), (($pointer692: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer692 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer692)))(value));
 }, false, (value: {
     value: SourceOutputAndProjectReference__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110734,7 +110896,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$TSConfig: {
 }, (value: {
     value: TSConfig__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$TSConfig), (($pointer633: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer633 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer633)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$TSConfig), (($pointer693: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer693 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer693)))(value));
 }, false, (value: {
     value: TSConfig__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110766,7 +110928,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$TsConfigSourceFile: {
 }, (value: {
     value: TsConfigSourceFile__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$TsConfigSourceFile), (($pointer634: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer634 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer634)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$TsConfigSourceFile), (($pointer694: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer694 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer694)))(value));
 }, false, (value: {
     value: TsConfigSourceFile__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110796,7 +110958,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$buildOptionsParser ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$buildOptionsParser), (($pointer635: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer635 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer635)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$buildOptionsParser), (($pointer695: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer695 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer695)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -110830,7 +110992,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$compilerOptionsParser
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$compilerOptionsParser), (($pointer636: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer636 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer636)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$compilerOptionsParser), (($pointer696: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer696 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer696)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -110851,17 +111013,19 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$compilerOptionsParser
     }
 }
 export const $goInterfaceAdapter$PointerTo_Named_tsoptions$configFileSpecs: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined;
+    new ($go$value: configFileSpecs__from_tsoptions | undefined): GoInterfaceValue & {
+        readonly $go$value: configFileSpecs__from_tsoptions | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined;
+        readonly $go$value: configFileSpecs__from_tsoptions | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined>($goDynamicType$PointerTo_Named_tsoptions$configFileSpecs, (left: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined, right: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$configFileSpecs), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<configFileSpecs__from_tsoptions | undefined>($goDynamicType$PointerTo_Named_tsoptions$configFileSpecs, (left: configFileSpecs__from_tsoptions | undefined, right: configFileSpecs__from_tsoptions | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: configFileSpecs__from_tsoptions | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$configFileSpecs), (($pointer697: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer697 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer697)))(value));
+}, false, (value: configFileSpecs__from_tsoptions | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*tsoptions.configFileSpecs", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Named_tsoptions$parsedTsconfig: {
@@ -110890,7 +111054,7 @@ export const $goInterfaceAdapter$PointerTo_Named_tsoptions$parsedTsconfig: {
 }, (value: {
     value: parsedTsconfig__from_tsoptions;
 } | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$parsedTsconfig), (($pointer637: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer637 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer637)))(value));
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$parsedTsconfig), (($pointer698: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer698 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer698)))(value));
 }, false, (value: {
     value: parsedTsconfig__from_tsoptions;
 } | undefined, verb: string, _flags: string, precision: number | undefined): string => {
@@ -110922,7 +111086,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$resolverHost extends 
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$resolverHost), (($pointer638: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer638 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer638)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$resolverHost), (($pointer699: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer699 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer699)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -110987,7 +111151,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$typeAcquisitionParser
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$typeAcquisitionParser), (($pointer639: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer639 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer639)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$typeAcquisitionParser), (($pointer700: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer700 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer700)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -111031,7 +111195,7 @@ export class $goInterfaceAdapter$PointerTo_Named_tsoptions$watchOptionsParser ex
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$watchOptionsParser), (($pointer640: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer640 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer640)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_tsoptions$watchOptionsParser), (($pointer701: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer701 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer701)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -111197,7 +111361,7 @@ export class $goInterfaceAdapter$PointerTo_Named_wrapvfs$wrappedFS extends GoInt
                 other.$go$value;
     }
     $go$hash(): number {
-        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_wrapvfs$wrappedFS), (($pointer641: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer641 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer641)))(this.$go$value));
+        return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Named_wrapvfs$wrappedFS), (($pointer702: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer702 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer702)))(this.$go$value));
     }
     readonly $go$formatString: boolean = false;
     $go$format(verb: string, _flags: string, precision: number | undefined): string {
@@ -111654,17 +111818,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_api$SignatureResponse
     return GoInterfaceFormat.formatOther("**api.SignatureResponse", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_api$SnapshotChanges: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_api$SnapshotChanges, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_api$SnapshotChanges, (left: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_api$SnapshotChanges), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<SnapshotChanges__from_api | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**api.SnapshotChanges", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_api$SymbolResponse: {
@@ -113146,17 +113310,33 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_cachedvfs$FS: {
     return GoInterfaceFormat.formatOther("**cachedvfs.FS", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_checker$Checker: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<{
+        value: Checker__from_checker;
+    } | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<{
+            value: Checker__from_checker;
+        } | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<{
+            value: Checker__from_checker;
+        } | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<{
+    value: Checker__from_checker;
+} | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<{
+    value: Checker__from_checker;
+} | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<{
+    value: Checker__from_checker;
+} | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<{
+    value: Checker__from_checker;
+} | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_checker$Checker), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<{
+    value: Checker__from_checker;
+} | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**checker.Checker", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_checker$CompositeSignature: {
@@ -113444,17 +113624,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_checker$IterationType
     return GoInterfaceFormat.formatOther("**checker.IterationTypesResolver", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_checker$NodeBuilder: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_checker$NodeBuilder, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_checker$NodeBuilder, (left: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_checker$NodeBuilder), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**checker.NodeBuilder", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_checker$NodeBuilderContext: {
@@ -114268,17 +114448,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_compiler$checkerPool:
     return GoInterfaceFormat.formatOther("**compiler.checkerPool", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_compiler$fileLoader: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_compiler$fileLoader, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_compiler$fileLoader, (left: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_compiler$fileLoader), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<fileLoader__from_compiler> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<fileLoader__from_compiler | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**compiler.fileLoader", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_compiler$filesParser: {
@@ -114566,31 +114746,31 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_core$CompilerOptions:
     return GoInterfaceFormat.formatOther("**core.CompilerOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_core$ParsedOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_core$ParsedOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_core$ParsedOptions, (left: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_core$ParsedOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ParsedOptions__from_core> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ParsedOptions__from_core | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**core.ParsedOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_core$ProjectReference: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_core$ProjectReference, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_core$ProjectReference, (left: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_core$ProjectReference), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ProjectReference__from_core | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**core.ProjectReference", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_core$TypeAcquisition: {
@@ -115248,17 +115428,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_glob$Glob: {
     return GoInterfaceFormat.formatOther("**glob.Glob", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$BuildInfo: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfo, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfo, (left: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfo), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**incremental.BuildInfo", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$BuildInfoDiagnostic: {
@@ -115292,17 +115472,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$BuildInfo
     return GoInterfaceFormat.formatOther("**incremental.BuildInfoDiagnostic", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**incremental.BuildInfoDiagnosticsOfFile", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$BuildInfoEmitSignature: {
@@ -115636,31 +115816,31 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$buildInfo
     return GoInterfaceFormat.formatOther("**incremental.buildInfoDiagnosticWithFileName", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoNoSignature: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoNoSignature, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoNoSignature, (left: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoNoSignature), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoNoSignature__from_incremental | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**incremental.buildInfoFileInfoNoSignature", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoWithSignature: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoWithSignature, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoWithSignature, (left: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_incremental$buildInfoFileInfoWithSignature), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<buildInfoFileInfoWithSignature__from_incremental | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**incremental.buildInfoFileInfoWithSignature", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_incremental$snapshot: {
@@ -117240,17 +117420,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CallHierarchy
     return GoInterfaceFormat.formatOther("**lsproto.CallHierarchyOutgoingCall", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CallHierarchyRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CallHierarchyRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CallHierarchyRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$CallHierarchyRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.CallHierarchyRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ChangeAnnotationsSupportOptions: {
@@ -117720,17 +117900,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeActionOpt
     return GoInterfaceFormat.formatOther("**lsproto.CodeActionOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeActionRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeActionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeActionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeActionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.CodeActionRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeActionTagOptions: {
@@ -117864,17 +118044,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeLensOptio
     return GoInterfaceFormat.formatOther("**lsproto.CodeLensOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeLensRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeLensRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeLensRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$CodeLensRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.CodeLensRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CodeLensWorkspaceClientCapabilities: {
@@ -117920,31 +118100,31 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ColorPresenta
     return GoInterfaceFormat.formatOther("**lsproto.ColorPresentation", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ColorPresentationRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ColorPresentationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ColorPresentationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$ColorPresentationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.ColorPresentationRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$Command: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$Command, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$Command, (left: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$Command), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<Command__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.Command", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CompletionClientCapabilities: {
@@ -118210,17 +118390,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CompletionOpt
     return GoInterfaceFormat.formatOther("**lsproto.CompletionOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$CompletionRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CompletionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$CompletionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$CompletionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.CompletionRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ConfigurationItem: {
@@ -118342,17 +118522,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DeclarationOp
     return GoInterfaceFormat.formatOther("**lsproto.DeclarationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DeclarationRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DeclarationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DeclarationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DeclarationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DeclarationRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DefinitionClientCapabilities: {
@@ -118400,17 +118580,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DefinitionOpt
     return GoInterfaceFormat.formatOther("**lsproto.DefinitionOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DefinitionRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DefinitionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DefinitionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DefinitionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DefinitionRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DeleteFile: {
@@ -118576,17 +118756,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DiagnosticOpt
     return GoInterfaceFormat.formatOther("**lsproto.DiagnosticOptionsOrRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DiagnosticRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DiagnosticRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DiagnosticRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DiagnosticRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DiagnosticRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DiagnosticRelatedInformation: {
@@ -118662,17 +118842,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DidChangeConf
     return GoInterfaceFormat.formatOther("**lsproto.DidChangeConfigurationClientCapabilities", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DidChangeConfigurationRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DidChangeWatchedFilesClientCapabilities: {
@@ -118690,17 +118870,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DidChangeWatc
     return GoInterfaceFormat.formatOther("**lsproto.DidChangeWatchedFilesClientCapabilities", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DidChangeWatchedFilesRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentColorClientCapabilities: {
@@ -118748,17 +118928,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentColor
     return GoInterfaceFormat.formatOther("**lsproto.DocumentColorOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentColorRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentColorRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentColorRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentColorRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentColorRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentFormattingClientCapabilities: {
@@ -118806,17 +118986,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentForma
     return GoInterfaceFormat.formatOther("**lsproto.DocumentFormattingOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentFormattingRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentHighlight: {
@@ -118908,17 +119088,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentHighl
     return GoInterfaceFormat.formatOther("**lsproto.DocumentHighlightOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentHighlightRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentLink: {
@@ -118978,17 +119158,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentLinkO
     return GoInterfaceFormat.formatOther("**lsproto.DocumentLinkOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentLinkRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentLinkRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentLinkRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentLinkRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentLinkRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentOnTypeFormattingClientCapabilities: {
@@ -119036,17 +119216,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentOnTyp
     return GoInterfaceFormat.formatOther("**lsproto.DocumentOnTypeFormattingOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentOnTypeFormattingRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentRangeFormattingClientCapabilities: {
@@ -119094,17 +119274,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentRange
     return GoInterfaceFormat.formatOther("**lsproto.DocumentRangeFormattingOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentRangeFormattingRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentSymbol: {
@@ -119182,17 +119362,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentSymbo
     return GoInterfaceFormat.formatOther("**lsproto.DocumentSymbolOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.DocumentSymbolRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$DocumentUri: {
@@ -119268,17 +119448,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ExecuteComman
     return GoInterfaceFormat.formatOther("**lsproto.ExecuteCommandOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.ExecuteCommandRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ExperimentalClientCapabilities: {
@@ -119546,17 +119726,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FileOperation
     return GoInterfaceFormat.formatOther("**lsproto.FileOperationPatternOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FileOperationRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$FileOperationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$FileOperationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$FileOperationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.FileOperationRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FileRename: {
@@ -119708,17 +119888,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FoldingRangeO
     return GoInterfaceFormat.formatOther("**lsproto.FoldingRangeOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FoldingRangeRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$FoldingRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$FoldingRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$FoldingRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.FoldingRangeRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$FoldingRangeWorkspaceClientCapabilities: {
@@ -119838,17 +120018,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$HoverOptions:
     return GoInterfaceFormat.formatOther("**lsproto.HoverOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$HoverRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$HoverRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$HoverRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$HoverRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.HoverRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ImplementationClientCapabilities: {
@@ -119896,17 +120076,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$Implementatio
     return GoInterfaceFormat.formatOther("**lsproto.ImplementationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ImplementationRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ImplementationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ImplementationRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$ImplementationRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.ImplementationRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InitializationOptions: {
@@ -120144,17 +120324,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlayHintOpti
     return GoInterfaceFormat.formatOther("**lsproto.InlayHintOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlayHintRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlayHintRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlayHintRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlayHintRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.InlayHintRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlayHintWorkspaceClientCapabilities: {
@@ -120274,17 +120454,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineComplet
     return GoInterfaceFormat.formatOther("**lsproto.InlineCompletionOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineCompletionRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineCompletionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineCompletionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineCompletionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.InlineCompletionRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineValueClientCapabilities: {
@@ -120376,17 +120556,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineValueOp
     return GoInterfaceFormat.formatOther("**lsproto.InlineValueOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineValueRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineValueRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineValueRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$InlineValueRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.InlineValueRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$InlineValueText: {
@@ -120580,17 +120760,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$LinkedEditing
     return GoInterfaceFormat.formatOther("**lsproto.LinkedEditingRangeOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.LinkedEditingRangeRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$LinkedEditingRanges: {
@@ -120918,17 +121098,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$MonikerOption
     return GoInterfaceFormat.formatOther("**lsproto.MonikerOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$MonikerRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$MonikerRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$MonikerRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$MonikerRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.MonikerRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$MultiDocumentHighlight: {
@@ -121258,17 +121438,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ProjectInfoTe
     return GoInterfaceFormat.formatOther("**lsproto.ProjectInfoTelemetryEvent", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements, (left: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$ProjectInfoTelemetryMeasurements), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.ProjectInfoTelemetryMeasurements", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$PublishDiagnosticsClientCapabilities: {
@@ -121404,17 +121584,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ReferenceOpti
     return GoInterfaceFormat.formatOther("**lsproto.ReferenceOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ReferenceRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ReferenceRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$ReferenceRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$ReferenceRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.ReferenceRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$RegisterOptions: {
@@ -121670,17 +121850,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$RenameOptions
     return GoInterfaceFormat.formatOther("**lsproto.RenameOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$RenameRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$RenameRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$RenameRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$RenameRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.RenameRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$RequestFailureTelemetryEvent: {
@@ -121862,17 +122042,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SelectionRang
     return GoInterfaceFormat.formatOther("**lsproto.SelectionRangeOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SelectionRangeRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SelectionRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SelectionRangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$SelectionRangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.SelectionRangeRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SemanticTokens: {
@@ -122084,17 +122264,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SemanticToken
     return GoInterfaceFormat.formatOther("**lsproto.SemanticTokensOptionsOrRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SemanticTokensRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SemanticTokensRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SemanticTokensRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$SemanticTokensRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.SemanticTokensRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SemanticTokensWorkspaceClientCapabilities: {
@@ -122316,17 +122496,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SignatureHelp
     return GoInterfaceFormat.formatOther("**lsproto.SignatureHelpOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SignatureHelpRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SignatureHelpRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$SignatureHelpRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$SignatureHelpRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.SignatureHelpRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SignatureInformation: {
@@ -122520,17 +122700,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SymbolInforma
     return GoInterfaceFormat.formatOther("**lsproto.SymbolInformation", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentChangeRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentClientCapabilities: {
@@ -122622,17 +122802,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentC
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentContentClientCapabilities", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentContentOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentOptions, (left: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentContentOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentContentOptionsOrRegistrationOptions: {
@@ -122650,17 +122830,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentC
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentContentOptionsOrRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentContentRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentContentResult: {
@@ -122722,45 +122902,45 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentF
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentFilterClientCapabilities", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterLanguage: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterLanguage, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterLanguage, (left: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterLanguage), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentFilterLanguage", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterPattern: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterPattern, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterPattern, (left: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterPattern), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentFilterPattern", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterScheme: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterScheme, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterScheme, (left: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentFilterScheme), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentFilterScheme", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentItem: {
@@ -122778,31 +122958,31 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentI
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TextDocumentSaveRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TextDocumentSyncClientCapabilities: {
@@ -123012,17 +123192,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TypeDefinitio
     return GoInterfaceFormat.formatOther("**lsproto.TypeDefinitionOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TypeDefinitionRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TypeHierarchyClientCapabilities: {
@@ -123098,17 +123278,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TypeHierarchy
     return GoInterfaceFormat.formatOther("**lsproto.TypeHierarchyOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.TypeHierarchyRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$URI: {
@@ -123306,17 +123486,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$VSOnAutoInser
     return GoInterfaceFormat.formatOther("**lsproto.VSOnAutoInsertResponseItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$VSReferenceItem: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$VSReferenceItem), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.VSReferenceItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$WatchKind: {
@@ -123728,17 +123908,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$WorkspaceSymb
     return GoInterfaceFormat.formatOther("**lsproto.WorkspaceSymbolOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions, (left: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions__from_lsproto | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**lsproto.WorkspaceSymbolRegistrationOptions", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$WorkspaceUnchangedDocumentDiagnosticReport: {
@@ -124882,17 +125062,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_pseudochecker$PseudoC
     return GoInterfaceFormat.formatOther("**pseudochecker.PseudoChecker", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_scanner$Scanner: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_scanner$Scanner, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_scanner$Scanner, (left: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_scanner$Scanner), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<Scanner__from_scanner | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**scanner.Scanner", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_semver$Version: {
@@ -125278,17 +125458,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_Named_tsoptions$TsConfigSou
     return GoInterfaceFormat.formatOther("**tsoptions.TsConfigSourceFile", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_tsoptions$configFileSpecs: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_tsoptions$configFileSpecs, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_Named_tsoptions$configFileSpecs, (left: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_Named_tsoptions$configFileSpecs), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<configFileSpecs__from_tsoptions | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**tsoptions.configFileSpecs", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_Named_tsoptions$parsedTsconfig: {
@@ -126178,17 +126358,17 @@ export const $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsp
     return GoInterfaceFormat.formatOther("**[]*lsproto.TypeHierarchyItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined>($goDynamicType$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined, right: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("**[]*lsproto.VSReferenceItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$WorkspaceFolder: {
@@ -128914,17 +129094,33 @@ export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_build$upstrea
     return GoInterfaceFormat.formatOther("*[]*build.upstreamTask", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_checker$Checker: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+            value: Checker__from_checker;
+        } | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+            value: Checker__from_checker;
+        } | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_checker$Checker, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_SliceOf_PointerTo_Named_checker$Checker), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*[]*checker.Checker", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_checker$IndexInfo: {
@@ -129254,17 +129450,17 @@ export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_compiler$proj
     return GoInterfaceFormat.formatOther("*[]*compiler.projectReferenceParseTask", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_core$ProjectReference: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_core$ProjectReference, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_core$ProjectReference, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_SliceOf_PointerTo_Named_core$ProjectReference), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<ProjectReference__from_core | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*[]*core.ProjectReference", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_glob$Glob: {
@@ -129328,17 +129524,17 @@ export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_incremental$B
     return GoInterfaceFormat.formatOther("*[]*incremental.BuildInfoDiagnostic", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*[]*incremental.BuildInfoDiagnosticsOfFile", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_incremental$BuildInfoEmitSignature: {
@@ -130588,17 +130784,17 @@ export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$VSCla
     return GoInterfaceFormat.formatOther("*[]*lsproto.VSClassifiedTextRun", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined;
+    new ($go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined): GoInterfaceValue & {
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined;
+        readonly $go$value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined): boolean => {
+} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined>($goDynamicType$PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined, right: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined): boolean => {
     return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined): number => {
+}, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined): number => {
     return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*[]*lsproto.VSReferenceItem", verb);
 });
 export const $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$WorkspaceFolder: {
@@ -130918,17 +131114,19 @@ export const $goInterfaceAdapter$PointerTo_SliceOf_void_to_void: {
     return GoInterfaceFormat.formatOther("*[]func()", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined;
+    new ($go$value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined): GoInterfaceValue & {
+        readonly $go$value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined;
+        readonly $go$value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined>($goDynamicType$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_, (left: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined, right: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<$goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined>($goDynamicType$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_, (left: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined, right: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_), (($pointer703: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer703 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer703)))(value));
+}, false, (value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_ | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*struct{Content *string \"json:\\\"content\\\"\"}", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Struct_Field_Files_SliceOf_string_Tag_json_u3a__u22_files_u22__Field_Directories_SliceOf_string_Tag_json_u3a__u22_directories_u22_: {
@@ -130946,31 +131144,35 @@ export const $goInterfaceAdapter$PointerTo_Struct_Field_Files_SliceOf_string_Tag
     return GoInterfaceFormat.formatOther("*struct{Files []string \"json:\\\"files\\\"\"; Directories []string \"json:\\\"directories\\\"\"}", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined;
+    new ($go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined): GoInterfaceValue & {
+        readonly $go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined;
+        readonly $go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined>($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_, (left: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined, right: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined>($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_, (left: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined, right: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_), (($pointer704: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer704 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer704)))(value));
+}, false, (value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_ | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*struct{JSONRPC jsonrpc.JSONRPCVersion \"json:\\\"jsonrpc\\\"\"; ID *jsonrpc.ID \"json:\\\"id\\\"\"; Method lsproto.Method \"json:\\\"method\\\"\"; Params json.Value \"json:\\\"params\\\"\"}", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_: {
-    new ($go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined): GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined;
+    new ($go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined): GoInterfaceValue & {
+        readonly $go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined;
+        readonly $go$value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined;
     };
-} = createGoInterfaceAdapter<tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined>($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_, (left: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined, right: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined): boolean => {
-    return tsonicTypeScriptRuntime.sameLocation(left, right);
-}, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined): number => {
-    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_), tsonicTypeScriptRuntime.hashLocation(value));
-}, false, (value: tsonicTypeScriptRuntime.Location<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_> | undefined, verb: string, _flags: string, precision: number | undefined): string => {
+} = createGoInterfaceAdapter<$goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined>($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_, (left: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined, right: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined): boolean => {
+    return left
+        ===
+            right;
+}, (value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined): number => {
+    return GoMapHash.mix(GoMapHash.object($goDynamicType$PointerTo_Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_), (($pointer705: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer705 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer705)))(value));
+}, false, (value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ | undefined, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("*struct{JSONRPC jsonrpc.JSONRPCVersion \"json:\\\"jsonrpc\\\"\"; Method lsproto.Method \"json:\\\"method\\\"\"; ID *jsonrpc.ID \"json:\\\"id,omitzero\\\"\"; Params json.Value \"json:\\\"params\\\"\"; Result json.Value \"json:\\\"result,omitzero\\\"\"; Error *jsonrpc.ResponseError \"json:\\\"error,omitzero\\\"\"}", verb);
 });
 export const $goInterfaceAdapter$PointerTo_Struct_void: {
@@ -134282,17 +134484,33 @@ export const $goInterfaceAdapter$SliceOf_PointerTo_Named_build$upstreamTask: {
     return GoInterfaceFormat.formatOther("[]*build.upstreamTask", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_checker$Checker: {
-    new ($go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>;
+    new ($go$value: RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined>): GoInterfaceValue & {
+        readonly $go$value: RuntimeSlice<{
+            value: Checker__from_checker;
+        } | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>;
+        readonly $go$value: RuntimeSlice<{
+            value: Checker__from_checker;
+        } | undefined>;
     };
-} = createGoInterfaceAdapter<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>>($goDynamicType$SliceOf_PointerTo_Named_checker$Checker, (left: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, right: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): boolean => {
+} = createGoInterfaceAdapter<RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>>($goDynamicType$SliceOf_PointerTo_Named_checker$Checker, (left: RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>, right: RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): number => {
+}, (value: RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("[]*checker.Checker", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_checker$IndexInfo: {
@@ -134622,17 +134840,17 @@ export const $goInterfaceAdapter$SliceOf_PointerTo_Named_compiler$projectReferen
     return GoInterfaceFormat.formatOther("[]*compiler.projectReferenceParseTask", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_core$ProjectReference: {
-    new ($go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>): GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>;
+    new ($go$value: RuntimeSlice<ProjectReference__from_core | undefined>): GoInterfaceValue & {
+        readonly $go$value: RuntimeSlice<ProjectReference__from_core | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>;
+        readonly $go$value: RuntimeSlice<ProjectReference__from_core | undefined>;
     };
-} = createGoInterfaceAdapter<RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>>($goDynamicType$SliceOf_PointerTo_Named_core$ProjectReference, (left: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>, right: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>): boolean => {
+} = createGoInterfaceAdapter<RuntimeSlice<ProjectReference__from_core | undefined>>($goDynamicType$SliceOf_PointerTo_Named_core$ProjectReference, (left: RuntimeSlice<ProjectReference__from_core | undefined>, right: RuntimeSlice<ProjectReference__from_core | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>): number => {
+}, (value: RuntimeSlice<ProjectReference__from_core | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: RuntimeSlice<ProjectReference__from_core | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("[]*core.ProjectReference", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_glob$Glob: {
@@ -134696,17 +134914,17 @@ export const $goInterfaceAdapter$SliceOf_PointerTo_Named_incremental$BuildInfoDi
     return GoInterfaceFormat.formatOther("[]*incremental.BuildInfoDiagnostic", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile: {
-    new ($go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>): GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>;
+    new ($go$value: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>): GoInterfaceValue & {
+        readonly $go$value: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>;
+        readonly $go$value: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>;
     };
-} = createGoInterfaceAdapter<RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>>($goDynamicType$SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>, right: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>): boolean => {
+} = createGoInterfaceAdapter<RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>>($goDynamicType$SliceOf_PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile, (left: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>, right: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>): number => {
+}, (value: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("[]*incremental.BuildInfoDiagnosticsOfFile", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_incremental$BuildInfoEmitSignature: {
@@ -135956,17 +136174,17 @@ export const $goInterfaceAdapter$SliceOf_PointerTo_Named_lsproto$VSClassifiedTex
     return GoInterfaceFormat.formatOther("[]*lsproto.VSClassifiedTextRun", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_lsproto$VSReferenceItem: {
-    new ($go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>): GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>;
+    new ($go$value: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>): GoInterfaceValue & {
+        readonly $go$value: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>;
     };
     $is(value: GoInterfaceValue | undefined): value is GoInterfaceValue & {
-        readonly $go$value: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>;
+        readonly $go$value: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>;
     };
-} = createGoInterfaceAdapter<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>>($goDynamicType$SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>, right: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>): boolean => {
+} = createGoInterfaceAdapter<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>>($goDynamicType$SliceOf_PointerTo_Named_lsproto$VSReferenceItem, (left: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>, right: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>): boolean => {
     return GoPanic.raiseRuntime("runtime error: comparing uncomparable dynamic interface value");
-}, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>): number => {
+}, (value: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>): number => {
     return GoPanic.raiseRuntime("runtime error: hash of unhashable dynamic interface value");
-}, false, (value: RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
+}, false, (value: RuntimeSlice<VSReferenceItem__from_lsproto | undefined>, verb: string, _flags: string, precision: number | undefined): string => {
     return GoInterfaceFormat.formatOther("[]*lsproto.VSReferenceItem", verb);
 });
 export const $goInterfaceAdapter$SliceOf_PointerTo_Named_lsproto$WorkspaceFolder: {

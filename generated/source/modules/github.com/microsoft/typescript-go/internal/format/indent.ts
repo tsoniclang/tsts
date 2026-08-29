@@ -552,7 +552,7 @@ export function getVisualListRange(node: tsonicTypeScriptRuntime.Location<Node__
     else {
         priorEnd = Node__from_ast.End(prior);
     }
-    let scan: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, list.End());
+    let scan: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, list.End());
     let nextStart = 0;
     if (Scanner__from_scanner.Token(scan) === KindEndOfFile$constant__from_ast()) {
         nextStart = list.End();

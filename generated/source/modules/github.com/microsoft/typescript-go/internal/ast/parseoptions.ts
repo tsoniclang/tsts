@@ -53,7 +53,7 @@ export class SourceFileParseOptions implements GoContainerStoredValue<SourceFile
             FileName: "",
             Path: ((void Path__from_tspath,
                 "") as string),
-            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions.$storageOf(ExternalModuleIndicatorOptions.$zero())
+            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions.$zeroStorage()
         });
     }
     static $copy($source: SourceFileParseOptions): SourceFileParseOptions {
@@ -78,6 +78,14 @@ export class SourceFileParseOptions implements GoContainerStoredValue<SourceFile
             $source.$storage.Path) as string)));
         $hash = GoMapHash.mix($hash, ExternalModuleIndicatorOptions.$hash(ExternalModuleIndicatorOptions.$fromStorage($source.$storage.ExternalModuleIndicatorOptions)));
         return $hash;
+    }
+    static $zeroStorage(): SourceFileParseOptions$Storage {
+        return {
+            FileName: "",
+            Path: ((void Path__from_tspath,
+                "") as string),
+            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -107,12 +115,6 @@ export class ExternalModuleIndicatorOptions {
     public set Force($value: bool) {
         this.$storage.Force = $value;
     }
-    static $zero(): ExternalModuleIndicatorOptions {
-        return new ExternalModuleIndicatorOptions({
-            JSX: false,
-            Force: false
-        });
-    }
     static $copy($source: ExternalModuleIndicatorOptions): ExternalModuleIndicatorOptions {
         return new ExternalModuleIndicatorOptions({
             JSX: $source.$storage.JSX,
@@ -127,6 +129,12 @@ export class ExternalModuleIndicatorOptions {
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.JSX));
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.Force));
         return $hash;
+    }
+    static $zeroStorage(): ExternalModuleIndicatorOptions$Storage {
+        return {
+            JSX: false,
+            Force: false
+        };
     }
     declare private readonly then?: never;
 }

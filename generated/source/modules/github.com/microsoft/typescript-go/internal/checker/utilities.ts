@@ -350,7 +350,9 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
     if (t2 === undefined) {
         return 1;
     }
-    if (!tsonicTypeScriptRuntime.sameLocation(((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker, ((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker)) {
+    if (!(((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker
+        ===
+            ((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker)) {
         const __gotots_argument_6 = new GoInterfaceAdapter("Cannot compare types from different checkers");
         GoPanic.raise(__gotots_argument_6 === undefined ? GoPanicNilValue.create() : __gotots_argument_6);
     }
@@ -371,7 +373,7 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
         }
         else if (!((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsObject$constant()) >>> 0 === 0)) {
             {
-                const __gotots_callee_0 = ((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.compareSymbols;
+                const __gotots_callee_0: Checker["compareSymbols"] = (((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compareSymbols;
                 const __gotots_argument_7 = ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 const __gotots_argument_8 = ((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 let c = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_7, __gotots_argument_8);
@@ -470,7 +472,7 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
         }
         else if (!((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (114688)) >>> 0 === 0)) {
             {
-                const __gotots_callee_1 = ((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.compareSymbols;
+                const __gotots_callee_1: Checker["compareSymbols"] = (((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compareSymbols;
                 const __gotots_argument_9 = ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 const __gotots_argument_10 = ((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 let c = (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_9, __gotots_argument_10);
@@ -537,7 +539,7 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
         }
         else if (!((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTypeParameter$constant()) >>> 0 === 0)) {
             {
-                const __gotots_callee_2 = ((((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.compareSymbols;
+                const __gotots_callee_2: Checker["compareSymbols"] = (((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compareSymbols;
                 const __gotots_argument_11 = ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 const __gotots_argument_12 = ((t2 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol;
                 let c = (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_11, __gotots_argument_12);
@@ -1044,7 +1046,7 @@ export function isValidBigIntString(s: gostring, roundTripOnly: bool): bool {
     if (s === "") {
         return false;
     }
-    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = NewScanner__from_scanner();
+    let scanner__shadow_1: Scanner__from_scanner | undefined = NewScanner__from_scanner();
     Scanner__from_scanner.SetSkipTrivia(scanner__shadow_1, false);
     let success = true;
     Scanner__from_scanner.SetOnError(scanner__shadow_1, new ErrorCallback__from_scanner((diagnostic: {
@@ -1496,7 +1498,9 @@ export function allDeclarationsInSameSourceFile(__go_symbol: tsonicTypeScriptRun
     }
     return true;
 }
-export function containsNonMissingUndefinedType(c: tsonicTypeScriptRuntime.Location<Checker> | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): bool {
+export function containsNonMissingUndefinedType(c: {
+    value: Checker;
+} | undefined, t: tsonicTypeScriptRuntime.Location<Type> | undefined): bool {
     let candidate: tsonicTypeScriptRuntime.Location<Type> | undefined = void 0;
     if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUnion$constant()) >>> 0 === 0)) {
         candidate = (Type.AsUnionType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnionOrIntersectionType.types.get(0);
@@ -1504,7 +1508,7 @@ export function containsNonMissingUndefinedType(c: tsonicTypeScriptRuntime.Locat
     else {
         candidate = t;
     }
-    return !((((candidate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUndefined$constant()) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(candidate, ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.missingType);
+    return !((((candidate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUndefined$constant()) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(candidate, (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.missingType);
 }
 export function getAnyImportSyntax(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let importNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
@@ -1569,7 +1573,9 @@ export function symbolsToArray(symbols: SymbolTable__from_ast): RuntimeSlice<tso
     }
     return result;
 }
-export function SkipAlias(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker: tsonicTypeScriptRuntime.Location<Checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function SkipAlias(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker: {
+    value: Checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (!((Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsAlias$constant__from_ast()) >>> 0 === 0)) {
         return Checker.GetAliasedSymbol(checker, __go_symbol);
     }

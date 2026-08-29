@@ -48,6 +48,12 @@ export class TextRange {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.end));
         return $hash;
     }
+    static $zeroStorage(): TextRange$Storage {
+        return {
+            pos: 0,
+            end: 0
+        };
+    }
     declare private readonly then?: never;
     ContainedBy(t2: TextRange): bool {
         return TextRange.$storageOf(t2).pos <= TextRange.$storageOf(this).pos && TextRange.$storageOf(t2).end >= TextRange.$storageOf(this).end;

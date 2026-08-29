@@ -2021,14 +2021,14 @@ export class $goMap$MapOf_Named_api$Method_To_SliceOf_byte_to_Interface_void_Nam
         return result;
     }
 }
-export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges extends GoMapValue<ProjectID__from_api, tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined> {
-    private constructor(private readonly zeroValue: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined, private readonly buckets: Map<number, [
+export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges extends GoMapValue<ProjectID__from_api, ProjectFileChanges__from_api | undefined> {
+    private constructor(private readonly zeroValue: ProjectFileChanges__from_api | undefined, private readonly buckets: Map<number, [
         gostring,
-        tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+        ProjectFileChanges__from_api | undefined
     ][]> | undefined, private count: number) {
         super();
     }
-    private static $zeroValue(): tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined {
+    private static $zeroValue(): ProjectFileChanges__from_api | undefined {
         return void 0;
     }
     private static $hash($key: gostring): number {
@@ -2040,7 +2040,7 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
     private static $copyKey($key: gostring): gostring {
         return $key;
     }
-    private static $copyValue($value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined): tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined {
+    private static $copyValue($value: ProjectFileChanges__from_api | undefined): ProjectFileChanges__from_api | undefined {
         return $value;
     }
     private static $projectKey($key: ProjectID__from_api): gostring {
@@ -2054,11 +2054,11 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
     }
     static make(size: number | bigint, entries: [
         ProjectID__from_api,
-        tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+        ProjectFileChanges__from_api | undefined
     ][]): $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges {
         const result: $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges = new $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges($goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$zeroValue(), new Map<number, [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ][]>, 0);
         for (const entry of entries) {
             result.store(entry[0], entry[1]);
@@ -2068,11 +2068,11 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
     private $find(key: gostring): [
         [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ],
         [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ][],
         number
     ] | undefined {
@@ -2093,34 +2093,34 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
         }
         return undefined;
     }
-    lookup(key: ProjectID__from_api): tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined {
+    lookup(key: ProjectID__from_api): ProjectFileChanges__from_api | undefined {
         const storageKey: gostring = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$projectKey(key);
         const found: [
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ],
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ][],
             number
         ] | undefined = this.$find(storageKey);
         return $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$copyValue(found === undefined ? this.zeroValue : found[0][1]);
     }
     lookupOk(key: ProjectID__from_api): [
-        tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined,
+        ProjectFileChanges__from_api | undefined,
         boolean
     ] {
         const storageKey: gostring = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$projectKey(key);
         const found: [
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ],
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ][],
             number
         ] | undefined = this.$find(storageKey);
@@ -2129,11 +2129,11 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
         }
         return [$goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$copyValue(found[0][1]), true];
     }
-    store(key: ProjectID__from_api, value: tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined): void {
+    store(key: ProjectID__from_api, value: ProjectFileChanges__from_api | undefined): void {
         const storageKey: gostring = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$projectKey(key);
         const buckets: Map<number, [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             GoPanic.raiseRuntime("assignment to entry in nil map");
@@ -2141,7 +2141,7 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
         const hash: number = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.$hash(storageKey);
         let bucket: [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ][] | undefined = buckets.get(hash);
         if (bucket === undefined) {
             bucket = [];
@@ -2161,11 +2161,11 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
         const found: [
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ],
             [
                 gostring,
-                tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+                ProjectFileChanges__from_api | undefined
             ][],
             number
         ] | undefined = this.$find(storageKey);
@@ -2197,7 +2197,7 @@ export class $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFile
         const result: ProjectID__from_api[] = [];
         const buckets: Map<number, [
             gostring,
-            tsonicTypeScriptRuntime.Location<ProjectFileChanges__from_api> | undefined
+            ProjectFileChanges__from_api | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             return result;
@@ -31120,14 +31120,14 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_estransfor
         return result;
     }
 }
-export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo extends GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined> {
-    private constructor(private readonly zeroValue: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined, private readonly buckets: Map<number, [
+export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo extends GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo__from_printer | undefined> {
+    private constructor(private readonly zeroValue: AutoGenerateInfo__from_printer | undefined, private readonly buckets: Map<number, [
         tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-        tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+        AutoGenerateInfo__from_printer | undefined
     ][]> | undefined, private count: number) {
         super();
     }
-    private static $zeroValue(): tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined {
+    private static $zeroValue(): AutoGenerateInfo__from_printer | undefined {
         return void 0;
     }
     private static $hash($key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): number {
@@ -31139,7 +31139,7 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
     private static $copyKey($key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         return $key;
     }
-    private static $copyValue($value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined): tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined {
+    private static $copyValue($value: AutoGenerateInfo__from_printer | undefined): AutoGenerateInfo__from_printer | undefined {
         return $value;
     }
     static nil(): $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo {
@@ -31147,11 +31147,11 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
     }
     static make(size: number | bigint, entries: [
         tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-        tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+        AutoGenerateInfo__from_printer | undefined
     ][]): $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo {
         const result: $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo = new $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo($goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo.$zeroValue(), new Map<number, [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ][]>, 0);
         for (const entry of entries) {
             result.store(entry[0], entry[1]);
@@ -31161,11 +31161,11 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
     private $find(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): [
         [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ],
         [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ][],
         number
     ] | undefined {
@@ -31186,32 +31186,32 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
         }
         return undefined;
     }
-    lookup(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined {
+    lookup(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): AutoGenerateInfo__from_printer | undefined {
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ][],
             number
         ] | undefined = this.$find(key);
         return $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo.$copyValue(found === undefined ? this.zeroValue : found[0][1]);
     }
     lookupOk(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined,
+        AutoGenerateInfo__from_printer | undefined,
         boolean
     ] {
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ][],
             number
         ] | undefined = this.$find(key);
@@ -31220,10 +31220,10 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
         }
         return [$goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo.$copyValue(found[0][1]), true];
     }
-    store(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, value: tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined): void {
+    store(key: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, value: AutoGenerateInfo__from_printer | undefined): void {
         const buckets: Map<number, [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             GoPanic.raiseRuntime("assignment to entry in nil map");
@@ -31231,7 +31231,7 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
         const hash: number = $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$AutoGenerateInfo.$hash(key);
         let bucket: [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ][] | undefined = buckets.get(hash);
         if (bucket === undefined) {
             bucket = [];
@@ -31250,11 +31250,11 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+                AutoGenerateInfo__from_printer | undefined
             ][],
             number
         ] | undefined = this.$find(key);
@@ -31286,7 +31286,7 @@ export class $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_printer$Au
         const result: (tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined)[] = [];
         const buckets: Map<number, [
             tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<AutoGenerateInfo__from_printer> | undefined
+            AutoGenerateInfo__from_printer | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             return result;
@@ -32374,14 +32374,22 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_Named_tspath$Path ex
         return result;
     }
 }
-export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker extends GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> {
-    private constructor(private readonly zeroValue: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, private readonly buckets: Map<number, [
+export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker extends GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+    value: Checker__from_checker;
+} | undefined> {
+    private constructor(private readonly zeroValue: {
+        value: Checker__from_checker;
+    } | undefined, private readonly buckets: Map<number, [
         tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+        {
+            value: Checker__from_checker;
+        } | undefined
     ][]> | undefined, private count: number) {
         super();
     }
-    private static $zeroValue(): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
+    private static $zeroValue(): {
+        value: Checker__from_checker;
+    } | undefined {
         return void 0;
     }
     private static $hash($key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): number {
@@ -32393,7 +32401,11 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
     private static $copyKey($key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
         return $key;
     }
-    private static $copyValue($value: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
+    private static $copyValue($value: {
+        value: Checker__from_checker;
+    } | undefined): {
+        value: Checker__from_checker;
+    } | undefined {
         return $value;
     }
     static nil(): $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker {
@@ -32401,11 +32413,15 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
     }
     static make(size: number | bigint, entries: [
         tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+        {
+            value: Checker__from_checker;
+        } | undefined
     ][]): $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker {
         const result: $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker = new $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker($goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker.$zeroValue(), new Map<number, [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ][]>, 0);
         for (const entry of entries) {
             result.store(entry[0], entry[1]);
@@ -32415,11 +32431,15 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
     private $find(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
         [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ],
         [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ][],
         number
     ] | undefined {
@@ -32440,32 +32460,44 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
         }
         return undefined;
     }
-    lookup(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
+    lookup(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
+        value: Checker__from_checker;
+    } | undefined {
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ][],
             number
         ] | undefined = this.$find(key);
         return $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker.$copyValue(found === undefined ? this.zeroValue : found[0][1]);
     }
     lookupOk(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         boolean
     ] {
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ][],
             number
         ] | undefined = this.$find(key);
@@ -32474,10 +32506,14 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
         }
         return [$goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker.$copyValue(found[0][1]), true];
     }
-    store(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, value: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): void {
+    store(key: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, value: {
+        value: Checker__from_checker;
+    } | undefined): void {
         const buckets: Map<number, [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             GoPanic.raiseRuntime("assignment to entry in nil map");
@@ -32485,7 +32521,9 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
         const hash: number = $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_checker$Checker.$hash(key);
         let bucket: [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ][] | undefined = buckets.get(hash);
         if (bucket === undefined) {
             bucket = [];
@@ -32504,11 +32542,15 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
         const found: [
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ],
             [
                 tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+                {
+                    value: Checker__from_checker;
+                } | undefined
             ][],
             number
         ] | undefined = this.$find(key);
@@ -32540,7 +32582,9 @@ export class $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_chec
         const result: (tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined)[] = [];
         const buckets: Map<number, [
             tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined
+            {
+                value: Checker__from_checker;
+            } | undefined
         ][]> | undefined = this.buckets;
         if (buckets === undefined) {
             return result;

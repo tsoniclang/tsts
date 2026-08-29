@@ -176,7 +176,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: gostring, 
     };
     const __gotots_slice_build_0 = goSliceAllocate<ModulePath__from_modulespecifiers$Storage>(0, paths.length);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, ModulePath.$storageOf(ModulePath.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, ModulePath.$zeroStorage());
     }
     let sortedPaths = __gotots_slice_build_0;
     for (let directory = info.SourceDirectory; allFileNames.length() !== 0;) {
@@ -208,7 +208,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: gostring, 
                     }
                     __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, ModulePath.$storageOf(ModulePath.$copy(p)));
                     for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
-                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, ModulePath.$storageOf(ModulePath.$zero()));
+                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, ModulePath.$zeroStorage());
                     }
                 }
                 pathsInDirectory = __gotots_slice_build_3;
@@ -243,7 +243,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: gostring, 
                     __gotots_slice_build_9.set(__gotots_slice_build_6.length + __gotots_slice_build_11, __gotots_slice_build_8.get(__gotots_slice_build_11));
                 }
                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, ModulePath.$storageOf(ModulePath.$zero()));
+                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, ModulePath.$zeroStorage());
                 }
             }
             sortedPaths = __gotots_slice_build_9;
@@ -283,7 +283,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: gostring, 
                 __gotots_slice_build_15.set(__gotots_slice_build_12.length + __gotots_slice_build_17, __gotots_slice_build_14.get(__gotots_slice_build_17));
             }
             for (let __gotots_slice_build_17 = __gotots_slice_build_16; __gotots_slice_build_17 < __gotots_slice_build_15.capacity; __gotots_slice_build_17++) {
-                __gotots_slice_build_15.$initialize(__gotots_slice_build_17, ModulePath.$storageOf(ModulePath.$zero()));
+                __gotots_slice_build_15.$initialize(__gotots_slice_build_17, ModulePath.$zeroStorage());
             }
         }
         sortedPaths = __gotots_slice_build_15;
@@ -328,7 +328,7 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
     let shouldFilterIgnoredPaths = !Every$string(targets, containsIgnoredPath);
     const __gotots_slice_build_18 = goSliceAllocate<ModulePath__from_modulespecifiers$Storage>(0, 2);
     for (let __gotots_slice_build_19 = 0; __gotots_slice_build_19 < __gotots_slice_build_18.capacity; __gotots_slice_build_19++) {
-        __gotots_slice_build_18.$initialize(__gotots_slice_build_19, ModulePath.$storageOf(ModulePath.$zero()));
+        __gotots_slice_build_18.$initialize(__gotots_slice_build_19, ModulePath.$zeroStorage());
     }
     let results = __gotots_slice_build_18;
     if (!preferSymlinks) {
@@ -361,7 +361,7 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                             IsRedirect: referenceRedirect === p
                         })));
                     for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
-                        __gotots_slice_build_21.$initialize(__gotots_slice_build_23, ModulePath.$storageOf(ModulePath.$zero()));
+                        __gotots_slice_build_21.$initialize(__gotots_slice_build_23, ModulePath.$zeroStorage());
                     }
                 }
                 results = __gotots_slice_build_21;
@@ -441,7 +441,7 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                                 IsRedirect: target === referenceRedirect
                             })));
                         for (let __gotots_slice_build_27 = __gotots_slice_build_26; __gotots_slice_build_27 < __gotots_slice_build_25.capacity; __gotots_slice_build_27++) {
-                            __gotots_slice_build_25.$initialize(__gotots_slice_build_27, ModulePath.$storageOf(ModulePath.$zero()));
+                            __gotots_slice_build_25.$initialize(__gotots_slice_build_27, ModulePath.$zeroStorage());
                         }
                     }
                     results = __gotots_slice_build_25;
@@ -483,7 +483,7 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
                             IsRedirect: referenceRedirect === p
                         })));
                     for (let __gotots_slice_build_31 = __gotots_slice_build_30; __gotots_slice_build_31 < __gotots_slice_build_29.capacity; __gotots_slice_build_31++) {
-                        __gotots_slice_build_29.$initialize(__gotots_slice_build_31, ModulePath.$storageOf(ModulePath.$zero()));
+                        __gotots_slice_build_29.$initialize(__gotots_slice_build_31, ModulePath.$zeroStorage());
                     }
                 }
                 results = __gotots_slice_build_29;
@@ -1247,17 +1247,17 @@ export class specPair implements GoContainerStoredValue<specPair$Storage> {
         this.$storage.value = $value;
     }
     declare readonly [$goContainerStorageType]: specPair$Storage;
-    static $zero(): specPair {
-        return new specPair({
-            ending: 0,
-            value: ""
-        });
-    }
     static $copy($source: specPair): specPair {
         return new specPair({
             ending: $source.$storage.ending,
             value: $source.$storage.value
         });
+    }
+    static $zeroStorage(): specPair$Storage {
+        return {
+            ending: 0,
+            value: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -1331,7 +1331,7 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: gostring, paths: ts
                             value: result
                         })));
                     for (let __gotots_slice_build_35 = __gotots_slice_build_34; __gotots_slice_build_35 < __gotots_slice_build_33.capacity; __gotots_slice_build_35++) {
-                        __gotots_slice_build_33.$initialize(__gotots_slice_build_35, specPair.$storageOf(specPair.$zero()));
+                        __gotots_slice_build_33.$initialize(__gotots_slice_build_35, specPair.$zeroStorage());
                     }
                 }
                 candidates = __gotots_slice_build_33;
@@ -1359,7 +1359,7 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: gostring, paths: ts
                             value: relativeToBaseUrl
                         })));
                     for (let __gotots_slice_build_39 = __gotots_slice_build_38; __gotots_slice_build_39 < __gotots_slice_build_37.capacity; __gotots_slice_build_39++) {
-                        __gotots_slice_build_37.$initialize(__gotots_slice_build_39, specPair.$storageOf(specPair.$zero()));
+                        __gotots_slice_build_37.$initialize(__gotots_slice_build_39, specPair.$zeroStorage());
                     }
                 }
                 candidates = __gotots_slice_build_37;

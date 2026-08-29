@@ -171,17 +171,17 @@ export class JSDocInfo {
     public set jsDocs($value: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) {
         this.$storage.jsDocs = $value;
     }
-    static $zero(): JSDocInfo {
-        return new JSDocInfo({
-            parent: void 0,
-            jsDocs: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>()
-        });
-    }
     static $copy($source: JSDocInfo): JSDocInfo {
         return new JSDocInfo({
             parent: $source.$storage.parent,
             jsDocs: $source.$storage.jsDocs
         });
+    }
+    static $zeroStorage(): JSDocInfo$Storage {
+        return {
+            parent: void 0,
+            jsDocs: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -197,7 +197,7 @@ export function jsdocScannerInfoHasSeeOrLink$constant(): jsdocScannerInfo {
 }
 export class Parser {
     declare private readonly $goType: void;
-    public constructor(public scanner: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, public factory: NodeFactory__from_ast, public opts: SourceFileParseOptions__from_ast, public sourceText: gostring, public scriptKind: ScriptKind__from_core, public languageVariant: LanguageVariant__from_core, public diagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public jsDiagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public jsdocDiagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public token: Kind__from_ast, public sourceFlags: NodeFlags__from_ast, public contextFlags: NodeFlags__from_ast, public parsingContexts: ParsingContexts, public statementHasAwaitIdentifier: bool, public hasDeprecatedTag: bool, public hasParseError: bool, public identifiers: GoMapValue<gostring, gostring>, public identifierCount: int, public notParenthesizedArrow: Set__from_collections<int>, public nodeSliceArena: Arena__from_core<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public stringSliceArena: Arena__from_core<gostring>, public jsdocInfos: RuntimeSlice<JSDocInfo$Storage>, public possibleAwaitSpans: RuntimeSlice<int>, public jsdocCommentsSpace: RuntimeSlice<gostring>, public jsdocCommentRangesSpace: RuntimeSlice<CommentRange__from_ast$Storage>, public jsdocTagCommentsSpace: RuntimeSlice<gostring>, public jsdocTagCommentsPartsSpace: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public reparseList: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public commonJSModuleIndicator: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public currentParent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public setParentFromContext: Visitor__from_ast, public reparsedClones: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) {
+    public constructor(public scanner: Scanner__from_scanner | undefined, public factory: NodeFactory__from_ast, public opts: SourceFileParseOptions__from_ast, public sourceText: gostring, public scriptKind: ScriptKind__from_core, public languageVariant: LanguageVariant__from_core, public diagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public jsDiagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public jsdocDiagnostics: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public token: Kind__from_ast, public sourceFlags: NodeFlags__from_ast, public contextFlags: NodeFlags__from_ast, public parsingContexts: ParsingContexts, public statementHasAwaitIdentifier: bool, public hasDeprecatedTag: bool, public hasParseError: bool, public identifiers: GoMapValue<gostring, gostring>, public identifierCount: int, public notParenthesizedArrow: Set__from_collections<int>, public nodeSliceArena: Arena__from_core<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public stringSliceArena: Arena__from_core<gostring>, public jsdocInfos: RuntimeSlice<JSDocInfo$Storage>, public possibleAwaitSpans: RuntimeSlice<int>, public jsdocCommentsSpace: RuntimeSlice<gostring>, public jsdocCommentRangesSpace: RuntimeSlice<CommentRange__from_ast$Storage>, public jsdocTagCommentsSpace: RuntimeSlice<gostring>, public jsdocTagCommentsPartsSpace: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public reparseList: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public commonJSModuleIndicator: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public currentParent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public setParentFromContext: Visitor__from_ast, public reparsedClones: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) {
     }
     static $copy($source: Parser): Parser {
         return new Parser($source.scanner, NodeFactory__from_ast.$copy($source.factory), SourceFileParseOptions__from_ast.$copy($source.opts), $source.sourceText, $source.scriptKind, $source.languageVariant, $source.diagnostics, $source.jsDiagnostics, $source.jsdocDiagnostics, $source.token, $source.sourceFlags, $source.contextFlags, $source.parsingContexts, $source.statementHasAwaitIdentifier, $source.hasDeprecatedTag, $source.hasParseError, $source.identifiers, $source.identifierCount, Set__from_collections.$copy<int>($source.notParenthesizedArrow), Arena__from_core.$copy<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>($source.nodeSliceArena), Arena__from_core.$copy<gostring>($source.stringSliceArena), $source.jsdocInfos, $source.possibleAwaitSpans, $source.jsdocCommentsSpace, $source.jsdocCommentRangesSpace, $source.jsdocTagCommentsSpace, $source.jsdocTagCommentsPartsSpace, $source.reparseList, $source.commonJSModuleIndicator, $source.currentParent, $source.setParentFromContext, $source.reparsedClones);
@@ -9192,7 +9192,7 @@ export class Parser {
         value: Parser;
     } | undefined): tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined {
         let typeParameters = NodeList__from_ast.$fromStorage({
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            Loc: TextRange__from_core.$zeroStorage(),
             Nodes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>()
         });
         const typeParameters$location = tsonicTypeScriptRuntime.boundLocation({}, () => typeParameters, typeParameters$next => typeParameters = typeParameters$next);
@@ -10848,7 +10848,7 @@ export class Parser {
                             jsDocs: RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([propJSDoc])
                         })));
                     for (let __gotots_slice_build_25 = __gotots_slice_build_24; __gotots_slice_build_25 < __gotots_slice_build_23.capacity; __gotots_slice_build_25++) {
-                        __gotots_slice_build_23.$initialize(__gotots_slice_build_25, JSDocInfo.$storageOf(JSDocInfo.$zero()));
+                        __gotots_slice_build_23.$initialize(__gotots_slice_build_25, JSDocInfo.$zeroStorage());
                     }
                 }
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.jsdocInfos = __gotots_slice_build_23;
@@ -11275,7 +11275,7 @@ export class Parser {
                             jsDocs: RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([jsDoc])
                         })));
                     for (let __gotots_slice_build_17 = __gotots_slice_build_16; __gotots_slice_build_17 < __gotots_slice_build_15.capacity; __gotots_slice_build_17++) {
-                        __gotots_slice_build_15.$initialize(__gotots_slice_build_17, JSDocInfo.$storageOf(JSDocInfo.$zero()));
+                        __gotots_slice_build_15.$initialize(__gotots_slice_build_17, JSDocInfo.$zeroStorage());
                     }
                 }
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.jsdocInfos = __gotots_slice_build_15;
@@ -11323,7 +11323,7 @@ export class Parser {
                             jsDocs: RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([jsDoc])
                         })));
                     for (let __gotots_slice_build_21 = __gotots_slice_build_20; __gotots_slice_build_21 < __gotots_slice_build_19.capacity; __gotots_slice_build_21++) {
-                        __gotots_slice_build_19.$initialize(__gotots_slice_build_21, JSDocInfo.$storageOf(JSDocInfo.$zero()));
+                        __gotots_slice_build_19.$initialize(__gotots_slice_build_21, JSDocInfo.$zeroStorage());
                     }
                 }
                 (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.jsdocInfos = __gotots_slice_build_19;
@@ -12083,7 +12083,7 @@ export class Parser {
                         jsDocs: jsdoc
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, JSDocInfo.$storageOf(JSDocInfo.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, JSDocInfo.$zeroStorage());
                 }
             }
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.jsdocInfos = __gotots_slice_build_1;
@@ -12234,7 +12234,7 @@ export function ParseIsolatedEntityName(text: gostring): tsonicTypeScriptRuntime
                     FileName: "",
                     Path: ((void Path__from_tspath,
                         "") as string),
-                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
                 }), text, ScriptKindJS$constant__from_core());
                 Parser.$go$private$parser$nextToken(p);
                 let entityName: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Parser.$go$private$parser$parseEntityName(p, true, void 0);
@@ -12404,7 +12404,7 @@ export function getCommentPragmas(f: tsonicTypeScriptRuntime.Location<NodeFactor
                 __gotots_slice_build_7.set(__gotots_slice_build_4.length + __gotots_slice_build_9, __gotots_slice_build_6.get(__gotots_slice_build_9));
             }
             for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-                __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Pragma__from_ast.$storageOf(Pragma__from_ast.$zero()));
+                __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Pragma__from_ast.$zeroStorage());
             }
         }
         pragmas = __gotots_slice_build_7;
@@ -12529,7 +12529,7 @@ export function extractPragmas(commentRange: CommentRange__from_ast, text: gostr
                                 Args: args
                             })));
                         for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
-                            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, Pragma__from_ast.$storageOf(Pragma__from_ast.$zero()));
+                            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, Pragma__from_ast.$zeroStorage());
                         }
                     }
                     pragmas = __gotots_slice_build_11;

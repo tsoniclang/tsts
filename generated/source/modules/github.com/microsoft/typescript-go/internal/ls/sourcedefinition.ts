@@ -159,7 +159,7 @@ export class sourceDefResolver {
                 sourceFile = ParseSourceFile__from_parser(SourceFileParseOptions__from_ast.$fromStorage({
                     FileName: fileName,
                     Path: LanguageService.$go$private$ls$toPath((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ls, fileName).$value,
-                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
                 }), text, GetScriptKindFromFileName__from_core(fileName));
                 BindSourceFile__from_binder(sourceFile);
             }
@@ -335,7 +335,9 @@ export function getSourceDefCheckerInfo(ctx: GoInterface | undefined, program: {
         try {
             __gotots_return_block_0: {
                 const __gotots_results_0 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                let c: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_0[0];
                 let done: (() => void) | undefined = __gotots_results_0[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -558,17 +560,17 @@ export function findDeclarationNodesByName(sourceFile: tsonicTypeScriptRuntime.L
         public set depth($value: int) {
             this.$storage.depth = $value;
         }
-        static $zero(): candidate {
-            return new candidate({
-                node: void 0,
-                depth: 0
-            });
-        }
         static $copy($source: candidate): candidate {
             return new candidate({
                 node: $source.$storage.node,
                 depth: $source.$storage.depth
             });
+        }
+        static $zeroStorage(): candidate$Storage {
+            return {
+                node: void 0,
+                depth: 0
+            };
         }
         declare private readonly then?: never;
     }
@@ -620,7 +622,7 @@ export function findDeclarationNodesByName(sourceFile: tsonicTypeScriptRuntime.L
                         depth: depth
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, candidate.$storageOf(candidate.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, candidate.$zeroStorage());
                 }
             }
             candidates = __gotots_slice_build_1;

@@ -23,8 +23,8 @@ export class exporter {
     public static $fromStorage($source: exporter$Storage): exporter {
         return new exporter($source);
     }
-    static $zero(): exporter {
-        return new exporter({});
+    static $zeroStorage(): exporter$Storage {
+        return {};
     }
     declare private readonly then?: never;
     Export(p: tsonicTypeScriptRuntime.Location<NotForPublicUse__from_internal> | undefined): __go_export {
@@ -46,11 +46,11 @@ export class __go_export {
     public static $fromStorage($source: __go_export$Storage): __go_export {
         return new __go_export($source);
     }
-    static $zero(): __go_export {
-        return new __go_export({});
-    }
     static $copy($source: __go_export): __go_export {
         return new __go_export({});
+    }
+    static $zeroStorage(): __go_export$Storage {
+        return {};
     }
     declare private readonly then?: never;
     Decoder(d: tsonicTypeScriptRuntime.Location<Decoder> | undefined): tsonicTypeScriptRuntime.Location<decoderState> | undefined {

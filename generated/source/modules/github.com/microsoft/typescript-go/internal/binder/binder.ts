@@ -94,13 +94,6 @@ export class ExpandoAssignmentInfo {
     public set blockScopeContainer($value: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) {
         this.$storage.blockScopeContainer = $value;
     }
-    static $zero(): ExpandoAssignmentInfo {
-        return new ExpandoAssignmentInfo({
-            node: void 0,
-            container: void 0,
-            blockScopeContainer: void 0
-        });
-    }
     static $copy($source: ExpandoAssignmentInfo): ExpandoAssignmentInfo {
         return new ExpandoAssignmentInfo({
             node: $source.$storage.node,
@@ -120,6 +113,13 @@ export class ExpandoAssignmentInfo {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.container));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.blockScopeContainer));
         return $hash;
+    }
+    static $zeroStorage(): ExpandoAssignmentInfo$Storage {
+        return {
+            node: void 0,
+            container: void 0,
+            blockScopeContainer: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1341,7 +1341,7 @@ export class Binder {
                     blockScopeContainer: (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.blockScopeContainer
                 })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ExpandoAssignmentInfo.$storageOf(ExpandoAssignmentInfo.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ExpandoAssignmentInfo.$zeroStorage());
             }
         }
         (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.expandoAssignments = __gotots_slice_build_1;

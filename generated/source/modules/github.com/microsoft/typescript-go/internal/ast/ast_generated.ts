@@ -4708,8 +4708,8 @@ export class StatementBase {
     }
     static $zero(): StatementBase {
         return new StatementBase({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            FlowNodeBase: FlowNodeBase.$storageOf(FlowNodeBase.$zero())
+            NodeBase: NodeBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage()
         });
     }
     static $copy($source: StatementBase): StatementBase {
@@ -4726,6 +4726,12 @@ export class StatementBase {
         $hash = GoMapHash.mix($hash, NodeBase.$hash(NodeBase.$fromStorage($source.$storage.NodeBase)));
         $hash = GoMapHash.mix($hash, FlowNodeBase.$hash(FlowNodeBase.$fromStorage($source.$storage.FlowNodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): StatementBase$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4772,7 +4778,7 @@ export class ExpressionBase {
     }
     static $zero(): ExpressionBase {
         return new ExpressionBase({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero())
+            NodeBase: NodeBase.$zeroStorage()
         });
     }
     static $copy($source: ExpressionBase): ExpressionBase {
@@ -4787,6 +4793,11 @@ export class ExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, NodeBase.$hash(NodeBase.$fromStorage($source.$storage.NodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): ExpressionBase$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4811,7 +4822,7 @@ export class UnaryExpressionBase {
     }
     static $zero(): UnaryExpressionBase {
         return new UnaryExpressionBase({
-            ExpressionBase: ExpressionBase.$storageOf(ExpressionBase.$zero())
+            ExpressionBase: ExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: UnaryExpressionBase): UnaryExpressionBase {
@@ -4826,6 +4837,11 @@ export class UnaryExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, ExpressionBase.$hash(ExpressionBase.$fromStorage($source.$storage.ExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): UnaryExpressionBase$Storage {
+        return {
+            ExpressionBase: ExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4850,7 +4866,7 @@ export class UpdateExpressionBase {
     }
     static $zero(): UpdateExpressionBase {
         return new UpdateExpressionBase({
-            UnaryExpressionBase: UnaryExpressionBase.$storageOf(UnaryExpressionBase.$zero())
+            UnaryExpressionBase: UnaryExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: UpdateExpressionBase): UpdateExpressionBase {
@@ -4865,6 +4881,11 @@ export class UpdateExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, UnaryExpressionBase.$hash(UnaryExpressionBase.$fromStorage($source.$storage.UnaryExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): UpdateExpressionBase$Storage {
+        return {
+            UnaryExpressionBase: UnaryExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4889,7 +4910,7 @@ export class LeftHandSideExpressionBase {
     }
     static $zero(): LeftHandSideExpressionBase {
         return new LeftHandSideExpressionBase({
-            UpdateExpressionBase: UpdateExpressionBase.$storageOf(UpdateExpressionBase.$zero())
+            UpdateExpressionBase: UpdateExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: LeftHandSideExpressionBase): LeftHandSideExpressionBase {
@@ -4904,6 +4925,11 @@ export class LeftHandSideExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, UpdateExpressionBase.$hash(UpdateExpressionBase.$fromStorage($source.$storage.UpdateExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): LeftHandSideExpressionBase$Storage {
+        return {
+            UpdateExpressionBase: UpdateExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4928,7 +4954,7 @@ export class MemberExpressionBase {
     }
     static $zero(): MemberExpressionBase {
         return new MemberExpressionBase({
-            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$storageOf(LeftHandSideExpressionBase.$zero())
+            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: MemberExpressionBase): MemberExpressionBase {
@@ -4943,6 +4969,11 @@ export class MemberExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, LeftHandSideExpressionBase.$hash(LeftHandSideExpressionBase.$fromStorage($source.$storage.LeftHandSideExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): MemberExpressionBase$Storage {
+        return {
+            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4967,7 +4998,7 @@ export class PrimaryExpressionBase {
     }
     static $zero(): PrimaryExpressionBase {
         return new PrimaryExpressionBase({
-            MemberExpressionBase: MemberExpressionBase.$storageOf(MemberExpressionBase.$zero())
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: PrimaryExpressionBase): PrimaryExpressionBase {
@@ -4982,6 +5013,11 @@ export class PrimaryExpressionBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, MemberExpressionBase.$hash(MemberExpressionBase.$fromStorage($source.$storage.MemberExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): PrimaryExpressionBase$Storage {
+        return {
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -5013,8 +5049,8 @@ export class TypeNodeBase {
     }
     static $zero(): TypeNodeBase {
         return new TypeNodeBase({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero())
+            NodeBase: NodeBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
         });
     }
     static $copy($source: TypeNodeBase): TypeNodeBase {
@@ -5031,6 +5067,12 @@ export class TypeNodeBase {
         $hash = GoMapHash.mix($hash, NodeBase.$hash(NodeBase.$fromStorage($source.$storage.NodeBase)));
         $hash = GoMapHash.mix($hash, TypeSyntaxBase.$hash(TypeSyntaxBase.$fromStorage($source.$storage.TypeSyntaxBase)));
         return $hash;
+    }
+    static $zeroStorage(): TypeNodeBase$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -5062,7 +5104,7 @@ export class NodeWithTypeArgumentsBase {
     }
     static $zero(): NodeWithTypeArgumentsBase {
         return new NodeWithTypeArgumentsBase({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             TypeArguments: void 0
         });
     }
@@ -5081,6 +5123,12 @@ export class NodeWithTypeArgumentsBase {
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.TypeArguments));
         return $hash;
+    }
+    static $zeroStorage(): NodeWithTypeArgumentsBase$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            TypeArguments: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -5141,6 +5189,11 @@ export class DeclarationBase {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Symbol));
         return $hash;
     }
+    static $zeroStorage(): DeclarationBase$Storage {
+        return {
+            Symbol: void 0
+        };
+    }
     declare private readonly then?: never;
     static DeclarationData(node: tsonicTypeScriptRuntime.Location<DeclarationBase> | undefined): tsonicTypeScriptRuntime.Location<DeclarationBase> | undefined {
         return node;
@@ -5183,6 +5236,11 @@ export class ExportableBase {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.LocalSymbol));
         return $hash;
     }
+    static $zeroStorage(): ExportableBase$Storage {
+        return {
+            LocalSymbol: void 0
+        };
+    }
     declare private readonly then?: never;
     static ExportableData(node: tsonicTypeScriptRuntime.Location<ExportableBase> | undefined): tsonicTypeScriptRuntime.Location<ExportableBase> | undefined {
         return node;
@@ -5224,6 +5282,11 @@ export class ModifiersBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.modifiers));
         return $hash;
+    }
+    static $zeroStorage(): ModifiersBase$Storage {
+        return {
+            modifiers: void 0
+        };
     }
     declare private readonly then?: never;
     static Modifiers(node: tsonicTypeScriptRuntime.Location<ModifiersBase> | undefined): tsonicTypeScriptRuntime.Location<ModifierList> | undefined {
@@ -5271,6 +5334,12 @@ export class LocalsContainerBase {
             NextContainer: $source.$storage.NextContainer
         });
     }
+    static $zeroStorage(): LocalsContainerBase$Storage {
+        return {
+            Locals: new SymbolTable($goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.nil()).$value,
+            NextContainer: void 0
+        };
+    }
     declare private readonly then?: never;
     static LocalsContainerData(node: tsonicTypeScriptRuntime.Location<LocalsContainerBase> | undefined): tsonicTypeScriptRuntime.Location<LocalsContainerBase> | undefined {
         return node;
@@ -5312,6 +5381,11 @@ export class FlowNodeBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.FlowNode));
         return $hash;
+    }
+    static $zeroStorage(): FlowNodeBase$Storage {
+        return {
+            FlowNode: void 0
+        };
     }
     declare private readonly then?: never;
     static FlowNodeData(node: tsonicTypeScriptRuntime.Location<FlowNodeBase> | undefined): tsonicTypeScriptRuntime.Location<FlowNodeBase> | undefined {
@@ -5355,6 +5429,11 @@ export class CompositeBase {
         $hash = GoMapHash.mix($hash, named_sync_atomic.SyncAtomicUint32Operations.$hash($source.$storage.facts));
         return $hash;
     }
+    static $zeroStorage(): CompositeBase$Storage {
+        return {
+            facts: named_sync_atomic.SyncAtomicUint32Operations.$zero()
+        };
+    }
     declare private readonly then?: never;
     static $go$private$ast$subtreeFactsWorker(node: tsonicTypeScriptRuntime.Location<CompositeBase> | undefined, self: nodeData | undefined): SubtreeFacts {
         let facts = atomic__from_gostdlib.Uint32.Load(CompositeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompositeBase>).value).facts);
@@ -5391,6 +5470,9 @@ export class TypeSyntaxBase {
     static $hash($source: TypeSyntaxBase): number {
         let $hash = 2166136261;
         return $hash;
+    }
+    static $zeroStorage(): TypeSyntaxBase$Storage {
+        return {};
     }
     declare private readonly then?: never;
     static $go$private$ast$computeSubtreeFacts(node: tsonicTypeScriptRuntime.Location<TypeSyntaxBase> | undefined): SubtreeFacts {
@@ -5456,8 +5538,8 @@ export class FunctionLikeBase {
     }
     static $zero(): FunctionLikeBase {
         return new FunctionLikeBase({
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            LocalsContainerBase: LocalsContainerBase.$storageOf(LocalsContainerBase.$zero()),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
             TypeParameters: void 0,
             Parameters: void 0,
             Type: void 0,
@@ -5473,6 +5555,16 @@ export class FunctionLikeBase {
             Type: $source.$storage.Type,
             FullSignature: $source.$storage.FullSignature
         });
+    }
+    static $zeroStorage(): FunctionLikeBase$Storage {
+        return {
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
+            TypeParameters: void 0,
+            Parameters: void 0,
+            Type: void 0,
+            FullSignature: void 0
+        };
     }
     declare private readonly then?: never;
     static FunctionLikeData(node: tsonicTypeScriptRuntime.Location<FunctionLikeBase> | undefined): tsonicTypeScriptRuntime.Location<FunctionLikeBase> | undefined {
@@ -5543,6 +5635,13 @@ export class BodyBase {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.EndFlowNode));
         return $hash;
     }
+    static $zeroStorage(): BodyBase$Storage {
+        return {
+            AsteriskToken: void 0,
+            Body: void 0,
+            EndFlowNode: void 0
+        };
+    }
     declare private readonly then?: never;
     static BodyData(node: tsonicTypeScriptRuntime.Location<BodyBase> | undefined): tsonicTypeScriptRuntime.Location<BodyBase> | undefined {
         return node;
@@ -5576,8 +5675,8 @@ export class FunctionLikeWithBodyBase {
     }
     static $zero(): FunctionLikeWithBodyBase {
         return new FunctionLikeWithBodyBase({
-            FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$zero()),
-            BodyBase: BodyBase.$storageOf(BodyBase.$zero())
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            BodyBase: BodyBase.$zeroStorage()
         });
     }
     static $copy($source: FunctionLikeWithBodyBase): FunctionLikeWithBodyBase {
@@ -5585,6 +5684,12 @@ export class FunctionLikeWithBodyBase {
             FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$copy(FunctionLikeBase.$fromStorage($source.$storage.FunctionLikeBase))),
             BodyBase: BodyBase.$storageOf(BodyBase.$copy(BodyBase.$fromStorage($source.$storage.BodyBase)))
         });
+    }
+    static $zeroStorage(): FunctionLikeWithBodyBase$Storage {
+        return {
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            BodyBase: BodyBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static BodyData(node: tsonicTypeScriptRuntime.Location<FunctionLikeWithBodyBase> | undefined): tsonicTypeScriptRuntime.Location<BodyBase> | undefined {
@@ -5671,6 +5776,12 @@ export class LiteralLikeNodeBase {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.TokenFlags));
         return $hash;
     }
+    static $zeroStorage(): LiteralLikeNodeBase$Storage {
+        return {
+            Text: "",
+            TokenFlags: 0
+        };
+    }
     declare private readonly then?: never;
     static LiteralLikeData(node: tsonicTypeScriptRuntime.Location<LiteralLikeNodeBase> | undefined): tsonicTypeScriptRuntime.Location<LiteralLikeNodeBase> | undefined {
         return node;
@@ -5704,8 +5815,8 @@ export class LiteralExpressionBase {
     }
     static $zero(): LiteralExpressionBase {
         return new LiteralExpressionBase({
-            LiteralLikeNodeBase: LiteralLikeNodeBase.$storageOf(LiteralLikeNodeBase.$zero()),
-            PrimaryExpressionBase: PrimaryExpressionBase.$storageOf(PrimaryExpressionBase.$zero())
+            LiteralLikeNodeBase: LiteralLikeNodeBase.$zeroStorage(),
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: LiteralExpressionBase): LiteralExpressionBase {
@@ -5722,6 +5833,12 @@ export class LiteralExpressionBase {
         $hash = GoMapHash.mix($hash, LiteralLikeNodeBase.$hash(LiteralLikeNodeBase.$fromStorage($source.$storage.LiteralLikeNodeBase)));
         $hash = GoMapHash.mix($hash, PrimaryExpressionBase.$hash(PrimaryExpressionBase.$fromStorage($source.$storage.PrimaryExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): LiteralExpressionBase$Storage {
+        return {
+            LiteralLikeNodeBase: LiteralLikeNodeBase.$zeroStorage(),
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -5777,6 +5894,9 @@ export class TypeElementBase {
     static $hash($source: TypeElementBase): number {
         let $hash = 2166136261;
         return $hash;
+    }
+    static $zeroStorage(): TypeElementBase$Storage {
+        return {};
     }
     declare private readonly then?: never;
 }
@@ -5841,8 +5961,8 @@ export class NamedMemberBase {
     }
     static $zero(): NamedMemberBase {
         return new NamedMemberBase({
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
             name: void 0,
             PostfixToken: void 0
         });
@@ -5867,6 +5987,14 @@ export class NamedMemberBase {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.name));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.PostfixToken));
         return $hash;
+    }
+    static $zeroStorage(): NamedMemberBase$Storage {
+        return {
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            name: void 0,
+            PostfixToken: void 0
+        };
     }
     declare private readonly then?: never;
     static DeclarationData(node: tsonicTypeScriptRuntime.Location<NamedMemberBase> | undefined): tsonicTypeScriptRuntime.Location<DeclarationBase> | undefined {
@@ -5908,6 +6036,9 @@ export class ObjectLiteralElementBase {
     static $hash($source: ObjectLiteralElementBase): number {
         let $hash = 2166136261;
         return $hash;
+    }
+    static $zeroStorage(): ObjectLiteralElementBase$Storage {
+        return {};
     }
     declare private readonly then?: never;
 }
@@ -5981,9 +6112,9 @@ export class FunctionOrConstructorTypeNodeBase {
     }
     static $zero(): FunctionOrConstructorTypeNodeBase {
         return new FunctionOrConstructorTypeNodeBase({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$zero())
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage()
         });
     }
     static $copy($source: FunctionOrConstructorTypeNodeBase): FunctionOrConstructorTypeNodeBase {
@@ -5992,6 +6123,13 @@ export class FunctionOrConstructorTypeNodeBase {
             ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$copy(ModifiersBase.$fromStorage($source.$storage.ModifiersBase))),
             FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$copy(FunctionLikeBase.$fromStorage($source.$storage.FunctionLikeBase)))
         });
+    }
+    static $zeroStorage(): FunctionOrConstructorTypeNodeBase$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static DeclarationData(node: tsonicTypeScriptRuntime.Location<FunctionOrConstructorTypeNodeBase> | undefined): tsonicTypeScriptRuntime.Location<DeclarationBase> | undefined {
@@ -6026,12 +6164,6 @@ export class UnionOrIntersectionTypeNodeBase {
     public set Types($value: tsonicTypeScriptRuntime.Location<NodeList> | undefined) {
         this.$storage.Types = $value;
     }
-    static $zero(): UnionOrIntersectionTypeNodeBase {
-        return new UnionOrIntersectionTypeNodeBase({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            Types: void 0
-        });
-    }
     static $copy($source: UnionOrIntersectionTypeNodeBase): UnionOrIntersectionTypeNodeBase {
         return new UnionOrIntersectionTypeNodeBase({
             TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$copy(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase))),
@@ -6047,6 +6179,12 @@ export class UnionOrIntersectionTypeNodeBase {
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Types));
         return $hash;
+    }
+    static $zeroStorage(): UnionOrIntersectionTypeNodeBase$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            Types: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -6085,7 +6223,7 @@ export class JSDocTagBase {
     }
     static $zero(): JSDocTagBase {
         return new JSDocTagBase({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
             TagName: void 0,
             Comment: void 0
         });
@@ -6108,6 +6246,13 @@ export class JSDocTagBase {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.TagName));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Comment));
         return $hash;
+    }
+    static $zeroStorage(): JSDocTagBase$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            TagName: void 0,
+            Comment: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -6139,7 +6284,7 @@ export class JSDocCommentBase {
     }
     static $zero(): JSDocCommentBase {
         return new JSDocCommentBase({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
             text: RuntimeSlice.nil<gostring>()
         });
     }
@@ -6148,6 +6293,12 @@ export class JSDocCommentBase {
             NodeBase: NodeBase.$storageOf(NodeBase.$copy(NodeBase.$fromStorage($source.$storage.NodeBase))),
             text: $source.$storage.text
         });
+    }
+    static $zeroStorage(): JSDocCommentBase$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            text: RuntimeSlice.nil<gostring>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -6173,7 +6324,7 @@ export class Token implements GoContainerStoredValue<Token$Storage> {
     declare readonly [$goContainerStorageType]: Token$Storage;
     static $zero(): Token {
         return new Token({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero())
+            NodeBase: NodeBase.$zeroStorage()
         });
     }
     static $copy($source: Token): Token {
@@ -6188,6 +6339,11 @@ export class Token implements GoContainerStoredValue<Token$Storage> {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, NodeBase.$hash(NodeBase.$fromStorage($source.$storage.NodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): Token$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<Token> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -6312,8 +6468,8 @@ export class Identifier implements GoContainerStoredValue<Identifier$Storage> {
     declare readonly [$goContainerStorageType]: Identifier$Storage;
     static $zero(): Identifier {
         return new Identifier({
-            PrimaryExpressionBase: PrimaryExpressionBase.$storageOf(PrimaryExpressionBase.$zero()),
-            FlowNodeBase: FlowNodeBase.$storageOf(FlowNodeBase.$zero()),
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
             Text: ""
         });
     }
@@ -6333,6 +6489,13 @@ export class Identifier implements GoContainerStoredValue<Identifier$Storage> {
         $hash = GoMapHash.mix($hash, FlowNodeBase.$hash(FlowNodeBase.$fromStorage($source.$storage.FlowNodeBase)));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.Text));
         return $hash;
+    }
+    static $zeroStorage(): Identifier$Storage {
+        return {
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
+            Text: ""
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<Identifier> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -6639,8 +6802,8 @@ export class IfStatement implements GoContainerStoredValue<IfStatement$Storage> 
     declare readonly [$goContainerStorageType]: IfStatement$Storage;
     static $zero(): IfStatement {
         return new IfStatement({
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            StatementBase: StatementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0,
             ThenStatement: void 0,
             ElseStatement: void 0
@@ -6669,6 +6832,15 @@ export class IfStatement implements GoContainerStoredValue<IfStatement$Storage> 
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ThenStatement));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ElseStatement));
         return $hash;
+    }
+    static $zeroStorage(): IfStatement$Storage {
+        return {
+            StatementBase: StatementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0,
+            ThenStatement: void 0,
+            ElseStatement: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<IfStatement> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7005,8 +7177,8 @@ export class ReturnStatement implements GoContainerStoredValue<ReturnStatement$S
     declare readonly [$goContainerStorageType]: ReturnStatement$Storage;
     static $zero(): ReturnStatement {
         return new ReturnStatement({
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            StatementBase: StatementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0
         });
     }
@@ -7027,6 +7199,13 @@ export class ReturnStatement implements GoContainerStoredValue<ReturnStatement$S
         $hash = GoMapHash.mix($hash, CompositeBase.$hash(CompositeBase.$fromStorage($source.$storage.CompositeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Expression));
         return $hash;
+    }
+    static $zeroStorage(): ReturnStatement$Storage {
+        return {
+            StatementBase: StatementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ReturnStatement> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7528,7 +7707,7 @@ export class ExpressionStatement implements GoContainerStoredValue<ExpressionSta
     declare readonly [$goContainerStorageType]: ExpressionStatement$Storage;
     static $zero(): ExpressionStatement {
         return new ExpressionStatement({
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
+            StatementBase: StatementBase.$zeroStorage(),
             Expression: void 0
         });
     }
@@ -7547,6 +7726,12 @@ export class ExpressionStatement implements GoContainerStoredValue<ExpressionSta
         $hash = GoMapHash.mix($hash, StatementBase.$hash(StatementBase.$fromStorage($source.$storage.StatementBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Expression));
         return $hash;
+    }
+    static $zeroStorage(): ExpressionStatement$Storage {
+        return {
+            StatementBase: StatementBase.$zeroStorage(),
+            Expression: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ExpressionStatement> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7625,9 +7810,9 @@ export class Block implements GoContainerStoredValue<Block$Storage> {
     declare readonly [$goContainerStorageType]: Block$Storage;
     static $zero(): Block {
         return new Block({
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            LocalsContainerBase: LocalsContainerBase.$storageOf(LocalsContainerBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            StatementBase: StatementBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Statements: void 0,
             MultiLine: false
         });
@@ -7640,6 +7825,15 @@ export class Block implements GoContainerStoredValue<Block$Storage> {
             Statements: $source.$storage.Statements,
             MultiLine: $source.$storage.MultiLine
         });
+    }
+    static $zeroStorage(): Block$Storage {
+        return {
+            StatementBase: StatementBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Statements: void 0,
+            MultiLine: false
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<Block> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7711,9 +7905,9 @@ export class VariableStatement implements GoContainerStoredValue<VariableStateme
     declare readonly [$goContainerStorageType]: VariableStatement$Storage;
     static $zero(): VariableStatement {
         return new VariableStatement({
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            StatementBase: StatementBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             DeclarationList: void 0
         });
     }
@@ -7736,6 +7930,14 @@ export class VariableStatement implements GoContainerStoredValue<VariableStateme
         $hash = GoMapHash.mix($hash, CompositeBase.$hash(CompositeBase.$fromStorage($source.$storage.CompositeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.DeclarationList));
         return $hash;
+    }
+    static $zeroStorage(): VariableStatement$Storage {
+        return {
+            StatementBase: StatementBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            DeclarationList: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<VariableStatement> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7849,10 +8051,10 @@ export class VariableDeclaration implements GoContainerStoredValue<VariableDecla
     declare readonly [$goContainerStorageType]: VariableDeclaration$Storage;
     static $zero(): VariableDeclaration {
         return new VariableDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ExportableBase: ExportableBase.$storageOf(ExportableBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             name: void 0,
             ExclamationToken: void 0,
             Type: void 0,
@@ -7889,6 +8091,18 @@ export class VariableDeclaration implements GoContainerStoredValue<VariableDecla
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Initializer));
         return $hash;
+    }
+    static $zeroStorage(): VariableDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            name: void 0,
+            ExclamationToken: void 0,
+            Type: void 0,
+            Initializer: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<VariableDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -7955,8 +8169,8 @@ export class VariableDeclarationList implements GoContainerStoredValue<VariableD
     declare readonly [$goContainerStorageType]: VariableDeclarationList$Storage;
     static $zero(): VariableDeclarationList {
         return new VariableDeclarationList({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Declarations: void 0
         });
     }
@@ -7977,6 +8191,13 @@ export class VariableDeclarationList implements GoContainerStoredValue<VariableD
         $hash = GoMapHash.mix($hash, CompositeBase.$hash(CompositeBase.$fromStorage($source.$storage.CompositeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Declarations));
         return $hash;
+    }
+    static $zeroStorage(): VariableDeclarationList$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Declarations: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<VariableDeclarationList> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -8177,10 +8398,10 @@ export class ParameterDeclaration implements GoContainerStoredValue<ParameterDec
     declare readonly [$goContainerStorageType]: ParameterDeclaration$Storage;
     static $zero(): ParameterDeclaration {
         return new ParameterDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             DotDotDotToken: void 0,
             name: void 0,
             QuestionToken: void 0,
@@ -8221,6 +8442,19 @@ export class ParameterDeclaration implements GoContainerStoredValue<ParameterDec
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Initializer));
         return $hash;
+    }
+    static $zeroStorage(): ParameterDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            DotDotDotToken: void 0,
+            name: void 0,
+            QuestionToken: void 0,
+            Type: void 0,
+            Initializer: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ParameterDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -8456,12 +8690,12 @@ export class FunctionDeclaration implements GoContainerStoredValue<FunctionDecla
     declare readonly [$goContainerStorageType]: FunctionDeclaration$Storage;
     static $zero(): FunctionDeclaration {
         return new FunctionDeclaration({
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            ExportableBase: ExportableBase.$storageOf(ExportableBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            FunctionLikeWithBodyBase: FunctionLikeWithBodyBase.$storageOf(FunctionLikeWithBodyBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            FunctionLikeWithBodyBase: FunctionLikeWithBodyBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             name: void 0,
             ReturnFlowNode: void 0
         });
@@ -8477,6 +8711,18 @@ export class FunctionDeclaration implements GoContainerStoredValue<FunctionDecla
             name: $source.$storage.name,
             ReturnFlowNode: $source.$storage.ReturnFlowNode
         });
+    }
+    static $zeroStorage(): FunctionDeclaration$Storage {
+        return {
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            FunctionLikeWithBodyBase: FunctionLikeWithBodyBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            name: void 0,
+            ReturnFlowNode: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<FunctionDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -8771,8 +9017,8 @@ export class HeritageClause implements GoContainerStoredValue<HeritageClause$Sto
     declare readonly [$goContainerStorageType]: HeritageClause$Storage;
     static $zero(): HeritageClause {
         return new HeritageClause({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Token: 0,
             Types: void 0
         });
@@ -8796,6 +9042,14 @@ export class HeritageClause implements GoContainerStoredValue<HeritageClause$Sto
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Token));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Types));
         return $hash;
+    }
+    static $zeroStorage(): HeritageClause$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Token: 0,
+            Types: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<HeritageClause> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -8914,11 +9168,11 @@ export class InterfaceDeclaration implements GoContainerStoredValue<InterfaceDec
     declare readonly [$goContainerStorageType]: InterfaceDeclaration$Storage;
     static $zero(): InterfaceDeclaration {
         return new InterfaceDeclaration({
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            ExportableBase: ExportableBase.$storageOf(ExportableBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero()),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
             name: void 0,
             TypeParameters: void 0,
             HeritageClauses: void 0,
@@ -8957,6 +9211,19 @@ export class InterfaceDeclaration implements GoContainerStoredValue<InterfaceDec
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.HeritageClauses));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Members));
         return $hash;
+    }
+    static $zeroStorage(): InterfaceDeclaration$Storage {
+        return {
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
+            name: void 0,
+            TypeParameters: void 0,
+            HeritageClauses: void 0,
+            Members: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<InterfaceDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -9072,12 +9339,12 @@ export class TypeAliasDeclaration implements GoContainerStoredValue<TypeAliasDec
     declare readonly [$goContainerStorageType]: TypeAliasDeclaration$Storage;
     static $zero(): TypeAliasDeclaration {
         return new TypeAliasDeclaration({
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            StatementBase: StatementBase.$storageOf(StatementBase.$zero()),
-            ExportableBase: ExportableBase.$storageOf(ExportableBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            LocalsContainerBase: LocalsContainerBase.$storageOf(LocalsContainerBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero()),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
             name: void 0,
             TypeParameters: void 0,
             Type: void 0
@@ -9095,6 +9362,19 @@ export class TypeAliasDeclaration implements GoContainerStoredValue<TypeAliasDec
             TypeParameters: $source.$storage.TypeParameters,
             Type: $source.$storage.Type
         });
+    }
+    static $zeroStorage(): TypeAliasDeclaration$Storage {
+        return {
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            StatementBase: StatementBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            LocalsContainerBase: LocalsContainerBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
+            name: void 0,
+            TypeParameters: void 0,
+            Type: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<TypeAliasDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -10049,11 +10329,11 @@ export class ConstructSignatureDeclaration implements GoContainerStoredValue<Con
     declare readonly [$goContainerStorageType]: ConstructSignatureDeclaration$Storage;
     static $zero(): ConstructSignatureDeclaration {
         return new ConstructSignatureDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$zero()),
-            TypeElementBase: TypeElementBase.$storageOf(TypeElementBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero())
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
         });
     }
     static $copy($source: ConstructSignatureDeclaration): ConstructSignatureDeclaration {
@@ -10064,6 +10344,15 @@ export class ConstructSignatureDeclaration implements GoContainerStoredValue<Con
             TypeElementBase: TypeElementBase.$storageOf(TypeElementBase.$copy(TypeElementBase.$fromStorage($source.$storage.TypeElementBase))),
             TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$copy(TypeSyntaxBase.$fromStorage($source.$storage.TypeSyntaxBase)))
         });
+    }
+    static $zeroStorage(): ConstructSignatureDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -10401,11 +10690,11 @@ export class MethodSignatureDeclaration implements GoContainerStoredValue<Method
     declare readonly [$goContainerStorageType]: MethodSignatureDeclaration$Storage;
     static $zero(): MethodSignatureDeclaration {
         return new MethodSignatureDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            NamedMemberBase: NamedMemberBase.$storageOf(NamedMemberBase.$zero()),
-            FunctionLikeBase: FunctionLikeBase.$storageOf(FunctionLikeBase.$zero()),
-            TypeElementBase: TypeElementBase.$storageOf(TypeElementBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero())
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
         });
     }
     static $copy($source: MethodSignatureDeclaration): MethodSignatureDeclaration {
@@ -10416,6 +10705,15 @@ export class MethodSignatureDeclaration implements GoContainerStoredValue<Method
             TypeElementBase: TypeElementBase.$storageOf(TypeElementBase.$copy(TypeElementBase.$fromStorage($source.$storage.TypeElementBase))),
             TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$copy(TypeSyntaxBase.$fromStorage($source.$storage.TypeSyntaxBase)))
         });
+    }
+    static $zeroStorage(): MethodSignatureDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            FunctionLikeBase: FunctionLikeBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -10632,10 +10930,10 @@ export class PropertySignatureDeclaration implements GoContainerStoredValue<Prop
     declare readonly [$goContainerStorageType]: PropertySignatureDeclaration$Storage;
     static $zero(): PropertySignatureDeclaration {
         return new PropertySignatureDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            NamedMemberBase: NamedMemberBase.$storageOf(NamedMemberBase.$zero()),
-            TypeElementBase: TypeElementBase.$storageOf(TypeElementBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
             Type: void 0,
             Initializer: void 0
         });
@@ -10664,6 +10962,16 @@ export class PropertySignatureDeclaration implements GoContainerStoredValue<Prop
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Initializer));
         return $hash;
+    }
+    static $zeroStorage(): PropertySignatureDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            TypeElementBase: TypeElementBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
+            Type: void 0,
+            Initializer: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -10924,8 +11232,8 @@ export class KeywordExpression implements GoContainerStoredValue<KeywordExpressi
     declare readonly [$goContainerStorageType]: KeywordExpression$Storage;
     static $zero(): KeywordExpression {
         return new KeywordExpression({
-            ExpressionBase: ExpressionBase.$storageOf(ExpressionBase.$zero()),
-            FlowNodeBase: FlowNodeBase.$storageOf(FlowNodeBase.$zero())
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage()
         });
     }
     static $copy($source: KeywordExpression): KeywordExpression {
@@ -10942,6 +11250,12 @@ export class KeywordExpression implements GoContainerStoredValue<KeywordExpressi
         $hash = GoMapHash.mix($hash, ExpressionBase.$hash(ExpressionBase.$fromStorage($source.$storage.ExpressionBase)));
         $hash = GoMapHash.mix($hash, FlowNodeBase.$hash(FlowNodeBase.$fromStorage($source.$storage.FlowNodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): KeywordExpression$Storage {
+        return {
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<KeywordExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -10999,7 +11313,7 @@ export class StringLiteral implements GoContainerStoredValue<StringLiteral$Stora
     declare readonly [$goContainerStorageType]: StringLiteral$Storage;
     static $zero(): StringLiteral {
         return new StringLiteral({
-            LiteralExpressionBase: LiteralExpressionBase.$storageOf(LiteralExpressionBase.$zero())
+            LiteralExpressionBase: LiteralExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: StringLiteral): StringLiteral {
@@ -11014,6 +11328,11 @@ export class StringLiteral implements GoContainerStoredValue<StringLiteral$Stora
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, LiteralExpressionBase.$hash(LiteralExpressionBase.$fromStorage($source.$storage.LiteralExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): StringLiteral$Storage {
+        return {
+            LiteralExpressionBase: LiteralExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<StringLiteral> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -11063,7 +11382,7 @@ export class NumericLiteral implements GoContainerStoredValue<NumericLiteral$Sto
     declare readonly [$goContainerStorageType]: NumericLiteral$Storage;
     static $zero(): NumericLiteral {
         return new NumericLiteral({
-            LiteralExpressionBase: LiteralExpressionBase.$storageOf(LiteralExpressionBase.$zero())
+            LiteralExpressionBase: LiteralExpressionBase.$zeroStorage()
         });
     }
     static $copy($source: NumericLiteral): NumericLiteral {
@@ -11078,6 +11397,11 @@ export class NumericLiteral implements GoContainerStoredValue<NumericLiteral$Sto
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, LiteralExpressionBase.$hash(LiteralExpressionBase.$fromStorage($source.$storage.LiteralExpressionBase)));
         return $hash;
+    }
+    static $zeroStorage(): NumericLiteral$Storage {
+        return {
+            LiteralExpressionBase: LiteralExpressionBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<NumericLiteral> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -11303,10 +11627,10 @@ export class BinaryExpression implements GoContainerStoredValue<BinaryExpression
     declare readonly [$goContainerStorageType]: BinaryExpression$Storage;
     static $zero(): BinaryExpression {
         return new BinaryExpression({
-            ExpressionBase: ExpressionBase.$storageOf(ExpressionBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Left: void 0,
             Type: void 0,
             OperatorToken: void 0,
@@ -11343,6 +11667,18 @@ export class BinaryExpression implements GoContainerStoredValue<BinaryExpression
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.OperatorToken));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Right));
         return $hash;
+    }
+    static $zeroStorage(): BinaryExpression$Storage {
+        return {
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Left: void 0,
+            Type: void 0,
+            OperatorToken: void 0,
+            Right: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<BinaryExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -11427,7 +11763,7 @@ export class PrefixUnaryExpression implements GoContainerStoredValue<PrefixUnary
     declare readonly [$goContainerStorageType]: PrefixUnaryExpression$Storage;
     static $zero(): PrefixUnaryExpression {
         return new PrefixUnaryExpression({
-            UpdateExpressionBase: UpdateExpressionBase.$storageOf(UpdateExpressionBase.$zero()),
+            UpdateExpressionBase: UpdateExpressionBase.$zeroStorage(),
             Operator: 0,
             Operand: void 0
         });
@@ -11449,6 +11785,13 @@ export class PrefixUnaryExpression implements GoContainerStoredValue<PrefixUnary
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Operator));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Operand));
         return $hash;
+    }
+    static $zeroStorage(): PrefixUnaryExpression$Storage {
+        return {
+            UpdateExpressionBase: UpdateExpressionBase.$zeroStorage(),
+            Operator: 0,
+            Operand: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<PrefixUnaryExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -11965,8 +12308,8 @@ export class ConditionalExpression implements GoContainerStoredValue<Conditional
     declare readonly [$goContainerStorageType]: ConditionalExpression$Storage;
     static $zero(): ConditionalExpression {
         return new ConditionalExpression({
-            ExpressionBase: ExpressionBase.$storageOf(ExpressionBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Condition: void 0,
             QuestionToken: void 0,
             WhenTrue: void 0,
@@ -12003,6 +12346,17 @@ export class ConditionalExpression implements GoContainerStoredValue<Conditional
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ColonToken));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.WhenFalse));
         return $hash;
+    }
+    static $zeroStorage(): ConditionalExpression$Storage {
+        return {
+            ExpressionBase: ExpressionBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Condition: void 0,
+            QuestionToken: void 0,
+            WhenTrue: void 0,
+            ColonToken: void 0,
+            WhenFalse: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ConditionalExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -12088,9 +12442,9 @@ export class PropertyAccessExpression implements GoContainerStoredValue<Property
     declare readonly [$goContainerStorageType]: PropertyAccessExpression$Storage;
     static $zero(): PropertyAccessExpression {
         return new PropertyAccessExpression({
-            MemberExpressionBase: MemberExpressionBase.$storageOf(MemberExpressionBase.$zero()),
-            FlowNodeBase: FlowNodeBase.$storageOf(FlowNodeBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0,
             QuestionDotToken: void 0,
             name: void 0
@@ -12121,6 +12475,16 @@ export class PropertyAccessExpression implements GoContainerStoredValue<Property
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.QuestionDotToken));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.name));
         return $hash;
+    }
+    static $zeroStorage(): PropertyAccessExpression$Storage {
+        return {
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0,
+            QuestionDotToken: void 0,
+            name: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<PropertyAccessExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -12245,9 +12609,9 @@ export class ElementAccessExpression implements GoContainerStoredValue<ElementAc
     declare readonly [$goContainerStorageType]: ElementAccessExpression$Storage;
     static $zero(): ElementAccessExpression {
         return new ElementAccessExpression({
-            MemberExpressionBase: MemberExpressionBase.$storageOf(MemberExpressionBase.$zero()),
-            FlowNodeBase: FlowNodeBase.$storageOf(FlowNodeBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0,
             QuestionDotToken: void 0,
             ArgumentExpression: void 0
@@ -12278,6 +12642,16 @@ export class ElementAccessExpression implements GoContainerStoredValue<ElementAc
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.QuestionDotToken));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ArgumentExpression));
         return $hash;
+    }
+    static $zeroStorage(): ElementAccessExpression$Storage {
+        return {
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            FlowNodeBase: FlowNodeBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0,
+            QuestionDotToken: void 0,
+            ArgumentExpression: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ElementAccessExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -12402,9 +12776,9 @@ export class CallExpression implements GoContainerStoredValue<CallExpression$Sto
     declare readonly [$goContainerStorageType]: CallExpression$Storage;
     static $zero(): CallExpression {
         return new CallExpression({
-            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$storageOf(LeftHandSideExpressionBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0,
             QuestionDotToken: void 0,
             TypeArguments: void 0,
@@ -12439,6 +12813,17 @@ export class CallExpression implements GoContainerStoredValue<CallExpression$Sto
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.TypeArguments));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Arguments));
         return $hash;
+    }
+    static $zeroStorage(): CallExpression$Storage {
+        return {
+            LeftHandSideExpressionBase: LeftHandSideExpressionBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0,
+            QuestionDotToken: void 0,
+            TypeArguments: void 0,
+            Arguments: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<CallExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -12967,7 +13352,7 @@ export class ParenthesizedExpression implements GoContainerStoredValue<Parenthes
     declare readonly [$goContainerStorageType]: ParenthesizedExpression$Storage;
     static $zero(): ParenthesizedExpression {
         return new ParenthesizedExpression({
-            PrimaryExpressionBase: PrimaryExpressionBase.$storageOf(PrimaryExpressionBase.$zero()),
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage(),
             Expression: void 0
         });
     }
@@ -12986,6 +13371,12 @@ export class ParenthesizedExpression implements GoContainerStoredValue<Parenthes
         $hash = GoMapHash.mix($hash, PrimaryExpressionBase.$hash(PrimaryExpressionBase.$fromStorage($source.$storage.PrimaryExpressionBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Expression));
         return $hash;
+    }
+    static $zeroStorage(): ParenthesizedExpression$Storage {
+        return {
+            PrimaryExpressionBase: PrimaryExpressionBase.$zeroStorage(),
+            Expression: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ParenthesizedExpression> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -13273,10 +13664,10 @@ export class PropertyAssignment implements GoContainerStoredValue<PropertyAssign
     declare readonly [$goContainerStorageType]: PropertyAssignment$Storage;
     static $zero(): PropertyAssignment {
         return new PropertyAssignment({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            NamedMemberBase: NamedMemberBase.$storageOf(NamedMemberBase.$zero()),
-            ObjectLiteralElementBase: ObjectLiteralElementBase.$storageOf(ObjectLiteralElementBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            ObjectLiteralElementBase: ObjectLiteralElementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Type: void 0,
             Initializer: void 0
         });
@@ -13305,6 +13696,16 @@ export class PropertyAssignment implements GoContainerStoredValue<PropertyAssign
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Initializer));
         return $hash;
+    }
+    static $zeroStorage(): PropertyAssignment$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            NamedMemberBase: NamedMemberBase.$zeroStorage(),
+            ObjectLiteralElementBase: ObjectLiteralElementBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Type: void 0,
+            Initializer: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<PropertyAssignment> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -13714,7 +14115,7 @@ export class KeywordTypeNode implements GoContainerStoredValue<KeywordTypeNode$S
     declare readonly [$goContainerStorageType]: KeywordTypeNode$Storage;
     static $zero(): KeywordTypeNode {
         return new KeywordTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero())
+            TypeNodeBase: TypeNodeBase.$zeroStorage()
         });
     }
     static $copy($source: KeywordTypeNode): KeywordTypeNode {
@@ -13729,6 +14130,11 @@ export class KeywordTypeNode implements GoContainerStoredValue<KeywordTypeNode$S
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): KeywordTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<KeywordTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -13776,8 +14182,8 @@ export class UnionTypeNode implements GoContainerStoredValue<UnionTypeNode$Stora
     declare readonly [$goContainerStorageType]: UnionTypeNode$Storage;
     static $zero(): UnionTypeNode {
         return new UnionTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$storageOf(UnionOrIntersectionTypeNodeBase.$zero())
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$zeroStorage()
         });
     }
     static $copy($source: UnionTypeNode): UnionTypeNode {
@@ -13794,6 +14200,12 @@ export class UnionTypeNode implements GoContainerStoredValue<UnionTypeNode$Stora
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, UnionOrIntersectionTypeNodeBase.$hash(UnionOrIntersectionTypeNodeBase.$fromStorage($source.$storage.UnionOrIntersectionTypeNodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): UnionTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<UnionTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -13848,8 +14260,8 @@ export class IntersectionTypeNode implements GoContainerStoredValue<Intersection
     declare readonly [$goContainerStorageType]: IntersectionTypeNode$Storage;
     static $zero(): IntersectionTypeNode {
         return new IntersectionTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$storageOf(UnionOrIntersectionTypeNodeBase.$zero())
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$zeroStorage()
         });
     }
     static $copy($source: IntersectionTypeNode): IntersectionTypeNode {
@@ -13866,6 +14278,12 @@ export class IntersectionTypeNode implements GoContainerStoredValue<Intersection
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, UnionOrIntersectionTypeNodeBase.$hash(UnionOrIntersectionTypeNodeBase.$fromStorage($source.$storage.UnionOrIntersectionTypeNodeBase)));
         return $hash;
+    }
+    static $zeroStorage(): IntersectionTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            UnionOrIntersectionTypeNodeBase: UnionOrIntersectionTypeNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<IntersectionTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -13966,7 +14384,7 @@ export class TypeOperatorNode implements GoContainerStoredValue<TypeOperatorNode
     declare readonly [$goContainerStorageType]: TypeOperatorNode$Storage;
     static $zero(): TypeOperatorNode {
         return new TypeOperatorNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             Operator: 0,
             Type: void 0
         });
@@ -13988,6 +14406,13 @@ export class TypeOperatorNode implements GoContainerStoredValue<TypeOperatorNode
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Operator));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         return $hash;
+    }
+    static $zeroStorage(): TypeOperatorNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            Operator: 0,
+            Type: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<TypeOperatorNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14088,7 +14513,7 @@ export class ArrayTypeNode implements GoContainerStoredValue<ArrayTypeNode$Stora
     declare readonly [$goContainerStorageType]: ArrayTypeNode$Storage;
     static $zero(): ArrayTypeNode {
         return new ArrayTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             ElementType: void 0
         });
     }
@@ -14107,6 +14532,12 @@ export class ArrayTypeNode implements GoContainerStoredValue<ArrayTypeNode$Stora
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ElementType));
         return $hash;
+    }
+    static $zeroStorage(): ArrayTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            ElementType: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ArrayTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14165,7 +14596,7 @@ export class IndexedAccessTypeNode implements GoContainerStoredValue<IndexedAcce
     declare readonly [$goContainerStorageType]: IndexedAccessTypeNode$Storage;
     static $zero(): IndexedAccessTypeNode {
         return new IndexedAccessTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             ObjectType: void 0,
             IndexType: void 0
         });
@@ -14188,6 +14619,13 @@ export class IndexedAccessTypeNode implements GoContainerStoredValue<IndexedAcce
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.ObjectType));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.IndexType));
         return $hash;
+    }
+    static $zeroStorage(): IndexedAccessTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            ObjectType: void 0,
+            IndexType: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14242,7 +14680,7 @@ export class TypeReferenceNode implements GoContainerStoredValue<TypeReferenceNo
     declare readonly [$goContainerStorageType]: TypeReferenceNode$Storage;
     static $zero(): TypeReferenceNode {
         return new TypeReferenceNode({
-            NodeWithTypeArgumentsBase: NodeWithTypeArgumentsBase.$storageOf(NodeWithTypeArgumentsBase.$zero()),
+            NodeWithTypeArgumentsBase: NodeWithTypeArgumentsBase.$zeroStorage(),
             TypeName: void 0
         });
     }
@@ -14261,6 +14699,12 @@ export class TypeReferenceNode implements GoContainerStoredValue<TypeReferenceNo
         $hash = GoMapHash.mix($hash, NodeWithTypeArgumentsBase.$hash(NodeWithTypeArgumentsBase.$fromStorage($source.$storage.NodeWithTypeArgumentsBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.TypeName));
         return $hash;
+    }
+    static $zeroStorage(): TypeReferenceNode$Storage {
+        return {
+            NodeWithTypeArgumentsBase: NodeWithTypeArgumentsBase.$zeroStorage(),
+            TypeName: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<TypeReferenceNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14333,8 +14777,8 @@ export class ExpressionWithTypeArguments implements GoContainerStoredValue<Expre
     declare readonly [$goContainerStorageType]: ExpressionWithTypeArguments$Storage;
     static $zero(): ExpressionWithTypeArguments {
         return new ExpressionWithTypeArguments({
-            MemberExpressionBase: MemberExpressionBase.$storageOf(MemberExpressionBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             Expression: void 0,
             TypeArguments: void 0
         });
@@ -14359,6 +14803,14 @@ export class ExpressionWithTypeArguments implements GoContainerStoredValue<Expre
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Expression));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.TypeArguments));
         return $hash;
+    }
+    static $zeroStorage(): ExpressionWithTypeArguments$Storage {
+        return {
+            MemberExpressionBase: MemberExpressionBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            Expression: void 0,
+            TypeArguments: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14420,7 +14872,7 @@ export class LiteralTypeNode implements GoContainerStoredValue<LiteralTypeNode$S
     declare readonly [$goContainerStorageType]: LiteralTypeNode$Storage;
     static $zero(): LiteralTypeNode {
         return new LiteralTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             Literal: void 0
         });
     }
@@ -14439,6 +14891,12 @@ export class LiteralTypeNode implements GoContainerStoredValue<LiteralTypeNode$S
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Literal));
         return $hash;
+    }
+    static $zeroStorage(): LiteralTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            Literal: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<LiteralTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -14773,8 +15231,8 @@ export class TypeLiteralNode implements GoContainerStoredValue<TypeLiteralNode$S
     declare readonly [$goContainerStorageType]: TypeLiteralNode$Storage;
     static $zero(): TypeLiteralNode {
         return new TypeLiteralNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
             Members: void 0
         });
     }
@@ -14795,6 +15253,13 @@ export class TypeLiteralNode implements GoContainerStoredValue<TypeLiteralNode$S
         $hash = GoMapHash.mix($hash, DeclarationBase.$hash(DeclarationBase.$fromStorage($source.$storage.DeclarationBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Members));
         return $hash;
+    }
+    static $zeroStorage(): TypeLiteralNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            Members: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<TypeLiteralNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -15045,7 +15510,7 @@ export class ParenthesizedTypeNode implements GoContainerStoredValue<Parenthesiz
     declare readonly [$goContainerStorageType]: ParenthesizedTypeNode$Storage;
     static $zero(): ParenthesizedTypeNode {
         return new ParenthesizedTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
             Type: void 0
         });
     }
@@ -15064,6 +15529,12 @@ export class ParenthesizedTypeNode implements GoContainerStoredValue<Parenthesiz
         $hash = GoMapHash.mix($hash, TypeNodeBase.$hash(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase)));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Type));
         return $hash;
+    }
+    static $zeroStorage(): ParenthesizedTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            Type: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ParenthesizedTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -15118,8 +15589,8 @@ export class FunctionTypeNode implements GoContainerStoredValue<FunctionTypeNode
     declare readonly [$goContainerStorageType]: FunctionTypeNode$Storage;
     static $zero(): FunctionTypeNode {
         return new FunctionTypeNode({
-            TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$zero()),
-            FunctionOrConstructorTypeNodeBase: FunctionOrConstructorTypeNodeBase.$storageOf(FunctionOrConstructorTypeNodeBase.$zero())
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            FunctionOrConstructorTypeNodeBase: FunctionOrConstructorTypeNodeBase.$zeroStorage()
         });
     }
     static $copy($source: FunctionTypeNode): FunctionTypeNode {
@@ -15127,6 +15598,12 @@ export class FunctionTypeNode implements GoContainerStoredValue<FunctionTypeNode
             TypeNodeBase: TypeNodeBase.$storageOf(TypeNodeBase.$copy(TypeNodeBase.$fromStorage($source.$storage.TypeNodeBase))),
             FunctionOrConstructorTypeNodeBase: FunctionOrConstructorTypeNodeBase.$storageOf(FunctionOrConstructorTypeNodeBase.$copy(FunctionOrConstructorTypeNodeBase.$fromStorage($source.$storage.FunctionOrConstructorTypeNodeBase)))
         });
+    }
+    static $zeroStorage(): FunctionTypeNode$Storage {
+        return {
+            TypeNodeBase: TypeNodeBase.$zeroStorage(),
+            FunctionOrConstructorTypeNodeBase: FunctionOrConstructorTypeNodeBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<FunctionTypeNode> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -16285,7 +16762,7 @@ export class JSDoc implements GoContainerStoredValue<JSDoc$Storage> {
     declare readonly [$goContainerStorageType]: JSDoc$Storage;
     static $zero(): JSDoc {
         return new JSDoc({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
             Comment: void 0,
             Tags: void 0
         });
@@ -16308,6 +16785,13 @@ export class JSDoc implements GoContainerStoredValue<JSDoc$Storage> {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Comment));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Tags));
         return $hash;
+    }
+    static $zeroStorage(): JSDoc$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            Comment: void 0,
+            Tags: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<JSDoc> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -16650,7 +17134,7 @@ export class JSDocUnknownTag implements GoContainerStoredValue<JSDocUnknownTag$S
     declare readonly [$goContainerStorageType]: JSDocUnknownTag$Storage;
     static $zero(): JSDocUnknownTag {
         return new JSDocUnknownTag({
-            JSDocTagBase: JSDocTagBase.$storageOf(JSDocTagBase.$zero())
+            JSDocTagBase: JSDocTagBase.$zeroStorage()
         });
     }
     static $copy($source: JSDocUnknownTag): JSDocUnknownTag {
@@ -16665,6 +17149,11 @@ export class JSDocUnknownTag implements GoContainerStoredValue<JSDocUnknownTag$S
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, JSDocTagBase.$hash(JSDocTagBase.$fromStorage($source.$storage.JSDocTagBase)));
         return $hash;
+    }
+    static $zeroStorage(): JSDocUnknownTag$Storage {
+        return {
+            JSDocTagBase: JSDocTagBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<JSDocUnknownTag> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -17014,7 +17503,7 @@ export class JSDocDeprecatedTag implements GoContainerStoredValue<JSDocDeprecate
     declare readonly [$goContainerStorageType]: JSDocDeprecatedTag$Storage;
     static $zero(): JSDocDeprecatedTag {
         return new JSDocDeprecatedTag({
-            JSDocTagBase: JSDocTagBase.$storageOf(JSDocTagBase.$zero())
+            JSDocTagBase: JSDocTagBase.$zeroStorage()
         });
     }
     static $copy($source: JSDocDeprecatedTag): JSDocDeprecatedTag {
@@ -17029,6 +17518,11 @@ export class JSDocDeprecatedTag implements GoContainerStoredValue<JSDocDeprecate
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, JSDocTagBase.$hash(JSDocTagBase.$fromStorage($source.$storage.JSDocTagBase)));
         return $hash;
+    }
+    static $zeroStorage(): JSDocDeprecatedTag$Storage {
+        return {
+            JSDocTagBase: JSDocTagBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<JSDocDeprecatedTag> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -18009,10 +18503,10 @@ export class ImportSpecifier implements GoContainerStoredValue<ImportSpecifier$S
     declare readonly [$goContainerStorageType]: ImportSpecifier$Storage;
     static $zero(): ImportSpecifier {
         return new ImportSpecifier({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ExportableBase: ExportableBase.$storageOf(ExportableBase.$zero()),
-            CompositeBase: CompositeBase.$storageOf(CompositeBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
             IsTypeOnly: false,
             PropertyName: void 0,
             name: void 0
@@ -18044,6 +18538,17 @@ export class ImportSpecifier implements GoContainerStoredValue<ImportSpecifier$S
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.PropertyName));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.name));
         return $hash;
+    }
+    static $zeroStorage(): ImportSpecifier$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ExportableBase: ExportableBase.$zeroStorage(),
+            CompositeBase: CompositeBase.$zeroStorage(),
+            IsTypeOnly: false,
+            PropertyName: void 0,
+            name: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<ImportSpecifier> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -18101,13 +18606,18 @@ export class JSDocText implements GoContainerStoredValue<JSDocText$Storage> {
     declare readonly [$goContainerStorageType]: JSDocText$Storage;
     static $zero(): JSDocText {
         return new JSDocText({
-            JSDocCommentBase: JSDocCommentBase.$storageOf(JSDocCommentBase.$zero())
+            JSDocCommentBase: JSDocCommentBase.$zeroStorage()
         });
     }
     static $copy($source: JSDocText): JSDocText {
         return new JSDocText({
             JSDocCommentBase: JSDocCommentBase.$storageOf(JSDocCommentBase.$copy(JSDocCommentBase.$fromStorage($source.$storage.JSDocCommentBase)))
         });
+    }
+    static $zeroStorage(): JSDocText$Storage {
+        return {
+            JSDocCommentBase: JSDocCommentBase.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<JSDocText> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -18308,10 +18818,10 @@ export class TypeParameterDeclaration implements GoContainerStoredValue<TypePara
     declare readonly [$goContainerStorageType]: TypeParameterDeclaration$Storage;
     static $zero(): TypeParameterDeclaration {
         return new TypeParameterDeclaration({
-            NodeBase: NodeBase.$storageOf(NodeBase.$zero()),
-            DeclarationBase: DeclarationBase.$storageOf(DeclarationBase.$zero()),
-            ModifiersBase: ModifiersBase.$storageOf(ModifiersBase.$zero()),
-            TypeSyntaxBase: TypeSyntaxBase.$storageOf(TypeSyntaxBase.$zero()),
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
             name: void 0,
             Constraint: void 0,
             Expression: void 0,
@@ -18348,6 +18858,18 @@ export class TypeParameterDeclaration implements GoContainerStoredValue<TypePara
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Expression));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.DefaultType));
         return $hash;
+    }
+    static $zeroStorage(): TypeParameterDeclaration$Storage {
+        return {
+            NodeBase: NodeBase.$zeroStorage(),
+            DeclarationBase: DeclarationBase.$zeroStorage(),
+            ModifiersBase: ModifiersBase.$zeroStorage(),
+            TypeSyntaxBase: TypeSyntaxBase.$zeroStorage(),
+            name: void 0,
+            Constraint: void 0,
+            Expression: void 0,
+            DefaultType: void 0
+        };
     }
     declare private readonly then?: never;
     static Clone(node: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {

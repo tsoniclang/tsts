@@ -11,7 +11,7 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export class chainedTransformer {
     declare private readonly $goType: void;
-    public constructor(public Transformer: Transformer, public components: RuntimeSlice<tsonicTypeScriptRuntime.Location<Transformer> | undefined>) {
+    public constructor(public Transformer: Transformer, public components: RuntimeSlice<Transformer | undefined>) {
     }
     declare private readonly then?: never;
     static $go$private$transformers$visit(ch: chainedTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -23,7 +23,7 @@ export class chainedTransformer {
         const __gotots_range_1 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).components;
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
-            let t: tsonicTypeScriptRuntime.Location<Transformer> | undefined = __gotots_range_value_1;
+            let t: Transformer | undefined = __gotots_range_value_1;
             result = Transformer.TransformSourceFile(t, result);
         }
         const __gotots_store_1 = NodeBase__from_ast.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
@@ -40,7 +40,7 @@ export class TransformOptions {
     }
     declare private readonly then?: never;
 }
-export function Chain(transforms: RuntimeSlice<(($0: TransformOptions | undefined) => tsonicTypeScriptRuntime.Location<Transformer> | undefined) | undefined>): (($0: TransformOptions | undefined) => tsonicTypeScriptRuntime.Location<Transformer> | undefined) | undefined {
+export function Chain(transforms: RuntimeSlice<(($0: TransformOptions | undefined) => Transformer | undefined) | undefined>): (($0: TransformOptions | undefined) => Transformer | undefined) | undefined {
     if (transforms.length < 2) {
         if (transforms.length === 0) {
             const __gotots_argument_0 = new GoInterfaceAdapter("Expected some number of transforms to chain, but got none");
@@ -48,16 +48,16 @@ export function Chain(transforms: RuntimeSlice<(($0: TransformOptions | undefine
         }
         return transforms.get(0);
     }
-    return (opt: TransformOptions | undefined): tsonicTypeScriptRuntime.Location<Transformer> | undefined => {
-        let constructed = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<Transformer> | undefined>(0, transforms.length, void 0);
+    return (opt: TransformOptions | undefined): Transformer | undefined => {
+        let constructed = RuntimeSlice.make<Transformer | undefined>(0, transforms.length, void 0);
         const __gotots_range_0 = transforms;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
-            let t: (($0: TransformOptions | undefined) => tsonicTypeScriptRuntime.Location<Transformer> | undefined) | undefined = __gotots_range_value_0;
+            let t: (($0: TransformOptions | undefined) => Transformer | undefined) | undefined = __gotots_range_value_0;
             {
                 const __gotots_callee_0 = t;
                 const __gotots_argument_1 = opt;
-                let result: tsonicTypeScriptRuntime.Location<Transformer> | undefined = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
+                let result: Transformer | undefined = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
                 if (!(result === undefined)) {
                     constructed = constructed.append(void 0, [result]);
                 }
@@ -75,7 +75,7 @@ export function Chain(transforms: RuntimeSlice<(($0: TransformOptions | undefine
         }
         let ch: chainedTransformer | undefined = new chainedTransformer(Transformer.$zero(), constructed);
         const __gotots_store_0 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_receiver_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Transformer");
+        const __gotots_receiver_1 = __gotots_store_0.Transformer;
         const __gotots_receiver_0 = ch;
         const __gotots_argument_2 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
             return chainedTransformer.$go$private$transformers$visit(__gotots_receiver_0, $argument0);

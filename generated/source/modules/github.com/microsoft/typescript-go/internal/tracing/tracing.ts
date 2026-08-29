@@ -123,14 +123,6 @@ export class TraceRecord implements GoContainerStoredValue<TraceRecord$Storage> 
         this.$storage.CheckerID = $value;
     }
     declare readonly [$goContainerStorageType]: TraceRecord$Storage;
-    static $zero(): TraceRecord {
-        return new TraceRecord({
-            ConfigFilePath: "",
-            TracePath: "",
-            TypesPath: "",
-            CheckerID: 0
-        });
-    }
     static $copy($source: TraceRecord): TraceRecord {
         return new TraceRecord({
             ConfigFilePath: $source.$storage.ConfigFilePath,
@@ -149,6 +141,14 @@ export class TraceRecord implements GoContainerStoredValue<TraceRecord$Storage> 
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.TypesPath));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.CheckerID));
         return $hash;
+    }
+    static $zeroStorage(): TraceRecord$Storage {
+        return {
+            ConfigFilePath: "",
+            TracePath: "",
+            TypesPath: "",
+            CheckerID: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -279,7 +279,7 @@ export class Tracing {
                                 CheckerID: checkerIndex
                             })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TraceRecord.$storageOf(TraceRecord.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TraceRecord.$zeroStorage());
                         }
                     }
                     (tr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.legend = __gotots_slice_build_1;
@@ -800,7 +800,7 @@ export function traceThreadKeyFromArgs(args: GoMapValue<gostring, $goInterface$I
     return [new traceThreadKey(new traceThreadKind(""), "", 0, false), false];
 }
 export function stableTraceThreadID(key: traceThreadKey): int {
-    let hash: tsonicTypeScriptRuntime.Location<Hasher__from_xxh3> | undefined = New__from_xxh3();
+    let hash: Hasher__from_xxh3 | undefined = New__from_xxh3();
     const __gotots_results_10 = Hasher__from_xxh3.WriteString(hash, key.kind.$value);
     const __gotots_results_11 = Hasher__from_xxh3.WriteString(hash, ":");
     if (key.hasIndex) {

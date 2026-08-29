@@ -41,7 +41,7 @@ export function init(): void {
     let tags = strings__from_gostdlib.Split(specialTagsStr, " ");
     const __gotots_slice_build_0 = goSliceAllocate<Tag__from_language$Storage>(tags.length, null);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Tag__from_language.$storageOf(Tag__from_language.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Tag__from_language.$zeroStorage());
     }
     $state.specialTags = __gotots_slice_build_0;
     const __gotots_range_0 = tags;

@@ -68,8 +68,8 @@ export class Iter {
     public set pNext($value: int) {
         this.$storage.pNext = $value;
     }
-    static $zero(): Iter {
-        return new Iter({
+    static $zeroStorage(): Iter$Storage {
+        return {
             Weighter: void 0,
             Elems: RuntimeSlice.nil<Elem>(),
             N: 0,
@@ -77,7 +77,7 @@ export class Iter {
             str: "",
             pEnd: 0,
             pNext: 0
-        });
+        };
     }
     declare private readonly then?: never;
     static Next(i: tsonicTypeScriptRuntime.Location<Iter> | undefined): bool {

@@ -60,7 +60,9 @@ export function isDefinedInLibraryFile(program: {
     let declSourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = GetSourceFileOfNode__from_ast(declaration);
     return Program__from_compiler.IsSourceFileDefaultLibrary(program, SourceFile__from_ast.Path(declSourceFile)) && IsDeclarationFileName__from_tspath(SourceFile__from_ast.FileName(declSourceFile));
 }
-export function wouldRenameInOtherNodeModules(originalFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, preferences: UserPreferences__from_lsutil): {
+export function wouldRenameInOtherNodeModules(originalFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined, preferences: UserPreferences__from_lsutil): {
     value: Message__from_diagnostics;
 } | undefined {
     let sym: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __go_symbol;

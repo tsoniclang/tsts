@@ -46,19 +46,19 @@ export class versionComparator {
     public set operand($value: Version) {
         this.$storage.operand = Version.$storageOf($value);
     }
-    static $zero(): versionComparator {
-        return new versionComparator({
-            operator: ((void comparatorOperator,
-                "") as gostring),
-            operand: Version.$storageOf(Version.$zero())
-        });
-    }
     static $copy($source: versionComparator): versionComparator {
         return new versionComparator({
             operator: ((void comparatorOperator,
                 $source.$storage.operator) as gostring),
             operand: Version.$storageOf(Version.$copy(Version.$fromStorage($source.$storage.operand)))
         });
+    }
+    static $zeroStorage(): versionComparator$Storage {
+        return {
+            operator: ((void comparatorOperator,
+                "") as gostring),
+            operand: Version.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -207,7 +207,7 @@ export function parseAlternatives(text: gostring): [
                                 __gotots_slice_build_3.set(__gotots_slice_build_0.length + __gotots_slice_build_5, __gotots_slice_build_2.get(__gotots_slice_build_5));
                             }
                             for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
-                                __gotots_slice_build_3.$initialize(__gotots_slice_build_5, versionComparator.$storageOf(versionComparator.$zero()));
+                                __gotots_slice_build_3.$initialize(__gotots_slice_build_5, versionComparator.$zeroStorage());
                             }
                         }
                         comparators = __gotots_slice_build_3;
@@ -261,7 +261,7 @@ export function parseAlternatives(text: gostring): [
                                     __gotots_slice_build_9.set(__gotots_slice_build_6.length + __gotots_slice_build_11, __gotots_slice_build_8.get(__gotots_slice_build_11));
                                 }
                                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, versionComparator.$storageOf(versionComparator.$zero()));
+                                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, versionComparator.$zeroStorage());
                                 }
                             }
                             comparators = __gotots_slice_build_9;
@@ -317,7 +317,7 @@ export function parseHyphen(left: gostring, right: gostring): [
                     operand: Version.$storageOf(Version.$copy(leftResult.version))
                 })));
             for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
-                __gotots_slice_build_13.$initialize(__gotots_slice_build_15, versionComparator.$storageOf(versionComparator.$zero()));
+                __gotots_slice_build_13.$initialize(__gotots_slice_build_15, versionComparator.$zeroStorage());
             }
         }
         comparators = __gotots_slice_build_13;
@@ -361,7 +361,7 @@ export function parseHyphen(left: gostring, right: gostring): [
                     operand: Version.$storageOf(Version.$copy(operand))
                 })));
             for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, versionComparator.$storageOf(versionComparator.$zero()));
+                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, versionComparator.$zeroStorage());
             }
         }
         comparators = __gotots_slice_build_17;

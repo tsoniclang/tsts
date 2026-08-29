@@ -9,8 +9,8 @@ export class NotForPublicUse {
     public static $fromStorage($source: NotForPublicUse$Storage): NotForPublicUse {
         return new NotForPublicUse($source);
     }
-    static $zero(): NotForPublicUse {
-        return new NotForPublicUse({});
+    static $zeroStorage(): NotForPublicUse$Storage {
+        return {};
     }
     declare private readonly then?: never;
 }

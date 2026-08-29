@@ -1,4 +1,3 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import { GoArray } from "@gotots/runtime/array.js";
 import type { GoError } from "@gotots/runtime/interface-value.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
@@ -168,6 +167,9 @@ export class Uint128 {
     public static $fromStorage(source: Uint128$Storage): Uint128 {
         return new Uint128(source);
     }
+    public static $zeroStorage(): Uint128$Storage {
+        return { Hi: 0n, Lo: 0n };
+    }
     public get Hi(): uint64 {
         return this.$storage.Hi;
     }
@@ -233,31 +235,31 @@ export class Hasher {
         targetState.seed = sourceState.seed;
         targetState.pendingHighSurrogate = sourceState.pendingHighSurrogate;
     }
-    public static Reset(hasher: tsonicTypeScriptRuntime.Location<Hasher> | undefined): void {
-        resetState((hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.$storage);
+    public static Reset(hasher: Hasher | undefined): void {
+        resetState((hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
     }
-    public static Sum128(hasher: tsonicTypeScriptRuntime.Location<Hasher> | undefined): Uint128 {
-        return digest((hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.$storage);
+    public static Sum128(hasher: Hasher | undefined): Uint128 {
+        return digest((hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
     }
-    public static Sum64(hasher: tsonicTypeScriptRuntime.Location<Hasher> | undefined): uint64 {
+    public static Sum64(hasher: Hasher | undefined): uint64 {
         return Hasher.Sum128(hasher).Lo;
     }
-    public static Write(hasher: tsonicTypeScriptRuntime.Location<Hasher> | undefined, value: RuntimeSlice<uint8>): [
+    public static Write(hasher: Hasher | undefined, value: RuntimeSlice<uint8>): [
         int,
         GoError | undefined
     ] {
-        const state = (hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.$storage;
+        const state = (hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
         flushPendingHighSurrogate(state);
         for (let index = 0; index < value.length; index++) {
             mixByte(state, value.get(index));
         }
         return [value.length, undefined];
     }
-    public static WriteString(hasher: tsonicTypeScriptRuntime.Location<Hasher> | undefined, value: gostring): [
+    public static WriteString(hasher: Hasher | undefined, value: gostring): [
         int,
         GoError | undefined
     ] {
-        const state = (hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.$storage;
+        const state = (hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
         const written = mixString(state, value);
         return [written, undefined];
     }
@@ -278,6 +280,6 @@ function Hash(value: RuntimeSlice<uint8>): uint64 {
 function HashSeed(value: RuntimeSlice<uint8>, seed: uint64): uint64 {
     return Hash128Seed(value, seed).Lo;
 }
-export function New(): tsonicTypeScriptRuntime.Location<Hasher> | undefined {
-    return tsonicTypeScriptRuntime.location(Hasher.$zero());
+export function New(): Hasher | undefined {
+    return Hasher.$zero();
 }

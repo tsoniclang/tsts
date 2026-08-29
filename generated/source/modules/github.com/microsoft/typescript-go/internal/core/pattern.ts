@@ -55,6 +55,12 @@ export class Pattern implements GoContainerStoredValue<Pattern$Storage> {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.StarIndex));
         return $hash;
     }
+    static $zeroStorage(): Pattern$Storage {
+        return {
+            Text: "",
+            StarIndex: 0
+        };
+    }
     declare private readonly then?: never;
     static IsValid(p: Pattern | undefined): bool {
         return Pattern.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).StarIndex === -1 || Pattern.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).StarIndex < Pattern.$storageOf((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).Text.length;

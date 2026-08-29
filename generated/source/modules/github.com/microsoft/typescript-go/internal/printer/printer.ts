@@ -2114,7 +2114,7 @@ export class Printer {
                             }
                             __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                             for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
-                                __gotots_slice_build_13.$initialize(__gotots_slice_build_15, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                                __gotots_slice_build_13.$initialize(__gotots_slice_build_15, CommentRange__from_ast.$zeroStorage());
                             }
                         }
                         leadingComments = __gotots_slice_build_13;
@@ -2166,7 +2166,7 @@ export class Printer {
                     }
                     __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                     for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                        __gotots_slice_build_17.$initialize(__gotots_slice_build_19, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_17.$initialize(__gotots_slice_build_19, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 detachedComments = __gotots_slice_build_17;
@@ -2196,7 +2196,7 @@ export class Printer {
                                 }
                                 __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                                 for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
-                                    __gotots_slice_build_21.$initialize(__gotots_slice_build_23, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                                    __gotots_slice_build_21.$initialize(__gotots_slice_build_23, CommentRange__from_ast.$zeroStorage());
                                 }
                             }
                             commentsToEmit = __gotots_slice_build_21;
@@ -5226,7 +5226,7 @@ export class Printer {
                     }
                     __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                     for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 comments = __gotots_slice_build_5;
@@ -6971,7 +6971,7 @@ export class Printer {
             static $zero(): entry {
                 return new entry({
                     node: void 0,
-                    state: printerState.$storageOf(printerState.$zero())
+                    state: printerState.$zeroStorage()
                 });
             }
             static $copy($source: entry): entry {
@@ -8488,7 +8488,7 @@ export class Printer {
                     }
                     __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 comments = __gotots_slice_build_1;
@@ -8562,7 +8562,7 @@ export class Printer {
                 }
                 __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(comment)));
                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, CommentRange__from_ast.$zeroStorage());
                 }
             }
             comments = __gotots_slice_build_9;
@@ -9753,7 +9753,7 @@ export class Printer {
     }
     static $go$private$printer$generateName(p: Printer | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         const __gotots_store_655 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        NameGenerator.GenerateName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_655, "nameGenerator"), name);
+        NameGenerator.GenerateName(__gotots_store_655.nameGenerator, name);
     }
     static $go$private$printer$generateNameIfNeeded(p: Printer | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         if (!(name === undefined)) {
@@ -10196,7 +10196,7 @@ export class Printer {
     static $go$private$printer$getTextOfNode(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, includeTrivia: bool): gostring {
         if (IsMemberName__from_ast(node) && !(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(node) === undefined)) {
             const __gotots_store_237 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            return NameGenerator.GenerateName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_237, "nameGenerator"), node);
+            return NameGenerator.GenerateName(__gotots_store_237.nameGenerator, node);
         }
         if (IsStringLiteral__from_ast(node)) {
             {
@@ -10683,11 +10683,11 @@ export class Printer {
     }
     static $go$private$printer$popNameGenerationScope(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         const __gotots_store_253 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        NameGenerator.PopScope(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_253, "nameGenerator"), Printer.$go$private$printer$shouldReuseTempVariableScope(p, node));
+        NameGenerator.PopScope(__gotots_store_253.nameGenerator, Printer.$go$private$printer$shouldReuseTempVariableScope(p, node));
     }
     static $go$private$printer$pushNameGenerationScope(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
         const __gotots_store_252 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        NameGenerator.PushScope(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_252, "nameGenerator"), Printer.$go$private$printer$shouldReuseTempVariableScope(p, node));
+        NameGenerator.PushScope(__gotots_store_252.nameGenerator, Printer.$go$private$printer$shouldReuseTempVariableScope(p, node));
     }
     static $go$private$printer$setSourceFile(p: Printer | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void {
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile = sourceFile;
@@ -11450,7 +11450,7 @@ export class commentState implements GoContainerStoredValue<commentState$Storage
     static $zero(): commentState {
         return new commentState({
             emitFlags: 0,
-            commentRange: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            commentRange: TextRange__from_core.$zeroStorage(),
             containerPos: 0,
             containerEnd: 0,
             declarationListContainerEnd: 0
@@ -11504,7 +11504,7 @@ export class sourceMapState implements GoContainerStoredValue<sourceMapState$Sto
     static $zero(): sourceMapState {
         return new sourceMapState({
             emitFlags: 0,
-            sourceMapRange: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            sourceMapRange: TextRange__from_core.$zeroStorage(),
             hasTokenSourceMapRange: false
         });
     }
@@ -11543,17 +11543,17 @@ export class printerState {
     public set sourceMapState($value: tsonicTypeScriptRuntime.Location<sourceMapState> | undefined) {
         this.$storage.sourceMapState = $value;
     }
-    static $zero(): printerState {
-        return new printerState({
-            commentState: void 0,
-            sourceMapState: void 0
-        });
-    }
     static $copy($source: printerState): printerState {
         return new printerState({
             commentState: $source.$storage.commentState,
             sourceMapState: $source.$storage.sourceMapState
         });
+    }
+    static $zeroStorage(): printerState$Storage {
+        return {
+            commentState: void 0,
+            sourceMapState: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -11574,7 +11574,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
     };
     (printer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).makeFileLevelOptimisticUniqueName = (name: gostring): gostring => {
         const __gotots_store_0 = (printer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return NameGenerator.MakeFileLevelOptimisticUniqueName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "nameGenerator"), name);
+        return NameGenerator.MakeFileLevelOptimisticUniqueName(__gotots_store_0.nameGenerator, name);
     };
     (printer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containerPos = -1;
     (printer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).containerEnd = -1;

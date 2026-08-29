@@ -87,6 +87,9 @@ export class $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_c
         return $hash;
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_): void {
+        this.Content = $value.Content;
+    }
 }
 export class $goStruct$Struct_Field_Files_SliceOf_string_Tag_json_u3a__u22_files_u22__Field_Directories_SliceOf_string_Tag_json_u3a__u22_directories_u22_ {
     declare private readonly $goType: void;
@@ -136,6 +139,12 @@ export class $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_jso
         return new $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_(JSONRPCVersion__from_jsonrpc.$copy($source.JSONRPC), $source.ID, $source.Method, $source.Params);
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22_): void {
+        this.JSONRPC = $value.JSONRPC;
+        this.ID = $value.ID;
+        this.Method = $value.Method;
+        this.Params = $value.Params;
+    }
 }
 export class $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_ {
     declare private readonly $goType: void;
@@ -152,6 +161,14 @@ export class $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_jso
         return new $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_(JSONRPCVersion__from_jsonrpc.$copy($source.JSONRPC), $source.Method, $source.ID, $source.Params, $source.Result, $source.Error);
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: $goStruct$Struct_Field_JSONRPC_Named_jsonrpc$JSONRPCVersion_Tag_json_u3a__u22_jsonrpc_u22__Field_Method_Named_lsproto$Method_Tag_json_u3a__u22_method_u22__Field_ID_PointerTo_Named_jsonrpc$ID_Tag_json_u3a__u22_id_u2c_omitzero_u22__Field_Params_Named_jsontext$Value_Tag_json_u3a__u22_params_u22__Field_Result_Named_jsontext$Value_Tag_json_u3a__u22_result_u2c_omitzero_u22__Field_Error_PointerTo_Named_jsonrpc$ResponseError_Tag_json_u3a__u22_error_u2c_omitzero_u22_): void {
+        this.JSONRPC = $value.JSONRPC;
+        this.Method = $value.Method;
+        this.ID = $value.ID;
+        this.Params = $value.Params;
+        this.Result = $value.Result;
+        this.Error = $value.Error;
+    }
 }
 export type $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_$Storage = {
     JSX: gostring;

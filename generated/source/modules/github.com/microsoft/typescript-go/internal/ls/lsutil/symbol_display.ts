@@ -185,7 +185,9 @@ export function ScriptElementKindModifierCts$constant(): ScriptElementKindModifi
 export function ScriptElementKindModifierCjs$constant(): ScriptElementKindModifier {
     return 2097152;
 }
-export function GetSymbolKind(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ScriptElementKind {
+export function GetSymbolKind(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ScriptElementKind {
     let result = getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker, __go_symbol, location);
     if (!(result.$value === ScriptElementKindUnknown$constant().$value)) {
         return result;
@@ -221,7 +223,9 @@ export function GetSymbolKind(typeChecker: tsonicTypeScriptRuntime.Location<Chec
     }
     return ScriptElementKindUnknown$constant();
 }
-export function getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ScriptElementKind {
+export function getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ScriptElementKind {
     let roots = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
     if (!(typeChecker === undefined)) {
         roots = Checker__from_checker.GetRootSymbols(typeChecker, __go_symbol);
@@ -353,7 +357,9 @@ export function isLocalVariableOrFunction(__go_symbol: tsonicTypeScriptRuntime.L
     }
     return false;
 }
-export function GetSymbolModifiers(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): ScriptElementKindModifier {
+export function GetSymbolModifiers(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): ScriptElementKindModifier {
     if (__go_symbol === undefined) {
         return ScriptElementKindModifierNone$constant();
     }
@@ -369,7 +375,9 @@ export function GetSymbolModifiers(typeChecker: tsonicTypeScriptRuntime.Location
     }
     return modifiers;
 }
-export function getNormalizedSymbolModifiers(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): ScriptElementKindModifier {
+export function getNormalizedSymbolModifiers(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): ScriptElementKindModifier {
     let modifierSet = 0;
     if (Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations.length > 0) {
         let declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations.get(0);
@@ -387,13 +395,17 @@ export function getNormalizedSymbolModifiers(typeChecker: tsonicTypeScriptRuntim
     }
     return modifierSet;
 }
-export function isDeprecatedDeclaration(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
+export function isDeprecatedDeclaration(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     if (!(typeChecker === undefined)) {
         return Checker__from_checker.IsDeprecatedDeclaration(typeChecker, declaration);
     }
     return IsDeprecatedDeclaration__from_ast(declaration);
 }
-export function getNodeModifiers(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, excludeFlags: ModifierFlags__from_ast): ScriptElementKindModifier {
+export function getNodeModifiers(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, excludeFlags: ModifierFlags__from_ast): ScriptElementKindModifier {
     let result = 0;
     let flags = 0;
     if (IsDeclaration__from_ast(node)) {

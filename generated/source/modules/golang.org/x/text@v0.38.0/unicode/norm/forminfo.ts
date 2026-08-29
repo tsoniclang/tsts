@@ -101,6 +101,17 @@ export class Properties {
             index: $source.$storage.index
         });
     }
+    static $zeroStorage(): Properties$Storage {
+        return {
+            pos: 0,
+            size: 0,
+            ccc: 0,
+            tccc: 0,
+            nLead: 0,
+            flags: 0,
+            index: 0
+        };
+    }
     declare private readonly then?: never;
     BoundaryAfter(): bool {
         return this.$go$private$norm$isInert();
@@ -171,7 +182,7 @@ export class formInfo {
         return new formInfo($source.form, $source.composing, $source.compatibility, $source.info, $source.nextMain);
     }
     declare private readonly then?: never;
-    static $go$private$norm$quickSpan(f: tsonicTypeScriptRuntime.Location<formInfo> | undefined, src: input, i: int, end: int, atEOF: bool): [
+    static $go$private$norm$quickSpan(f: formInfo | undefined, src: input, i: int, end: int, atEOF: bool): [
         int,
         bool
     ] {
@@ -192,7 +203,7 @@ export class formInfo {
                     continue;
                 }
             }
-            const __gotots_callee_0 = ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<formInfo>).value.info.$value;
+            const __gotots_callee_0 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).info.$value;
             const __gotots_argument_0 = input.$copy(src);
             const __gotots_argument_1 = i;
             let info = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0, __gotots_argument_1);
@@ -218,7 +229,7 @@ export class formInfo {
                     break;
                 }
             }
-            if (((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<formInfo>).value.composing) {
+            if ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).composing) {
                 if (!info.$go$private$norm$isYesC()) {
                     break;
                 }

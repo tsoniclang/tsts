@@ -322,21 +322,25 @@ export function newMergedTypeMapper(m1: tsonicTypeScriptRuntime.Location<TypeMap
 }
 export class CompositeTypeMapper {
     declare private readonly $goType: void;
-    public constructor(public TypeMapperBase: TypeMapperBase, public c: tsonicTypeScriptRuntime.Location<Checker> | undefined, public m1: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined, public m2: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined) {
+    public constructor(public TypeMapperBase: TypeMapperBase, public c: {
+        value: Checker;
+    } | undefined, public m1: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined, public m2: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined) {
     }
     static $copy($source: CompositeTypeMapper): CompositeTypeMapper {
         return new CompositeTypeMapper(TypeMapperBase.$copy($source.TypeMapperBase), $source.c, $source.m1, $source.m2);
     }
     static $equal($left: CompositeTypeMapper, $right: CompositeTypeMapper): bool {
         return TypeMapperBase.$equal($left.TypeMapperBase, $right.TypeMapperBase) &&
-            tsonicTypeScriptRuntime.sameLocation($left.c, $right.c) &&
+            $left.c
+                ===
+                    $right.c &&
             tsonicTypeScriptRuntime.sameLocation($left.m1, $right.m1) &&
             tsonicTypeScriptRuntime.sameLocation($left.m2, $right.m2);
     }
     static $hash($source: CompositeTypeMapper): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, TypeMapperBase.$hash($source.TypeMapperBase));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.c));
+        $hash = GoMapHash.mix($hash, (($pointer: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer)))($source.c));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.m1));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.m2));
         return $hash;
@@ -352,7 +356,9 @@ export class CompositeTypeMapper {
         return TypeMapper.Map((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.m2, t);
     }
 }
-export function newCompositeTypeMapper(c: tsonicTypeScriptRuntime.Location<Checker> | undefined, m1: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined, m2: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined): tsonicTypeScriptRuntime.Location<TypeMapper> | undefined {
+export function newCompositeTypeMapper(c: {
+    value: Checker;
+} | undefined, m1: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined, m2: tsonicTypeScriptRuntime.Location<TypeMapper> | undefined): tsonicTypeScriptRuntime.Location<TypeMapper> | undefined {
     let m: {
         value: CompositeTypeMapper;
     } | undefined = { value: new CompositeTypeMapper(TypeMapperBase.$zero(), void 0, void 0, void 0) };
@@ -365,7 +371,9 @@ export function newCompositeTypeMapper(c: tsonicTypeScriptRuntime.Location<Check
 }
 export class InferenceTypeMapper {
     declare private readonly $goType: void;
-    public constructor(public TypeMapperBase: TypeMapperBase, public c: tsonicTypeScriptRuntime.Location<Checker> | undefined, public n: {
+    public constructor(public TypeMapperBase: TypeMapperBase, public c: {
+        value: Checker;
+    } | undefined, public n: {
         value: InferenceContext;
     } | undefined, public fixing: bool) {
     }
@@ -374,7 +382,9 @@ export class InferenceTypeMapper {
     }
     static $equal($left: InferenceTypeMapper, $right: InferenceTypeMapper): bool {
         return TypeMapperBase.$equal($left.TypeMapperBase, $right.TypeMapperBase) &&
-            tsonicTypeScriptRuntime.sameLocation($left.c, $right.c) &&
+            $left.c
+                ===
+                    $right.c &&
             $left.n
                 ===
                     $right.n && $left.fixing === $right.fixing;
@@ -382,8 +392,8 @@ export class InferenceTypeMapper {
     static $hash($source: InferenceTypeMapper): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, TypeMapperBase.$hash($source.TypeMapperBase));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.c));
-        $hash = GoMapHash.mix($hash, (($pointer: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer)))($source.n));
+        $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.c));
+        $hash = GoMapHash.mix($hash, (($pointer3: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer3 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer3)))($source.n));
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.fixing));
         return $hash;
     }

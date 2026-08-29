@@ -173,12 +173,6 @@ export class Flags {
     public set Values($value: uint64) {
         this.$storage.Values = $value;
     }
-    static $zero(): Flags {
-        return new Flags({
-            Presence: 0n,
-            Values: 0n
-        });
-    }
     static $copy($source: Flags): Flags {
         return new Flags({
             Presence: $source.$storage.Presence,
@@ -193,6 +187,12 @@ export class Flags {
         $hash = GoMapHash.mix($hash, GoMapHash.bigint($source.$storage.Presence));
         $hash = GoMapHash.mix($hash, GoMapHash.bigint($source.$storage.Values));
         return $hash;
+    }
+    static $zeroStorage(): Flags$Storage {
+        return {
+            Presence: 0n,
+            Values: 0n
+        };
     }
     declare private readonly then?: never;
     static Clear(fs: tsonicTypeScriptRuntime.Location<Flags> | undefined, f: Bools): void {

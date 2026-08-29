@@ -117,6 +117,12 @@ export class objectMember implements GoContainerStoredValue<objectMember$Storage
             buffer: $source.$storage.buffer
         });
     }
+    static $zeroStorage(): objectMember$Storage {
+        return {
+            name: RuntimeSlice.nil<uint8>(),
+            buffer: RuntimeSlice.nil<uint8>()
+        };
+    }
     declare private readonly then?: never;
     Compare(y: objectMember): int {
         {
@@ -143,7 +149,7 @@ export function putObjectMembers(ns: tsonicTypeScriptRuntime.Location<RuntimeSli
     if (((ns ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value.capacity < 1024) {
         const __gotots_slice_build_4 = ((ns ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<objectMember$Storage>>).value;
         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_4.length; __gotots_slice_build_5++) {
-            __gotots_slice_build_4.set(__gotots_slice_build_5, objectMember.$storageOf(objectMember.$zero()));
+            __gotots_slice_build_4.set(__gotots_slice_build_5, objectMember.$zeroStorage());
         }
         void 0;
         sync__from_gostdlib.Pool.Put($state.objectMemberPool, new $goInterfaceAdapter$PointerTo_SliceOf_Named_jsontext$objectMember(ns));
@@ -276,7 +282,7 @@ export function mustReorderObjectsFromDecoder(d: tsonicTypeScriptRuntime.Locatio
                                     }
                                     __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, objectMember.$storageOf(objectMember.$copy(currMember)));
                                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, objectMember.$storageOf(objectMember.$zero()));
+                                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, objectMember.$zeroStorage());
                                     }
                                 }
                                 void (__gotots_store_3.value =

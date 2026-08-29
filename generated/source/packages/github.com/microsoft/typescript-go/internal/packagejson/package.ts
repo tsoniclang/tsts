@@ -10,7 +10,7 @@ export function $initialize(): void {
     JSONValueTypeNumber = JSONValueTypeNumber$constant();
     JSONValueTypeObject = JSONValueTypeObject$constant();
     JSONValueTypeString = JSONValueTypeString$constant();
-    $state.typeScriptVersion = Version__from_semver.$storageOf(Version__from_semver.$zero());
+    $state.typeScriptVersion = Version__from_semver.$zeroStorage();
     {
         $state.typeScriptVersion = Version__from_semver.$storageOf(MustParse__from_semver(Version__from_core()));
     }

@@ -29,6 +29,11 @@ export class Arena<T> {
             data: $source.$storage.data
         });
     }
+    static $zeroStorage<T>(): Arena$Storage<T> {
+        return {
+            data: RuntimeSlice.nil<GoContainerStorage<T>>()
+        };
+    }
     declare private readonly then?: never;
     static Clone$kernel<T>(a: tsonicTypeScriptRuntime.Location<Arena<T>> | undefined, $go$capacity$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$convert$SliceOf_T0_to_SliceOf_T0: ($0: RuntimeSlice<GoContainerStorage<T>>) => RuntimeSlice<GoContainerStorage<T>>, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$length$SliceOf_T0_to_int: ($0: RuntimeSlice<GoContainerStorage<T>>) => int, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, t: RuntimeSlice<GoContainerStorage<T>>): RuntimeSlice<GoContainerStorage<T>> {
         if ($go$length$SliceOf_T0_to_int(t) === 0) {

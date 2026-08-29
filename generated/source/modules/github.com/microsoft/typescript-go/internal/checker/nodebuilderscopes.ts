@@ -53,17 +53,17 @@ export class localsRecord {
     public set oldSymbol($value: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) {
         this.$storage.oldSymbol = $value;
     }
-    static $zero(): localsRecord {
-        return new localsRecord({
-            name: "",
-            oldSymbol: void 0
-        });
-    }
     static $copy($source: localsRecord): localsRecord {
         return new localsRecord({
             name: $source.$storage.name,
             oldSymbol: $source.$storage.oldSymbol
         });
+    }
+    static $zeroStorage(): localsRecord$Storage {
+        return {
+            name: "",
+            oldSymbol: void 0
+        };
     }
     declare private readonly then?: never;
 }

@@ -176,6 +176,14 @@ export class PackageId {
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.PeerDependencies));
         return $hash;
     }
+    static $zeroStorage(): PackageId$Storage {
+        return {
+            Name: "",
+            SubModuleName: "",
+            Version: "",
+            PeerDependencies: ""
+        };
+    }
     declare private readonly then?: never;
     static PackageName(p: tsonicTypeScriptRuntime.Location<PackageId> | undefined): gostring {
         if (PackageId.$storageOf(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PackageId>).value).SubModuleName !== "") {

@@ -136,13 +136,13 @@ export class host {
     }
     static ReadBuildInfo(h: {
         value: host;
-    } | undefined, config: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined {
+    } | undefined, config: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined): BuildInfo__from_incremental | undefined {
         let configPath = Orchestrator.$go$private$build$toPath((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator, ParsedCommandLine__from_tsoptions.ConfigName(config));
         let task: {
             value: BuildTask;
         } | undefined = Orchestrator.$go$private$build$getTask((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator, configPath);
         const __gotots_results_6 = BuildTask.$go$private$build$loadOrStoreBuildInfo(task, (h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator, Orchestrator.$go$private$build$toPath((h ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.orchestrator, ParsedCommandLine__from_tsoptions.ConfigName(config)), ParsedCommandLine__from_tsoptions.GetBuildInfoFileName(config));
-        let buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined = __gotots_results_6[0];
+        let buildInfo: BuildInfo__from_incremental | undefined = __gotots_results_6[0];
         return buildInfo;
     }
     static SetMTime(h: {

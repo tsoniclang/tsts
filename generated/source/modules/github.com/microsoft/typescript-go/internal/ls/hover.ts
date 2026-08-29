@@ -74,7 +74,9 @@ export class symbolDisplayInfo {
     }
     declare private readonly then?: never;
 }
-export function getQuickInfoAndDeclarationAtLocation(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, vc: {
+export function getQuickInfoAndDeclarationAtLocation(c: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, vc: {
     value: VerbosityContext__from_checker;
 } | undefined, vsCapability: bool, meaning: SemanticMeaning__from_ast): symbolDisplayInfo {
     let container: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getContainerNode(node);
@@ -100,7 +102,7 @@ export function getQuickInfoAndDeclarationAtLocation(c: tsonicTypeScriptRuntime.
             value: EmitContext__from_printer;
         } | undefined = NewEmitContext__from_printer();
         let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = GoMap.make(0, []);
-        let nb: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = NewNodeBuilderEx__from_checker(c, emitContext, idToSymbol);
+        let nb: NodeBuilder__from_checker | undefined = NewNodeBuilderEx__from_checker(c, emitContext, idToSymbol);
         let combinedFlags = ((flags & TypeFormatFlagsNodeBuilderFlagsMask$constant__from_checker()) >>> 0 | classifiedNodeBuilderFlags) >>> 0;
         let typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilder__from_checker.TypeToTypeNode(nb, t, enclosing, combinedFlags, InternalFlagsNone$constant__from_nodebuilder(), void 0);
         if (typeNode === undefined) {
@@ -143,7 +145,7 @@ export function getQuickInfoAndDeclarationAtLocation(c: tsonicTypeScriptRuntime.
             value: EmitContext__from_printer;
         } | undefined = NewEmitContext__from_printer();
         let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = GoMap.make(0, []);
-        let nb: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = NewNodeBuilderEx__from_checker(c, emitContext, idToSymbol);
+        let nb: NodeBuilder__from_checker | undefined = NewNodeBuilderEx__from_checker(c, emitContext, idToSymbol);
         let combinedFlags = ((flags & TypeFormatFlagsNodeBuilderFlagsMask$constant__from_checker()) >>> 0 | classifiedNodeBuilderFlags) >>> 0;
         let sigNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilder__from_checker.SignatureToSignatureDeclaration(nb, sig, sigOutput, enclosing, combinedFlags, InternalFlagsNone$constant__from_nodebuilder(), void 0);
         if (sigNode === undefined) {
@@ -824,7 +826,9 @@ export function getQuickInfoAndDeclarationAtLocation(c: tsonicTypeScriptRuntime.
     (__gotots_callee_63 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_131);
     return new symbolDisplayInfo(dpw, firstDeclaration);
 }
-export function typeParameterToString(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, vc: {
+export function typeParameterToString(c: {
+    value: Checker__from_checker;
+} | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, vc: {
     value: VerbosityContext__from_checker;
 } | undefined): gostring {
     return Checker__from_checker.TypeParameterToStringEx(c, t, enclosingDeclaration, vc);
@@ -848,7 +852,9 @@ export function getNodeForQuickInfo(node: tsonicTypeScriptRuntime.Location<Node_
     }
     return node;
 }
-export function getSymbolAtLocationForQuickInfo(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getSymbolAtLocationForQuickInfo(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     {
         let objectElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getContainingObjectLiteralElement(node);
         if (!(objectElement === undefined)) {
@@ -867,7 +873,9 @@ export function getSymbolAtLocationForQuickInfo(c: tsonicTypeScriptRuntime.Locat
     }
     return Checker__from_checker.GetSymbolAtLocation(c, node);
 }
-export function getSignaturesAtLocation(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, kind: SignatureKind__from_checker, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined> {
+export function getSignaturesAtLocation(c: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, kind: SignatureKind__from_checker, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined> {
     let signatures = Checker__from_checker.GetSignaturesOfType(c, Checker__from_checker.RemoveMissingOrUndefinedType(c, Checker__from_checker.GetTypeOfSymbol(c, __go_symbol)), kind);
     if (signatures.length > 1 || signatures.length === 1 && Signature__from_checker.TypeParameters(signatures.get(0)).length !== 0) {
         {
@@ -914,7 +922,9 @@ export function containsTypedefTag(jsdoc: tsonicTypeScriptRuntime.Location<Node_
 export function getJSDoc(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     return LastOrNil$PointerTo_Named_ast$Node(Node__from_ast.JSDoc(node, void 0));
 }
-export function getJSDocOrTag(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function getJSDocOrTag(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     {
         let jsdoc: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getJSDoc(node);
         if (!(jsdoc === undefined)) {
@@ -1023,7 +1033,9 @@ export function getJSDocOrTag(c: tsonicTypeScriptRuntime.Location<Checker__from_
     }
     return void 0;
 }
-export function getMatchingJSDocTag(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: gostring, match: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $1: gostring) => bool) | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function getMatchingJSDocTag(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: gostring, match: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $1: gostring) => bool) | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     {
         let jsdoc: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getJSDocOrTag(c, node);
         if (!(jsdoc === undefined) && Node__from_ast.$storageOf(((jsdoc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindJSDoc$constant__from_ast()) {
@@ -1047,7 +1059,9 @@ export function getMatchingJSDocTag(c: tsonicTypeScriptRuntime.Location<Checker_
     }
     return void 0;
 }
-export function getJSDocParameterTagByPosition(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, param: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function getJSDocParameterTagByPosition(c: {
+    value: Checker__from_checker;
+} | undefined, param: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.$storageOf(((param ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
     if (parent === undefined) {
         return void 0;

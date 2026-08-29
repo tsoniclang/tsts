@@ -5,7 +5,9 @@ import { GetSourceFileOfNode, GetSymbolId, Node, Symbol, } from "../../packages/
 import * as strings from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
-export function sortSymbols(checkerPointer: tsonicTypeScriptRuntime.Location<Checker> | undefined, symbols: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol> | undefined>): void {
+export function sortSymbols(checkerPointer: {
+    value: Checker;
+} | undefined, symbols: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol> | undefined>): void {
     const compare = (checkerPointer ??
         GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compareSymbols;
     const selectedCompare = compare ?? GoPanic.raiseRuntime("call of nil function");
@@ -18,7 +20,9 @@ export function sortSymbols(checkerPointer: tsonicTypeScriptRuntime.Location<Che
         symbols.set(index, values[index]);
     }
 }
-export function compareNodes(checkerPointer: tsonicTypeScriptRuntime.Location<Checker> | undefined, leftPointer: tsonicTypeScriptRuntime.Location<Node> | undefined, rightPointer: tsonicTypeScriptRuntime.Location<Node> | undefined): int {
+export function compareNodes(checkerPointer: {
+    value: Checker;
+} | undefined, leftPointer: tsonicTypeScriptRuntime.Location<Node> | undefined, rightPointer: tsonicTypeScriptRuntime.Location<Node> | undefined): int {
     if (tsonicTypeScriptRuntime.sameLocation(leftPointer, rightPointer)) {
         return 0;
     }
@@ -37,7 +41,9 @@ export function compareNodes(checkerPointer: tsonicTypeScriptRuntime.Location<Ch
     }
     return Node.Pos(leftPointer) - Node.Pos(rightPointer);
 }
-export function compareSymbolsWorker(checkerPointer: tsonicTypeScriptRuntime.Location<Checker> | undefined, leftPointer: tsonicTypeScriptRuntime.Location<Symbol> | undefined, rightPointer: tsonicTypeScriptRuntime.Location<Symbol> | undefined): int {
+export function compareSymbolsWorker(checkerPointer: {
+    value: Checker;
+} | undefined, leftPointer: tsonicTypeScriptRuntime.Location<Symbol> | undefined, rightPointer: tsonicTypeScriptRuntime.Location<Symbol> | undefined): int {
     if (tsonicTypeScriptRuntime.sameLocation(leftPointer, rightPointer)) {
         return 0;
     }

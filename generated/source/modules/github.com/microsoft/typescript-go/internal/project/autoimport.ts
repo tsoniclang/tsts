@@ -262,7 +262,7 @@ export class autoImportRegistryCloneHost {
         let opts = SourceFileParseOptions__from_ast.$fromStorage({
             FileName: fileName,
             Path: path.$value,
-            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
         });
         const __gotots_argument_1 = SourceFileParseOptions__from_ast.$copy(opts);
         const __gotots_receiver_2 = fh;
@@ -286,7 +286,7 @@ export class autoImportRegistryCloneHost {
             }
             __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, ParseCacheKey.$storageOf(ParseCacheKey.$copy(key)));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ParseCacheKey.$storageOf(ParseCacheKey.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ParseCacheKey.$zeroStorage());
             }
         }
         (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.files = __gotots_slice_build_1;

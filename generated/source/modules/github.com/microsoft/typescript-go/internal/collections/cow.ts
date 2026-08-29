@@ -30,6 +30,12 @@ export class CopyOnWriteMap<K, V> {
             owned: $source.$storage.owned
         });
     }
+    static $zeroStorage<K, V>($go$zero$void_to_MapOf_T0_To_T1: () => GoMapValue<K, V>): CopyOnWriteMap$Storage<K, V> {
+        return {
+            m: $go$zero$void_to_MapOf_T0_To_T1(),
+            owned: false
+        };
+    }
     declare private readonly then?: never;
     static EnterScope<K, V>(c: tsonicTypeScriptRuntime.Location<CopyOnWriteMap<K, V>> | undefined): (() => void) | undefined {
         let saved = CopyOnWriteMap.$copy<K, V>(CopyOnWriteMap.$copy<K, V>(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CopyOnWriteMap<K, V>>).value));
@@ -80,7 +86,7 @@ export class CopyOnWriteSet<K> {
     }
     static $zero<K>($go$zero$void_to_MapOf_T0_To_Struct_void: () => GoMapValue<K, GoEmptyStruct>): CopyOnWriteSet<K> {
         return new CopyOnWriteSet<K>({
-            m: CopyOnWriteMap.$storageOf<K, GoEmptyStruct>(CopyOnWriteMap.$zero<K, GoEmptyStruct>($go$zero$void_to_MapOf_T0_To_Struct_void))
+            m: CopyOnWriteMap.$zeroStorage<K, GoEmptyStruct>($go$zero$void_to_MapOf_T0_To_Struct_void)
         });
     }
     static $copy<K>($source: CopyOnWriteSet<K>): CopyOnWriteSet<K> {

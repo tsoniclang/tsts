@@ -115,7 +115,9 @@ export function getCallHierarchyDeclarationReferenceNode(node: tsonicTypeScriptR
     }
     return void 0;
 }
-export function getSymbolOfCallHierarchyDeclaration(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getSymbolOfCallHierarchyDeclaration(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (IsClassStaticBlockDeclaration__from_ast(node)) {
         return void 0;
     }
@@ -183,7 +185,9 @@ export function getCallHierarchyItemName(program: {
                     let pos__shadow_1 = SkipTrivia__from_scanner(SourceFile__from_ast.Text(sourceFile__shadow_1), moveRangePastModifiers(node).Pos());
                     let end__shadow_1 = pos__shadow_1 + 6;
                     const __gotots_results_3 = Program__from_compiler.GetTypeCheckerForFile(program, GoProviderInterfaceBridge.$from(context__from_gostdlib.Background()), sourceFile__shadow_1);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_3[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_3[0];
                     let done: (() => void) | undefined = __gotots_results_3[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -308,7 +312,9 @@ export function getTextOfCallHierarchyName(program: {
                     }
                 }
                 const __gotots_results_2 = Program__from_compiler.GetTypeCheckerForFile(program, GoProviderInterfaceBridge.$from(context__from_gostdlib.Background()), GetSourceFileOfNode__from_ast(sourceNode));
-                let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_2[0];
+                let c: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_2[0];
                 let done: (() => void) | undefined = __gotots_results_2[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_2 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -470,7 +476,9 @@ export function moveRangePastModifiers(node: tsonicTypeScriptRuntime.Location<No
     }
     return NewTextRange__from_core(Node__from_ast.Pos(node), Node__from_ast.End(node));
 }
-export function findImplementation(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function findImplementation(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     if (node === undefined) {
         return void 0;
     }
@@ -494,7 +502,9 @@ export function findImplementation(c: tsonicTypeScriptRuntime.Location<Checker__
     }
     return node;
 }
-export function findAllInitialDeclarations(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
+export function findAllInitialDeclarations(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     if (IsClassStaticBlockDeclaration__from_ast(node)) {
         return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
     }
@@ -528,11 +538,11 @@ export function findAllInitialDeclarations(c: tsonicTypeScriptRuntime.Location<C
         public set pos($value: int) {
             this.$storage.pos = $value;
         }
-        static $zero(): declKey {
-            return new declKey({
+        static $zeroStorage(): declKey$Storage {
+            return {
                 file: "",
                 pos: 0
-            });
+            };
         }
         declare private readonly then?: never;
     }
@@ -545,7 +555,7 @@ export function findAllInitialDeclarations(c: tsonicTypeScriptRuntime.Location<C
     }
     const __gotots_slice_build_0 = goSliceAllocate<declKey$Storage>(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations.length, null);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, declKey.$storageOf(declKey.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, declKey.$zeroStorage());
     }
     let keys = __gotots_slice_build_0;
     const __gotots_range_10 = Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations;
@@ -588,7 +598,9 @@ export function findAllInitialDeclarations(c: tsonicTypeScriptRuntime.Location<C
     }
     return declarations;
 }
-export function findImplementationOrAllInitialDeclarations(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): GoInterface | undefined {
+export function findImplementationOrAllInitialDeclarations(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): GoInterface | undefined {
     if (IsClassStaticBlockDeclaration__from_ast(node)) {
         return new GoInterfaceAdapter(node);
     }
@@ -625,7 +637,9 @@ export function resolveCallHierarchyDeclaration(program: {
         try {
             __gotots_return_block_0: {
                 const __gotots_results_0 = Program__from_compiler.GetTypeChecker(program, GoProviderInterfaceBridge.$from(context__from_gostdlib.Background()));
-                let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                let c: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_0[0];
                 let done: (() => void) | undefined = __gotots_results_0[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -991,7 +1005,9 @@ export class callSiteCollector {
 }
 export function collectCallSites(program: {
     value: Program__from_compiler;
-} | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<callSite | undefined> {
+} | undefined, c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<callSite | undefined> {
     let collector: callSiteCollector | undefined = new callSiteCollector(program, RuntimeSlice.make<callSite | undefined>(0, null, void 0));
     switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindSourceFile$constant__from_ast(): {

@@ -72,7 +72,7 @@ export function GetJSDocCommentRanges(f: tsonicTypeScriptRuntime.Location<NodeFa
                     }
                     __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(commentRange)));
                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 commentRanges = __gotots_slice_build_1;
@@ -118,7 +118,7 @@ export function GetJSDocCommentRanges(f: tsonicTypeScriptRuntime.Location<NodeFa
                     }
                     __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(commentRange)));
                     for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 commentRanges = __gotots_slice_build_5;
@@ -167,7 +167,7 @@ export function GetJSDocCommentRanges(f: tsonicTypeScriptRuntime.Location<NodeFa
                     }
                     __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$copy(commentRange)));
                     for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                        __gotots_slice_build_9.$initialize(__gotots_slice_build_11, CommentRange__from_ast.$storageOf(CommentRange__from_ast.$zero()));
+                        __gotots_slice_build_9.$initialize(__gotots_slice_build_11, CommentRange__from_ast.$zeroStorage());
                     }
                 }
                 commentRanges = __gotots_slice_build_9;

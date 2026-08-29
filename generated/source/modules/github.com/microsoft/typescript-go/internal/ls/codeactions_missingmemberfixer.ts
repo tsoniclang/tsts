@@ -49,7 +49,9 @@ export function preserveOptionalFlagsAll$constant(): preserveOptionalFlags {
 }
 export class missingMemberFixer {
     declare private readonly $goType: void;
-    public constructor(public changeTracker: Tracker__from_change | undefined, public typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public program: {
+    public constructor(public changeTracker: Tracker__from_change | undefined, public typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, public program: {
         value: Program__from_compiler;
     } | undefined, public preferences: UserPreferences__from_lsutil, public importAdder: ImportAdder__from_autoimport | undefined, public locale: Locale__from_locale) {
     }
@@ -69,7 +71,7 @@ export class missingMemberFixer {
         if (indexInfo === undefined) {
             return void 0;
         }
-        let builder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = NewNodeBuilder__from_checker((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeChecker, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext);
+        let builder: NodeBuilder__from_checker | undefined = NewNodeBuilder__from_checker((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeChecker, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext);
         return NodeBuilder__from_checker.IndexInfoToIndexSignatureDeclaration(builder, indexInfo, classDeclaration, FlagsNone$constant__from_nodebuilder(), InternalFlagsNone$constant__from_nodebuilder(), void 0);
     }
     static $go$private$ls$createMemberFromSymbol(f: missingMemberFixer | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, preserveOptional: preserveOptionalFlags): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
@@ -94,7 +96,7 @@ export class missingMemberFixer {
             case KindPropertySignature$constant__from_ast():
             case KindPropertyDeclaration$constant__from_ast(): {
                 const __gotots_results_0 = missingMemberFixer.$go$private$ls$createNodeBuilder(f);
-                let nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = __gotots_results_0[0];
+                let nodeBuilder: NodeBuilder__from_checker | undefined = __gotots_results_0[0];
                 let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = __gotots_results_0[1];
                 let typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = missingMemberFixer.$go$private$ls$createTypeNode(f, t, enclosingDeclaration, flags, nodeBuilder, idToSymbol);
                 let questionToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
@@ -111,7 +113,7 @@ export class missingMemberFixer {
             case KindGetAccessor$constant__from_ast():
             case KindSetAccessor$constant__from_ast(): {
                 const __gotots_results_1 = missingMemberFixer.$go$private$ls$createNodeBuilder(f);
-                let nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = __gotots_results_1[0];
+                let nodeBuilder: NodeBuilder__from_checker | undefined = __gotots_results_1[0];
                 let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = __gotots_results_1[1];
                 let accessors = GetAllAccessorDeclarations__from_ast(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations, declaration);
                 let orderedAccessors = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
@@ -223,11 +225,11 @@ export class missingMemberFixer {
         return NodeFactory__from_ast.NewModifierList(__gotots_receiver_1, __gotots_argument_3);
     }
     static $go$private$ls$createNodeBuilder(f: missingMemberFixer | undefined): [
-        tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined,
+        NodeBuilder__from_checker | undefined,
         GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>
     ] {
         let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_ast$Symbol.make(0, []);
-        let nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = NewNodeBuilderEx__from_checker((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeChecker, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, idToSymbol);
+        let nodeBuilder: NodeBuilder__from_checker | undefined = NewNodeBuilderEx__from_checker((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeChecker, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitContext, idToSymbol);
         return [nodeBuilder, idToSymbol];
     }
     static $go$private$ls$createSignatureDeclarationFromSignature(f: missingMemberFixer | undefined, signature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, kind: Kind__from_ast, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, body: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, modifiers: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, optional: bool): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -237,7 +239,7 @@ export class missingMemberFixer {
             flags = (flags | 268435456) >>> 0;
         }
         const __gotots_results_2 = missingMemberFixer.$go$private$ls$createNodeBuilder(f);
-        let nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = __gotots_results_2[0];
+        let nodeBuilder: NodeBuilder__from_checker | undefined = __gotots_results_2[0];
         let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = __gotots_results_2[1];
         let signatureDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeBuilder__from_checker.SignatureToSignatureDeclaration(nodeBuilder, signature, kind, enclosingDeclaration, flags, InternalFlagsAllowUnresolvedNames$constant__from_nodebuilder(), void 0);
         if (signatureDeclaration === undefined) {
@@ -369,7 +371,7 @@ export class missingMemberFixer {
             return void 0;
         }
         const __gotots_results_3 = missingMemberFixer.$go$private$ls$createNodeBuilder(f);
-        let nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined = __gotots_results_3[0];
+        let nodeBuilder: NodeBuilder__from_checker | undefined = __gotots_results_3[0];
         let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = __gotots_results_3[1];
         let maxArgsSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined = signatures.get(0);
         let minArgumentCount = Signature__from_checker.MinArgumentCount(signatures.get(0));
@@ -416,7 +418,7 @@ export class missingMemberFixer {
         }
         return NodeFactory__from_ast.NewBlock(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, NodeFactory__from_ast.NewNodeList(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([NodeFactory__from_ast.NewThrowStatement(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, NodeFactory__from_ast.NewNewExpression(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, NodeFactory__from_ast.NewIdentifier(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, "Error"), void 0, NodeFactory__from_ast.NewNodeList(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([NodeFactory__from_ast.NewStringLiteral(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory, Message__from_diagnostics.Localize($state__diagnostics.Method_not_implemented, Locale__from_locale.$copy((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).locale), RuntimeSlice.nil<GoInterface | undefined>()), tokenFlags)]))))])), true);
     }
-    static $go$private$ls$createTypeNode(f: missingMemberFixer | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, flags: Flags__from_nodebuilder, nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined, idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+    static $go$private$ls$createTypeNode(f: missingMemberFixer | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, flags: Flags__from_nodebuilder, nodeBuilder: NodeBuilder__from_checker | undefined, idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         return missingMemberFixer.$go$private$ls$importTypeNode(f, NodeBuilder__from_checker.TypeToTypeNode(nodeBuilder, t, enclosingDeclaration, flags, InternalFlagsNone$constant__from_nodebuilder(), void 0), idToSymbol);
     }
     static $go$private$ls$getCallSignatures(f: missingMemberFixer | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined> {
@@ -430,7 +432,7 @@ export class missingMemberFixer {
         }
         return Checker__from_checker.GetCallSignatures((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeChecker, t);
     }
-    static $go$private$ls$getReturnTypeFromSignatures(f: missingMemberFixer | undefined, signatures: RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, nodeBuilder: tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker> | undefined, idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+    static $go$private$ls$getReturnTypeFromSignatures(f: missingMemberFixer | undefined, signatures: RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, nodeBuilder: NodeBuilder__from_checker | undefined, idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         if (signatures.length === 0) {
             return void 0;
         }
@@ -490,7 +492,9 @@ export class missingMemberFixer {
 }
 export function newMissingMemberFixer(changeTracker: Tracker__from_change | undefined, program: {
     value: Program__from_compiler;
-} | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, preferences: UserPreferences__from_lsutil, importAdder: ImportAdder__from_autoimport | undefined, locale__shadow_1: Locale__from_locale): missingMemberFixer | undefined {
+} | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, preferences: UserPreferences__from_lsutil, importAdder: ImportAdder__from_autoimport | undefined, locale__shadow_1: Locale__from_locale): missingMemberFixer | undefined {
     return new missingMemberFixer(changeTracker, typeChecker, program, UserPreferences__from_lsutil.$copy(preferences), importAdder, Locale__from_locale.$copy(locale__shadow_1));
 }
 export function createDummyParameters(factory: tsonicTypeScriptRuntime.Location<NodeFactory__from_ast> | undefined, argCount: int, names: RuntimeSlice<gostring>, types: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, minArgumentCount: int, inJS: bool): tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined {
@@ -530,7 +534,9 @@ export function createDummyParameters(factory: tsonicTypeScriptRuntime.Location<
     }
     return NodeFactory__from_ast.NewNodeList(factory, parameters);
 }
-export function createDeclarationName(factory: tsonicTypeScriptRuntime.Location<NodeFactory__from_ast> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function createDeclarationName(factory: tsonicTypeScriptRuntime.Location<NodeFactory__from_ast> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     if (!(__go_symbol === undefined) && !((Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).CheckFlags & CheckFlagsMapped$constant__from_ast()) >>> 0 === 0)) {
         let nameType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetNameTypeOfSymbol(typeChecker, __go_symbol);
         if (!(nameType === undefined) && IsTypeUsableAsPropertyName__from_checker(nameType)) {

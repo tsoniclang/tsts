@@ -65,7 +65,7 @@ export class View {
         value: Registry;
     } | undefined, public importingFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, public program: {
         value: Program__from_compiler;
-    } | undefined, public preferences: UserPreferences__from_modulespecifiers, public projectKey: Path__from_tspath, public allowedEndings: RuntimeSlice<ModuleSpecifierEnding__from_modulespecifiers>, public conditions: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public shouldUseUriStyleNodeCoreModules: Tristate__from_core, public existingImports: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined, public shouldUseRequireForFixes: tsonicTypeScriptRuntime.Location<bool> | undefined) {
+    } | undefined, public preferences: UserPreferences__from_modulespecifiers, public projectKey: Path__from_tspath, public allowedEndings: RuntimeSlice<ModuleSpecifierEnding__from_modulespecifiers>, public conditions: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public shouldUseUriStyleNodeCoreModules: Tristate__from_core, public existingImports: MultiMap__from_collections<ModuleID, existingImport> | undefined, public shouldUseRequireForFixes: tsonicTypeScriptRuntime.Location<bool> | undefined) {
     }
     declare private readonly then?: never;
     static CompareFixesForRanking(v: View | undefined, a: {
@@ -772,10 +772,10 @@ export class View {
         }
         return (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).allowedEndings;
     }
-    static $go$private$autoimport$getExistingImports(v: View | undefined, ctx: GoInterface | undefined): tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined {
+    static $go$private$autoimport$getExistingImports(v: View | undefined, ctx: GoInterface | undefined): MultiMap__from_collections<ModuleID, existingImport> | undefined {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
-        let __gotots_return_0: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined = void 0;
+        let __gotots_return_0: MultiMap__from_collections<ModuleID, existingImport> | undefined = void 0;
         try {
             try {
                 __gotots_return_block_0: {
@@ -783,9 +783,11 @@ export class View {
                         __gotots_return_0 = (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).existingImports;
                         break __gotots_return_block_0;
                     }
-                    let result: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined = NewMultiMapWithSizeHint$Named_autoimport$ModuleID$Named_autoimport$existingImport(SourceFile__from_ast.Imports((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).importingFile).length);
+                    let result: MultiMap__from_collections<ModuleID, existingImport> | undefined = NewMultiMapWithSizeHint$Named_autoimport$ModuleID$Named_autoimport$existingImport(SourceFile__from_ast.Imports((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).importingFile).length);
                     const __gotots_results_10 = Program__from_compiler.GetTypeChecker((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program, ctx);
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_10[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_10[0];
                     let done: (() => void) | undefined = __gotots_results_10[1];
                     const __gotots_callee_2: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_2);
@@ -1010,7 +1012,7 @@ export class View {
     } | undefined, isValidTypeOnlyUseSite: bool): {
         value: Fix;
     } | undefined {
-        let existingImports: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined = View.$go$private$autoimport$getExistingImports(v, ctx);
+        let existingImports: MultiMap__from_collections<ModuleID, existingImport> | undefined = View.$go$private$autoimport$getExistingImports(v, ctx);
         let matchingDeclarations = MultiMap__from_collections.Get<ModuleID, existingImport>(existingImports, (__go_export ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExportID.ModuleID);
         if (matchingDeclarations.length === 0) {
             return void 0;
@@ -1094,7 +1096,7 @@ export class View {
         if (!(getImportKind((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).importingFile, __go_export, (v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program) === ImportKindNamed$constant__from_lsproto())) {
             return void 0;
         }
-        let existingImports: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<ModuleID, existingImport>> | undefined = View.$go$private$autoimport$getExistingImports(v, ctx);
+        let existingImports: MultiMap__from_collections<ModuleID, existingImport> | undefined = View.$go$private$autoimport$getExistingImports(v, ctx);
         let matchingDeclarations = MultiMap__from_collections.Get<ModuleID, existingImport>(existingImports, (__go_export ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExportID.ModuleID);
         const __gotots_range_8 = matchingDeclarations;
         for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_8.length; __gotots_range_index_6++) {

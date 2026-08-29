@@ -32,7 +32,7 @@ export class allSubtags {
         let bs = BaseLanguages__from_language();
         const __gotots_slice_build_0 = goSliceAllocate<Base__from_language__package_1$Storage>(bs.length, null);
         for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-            __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Base.$storageOf(Base.$zero()));
+            __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Base.$zeroStorage());
         }
         let base = __gotots_slice_build_0;
         const __gotots_range_0 = bs;
@@ -51,7 +51,7 @@ export class allSubtags {
     Regions(): RuntimeSlice<Region__from_language__package_1$Storage> {
         const __gotots_slice_build_2 = goSliceAllocate<Region__from_language__package_1$Storage>(NumRegions$int__from_language, null);
         for (let __gotots_slice_build_3 = 0; __gotots_slice_build_3 < __gotots_slice_build_2.capacity; __gotots_slice_build_3++) {
-            __gotots_slice_build_2.$initialize(__gotots_slice_build_3, Region.$storageOf(Region.$zero()));
+            __gotots_slice_build_2.$initialize(__gotots_slice_build_3, Region.$zeroStorage());
         }
         let reg = __gotots_slice_build_2;
         const __gotots_range_1 = reg;
@@ -68,7 +68,7 @@ export class allSubtags {
     Scripts(): RuntimeSlice<Script__from_language__package_1$Storage> {
         const __gotots_slice_build_4 = goSliceAllocate<Script__from_language__package_1$Storage>(NumScripts$int__from_language, null);
         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_4.capacity; __gotots_slice_build_5++) {
-            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, Script.$storageOf(Script.$zero()));
+            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, Script.$zeroStorage());
         }
         let scr = __gotots_slice_build_4;
         const __gotots_range_2 = scr;

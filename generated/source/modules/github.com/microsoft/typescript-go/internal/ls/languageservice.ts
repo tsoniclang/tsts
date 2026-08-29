@@ -233,7 +233,7 @@ export class LanguageService {
                                     DeleteFile: void 0
                                 })));
                             for (let __gotots_slice_build_87 = __gotots_slice_build_86; __gotots_slice_build_87 < __gotots_slice_build_85.capacity; __gotots_slice_build_87++) {
-                                __gotots_slice_build_85.$initialize(__gotots_slice_build_87, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
+                                __gotots_slice_build_85.$initialize(__gotots_slice_build_87, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zeroStorage());
                             }
                         }
                         documentChanges = __gotots_slice_build_85;
@@ -255,7 +255,7 @@ export class LanguageService {
             let uri = FileNameToDocumentURI__from_lsconv(fileName);
             const __gotots_slice_build_88 = goSliceAllocate<TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto$Storage>(0, edits.length);
             for (let __gotots_slice_build_89 = 0; __gotots_slice_build_89 < __gotots_slice_build_88.capacity; __gotots_slice_build_89++) {
-                __gotots_slice_build_88.$initialize(__gotots_slice_build_89, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$zero()));
+                __gotots_slice_build_88.$initialize(__gotots_slice_build_89, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$zeroStorage());
             }
             let lspEdits = __gotots_slice_build_88;
             const __gotots_range_69 = edits;
@@ -288,7 +288,7 @@ export class LanguageService {
                             SnippetTextEdit: void 0
                         })));
                     for (let __gotots_slice_build_93 = __gotots_slice_build_92; __gotots_slice_build_93 < __gotots_slice_build_91.capacity; __gotots_slice_build_93++) {
-                        __gotots_slice_build_91.$initialize(__gotots_slice_build_93, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$storageOf(TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$zero()));
+                        __gotots_slice_build_91.$initialize(__gotots_slice_build_93, TextEditOrAnnotatedTextEditOrSnippetTextEdit__from_lsproto.$zeroStorage());
                     }
                 }
                 lspEdits = __gotots_slice_build_91;
@@ -319,7 +319,7 @@ export class LanguageService {
                         DeleteFile: void 0
                     })));
                 for (let __gotots_slice_build_97 = __gotots_slice_build_96; __gotots_slice_build_97 < __gotots_slice_build_95.capacity; __gotots_slice_build_97++) {
-                    __gotots_slice_build_95.$initialize(__gotots_slice_build_97, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
+                    __gotots_slice_build_95.$initialize(__gotots_slice_build_97, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zeroStorage());
                 }
             }
             documentChanges = __gotots_slice_build_95;
@@ -369,7 +369,9 @@ export class LanguageService {
             try {
                 __gotots_return_block_1: {
                     const __gotots_results_80 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, sourceFile);
-                    let typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_80[0];
+                    let typeChecker: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_80[0];
                     let done: (() => void) | undefined = __gotots_results_80[1];
                     const __gotots_callee_44: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_44);
@@ -559,7 +561,7 @@ export class LanguageService {
                             Call: callExpr
                         })));
                     for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, SignatureUsage.$storageOf(SignatureUsage.$zero()));
+                        __gotots_slice_build_1.$initialize(__gotots_slice_build_3, SignatureUsage.$zeroStorage());
                     }
                 }
                 result = __gotots_slice_build_1;
@@ -828,7 +830,7 @@ export class LanguageService {
                         }
                         __gotots_slice_build_67.set(__gotots_slice_build_66.length + 0, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$copy(CommandOrCodeAction__from_lsproto.$copy((organizeAction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))))));
                         for (let __gotots_slice_build_69 = __gotots_slice_build_68; __gotots_slice_build_69 < __gotots_slice_build_67.capacity; __gotots_slice_build_69++) {
-                            __gotots_slice_build_67.$initialize(__gotots_slice_build_69, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
+                            __gotots_slice_build_67.$initialize(__gotots_slice_build_69, CommandOrCodeAction__from_lsproto.$zeroStorage());
                         }
                     }
                     actions = __gotots_slice_build_67;
@@ -857,7 +859,7 @@ export class LanguageService {
                             }
                             __gotots_slice_build_71.set(__gotots_slice_build_70.length + 0, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$copy(CommandOrCodeAction__from_lsproto.$copy(((fixAllAction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommandOrCodeAction__from_lsproto>).value))));
                             for (let __gotots_slice_build_73 = __gotots_slice_build_72; __gotots_slice_build_73 < __gotots_slice_build_71.capacity; __gotots_slice_build_73++) {
-                                __gotots_slice_build_71.$initialize(__gotots_slice_build_73, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
+                                __gotots_slice_build_71.$initialize(__gotots_slice_build_73, CommandOrCodeAction__from_lsproto.$zeroStorage());
                             }
                         }
                         actions = __gotots_slice_build_71;
@@ -867,7 +869,7 @@ export class LanguageService {
         }
         if (!(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionParams__from_lsproto>).value.Context === undefined) && !((((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionParams__from_lsproto>).value.Context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionContext__from_lsproto>).value.Diagnostics.isNil() && wantsQuickFixes(((((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionParams__from_lsproto>).value.Context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionContext__from_lsproto>).value.Only)) {
             let fixIdSeen: GoMapValue<gostring, CodeFixProvider | undefined> = $goMap$MapOf_string_To_PointerTo_Named_ls$CodeFixProvider.make(0, []);
-            let seen = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>();
+            let seen = RuntimeSlice.nil<CodeAction | undefined>();
             const __gotots_range_61 = ((((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionParams__from_lsproto>).value.Context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionContext__from_lsproto>).value.Diagnostics;
             for (let __gotots_range_index_56 = 0; __gotots_range_index_56 < __gotots_range_61.length; __gotots_range_index_56++) {
                 const __gotots_range_value_74 = __gotots_range_61.get(__gotots_range_index_56);
@@ -902,8 +904,8 @@ export class LanguageService {
                     const __gotots_range_63 = providerActions;
                     for (let __gotots_range_index_58 = 0; __gotots_range_index_58 < __gotots_range_63.length; __gotots_range_index_58++) {
                         const __gotots_range_value_76 = __gotots_range_63.get(__gotots_range_index_58);
-                        let action: tsonicTypeScriptRuntime.Location<CodeAction> | undefined = __gotots_range_value_76;
-                        const __gotots_results_59 = BinarySearchFunc$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction(seen, action, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction> | undefined, $argument1: tsonicTypeScriptRuntime.Location<CodeAction> | undefined): int => {
+                        let action: CodeAction | undefined = __gotots_range_value_76;
+                        const __gotots_results_59 = BinarySearchFunc$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction(seen, action, ($argument0: CodeAction | undefined, $argument1: CodeAction | undefined): int => {
                             return CodeAction.Compare($argument0, $argument1);
                         });
                         let i = __gotots_results_59[0];
@@ -911,7 +913,7 @@ export class LanguageService {
                         if (found) {
                             continue;
                         }
-                        seen = Insert$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction(seen, i, RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>([action]));
+                        seen = Insert$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction(seen, i, RuntimeSlice.literal<CodeAction | undefined>([action]));
                         const __gotots_slice_build_74 = actions;
                         const __gotots_slice_build_76 = __gotots_slice_build_74.length + 1;
                         let __gotots_slice_build_75 = __gotots_slice_build_74;
@@ -926,12 +928,12 @@ export class LanguageService {
                             }
                             __gotots_slice_build_75.set(__gotots_slice_build_74.length + 0, CommandOrCodeAction__from_lsproto.$storageOf(convertToLSPCodeAction(action, diag, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionParams__from_lsproto>).value.TextDocument.Uri)));
                             for (let __gotots_slice_build_77 = __gotots_slice_build_76; __gotots_slice_build_77 < __gotots_slice_build_75.capacity; __gotots_slice_build_77++) {
-                                __gotots_slice_build_75.$initialize(__gotots_slice_build_77, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
+                                __gotots_slice_build_75.$initialize(__gotots_slice_build_77, CommandOrCodeAction__from_lsproto.$zeroStorage());
                             }
                         }
                         actions = __gotots_slice_build_75;
-                        if (((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.FixID !== "") {
-                            fixIdSeen.store(((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.FixID, provider);
+                        if ((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FixID !== "") {
+                            fixIdSeen.store((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FixID, provider);
                         }
                     }
                 }
@@ -970,7 +972,7 @@ export class LanguageService {
                     __gotots_slice_build_81.set(__gotots_slice_build_78.length + __gotots_slice_build_83, __gotots_slice_build_80.get(__gotots_slice_build_83));
                 }
                 for (let __gotots_slice_build_83 = __gotots_slice_build_82; __gotots_slice_build_83 < __gotots_slice_build_81.capacity; __gotots_slice_build_83++) {
-                    __gotots_slice_build_81.$initialize(__gotots_slice_build_83, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
+                    __gotots_slice_build_81.$initialize(__gotots_slice_build_83, CommandOrCodeAction__from_lsproto.$zeroStorage());
                 }
             }
             actions = __gotots_slice_build_81;
@@ -1251,7 +1253,9 @@ export class LanguageService {
                         break __gotots_return_block_1;
                     }
                     const __gotots_results_37 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_37[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_37[0];
                     let done: (() => void) | undefined = __gotots_results_37[1];
                     const __gotots_callee_42: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_42);
@@ -1360,7 +1364,9 @@ export class LanguageService {
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_results_51[1];
                     let quotePreference = GetQuotePreference__from_lsutil(file, UserPreferences__from_lsutil.$copy(userPreferences));
                     const __gotots_results_52 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_52[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_52[0];
                     let done: (() => void) | undefined = __gotots_results_52[1];
                     const __gotots_callee_42: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_42);
@@ -1711,7 +1717,9 @@ export class LanguageService {
                     } | undefined = __gotots_results_73[0];
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_results_73[1];
                     const __gotots_results_74 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_74[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_74[0];
                     let done: (() => void) | undefined = __gotots_results_74[1];
                     const __gotots_callee_44: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_44);
@@ -1780,7 +1788,9 @@ export class LanguageService {
                     } | undefined = __gotots_results_75[0];
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_results_75[1];
                     const __gotots_results_76 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_76[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_76[0];
                     let done: (() => void) | undefined = __gotots_results_76[1];
                     const __gotots_callee_44: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_44);
@@ -1959,7 +1969,9 @@ export class LanguageService {
                     }
                     let originSelectionRange = LanguageService.$go$private$ls$createLspRangeFromNode(l, node, file);
                     const __gotots_results_43 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_43[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_43[0];
                     let done: (() => void) | undefined = __gotots_results_43[1];
                     const __gotots_callee_42: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_42);
@@ -2103,11 +2115,11 @@ export class LanguageService {
                 break;
             }
         }
-        let cmd: tsonicTypeScriptRuntime.Location<Command__from_lsproto> | undefined = tsonicTypeScriptRuntime.location<Command__from_lsproto>(new Command__from_lsproto(lensTitle, void 0, "", void 0));
+        let cmd: Command__from_lsproto | undefined = new Command__from_lsproto(lensTitle, void 0, "", void 0);
         if (locs.length > 0 && !(showLocationsCommandName === undefined)) {
-            ((cmd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command__from_lsproto>).value.Command =
+            (cmd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Command =
                 ((showLocationsCommandName ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value;
-            ((cmd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command__from_lsproto>).value.Arguments =
+            (cmd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Arguments =
                 tsonicTypeScriptRuntime.location<RuntimeSlice<$goInterface$Interface_void | undefined>>(RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_lsproto$DocumentUri(uri), new $goInterfaceAdapter$Named_lsproto$Position(Position__from_lsproto.$copy(Position__from_lsproto.$fromStorage(Range__from_lsproto.$storageOf(((codeLens ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLens__from_lsproto>).value.Range).Start))), new $goInterfaceAdapter$SliceOf_Named_lsproto$Location(locs)]));
         }
         ((codeLens ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLens__from_lsproto>).value.Command = cmd;
@@ -2142,7 +2154,9 @@ export class LanguageService {
                         break __gotots_return_block_1;
                     }
                     const __gotots_results_70 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_70[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_70[0];
                     let done: (() => void) | undefined = __gotots_results_70[1];
                     const __gotots_callee_44: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_44);
@@ -2251,6 +2265,12 @@ export class LanguageService {
                     results: $source.$storage.results,
                     matched: $source.$storage.matched
                 });
+            }
+            static $zeroStorage(): pathResult$Storage {
+                return {
+                    results: RuntimeSlice.nil<moduleCompletionNameAndKind__from_ls$Storage>(),
+                    matched: false
+                };
             }
             declare private readonly then?: never;
         }
@@ -2366,7 +2386,7 @@ export class LanguageService {
                                 results: LanguageService.$go$private$ls$getCompletionsForPathMapping(l, normalizedKey, patterns, fragment, baseDirectory, isExports, isImports, extensionOptions__shadow_1, program)
                             })));
                         for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, pathResult.$storageOf(pathResult.$zero()));
+                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, pathResult.$zeroStorage());
                         }
                     }
                     pathResults = __gotots_slice_build_5;
@@ -2523,7 +2543,9 @@ export class LanguageService {
         }
         return result;
     }
-    static $go$private$ls$collectSemanticTokens(l: LanguageService | undefined, ctx: GoInterface | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, program: {
+    static $go$private$ls$collectSemanticTokens(l: LanguageService | undefined, ctx: GoInterface | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, program: {
         value: Program__from_compiler;
     } | undefined): RuntimeSlice<semanticToken__from_ls$Storage> {
         const __gotots_receiver_36 = l;
@@ -2539,7 +2561,9 @@ export class LanguageService {
         const __gotots_argument_230 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         return LanguageService.$go$private$ls$collectSemanticTokensInRange(__gotots_receiver_36, __gotots_argument_225, __gotots_argument_226, __gotots_argument_227, __gotots_argument_228, __gotots_argument_229, __gotots_argument_230);
     }
-    static $go$private$ls$collectSemanticTokensInRange(l: LanguageService | undefined, ctx: GoInterface | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, program: {
+    static $go$private$ls$collectSemanticTokensInRange(l: LanguageService | undefined, ctx: GoInterface | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, program: {
         value: Program__from_compiler;
     } | undefined, spanStart: int, spanEnd: int): RuntimeSlice<semanticToken__from_ls$Storage> {
         let tokens = RuntimeSlice.literal<semanticToken__from_ls$Storage>([]);
@@ -2651,7 +2675,7 @@ export class LanguageService {
                                     tokenModifier: tokenModifier__shadow_1.$value
                                 })));
                             for (let __gotots_slice_build_109 = __gotots_slice_build_108; __gotots_slice_build_109 < __gotots_slice_build_107.capacity; __gotots_slice_build_109++) {
-                                __gotots_slice_build_107.$initialize(__gotots_slice_build_109, semanticToken.$storageOf(semanticToken.$zero()));
+                                __gotots_slice_build_107.$initialize(__gotots_slice_build_109, semanticToken.$zeroStorage());
                             }
                         }
                         tokens = __gotots_slice_build_107;
@@ -2672,7 +2696,9 @@ export class LanguageService {
         }
         return tokens;
     }
-    static $go$private$ls$completionInfoFromData(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, compilerOptions: {
+    static $go$private$ls$completionInfoFromData(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, compilerOptions: {
         value: CompilerOptions__from_core;
     } | undefined, data: {
         value: completionDataData;
@@ -2823,7 +2849,7 @@ export class LanguageService {
     } | undefined {
         const __gotots_slice_build_122 = goSliceAllocate<Range__from_lsproto$Storage>(entries.length, null);
         for (let __gotots_slice_build_123 = 0; __gotots_slice_build_123 < __gotots_slice_build_122.capacity; __gotots_slice_build_123++) {
-            __gotots_slice_build_122.$initialize(__gotots_slice_build_123, Range__from_lsproto.$storageOf(Range__from_lsproto.$zero()));
+            __gotots_slice_build_122.$initialize(__gotots_slice_build_123, Range__from_lsproto.$zeroStorage());
         }
         let fromRanges = __gotots_slice_build_122;
         const __gotots_range_133 = entries;
@@ -2845,7 +2871,7 @@ export class LanguageService {
     } | undefined {
         const __gotots_slice_build_118 = goSliceAllocate<Range__from_lsproto$Storage>(entries.length, null);
         for (let __gotots_slice_build_119 = 0; __gotots_slice_build_119 < __gotots_slice_build_118.capacity; __gotots_slice_build_119++) {
-            __gotots_slice_build_118.$initialize(__gotots_slice_build_119, Range__from_lsproto.$storageOf(Range__from_lsproto.$zero()));
+            __gotots_slice_build_118.$initialize(__gotots_slice_build_119, Range__from_lsproto.$zeroStorage());
         }
         let fromRanges = __gotots_slice_build_118;
         const __gotots_range_124 = entries;
@@ -2889,7 +2915,7 @@ export class LanguageService {
     static $go$private$ls$convertEntriesToLocations(l: LanguageService | undefined, entries: RuntimeSlice<ReferenceEntry | undefined>): RuntimeSlice<Location__from_lsproto$Storage> {
         const __gotots_slice_build_116 = goSliceAllocate<Location__from_lsproto$Storage>(entries.length, null);
         for (let __gotots_slice_build_117 = 0; __gotots_slice_build_117 < __gotots_slice_build_116.capacity; __gotots_slice_build_117++) {
-            __gotots_slice_build_116.$initialize(__gotots_slice_build_117, Location__from_lsproto.$storageOf(Location__from_lsproto.$zero()));
+            __gotots_slice_build_116.$initialize(__gotots_slice_build_117, Location__from_lsproto.$zeroStorage());
         }
         let locations = __gotots_slice_build_116;
         const __gotots_range_118 = entries;
@@ -2927,7 +2953,9 @@ export class LanguageService {
         } | undefined = LanguageService.$go$private$ls$setItemDefaults(l, ctx, position__shadow_1, file, items, defaultCommitCharacters$location, void 0);
         return new CompletionList(false, itemDefaults, void 0, items);
     }
-    static $go$private$ls$convertStringLiteralCompletions(l: LanguageService | undefined, ctx: GoInterface | undefined, completion: stringLiteralCompletions | undefined, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, options: {
+    static $go$private$ls$convertStringLiteralCompletions(l: LanguageService | undefined, ctx: GoInterface | undefined, completion: stringLiteralCompletions | undefined, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, options: {
         value: CompilerOptions__from_core;
     } | undefined, includeSymbols: bool): CompletionList | undefined {
         if (completion === undefined) {
@@ -3031,13 +3059,17 @@ export class LanguageService {
         }
         return item;
     }
-    static $go$private$ls$createCompletionDetailsForSymbol(l: LanguageService | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
+    static $go$private$ls$createCompletionDetailsForSymbol(l: LanguageService | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
         const __gotots_results_113 = LanguageService.$go$private$ls$getQuickInfoAndDocumentationForSymbol(l, checker__shadow_1, __go_symbol, location, docFormat, void 0);
         let quickInfo = __gotots_results_113[0];
         let documentation = __gotots_results_113[1];
         return createCompletionDetails(item, quickInfo, documentation, docFormat);
     }
-    static $go$private$ls$createCompletionItem(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, sortText: SortText, replacementToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, data: {
+    static $go$private$ls$createCompletionItem(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, sortText: SortText, replacementToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, data: {
         value: completionDataData;
     } | undefined, position__shadow_1: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, name: gostring, needsConvertPropertyAccess: bool, origin: symbolOriginInfo | undefined, useSemicolons: bool, compilerOptions: {
         value: CompilerOptions__from_core;
@@ -3176,7 +3208,7 @@ export class LanguageService {
             if (!IsIdentifierText__from_scanner(name, LanguageVariantStandard$constant__from_core())) {
                 insertText = quotePropertyName(file, UserPreferences__from_lsutil.$copy(preferences), name);
                 if (Node__from_ast.$storageOf(((parentNamedImportOrExport ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindNamedImports$constant__from_ast()) {
-                    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = NewScanner__from_scanner();
+                    let scanner__shadow_1: Scanner__from_scanner | undefined = NewScanner__from_scanner();
                     Scanner__from_scanner.SetText(scanner__shadow_1, SourceFile__from_ast.Text(file));
                     Scanner__from_scanner.ResetPos(scanner__shadow_1, position__shadow_1);
                     if (!(Scanner__from_scanner.Scan(scanner__shadow_1) === KindAsKeyword$constant__from_ast() && Scanner__from_scanner.Scan(scanner__shadow_1) === KindIdentifier$constant__from_ast())) {
@@ -3314,7 +3346,9 @@ export class LanguageService {
     }
     static $go$private$ls$createJSSignatureHelpItems(l: LanguageService | undefined, ctx: GoInterface | undefined, argumentInfo: argumentListInfo | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): {
+    } | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined): {
         value: SignatureHelp__from_lsproto;
     } | undefined {
         if (!(((argumentInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).invocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.contextualInvocation === undefined)) {
@@ -3474,7 +3508,9 @@ export class LanguageService {
         }
         return tsonicTypeScriptRuntime.location<Range__from_lsproto>(LanguageService.$go$private$ls$createLspRangeFromBounds(l, nodeStart + 1, replacementEnd, file));
     }
-    static $go$private$ls$createSignatureHelpItems(l: LanguageService | undefined, ctx: GoInterface | undefined, candidates: RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, resolvedSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, argumentInfo: argumentListInfo | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, useFullPrefix: bool): {
+    static $go$private$ls$createSignatureHelpItems(l: LanguageService | undefined, ctx: GoInterface | undefined, candidates: RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, resolvedSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, argumentInfo: argumentListInfo | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, useFullPrefix: bool): {
         value: SignatureHelp__from_lsproto;
     } | undefined {
         let caps: tsonicTypeScriptRuntime.Location<ResolvedClientCapabilities__from_lsproto> | undefined = GetClientCapabilities__from_lsproto(ctx);
@@ -3577,7 +3613,7 @@ export class LanguageService {
                     __gotots_slice_build_113.set(__gotots_slice_build_110.length + __gotots_slice_build_115, __gotots_slice_build_112.get(__gotots_slice_build_115));
                 }
                 for (let __gotots_slice_build_115 = __gotots_slice_build_114; __gotots_slice_build_115 < __gotots_slice_build_113.capacity; __gotots_slice_build_115++) {
-                    __gotots_slice_build_113.$initialize(__gotots_slice_build_115, signatureInformation.$storageOf(signatureInformation.$zero()));
+                    __gotots_slice_build_113.$initialize(__gotots_slice_build_115, signatureInformation.$zeroStorage());
                 }
             }
             flattenedSignatures = __gotots_slice_build_113;
@@ -3635,11 +3671,15 @@ export class LanguageService {
         }
         return help;
     }
-    static $go$private$ls$createSignatureHelpParameterForParameter(l: LanguageService | undefined, parameter: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, enclosingDeclaratipn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, p: Printer__from_printer | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, docFormat: MarkupKind__from_lsproto): signatureHelpParameter {
-        let display = Printer__from_printer.Emit(p, ((NewNodeBuilder__from_checker(c, NewEmitContext__from_printer()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker>).value.SymbolToParameterDeclaration(parameter, enclosingDeclaratipn, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0), sourceFile);
+    static $go$private$ls$createSignatureHelpParameterForParameter(l: LanguageService | undefined, parameter: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, enclosingDeclaratipn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, p: Printer__from_printer | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, docFormat: MarkupKind__from_lsproto): signatureHelpParameter {
+        let display = Printer__from_printer.Emit(p, (NewNodeBuilder__from_checker(c, NewEmitContext__from_printer()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SymbolToParameterDeclaration(parameter, enclosingDeclaratipn, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0), sourceFile);
         return LanguageService.$go$private$ls$createSignatureHelpParameterFromLabel(l, parameter, display, c, docFormat);
     }
-    static $go$private$ls$createSignatureHelpParameterFromLabel(l: LanguageService | undefined, parameter: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, label: gostring, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, docFormat: MarkupKind__from_lsproto): signatureHelpParameter {
+    static $go$private$ls$createSignatureHelpParameterFromLabel(l: LanguageService | undefined, parameter: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, label: gostring, c: {
+        value: Checker__from_checker;
+    } | undefined, docFormat: MarkupKind__from_lsproto): signatureHelpParameter {
         const label$location = tsonicTypeScriptRuntime.boundLocation({}, () => label, label$next => label = label$next);
         let isOptional = !((Symbol__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).CheckFlags & CheckFlagsOptionalParameter$constant__from_ast()) >>> 0 === 0);
         let isRest = !((Symbol__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).CheckFlags & CheckFlagsRestParameter$constant__from_ast()) >>> 0 === 0);
@@ -3755,7 +3795,9 @@ export class LanguageService {
             }
         }
     }
-    static $go$private$ls$documentationFromAlias(l: LanguageService | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto): gostring {
+    static $go$private$ls$documentationFromAlias(l: LanguageService | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto): gostring {
         if (__go_symbol === undefined || (Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsAlias$constant__from_ast()) >>> 0 === 0) {
             return "";
         }
@@ -3785,7 +3827,9 @@ export class LanguageService {
         }
         return "";
     }
-    static $go$private$ls$documentationFromSignature(l: LanguageService | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, commentOnly: bool): gostring {
+    static $go$private$ls$documentationFromSignature(l: LanguageService | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, commentOnly: bool): gostring {
         if (node === undefined) {
             return "";
         }
@@ -3826,7 +3870,9 @@ export class LanguageService {
         });
         return result;
     }
-    static $go$private$ls$findSignatureHelpFromNamedDeclarations(l: LanguageService | undefined, ctx: GoInterface | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, name: gostring, argumentInfo: argumentListInfo | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): {
+    static $go$private$ls$findSignatureHelpFromNamedDeclarations(l: LanguageService | undefined, ctx: GoInterface | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, name: gostring, argumentInfo: argumentListInfo | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined): {
         value: SignatureHelp__from_lsproto;
     } | undefined {
         let result: {
@@ -3903,7 +3949,9 @@ export class LanguageService {
             }
         }
     }
-    static $go$private$ls$getCompletionData(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, preferences: UserPreferences__from_lsutil, forItemResolve: bool): [
+    static $go$private$ls$getCompletionData(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, preferences: UserPreferences__from_lsutil, forItemResolve: bool): [
         $goInterface$Interface_void | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -5261,7 +5309,7 @@ export class LanguageService {
                     }
                     __gotots_slice_build_15.set(__gotots_slice_build_14.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$copy(entry)));
                     for (let __gotots_slice_build_17 = __gotots_slice_build_16; __gotots_slice_build_17 < __gotots_slice_build_15.capacity; __gotots_slice_build_17++) {
-                        __gotots_slice_build_15.$initialize(__gotots_slice_build_17, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                        __gotots_slice_build_15.$initialize(__gotots_slice_build_17, moduleCompletionNameAndKind.$zeroStorage());
                     }
                 }
                 allCompletions = __gotots_slice_build_15;
@@ -5271,7 +5319,9 @@ export class LanguageService {
     }
     static $go$private$ls$getCompletionEntriesForNonRelativeModules(l: LanguageService | undefined, fragment: gostring, scriptPath: gostring, mode: ModuleKind__from_core, program: {
         value: Program__from_compiler;
-    } | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, extensionOptions__shadow_1: extensionOptions | undefined): RuntimeSlice<moduleCompletionNameAndKind__from_ls$Storage> {
+    } | undefined, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, extensionOptions__shadow_1: extensionOptions | undefined): RuntimeSlice<moduleCompletionNameAndKind__from_ls$Storage> {
         let compilerOptions: {
             value: CompilerOptions__from_core;
         } | undefined = Program__from_compiler.Options(program);
@@ -5466,7 +5516,9 @@ export class LanguageService {
             return Collect$Named_ls$moduleCompletionNameAndKind(Values$MapOf_string_To_Named_ls$moduleCompletionNameAndKind$string$Named_ls$moduleCompletionNameAndKind((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).names));
         }
     }
-    static $go$private$ls$getCompletionEntriesFromSymbols(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, data: {
+    static $go$private$ls$getCompletionEntriesFromSymbols(l: LanguageService | undefined, ctx: GoInterface | undefined, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined, data: {
         value: completionDataData;
     } | undefined, replacementToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, compilerOptions: {
         value: CompilerOptions__from_core;
@@ -5649,7 +5701,9 @@ export class LanguageService {
     }
     static $go$private$ls$getCompletionItemDetails(l: LanguageService | undefined, ctx: GoInterface | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, position__shadow_1: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, data: {
+    } | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, position__shadow_1: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, data: {
         value: CompletionItemData__from_lsproto;
     } | undefined): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
         let docFormat = getCompletionDocumentationFormat(ctx);
@@ -5778,7 +5832,9 @@ export class LanguageService {
                         value: CompilerOptions__from_core;
                     } | undefined = Program__from_compiler.Options(LanguageService.GetProgram(l));
                     const __gotots_results_2 = Program__from_compiler.GetTypeCheckerForFile(LanguageService.GetProgram(l), ctx, file);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_2[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_2[0];
                     let done: (() => void) | undefined = __gotots_results_2[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -5998,7 +6054,7 @@ export class LanguageService {
                         __gotots_slice_build_11.set(__gotots_slice_build_8.length + __gotots_slice_build_13, __gotots_slice_build_10.get(__gotots_slice_build_13));
                     }
                     for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
-                        __gotots_slice_build_11.$initialize(__gotots_slice_build_13, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                        __gotots_slice_build_11.$initialize(__gotots_slice_build_13, moduleCompletionNameAndKind.$zeroStorage());
                     }
                 }
                 completions = __gotots_slice_build_11;
@@ -6050,7 +6106,9 @@ export class LanguageService {
                         value: Program__from_compiler;
                     } | undefined = LanguageService.GetProgram(l);
                     const __gotots_results_109 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_109[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_109[0];
                     let done: (() => void) | undefined = __gotots_results_109[1];
                     const __gotots_callee_85: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_85);
@@ -6149,7 +6207,7 @@ export class LanguageService {
                     }
                     __gotots_slice_build_99.set(__gotots_slice_build_98.length + 0, SymbolInformation__from_lsproto.$storageOf(SymbolInformation__from_lsproto.$copy(info)));
                     for (let __gotots_slice_build_101 = __gotots_slice_build_100; __gotots_slice_build_101 < __gotots_slice_build_99.capacity; __gotots_slice_build_101++) {
-                        __gotots_slice_build_99.$initialize(__gotots_slice_build_101, SymbolInformation__from_lsproto.$storageOf(SymbolInformation__from_lsproto.$zero()));
+                        __gotots_slice_build_99.$initialize(__gotots_slice_build_101, SymbolInformation__from_lsproto.$zeroStorage());
                     }
                 }
                 result = __gotots_slice_build_99;
@@ -6555,7 +6613,9 @@ export class LanguageService {
         Node__from_ast.ForEachChild(node, new Visitor__from_ast(visit));
         return mergeExpandos(symbols);
     }
-    static $go$private$ls$getDocumentationFromDeclaration(l: LanguageService | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, commentOnly: bool): gostring {
+    static $go$private$ls$getDocumentationFromDeclaration(l: LanguageService | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, commentOnly: bool): gostring {
         if (declaration === undefined) {
             return "";
         }
@@ -6679,7 +6739,9 @@ export class LanguageService {
         value: CompilerOptions__from_core;
     } | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): [
+    } | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined): [
         tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -6826,7 +6888,9 @@ export class LanguageService {
     }
     static $go$private$ls$getExtensionOptions(l: LanguageService | undefined, options: {
         value: CompilerOptions__from_core;
-    } | undefined, referenceKind__shadow_1: referenceKind, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, mode: ModuleKind__from_core, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): extensionOptions | undefined {
+    } | undefined, referenceKind__shadow_1: referenceKind, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, mode: ModuleKind__from_core, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined): extensionOptions | undefined {
         let extensionsToSearch = getSupportedExtensionsForModuleResolution(options, checker__shadow_1);
         return new extensionOptions(extensionsToSearch, referenceKind__shadow_1, file, LanguageService.UserPreferences(l).ImportModuleSpecifierEnding, mode);
     }
@@ -6902,7 +6966,7 @@ export class LanguageService {
                             Command: void 0
                         })));
                     for (let __gotots_slice_build_105 = __gotots_slice_build_104; __gotots_slice_build_105 < __gotots_slice_build_103.capacity; __gotots_slice_build_105++) {
-                        __gotots_slice_build_103.$initialize(__gotots_slice_build_105, CommandOrCodeAction__from_lsproto.$storageOf(CommandOrCodeAction__from_lsproto.$zero()));
+                        __gotots_slice_build_103.$initialize(__gotots_slice_build_105, CommandOrCodeAction__from_lsproto.$zeroStorage());
                     }
                 }
                 actions = __gotots_slice_build_103;
@@ -7446,7 +7510,7 @@ export class LanguageService {
                                         extension: ""
                                     })));
                                 for (let __gotots_slice_build_21 = __gotots_slice_build_20; __gotots_slice_build_21 < __gotots_slice_build_19.capacity; __gotots_slice_build_21++) {
-                                    __gotots_slice_build_19.$initialize(__gotots_slice_build_21, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                                    __gotots_slice_build_19.$initialize(__gotots_slice_build_21, moduleCompletionNameAndKind.$zeroStorage());
                                 }
                             }
                             result = __gotots_slice_build_19;
@@ -7483,7 +7547,7 @@ export class LanguageService {
                                     extension: extension
                                 })));
                             for (let __gotots_slice_build_25 = __gotots_slice_build_24; __gotots_slice_build_25 < __gotots_slice_build_23.capacity; __gotots_slice_build_25++) {
-                                __gotots_slice_build_23.$initialize(__gotots_slice_build_25, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                                __gotots_slice_build_23.$initialize(__gotots_slice_build_25, moduleCompletionNameAndKind.$zeroStorage());
                             }
                         }
                         result = __gotots_slice_build_23;
@@ -7524,7 +7588,7 @@ export class LanguageService {
                                 extension: ""
                             })));
                         for (let __gotots_slice_build_29 = __gotots_slice_build_28; __gotots_slice_build_29 < __gotots_slice_build_27.capacity; __gotots_slice_build_29++) {
-                            __gotots_slice_build_27.$initialize(__gotots_slice_build_29, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                            __gotots_slice_build_27.$initialize(__gotots_slice_build_29, moduleCompletionNameAndKind.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_27;
@@ -7563,7 +7627,7 @@ export class LanguageService {
                 __gotots_slice_build_33.set(__gotots_slice_build_30.length + __gotots_slice_build_35, __gotots_slice_build_32.get(__gotots_slice_build_35));
             }
             for (let __gotots_slice_build_35 = __gotots_slice_build_34; __gotots_slice_build_35 < __gotots_slice_build_33.capacity; __gotots_slice_build_35++) {
-                __gotots_slice_build_33.$initialize(__gotots_slice_build_35, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                __gotots_slice_build_33.$initialize(__gotots_slice_build_35, moduleCompletionNameAndKind.$zeroStorage());
             }
         }
         matches = __gotots_slice_build_33;
@@ -7598,7 +7662,7 @@ export class LanguageService {
                     __gotots_slice_build_39.set(__gotots_slice_build_36.length + __gotots_slice_build_41, __gotots_slice_build_38.get(__gotots_slice_build_41));
                 }
                 for (let __gotots_slice_build_41 = __gotots_slice_build_40; __gotots_slice_build_41 < __gotots_slice_build_39.capacity; __gotots_slice_build_41++) {
-                    __gotots_slice_build_39.$initialize(__gotots_slice_build_41, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                    __gotots_slice_build_39.$initialize(__gotots_slice_build_41, moduleCompletionNameAndKind.$zeroStorage());
                 }
             }
             matches = __gotots_slice_build_39;
@@ -7634,7 +7698,7 @@ export class LanguageService {
                     __gotots_slice_build_45.set(__gotots_slice_build_42.length + __gotots_slice_build_47, __gotots_slice_build_44.get(__gotots_slice_build_47));
                 }
                 for (let __gotots_slice_build_47 = __gotots_slice_build_46; __gotots_slice_build_47 < __gotots_slice_build_45.capacity; __gotots_slice_build_47++) {
-                    __gotots_slice_build_45.$initialize(__gotots_slice_build_47, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                    __gotots_slice_build_45.$initialize(__gotots_slice_build_47, moduleCompletionNameAndKind.$zeroStorage());
                 }
             }
             matches = __gotots_slice_build_45;
@@ -7670,7 +7734,7 @@ export class LanguageService {
                     __gotots_slice_build_51.set(__gotots_slice_build_48.length + __gotots_slice_build_53, __gotots_slice_build_50.get(__gotots_slice_build_53));
                 }
                 for (let __gotots_slice_build_53 = __gotots_slice_build_52; __gotots_slice_build_53 < __gotots_slice_build_51.capacity; __gotots_slice_build_53++) {
-                    __gotots_slice_build_51.$initialize(__gotots_slice_build_53, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                    __gotots_slice_build_51.$initialize(__gotots_slice_build_53, moduleCompletionNameAndKind.$zeroStorage());
                 }
             }
             matches = __gotots_slice_build_51;
@@ -7705,7 +7769,7 @@ export class LanguageService {
                         __gotots_slice_build_57.set(__gotots_slice_build_54.length + __gotots_slice_build_59, __gotots_slice_build_56.get(__gotots_slice_build_59));
                     }
                     for (let __gotots_slice_build_59 = __gotots_slice_build_58; __gotots_slice_build_59 < __gotots_slice_build_57.capacity; __gotots_slice_build_59++) {
-                        __gotots_slice_build_57.$initialize(__gotots_slice_build_59, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                        __gotots_slice_build_57.$initialize(__gotots_slice_build_59, moduleCompletionNameAndKind.$zeroStorage());
                     }
                 }
                 matches = __gotots_slice_build_57;
@@ -7741,7 +7805,7 @@ export class LanguageService {
                         __gotots_slice_build_63.set(__gotots_slice_build_60.length + __gotots_slice_build_65, __gotots_slice_build_62.get(__gotots_slice_build_65));
                     }
                     for (let __gotots_slice_build_65 = __gotots_slice_build_64; __gotots_slice_build_65 < __gotots_slice_build_63.capacity; __gotots_slice_build_65++) {
-                        __gotots_slice_build_63.$initialize(__gotots_slice_build_65, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                        __gotots_slice_build_63.$initialize(__gotots_slice_build_65, moduleCompletionNameAndKind.$zeroStorage());
                     }
                 }
                 matches = __gotots_slice_build_63;
@@ -7783,7 +7847,9 @@ export class LanguageService {
                         value: Program__from_compiler;
                     } | undefined = LanguageService.GetProgram(l);
                     const __gotots_results_87 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_87[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_87[0];
                     let done: (() => void) | undefined = __gotots_results_87[1];
                     const __gotots_callee_76: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_76);
@@ -7880,7 +7946,9 @@ export class LanguageService {
                         break __gotots_return_block_1;
                     }
                     const __gotots_results_93 = Program__from_compiler.GetTypeChecker(program, $goProviderInterfaceBridge$Named_context$Context.$from(context__from_gostdlib.Background()));
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_93[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_93[0];
                     let done: (() => void) | undefined = __gotots_results_93[1];
                     const __gotots_callee_82: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_82);
@@ -8000,7 +8068,9 @@ export class LanguageService {
         }
         return [program, file];
     }
-    static $go$private$ls$getQuickInfoAndDocumentationForSymbol(l: LanguageService | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, vc: {
+    static $go$private$ls$getQuickInfoAndDocumentationForSymbol(l: LanguageService | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, contentFormat: MarkupKind__from_lsproto, vc: {
         value: VerbosityContext__from_checker;
     } | undefined): [
         gostring,
@@ -8035,7 +8105,9 @@ export class LanguageService {
                 __gotots_return_block_0: {
                     Assert__from_debug(!(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration === undefined), RuntimeSlice.nil<$goInterface$Interface_void | undefined>());
                     const __gotots_results_5 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_5[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_5[0];
                     let done: (() => void) | undefined = __gotots_results_5[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -8179,7 +8251,9 @@ export class LanguageService {
     }
     static $go$private$ls$getReferencedSymbolsForModuleIfDeclaredBySourceFile(l: LanguageService | undefined, ctx: GoInterface | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, options: refOptions, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined): RuntimeSlice<SymbolAndEntries | undefined> {
+    } | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, options: refOptions, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined): RuntimeSlice<SymbolAndEntries | undefined> {
         let moduleSourceFileName = "";
         if (__go_symbol === undefined || !((!((Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsModule$constant__from_ast()) >>> 0 === 0)) && Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations.length !== 0)) {
             return RuntimeSlice.nil<SymbolAndEntries | undefined>();
@@ -8222,7 +8296,9 @@ export class LanguageService {
                         node = getAdjustedLocation(node, options.use.$value === referenceUseRename$constant().$value, GetSourceFileOfNode__from_ast(node));
                     }
                     const __gotots_results_0 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_0[0];
                     let done: (() => void) | undefined = __gotots_results_0[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -8314,7 +8390,9 @@ export class LanguageService {
         }
         return __gotots_return_0;
     }
-    static $go$private$ls$getReferencesForStringLiteral(l: LanguageService | undefined, ctx: GoInterface | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<SymbolAndEntries | undefined> {
+    static $go$private$ls$getReferencesForStringLiteral(l: LanguageService | undefined, ctx: GoInterface | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined): RuntimeSlice<SymbolAndEntries | undefined> {
         let t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = getContextualTypeFromParentOrAncestorTypeNode(node, checker__shadow_1);
         let references = FlatMap$PointerTo_Named_ast$SourceFile$PointerTo_Named_ls$ReferenceEntry(sourceFiles, (sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<ReferenceEntry | undefined> => {
             const __gotots_receiver_2 = ctx;
@@ -8400,7 +8478,9 @@ export class LanguageService {
             try {
                 __gotots_return_block_1: {
                     const __gotots_results_85 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_85[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_85[0];
                     let done: (() => void) | undefined = __gotots_results_85[1];
                     const __gotots_callee_74: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_74);
@@ -8558,7 +8638,9 @@ export class LanguageService {
         }
         return result;
     }
-    static $go$private$ls$getSignatureHelpItem(l: LanguageService | undefined, candidate: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, isTypeParameterList: bool, callTargetSymbol: gostring, callTargetSym: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureInformation__from_ls$Storage> {
+    static $go$private$ls$getSignatureHelpItem(l: LanguageService | undefined, candidate: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, isTypeParameterList: bool, callTargetSymbol: gostring, callTargetSym: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureInformation__from_ls$Storage> {
         let infos = RuntimeSlice.nil<signatureHelpItemInfo | undefined>();
         if (isTypeParameterList) {
             infos = LanguageService.$go$private$ls$itemInfoForTypeParameters(l, candidate, c, enclosingDeclaration, sourceFile, docFormat, vsCapability);
@@ -8583,7 +8665,7 @@ export class LanguageService {
         }
         const __gotots_slice_build_120 = goSliceAllocate<signatureInformation__from_ls$Storage>(infos.length, null);
         for (let __gotots_slice_build_121 = 0; __gotots_slice_build_121 < __gotots_slice_build_120.capacity; __gotots_slice_build_121++) {
-            __gotots_slice_build_120.$initialize(__gotots_slice_build_121, signatureInformation.$storageOf(signatureInformation.$zero()));
+            __gotots_slice_build_120.$initialize(__gotots_slice_build_121, signatureInformation.$zeroStorage());
         }
         let result = __gotots_slice_build_120;
         const __gotots_range_128 = infos;
@@ -8652,7 +8734,9 @@ export class LanguageService {
         }
         return void 0;
     }
-    static $go$private$ls$getStringLiteralCompletionDetails(l: LanguageService | undefined, ctx: GoInterface | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, name: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
+    static $go$private$ls$getStringLiteralCompletionDetails(l: LanguageService | undefined, ctx: GoInterface | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, name: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
         if (contextToken === undefined || !IsStringLiteralLike__from_ast(contextToken)) {
             return item;
         }
@@ -8662,7 +8746,9 @@ export class LanguageService {
         }
         return LanguageService.$go$private$ls$stringLiteralCompletionDetails(l, item, name, contextToken, position__shadow_1, completions, file, checker__shadow_1, docFormat);
     }
-    static $go$private$ls$getStringLiteralCompletionEntries(l: LanguageService | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): stringLiteralCompletions | undefined {
+    static $go$private$ls$getStringLiteralCompletionEntries(l: LanguageService | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, typeChecker: {
+        value: Checker__from_checker;
+    } | undefined): stringLiteralCompletions | undefined {
         let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = walkUpParentheses(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
         {
             const __gotots_switch_tag_1 = Node__from_ast.$storageOf(((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
@@ -8889,7 +8975,9 @@ export class LanguageService {
         }
         GoPanic.raiseRuntime("unreachable Go function end");
     }
-    static $go$private$ls$getStringLiteralCompletions(l: LanguageService | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, compilerOptions: {
+    static $go$private$ls$getStringLiteralCompletions(l: LanguageService | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, compilerOptions: {
         value: CompilerOptions__from_core;
     } | undefined, includeSymbols: bool): CompletionList | undefined {
         if (isInReferenceComment(file, position__shadow_1)) {
@@ -8907,14 +8995,18 @@ export class LanguageService {
     }
     static $go$private$ls$getStringLiteralCompletionsFromModuleNames(l: LanguageService | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): stringLiteralCompletions | undefined {
+    } | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined): stringLiteralCompletions | undefined {
         let nameAndKinds = LanguageService.$go$private$ls$getStringLiteralCompletionsFromModuleNamesWorker(l, file, node, program, checker__shadow_1);
         let textStart = GetStartOfNode__from_astnav(node, file, false) + 1;
         return new stringLiteralCompletions(void 0, void 0, addReplacementSpans(Node__from_ast.Text(node), textStart, nameAndKinds));
     }
     static $go$private$ls$getStringLiteralCompletionsFromModuleNamesWorker(l: LanguageService | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<moduleCompletionNameAndKind__from_ls$Storage> {
+    } | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined): RuntimeSlice<moduleCompletionNameAndKind__from_ls$Storage> {
         let literalValue__shadow_1 = NormalizeSlashes__from_tspath(Node__from_ast.Text(node));
         let mode = 0;
         if (IsStringLiteralLike__from_ast(node)) {
@@ -8949,7 +9041,9 @@ export class LanguageService {
         }
         return LanguageService.$go$private$ls$getReferencedSymbolsForNode(l, ctx, position__shadow_1, node, program, Program__from_compiler.GetSourceFiles(program), refOptions.$copy(options));
     }
-    static $go$private$ls$getSymbolCompletionFromItemData(l: LanguageService | undefined, ctx: GoInterface | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, itemData: {
+    static $go$private$ls$getSymbolCompletionFromItemData(l: LanguageService | undefined, ctx: GoInterface | undefined, ch: {
+        value: Checker__from_checker;
+    } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, itemData: {
         value: CompletionItemData__from_lsproto;
     } | undefined): detailsData {
         if ((itemData ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source === SourceSwitchCases$string) {
@@ -9124,7 +9218,9 @@ export class LanguageService {
             }
         }
     }
-    static $go$private$ls$getTextForRename(l: LanguageService | undefined, originalNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, entry: ReferenceEntry | undefined, newText: gostring, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, quotePreference: QuotePreference__from_lsutil): gostring {
+    static $go$private$ls$getTextForRename(l: LanguageService | undefined, originalNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, entry: ReferenceEntry | undefined, newText: gostring, ch: {
+        value: Checker__from_checker;
+    } | undefined, quotePreference: QuotePreference__from_lsutil): gostring {
         if (!((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value === entryKindRange$constant().$value) && (IsIdentifier__from_ast(originalNode) || IsStringLiteralLike__from_ast(originalNode))) {
             let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = GetReparsedNodeForNode__from_ast((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).node);
             let kind = (entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind;
@@ -9180,7 +9276,9 @@ export class LanguageService {
     }
     static $go$private$ls$getTripleSlashReferenceCompletions(l: LanguageService | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, program: {
         value: Program__from_compiler;
-    } | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<pathCompletion | undefined> {
+    } | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined): RuntimeSlice<pathCompletion | undefined> {
         let compilerOptions: {
             value: CompilerOptions__from_core;
         } | undefined = Program__from_compiler.Options(program);
@@ -9235,7 +9333,9 @@ export class LanguageService {
     }
     static $go$private$ls$getUpdatedImportSpecifier(l: LanguageService | undefined, program: {
         value: Program__from_compiler;
-    } | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, importLiteral: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, oldToNew: pathUpdater, newImportFromPath: gostring, importingSourceFileMoved: bool, userPreferences: UserPreferences__from_modulespecifiers): gostring {
+    } | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, importLiteral: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, oldToNew: pathUpdater, newImportFromPath: gostring, importingSourceFileMoved: bool, userPreferences: UserPreferences__from_modulespecifiers): gostring {
         let importedModuleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetSymbolAtLocation(checker__shadow_1, importLiteral);
         if (isAmbientModuleSymbol(importedModuleSymbol)) {
             return "";
@@ -9284,14 +9384,16 @@ export class LanguageService {
         }
         return highlights;
     }
-    static $go$private$ls$itemInfoForParameters(l: LanguageService | undefined, candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, enclosingDeclaratipn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureHelpItemInfo | undefined> {
+    static $go$private$ls$itemInfoForParameters(l: LanguageService | undefined, candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, enclosingDeclaratipn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureHelpItemInfo | undefined> {
         let emitContext: {
             value: EmitContext__from_printer;
         } | undefined = NewEmitContext__from_printer();
         let p: Printer__from_printer | undefined = NewPrinter__from_printer(new PrinterOptions__from_printer(false, NewLineKindLF$constant__from_core(), false, 0, false, false, false, false, false, false, false, false), new PrintHandlers__from_printer(void 0, void 0, void 0, void 0, void 0, void 0, void 0), emitContext);
         const __gotots_slice_build_130 = goSliceAllocate<signatureHelpParameter__from_ls$Storage>(Signature__from_checker.TypeParameters(candidateSignature).length, null);
         for (let __gotots_slice_build_131 = 0; __gotots_slice_build_131 < __gotots_slice_build_130.capacity; __gotots_slice_build_131++) {
-            __gotots_slice_build_130.$initialize(__gotots_slice_build_131, signatureHelpParameter.$storageOf(signatureHelpParameter.$zero()));
+            __gotots_slice_build_130.$initialize(__gotots_slice_build_131, signatureHelpParameter.$zeroStorage());
         }
         let signatureHelpTypeParameters = __gotots_slice_build_130;
         if (Signature__from_checker.TypeParameters(candidateSignature).length !== 0) {
@@ -9348,7 +9450,7 @@ export class LanguageService {
             let parameterList = __gotots_range_value_185;
             const __gotots_slice_build_132 = goSliceAllocate<signatureHelpParameter__from_ls$Storage>(parameterList.length, null);
             for (let __gotots_slice_build_133 = 0; __gotots_slice_build_133 < __gotots_slice_build_132.capacity; __gotots_slice_build_133++) {
-                __gotots_slice_build_132.$initialize(__gotots_slice_build_133, signatureHelpParameter.$storageOf(signatureHelpParameter.$zero()));
+                __gotots_slice_build_132.$initialize(__gotots_slice_build_133, signatureHelpParameter.$zeroStorage());
             }
             let parameters = __gotots_slice_build_132;
             let paramDpw: {
@@ -9361,7 +9463,7 @@ export class LanguageService {
                 const __gotots_range_value_187 = __gotots_range_143.get(__gotots_range_index_133);
                 let j = __gotots_range_value_186;
                 let param: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __gotots_range_value_187;
-                let paramNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ((NewNodeBuilder__from_checker(c, emitContext) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker>).value.SymbolToParameterDeclaration(param, enclosingDeclaratipn, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0);
+                let paramNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (NewNodeBuilder__from_checker(c, emitContext) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SymbolToParameterDeclaration(param, enclosingDeclaratipn, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0);
                 if (j > 0) {
                     displayPartsWriter.WritePunctuation(paramDpw, ", ");
                 }
@@ -9385,7 +9487,9 @@ export class LanguageService {
         }
         return result;
     }
-    static $go$private$ls$itemInfoForTypeParameters(l: LanguageService | undefined, candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureHelpItemInfo | undefined> {
+    static $go$private$ls$itemInfoForTypeParameters(l: LanguageService | undefined, candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, docFormat: MarkupKind__from_lsproto, vsCapability: bool): RuntimeSlice<signatureHelpItemInfo | undefined> {
         let emitContext: {
             value: EmitContext__from_printer;
         } | undefined = NewEmitContext__from_printer();
@@ -9399,7 +9503,7 @@ export class LanguageService {
         }
         const __gotots_slice_build_124 = goSliceAllocate<signatureHelpParameter__from_ls$Storage>(typeParameters.length, null);
         for (let __gotots_slice_build_125 = 0; __gotots_slice_build_125 < __gotots_slice_build_124.capacity; __gotots_slice_build_125++) {
-            __gotots_slice_build_124.$initialize(__gotots_slice_build_125, signatureHelpParameter.$storageOf(signatureHelpParameter.$zero()));
+            __gotots_slice_build_124.$initialize(__gotots_slice_build_125, signatureHelpParameter.$zeroStorage());
         }
         let signatureHelpTypeParameters = __gotots_slice_build_124;
         const __gotots_range_136 = typeParameters;
@@ -9456,7 +9560,7 @@ export class LanguageService {
                 const __gotots_range_value_179 = __gotots_range_139.get(__gotots_range_index_129);
                 let j = __gotots_range_value_178;
                 let param: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __gotots_range_value_179;
-                let paramNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ((NewNodeBuilder__from_checker(c, emitContext) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeBuilder__from_checker>).value.SymbolToParameterDeclaration(param, enclosingDeclaration, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0);
+                let paramNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (NewNodeBuilder__from_checker(c, emitContext) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SymbolToParameterDeclaration(param, enclosingDeclaration, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0);
                 if (j > 0) {
                     displayPartsWriter.WritePunctuation(paramDpw, ", ");
                 }
@@ -9481,7 +9585,7 @@ export class LanguageService {
                     }
                     __gotots_slice_build_127.set(__gotots_slice_build_126.length + 0, signatureHelpParameter.$storageOf(signatureHelpParameter.$copy(parameter)));
                     for (let __gotots_slice_build_129 = __gotots_slice_build_128; __gotots_slice_build_129 < __gotots_slice_build_127.capacity; __gotots_slice_build_129++) {
-                        __gotots_slice_build_127.$initialize(__gotots_slice_build_129, signatureHelpParameter.$storageOf(signatureHelpParameter.$zero()));
+                        __gotots_slice_build_127.$initialize(__gotots_slice_build_129, signatureHelpParameter.$zeroStorage());
                     }
                 }
                 parameters = __gotots_slice_build_127;
@@ -9706,7 +9810,9 @@ export class LanguageService {
                         break __gotots_return_block_1;
                     }
                     const __gotots_results_79 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, file);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_79[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_79[0];
                     let done: (() => void) | undefined = __gotots_results_79[1];
                     const __gotots_callee_44: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_44);
@@ -9951,7 +10057,9 @@ export class LanguageService {
         }
         return [new SymbolAndEntriesData(node, implementationEntries, position__shadow_1), true];
     }
-    static $go$private$ls$renameBlockedReason(l: LanguageService | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, program: {
+    static $go$private$ls$renameBlockedReason(l: LanguageService | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+        value: Checker__from_checker;
+    } | undefined, program: {
         value: Program__from_compiler;
     } | undefined): {
         value: Message__from_diagnostics;
@@ -10074,7 +10182,9 @@ export class LanguageService {
         } | undefined = LanguageService.$go$private$ls$setItemDefaults(l, ctx, position__shadow_1, file, items, defaultCommitCharacters$location7, optionalReplacementSpan);
         return new CompletionList(false, itemDefaults, void 0, items);
     }
-    static $go$private$ls$stringLiteralCompletionDetails(l: LanguageService | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, name: gostring, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, completion: stringLiteralCompletions | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
+    static $go$private$ls$stringLiteralCompletionDetails(l: LanguageService | undefined, item: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, name: gostring, location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, completion: stringLiteralCompletions | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, docFormat: MarkupKind__from_lsproto): tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined {
         __gotots_control_target_6: {
             if (!(completion ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fromPaths.isNil()) {
                 return item;
@@ -10260,7 +10370,9 @@ export class LanguageService {
                     } | undefined>> = $goMap$MapOf_Named_lsproto$DocumentUri_To_SliceOf_PointerTo_Named_lsproto$TextEdit.make(0, []);
                     const changes$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => changes, changes$next2 => changes = changes$next2);
                     const __gotots_results_91 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_91[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_91[0];
                     let done: (() => void) | undefined = __gotots_results_91[1];
                     const __gotots_callee_82: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_82);
@@ -10322,7 +10434,7 @@ export class LanguageService {
     ] {
         let caps: tsonicTypeScriptRuntime.Location<ResolvedClientCapabilities__from_lsproto> | undefined = GetClientCapabilities__from_lsproto(ctx);
         let vsCapability = ((caps ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedClientCapabilities__from_lsproto>).value.VSSupportsVisualStudioExtensions;
-        let items = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>();
+        let items = RuntimeSlice.nil<VSReferenceItem__from_lsproto | undefined>();
         const items$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => items, items$next2 => items = items$next2);
         let id = 0;
         let projectName = (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectPath.$value;
@@ -10342,7 +10454,7 @@ export class LanguageService {
             const definitionId$location = tsonicTypeScriptRuntime.boundLocation({}, () => definitionId, definitionId$next => definitionId = definitionId$next);
             let emptyStr = "";
             const emptyStr$location = tsonicTypeScriptRuntime.boundLocation({}, () => emptyStr, emptyStr$next => emptyStr = emptyStr$next);
-            let defItem: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined = tsonicTypeScriptRuntime.location<VSReferenceItem__from_lsproto>(new VSReferenceItem__from_lsproto(definitionId, void 0, tsonicTypeScriptRuntime.location<RuntimeSlice<VSReferenceKind__from_lsproto>>(RuntimeSlice.literal<VSReferenceKind__from_lsproto>([VSReferenceKindUnknown$constant__from_lsproto()])), Location__from_lsproto.$copy((defInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).location), (defInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).displayText, projectName$location, emptyStr$location));
+            let defItem: VSReferenceItem__from_lsproto | undefined = new VSReferenceItem__from_lsproto(definitionId, void 0, tsonicTypeScriptRuntime.location<RuntimeSlice<VSReferenceKind__from_lsproto>>(RuntimeSlice.literal<VSReferenceKind__from_lsproto>([VSReferenceKindUnknown$constant__from_lsproto()])), Location__from_lsproto.$copy((defInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).location), (defInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).displayText, projectName$location, emptyStr$location);
             items = items.append(void 0, [defItem]);
             id++;
             const __gotots_range_66 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).references;
@@ -10357,7 +10469,7 @@ export class LanguageService {
                 if (!((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value === entryKindRange$constant().$value) && !((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).node === undefined) && IsWriteAccessForReference__from_ast((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).node)) {
                     kind = VSReferenceKindWrite$constant__from_lsproto();
                 }
-                let refItem: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined = tsonicTypeScriptRuntime.location<VSReferenceItem__from_lsproto>(new VSReferenceItem__from_lsproto(id, definitionId$location, tsonicTypeScriptRuntime.location<RuntimeSlice<VSReferenceKind__from_lsproto>>(RuntimeSlice.literal<VSReferenceKind__from_lsproto>([kind])), Location__from_lsproto.$copy(refLocation), void 0, projectName$location, void 0));
+                let refItem: VSReferenceItem__from_lsproto | undefined = new VSReferenceItem__from_lsproto(id, definitionId$location, tsonicTypeScriptRuntime.location<RuntimeSlice<VSReferenceKind__from_lsproto>>(RuntimeSlice.literal<VSReferenceKind__from_lsproto>([kind])), Location__from_lsproto.$copy(refLocation), void 0, projectName$location, void 0);
                 items = items.append(void 0, [refItem]);
                 id++;
             }
@@ -10525,7 +10637,9 @@ export class LanguageService {
                 __gotots_return_block_1: {
                     let allFiles = Program__from_compiler.GetSourceFiles(program);
                     const __gotots_results_99 = Program__from_compiler.GetTypeChecker(program, $goProviderInterfaceBridge$Named_context$Context.$from(context__from_gostdlib.Background()));
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_99[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_99[0];
                     let done: (() => void) | undefined = __gotots_results_99[1];
                     const __gotots_callee_84: (() => void) | undefined = done;
                     const __gotots_deferred_3 = DeferredCallableRegistry.resolve(__gotots_callee_84);
@@ -10712,7 +10826,9 @@ export class LanguageService {
             value: DocumentHighlight__from_lsproto;
         } | undefined>();
     }
-    static $go$private$ls$writeComments(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, comments: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, isMarkdown: bool): void {
+    static $go$private$ls$writeComments(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, comments: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, isMarkdown: bool): void {
         const __gotots_range_127 = comments;
         for (let __gotots_range_index_117 = 0; __gotots_range_index_117 < __gotots_range_127.length; __gotots_range_index_117++) {
             const __gotots_range_value_161 = __gotots_range_127.get(__gotots_range_index_117);
@@ -10736,7 +10852,9 @@ export class LanguageService {
             }
         }
     }
-    static $go$private$ls$writeJSDocLink(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, link: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, quote__shadow_1: bool, isMarkdown: bool): void {
+    static $go$private$ls$writeJSDocLink(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, link: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, quote__shadow_1: bool, isMarkdown: bool): void {
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.Name(link);
         let text = strings__from_gostdlib.Trim(Node__from_ast.Text(link), " ");
         if (name === undefined) {
@@ -10779,7 +10897,9 @@ export class LanguageService {
         }
         LanguageService.$go$private$ls$writeNameLink(l, b, c, name, text, quote__shadow_1, isMarkdown);
     }
-    static $go$private$ls$writeNameLink(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, text: gostring, quote__shadow_1: bool, isMarkdown: bool): void {
+    static $go$private$ls$writeNameLink(l: LanguageService | undefined, b: tsonicTypeScriptRuntime.Location<strings__from_gostdlib.Builder> | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, text: gostring, quote__shadow_1: bool, isMarkdown: bool): void {
         let declarations = getDeclarationsFromLocation(c, name);
         if (declarations.length !== 0) {
             let declaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = declarations.get(0);

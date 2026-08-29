@@ -141,15 +141,6 @@ export class semanticToken {
     public set tokenModifier($value: tokenModifier) {
         this.$storage.tokenModifier = $value.$value;
     }
-    static $zero(): semanticToken {
-        return new semanticToken({
-            node: void 0,
-            tokenType: ((void tokenType,
-                0) as int),
-            tokenModifier: ((void tokenModifier,
-                0) as int)
-        });
-    }
     static $copy($source: semanticToken): semanticToken {
         return new semanticToken({
             node: $source.$storage.node,
@@ -158,6 +149,15 @@ export class semanticToken {
             tokenModifier: ((void tokenModifier,
                 $source.$storage.tokenModifier) as int)
         });
+    }
+    static $zeroStorage(): semanticToken$Storage {
+        return {
+            node: void 0,
+            tokenType: ((void tokenType,
+                0) as int),
+            tokenModifier: ((void tokenModifier,
+                0) as int)
+        };
     }
     declare private readonly then?: never;
 }
@@ -276,7 +276,9 @@ export function tokenFromDeclarationMapping(kind: Kind__from_ast): tokenType {
         }
     }
 }
-export function reclassifyByType(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tt: tokenType): tokenType {
+export function reclassifyByType(c: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tt: tokenType): tokenType {
     if (tt.$value === tokenTypeVariable$constant().$value || tt.$value === tokenTypeProperty$constant().$value || tt.$value === tokenTypeParameter$constant().$value) {
         let typ: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(c, node);
         if (!(typ === undefined)) {

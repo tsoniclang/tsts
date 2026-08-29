@@ -162,10 +162,10 @@ export function Some$PointerTo_Named_lsproto$CompletionItem($argument0: RuntimeS
         return $argument0;
     }, $argument0, $argument1);
 }
-export function Some$PointerTo_Named_pseudochecker$PseudoType($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined) => bool) | undefined): bool {
-    return Some$kernel<tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined => {
+export function Some$PointerTo_Named_pseudochecker$PseudoType($argument0: RuntimeSlice<PseudoType__from_pseudochecker | undefined>, $argument1: (($0: PseudoType__from_pseudochecker | undefined) => bool) | undefined): bool {
+    return Some$kernel<PseudoType__from_pseudochecker | undefined>(($argument0: PseudoType__from_pseudochecker | undefined): PseudoType__from_pseudochecker | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined): tsonicTypeScriptRuntime.Location<PseudoType__from_pseudochecker> | undefined => {
+    }, ($argument0: PseudoType__from_pseudochecker | undefined): PseudoType__from_pseudochecker | undefined => {
         return $argument0;
     }, $argument0, $argument1);
 }

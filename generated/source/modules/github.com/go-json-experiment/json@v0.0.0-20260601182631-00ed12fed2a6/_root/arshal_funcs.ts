@@ -121,19 +121,19 @@ export class typedArshaler<Coder> {
     public static $fromStorage<Coder>($source: typedArshaler$Storage<Coder>): typedArshaler<Coder> {
         return new typedArshaler<Coder>($source);
     }
-    static $zero<Coder>(): typedArshaler<Coder> {
-        return new typedArshaler<Coder>({
-            typ: void 0,
-            fnc: void 0,
-            maySkip: false
-        });
-    }
     static $copy<Coder>($source: typedArshaler<Coder>): typedArshaler<Coder> {
         return new typedArshaler<Coder>({
             typ: $source.$storage.typ,
             fnc: $source.$storage.fnc,
             maySkip: $source.$storage.maySkip
         });
+    }
+    static $zeroStorage<Coder>(): typedArshaler$Storage<Coder> {
+        return {
+            typ: void 0,
+            fnc: void 0,
+            maySkip: false
+        };
     }
     declare private readonly then?: never;
 }

@@ -214,8 +214,8 @@ export function parseNumber(value: GoInterface | undefined): tsonicTypeScriptRun
     }
     return void 0;
 }
-export function parseProjectReference(json: GoInterface | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> {
-    let result = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>();
+export function parseProjectReference(json: GoInterface | undefined): RuntimeSlice<ProjectReference__from_core | undefined> {
+    let result = RuntimeSlice.nil<ProjectReference__from_core | undefined>();
     {
         const __gotots_results_29 = (($value: GoInterface | undefined): [
             tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, GoInterface | undefined>> | undefined,
@@ -230,7 +230,6 @@ export function parseProjectReference(json: GoInterface | undefined): RuntimeSli
         let ok = __gotots_results_29[1];
         if (ok) {
             let reference = ProjectReference__from_core.$zero();
-            const reference$location = tsonicTypeScriptRuntime.boundLocation({}, () => reference, reference$next => reference = reference$next);
             {
                 const __gotots_results_30 = OrderedMap$Get$string$Interface_void(v, "path");
                 let v__shadow_1: GoInterface | undefined = __gotots_results_30[0];
@@ -257,9 +256,7 @@ export function parseProjectReference(json: GoInterface | undefined): RuntimeSli
                     })(v__shadow_1);
                 }
             }
-            result = result.append(void 0, [
-                reference$location,
-            ]);
+            result = result.append(void 0, [reference,]);
         }
     }
     return result;

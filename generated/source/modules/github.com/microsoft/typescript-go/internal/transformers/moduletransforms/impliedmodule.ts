@@ -12,7 +12,7 @@ import { NewESModuleTransformer } from "./esmodule.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 export class ImpliedModuleTransformer {
     declare private readonly $goType: void;
-    public constructor(public Transformer: Transformer__from_transformers, public opts: TransformOptions__from_transformers | undefined, public resolver: ReferenceResolver__from_binder | undefined, public getEmitModuleFormatOfFile: (($0: HasFileName__from_ast | undefined) => ModuleKind__from_core) | undefined, public cjsTransformer: tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined, public esmTransformer: tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined) {
+    public constructor(public Transformer: Transformer__from_transformers, public opts: TransformOptions__from_transformers | undefined, public resolver: ReferenceResolver__from_binder | undefined, public getEmitModuleFormatOfFile: (($0: HasFileName__from_ast | undefined) => ModuleKind__from_core) | undefined, public cjsTransformer: Transformer__from_transformers | undefined, public esmTransformer: Transformer__from_transformers | undefined) {
     }
     declare private readonly then?: never;
     static $go$private$moduletransforms$visit(tx: ImpliedModuleTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -32,7 +32,7 @@ export class ImpliedModuleTransformer {
         const __gotots_callee_0 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).getEmitModuleFormatOfFile;
         const __gotots_argument_2 = new GoInterfaceAdapter(node);
         let format = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_2);
-        let transformer: tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined = void 0;
+        let transformer: Transformer__from_transformers | undefined = void 0;
         if (format >= ModuleKindES2015$constant__from_core()) {
             if ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).esmTransformer === undefined) {
                 (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).esmTransformer = NewESModuleTransformer((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts);
@@ -49,10 +49,10 @@ export class ImpliedModuleTransformer {
         return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
 }
-export function NewImpliedModuleTransformer(opts: TransformOptions__from_transformers | undefined): tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined {
+export function NewImpliedModuleTransformer(opts: TransformOptions__from_transformers | undefined): Transformer__from_transformers | undefined {
     let tx: ImpliedModuleTransformer | undefined = new ImpliedModuleTransformer(Transformer__from_transformers.$zero(), opts, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Resolver, (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).GetEmitModuleFormatOfFile, void 0, void 0);
     const __gotots_store_0 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-    const __gotots_receiver_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Transformer");
+    const __gotots_receiver_1 = __gotots_store_0.Transformer;
     const __gotots_receiver_0 = tx;
     const __gotots_argument_0 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return ImpliedModuleTransformer.$go$private$moduletransforms$visit(__gotots_receiver_0, $argument0);

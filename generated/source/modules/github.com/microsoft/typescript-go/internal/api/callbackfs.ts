@@ -184,9 +184,8 @@ export class callbackFS {
             }
             if (__gotots_logical_result_2) {
                 let wrapper = $goStruct$Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_.$zero();
-                const wrapper$location = tsonicTypeScriptRuntime.boundLocation({}, () => wrapper, wrapper$next => wrapper = wrapper$next);
                 {
-                    let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(result, new $goInterfaceAdapter$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_(wrapper$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                    let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(result, new $goInterfaceAdapter$PointerTo_Struct_Field_Content_PointerTo_string_Tag_json_u3a__u22_content_u22_(wrapper), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                     if (!(err__shadow_1 === undefined)) {
                         const __gotots_argument_14 = err__shadow_1;
                         GoPanic.raise(__gotots_argument_14 === undefined ? GoPanicNilValue.create() : __gotots_argument_14);

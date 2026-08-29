@@ -49,7 +49,9 @@ export function organizeImportsWorker(oldImportDecls: RuntimeSlice<tsonicTypeScr
                 let processedImports = Clone$SliceOf_PointerTo_Named_ast$Node$PointerTo_Named_ast$Node(oldImportDecls);
                 if (shouldRemove) {
                     const __gotots_results_0 = Program__from_compiler.GetTypeCheckerForFile(program, ctx, sourceFile);
-                    let typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                    let typeChecker: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_0[0];
                     let done: (() => void) | undefined = __gotots_results_0[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -182,7 +184,9 @@ export function groupByModuleSpecifier(imports: RuntimeSlice<tsonicTypeScriptRun
     }
     return result;
 }
-export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, program: {
+export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, program: {
     value: Program__from_compiler;
 } | undefined, changeTracker: Tracker__from_change | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     let compilerOptions: {
@@ -288,7 +292,9 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
     }
     return usedImports;
 }
-export function filterUsedImportSpecifiers(elements: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, jsxElementsPresent: bool, jsxModeNeedsExplicitImport__shadow_1: bool): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
+export function filterUsedImportSpecifiers(elements: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, jsxElementsPresent: bool, jsxModeNeedsExplicitImport__shadow_1: bool): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     let result = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
     const __gotots_range_17 = elements;
     for (let __gotots_range_index_17 = 0; __gotots_range_index_17 < __gotots_range_17.length; __gotots_range_index_17++) {
@@ -358,7 +364,7 @@ export function getImportAttributesKey(attributes: tsonicTypeScriptRuntime.Locat
     return strings__from_gostdlib.Builder.String(key);
 }
 export function groupByNewlineContiguous(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, decls: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>): RuntimeSlice<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>> {
-    let s: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = NewScanner__from_scanner();
+    let s: Scanner__from_scanner | undefined = NewScanner__from_scanner();
     Scanner__from_scanner.SetSkipTrivia(s, false);
     let groups = RuntimeSlice.nil<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>();
     let currentGroup = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
@@ -377,7 +383,7 @@ export function groupByNewlineContiguous(sourceFile: tsonicTypeScriptRuntime.Loc
     }
     return groups;
 }
-export function isNewGroup(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, decl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, s: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined): bool {
+export function isNewGroup(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, decl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, s: Scanner__from_scanner | undefined): bool {
     let fullStart = Node__from_ast.Pos(decl);
     if (fullStart < 0) {
         return false;

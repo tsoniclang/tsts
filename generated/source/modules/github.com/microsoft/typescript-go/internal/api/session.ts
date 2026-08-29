@@ -1010,7 +1010,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetAnyType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_59[0]), __gotots_results_59[1]];
@@ -1022,7 +1024,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetStringType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_60[0]), __gotots_results_60[1]];
@@ -1034,7 +1038,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetNumberType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_61[0]), __gotots_results_61[1]];
@@ -1046,7 +1052,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetBooleanType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_62[0]), __gotots_results_62[1]];
@@ -1058,7 +1066,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetVoidType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_63[0]), __gotots_results_63[1]];
@@ -1070,7 +1080,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetUndefinedType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_64[0]), __gotots_results_64[1]];
@@ -1082,7 +1094,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetNullType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_65[0]), __gotots_results_65[1]];
@@ -1094,7 +1108,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetNeverType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_66[0]), __gotots_results_66[1]];
@@ -1106,7 +1122,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetUnknownType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_67[0]), __gotots_results_67[1]];
@@ -1118,7 +1136,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetBigIntType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_68[0]), __gotots_results_68[1]];
@@ -1130,7 +1150,9 @@ export class Session {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })(parsed), ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
+                })(parsed), ($argument0: {
+                    value: Checker__from_checker;
+                } | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined => {
                     return Checker__from_checker.GetESSymbolType($argument0);
                 });
                 return [new $goInterfaceAdapter$PointerTo_Named_api$TypeResponse(__gotots_results_69[0]), __gotots_results_69[1]];
@@ -2085,7 +2107,9 @@ export class Session {
     }
     static $go$private$api$handleGetIntrinsicType(s: {
         value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetIntrinsicTypeParams> | undefined, getter: (($0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) => tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) | undefined): [
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetIntrinsicTypeParams> | undefined, getter: (($0: {
+        value: Checker__from_checker;
+    } | undefined) => tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2578,7 +2602,7 @@ export class Session {
                 }
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, ReferencedSymbolEntry.$storageOf(ReferencedSymbolEntry.$copy(re)));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ReferencedSymbolEntry.$storageOf(ReferencedSymbolEntry.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ReferencedSymbolEntry.$zeroStorage());
                 }
             }
             result = __gotots_slice_build_1;
@@ -3064,7 +3088,7 @@ export class Session {
         }
         const __gotots_slice_build_4 = goSliceAllocate<SignatureUsageResponse__from_api$Storage>(0, usages.length);
         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_4.capacity; __gotots_slice_build_5++) {
-            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, SignatureUsageResponse.$storageOf(SignatureUsageResponse.$zero()));
+            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, SignatureUsageResponse.$zeroStorage());
         }
         let result = __gotots_slice_build_4;
         const __gotots_range_17 = usages;
@@ -3093,7 +3117,7 @@ export class Session {
                 }
                 __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, SignatureUsageResponse.$storageOf(SignatureUsageResponse.$copy(entry)));
                 for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-                    __gotots_slice_build_7.$initialize(__gotots_slice_build_9, SignatureUsageResponse.$storageOf(SignatureUsageResponse.$zero()));
+                    __gotots_slice_build_7.$initialize(__gotots_slice_build_9, SignatureUsageResponse.$zeroStorage());
                 }
             }
             result = __gotots_slice_build_7;
@@ -5413,7 +5437,7 @@ export class Session {
             } | undefined = __gotots_range_value_4;
             projectResponses.set(i, NewProjectResponse(proj));
         }
-        let changes: tsonicTypeScriptRuntime.Location<SnapshotChanges> | undefined = void 0;
+        let changes: SnapshotChanges | undefined = void 0;
         sync__from_gostdlib.RWMutex.RLock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
         let prevSD: snapshotData | undefined = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.lookup((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.latestSnapshot);
         sync__from_gostdlib.RWMutex.RUnlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
@@ -5525,7 +5549,9 @@ export class Session {
             return [new checkerSetup(void 0, void 0, void 0, void 0), err];
         }
         const __gotots_results_220 = Program__from_compiler.GetTypeChecker(program, WithCheckerLifetime__from_core(ctx, CheckerLifetimeAPI$constant__from_core()));
-        let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_220[0];
+        let c: {
+            value: Checker__from_checker;
+        } | undefined = __gotots_results_220[0];
         let done: (() => void) | undefined = __gotots_results_220[1];
         return [new checkerSetup(sd, program, c, done), void 0];
     }
@@ -5648,7 +5674,9 @@ export class checkerSetup {
     declare private readonly $goType: void;
     public constructor(public sd: snapshotData | undefined, public program: {
         value: Program__from_compiler;
-    } | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public done: (() => void) | undefined) {
+    } | undefined, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public done: (() => void) | undefined) {
     }
     declare private readonly then?: never;
 }
@@ -5656,7 +5684,7 @@ export function computeSnapshotChanges(prev: {
     value: Snapshot__from_project;
 } | undefined, next: {
     value: Snapshot__from_project;
-} | undefined): tsonicTypeScriptRuntime.Location<SnapshotChanges> | undefined {
+} | undefined): SnapshotChanges | undefined {
     let prevProjects: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
         value: Project__from_project;
     } | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((prev ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
@@ -5664,7 +5692,6 @@ export function computeSnapshotChanges(prev: {
         value: Project__from_project;
     } | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((next ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
     let changes = SnapshotChanges.$zero();
-    const changes$location = tsonicTypeScriptRuntime.boundLocation({}, () => changes, changes$next => changes = changes$next);
     DiffOrderedMaps$Named_tspath$Path$PointerTo_Named_project$Project(prevProjects, nextProjects, ($0: Path__from_tspath, $1: {
         value: Project__from_project;
     } | undefined): void => {
@@ -5701,7 +5728,6 @@ export function computeSnapshotChanges(prev: {
             }
         }
         let projectChanges = ProjectFileChanges.$zero();
-        const projectChanges$location = tsonicTypeScriptRuntime.boundLocation({}, () => projectChanges, projectChanges$next => projectChanges = projectChanges$next);
         DiffMaps$Named_tspath$Path$PointerTo_Named_ast$SourceFile(oldFiles, newFiles, void 0, (path: Path__from_tspath, $1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void => {
             projectChanges.DeletedFiles = projectChanges.DeletedFiles.append(((void Path__from_tspath,
                 "") as string), [path.$value]);
@@ -5713,10 +5739,10 @@ export function computeSnapshotChanges(prev: {
             if (changes.ChangedProjects.isNil()) {
                 changes.ChangedProjects = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.make(0, []);
             }
-            changes.ChangedProjects.store(ProjectHandle(newProj), projectChanges$location);
+            changes.ChangedProjects.store(ProjectHandle(newProj), projectChanges);
         }
     });
-    return changes$location;
+    return changes;
 }
 export function formatSessionID(id: uint64): gostring {
     return fmt__from_gostdlib.Sprintf("api-session-%d", RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(id)]));

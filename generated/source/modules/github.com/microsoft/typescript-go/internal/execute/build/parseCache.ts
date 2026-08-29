@@ -57,11 +57,9 @@ export class parseCache<K, V> {
     }
     static $zero<K, V>(): parseCache<K, V> {
         return new parseCache<K, V>({
-            entries: SyncMap__from_collections.$storageOf<K, {
+            entries: SyncMap__from_collections.$zeroStorage<K, {
                 value: parseCacheEntry<V>;
-            } | undefined>(SyncMap__from_collections.$zero<K, {
-                value: parseCacheEntry<V>;
-            } | undefined>())
+            } | undefined>()
         });
     }
     static $copy<K, V>($source: parseCache<K, V>): parseCache<K, V> {

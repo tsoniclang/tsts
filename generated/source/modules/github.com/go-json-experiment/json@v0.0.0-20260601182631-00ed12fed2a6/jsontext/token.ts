@@ -56,14 +56,6 @@ export class Token {
     public set num($value: uint64) {
         this.$storage.num = $value;
     }
-    static $zero(): Token {
-        return new Token({
-            nonComparable: new nonComparable(GoArray.zero<(() => void) | undefined, 0>(0, void 0)).$value,
-            raw: void 0,
-            str: "",
-            num: 0n
-        });
-    }
     static $copy($source: Token): Token {
         return new Token({
             nonComparable: new nonComparable(new nonComparable($source.$storage.nonComparable).$value.copy()).$value,
@@ -71,6 +63,14 @@ export class Token {
             str: $source.$storage.str,
             num: $source.$storage.num
         });
+    }
+    static $zeroStorage(): Token$Storage {
+        return {
+            nonComparable: new nonComparable(GoArray.zero<(() => void) | undefined, 0>(0, void 0)).$value,
+            raw: void 0,
+            str: "",
+            num: 0n
+        };
     }
     declare private readonly then?: never;
     Bool(): bool {

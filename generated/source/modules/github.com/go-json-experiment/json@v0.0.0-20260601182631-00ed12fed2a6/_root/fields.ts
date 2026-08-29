@@ -94,7 +94,7 @@ export type structField$Storage = {
     index0: int;
     index: RuntimeSlice<int>;
     typ: reflect__from_gostdlib.Type | undefined;
-    fncs: tsonicTypeScriptRuntime.Location<arshaler> | undefined;
+    fncs: arshaler | undefined;
     isZero: (($0: addressableValue) => bool) | undefined;
     isEmpty: (($0: addressableValue) => bool) | undefined;
     fieldOptions: fieldOptions$Storage;
@@ -133,10 +133,10 @@ export class structField implements GoContainerStoredValue<structField$Storage> 
     public set typ($value: reflect__from_gostdlib.Type | undefined) {
         this.$storage.typ = $value;
     }
-    public get fncs(): tsonicTypeScriptRuntime.Location<arshaler> | undefined {
+    public get fncs(): arshaler | undefined {
         return this.$storage.fncs;
     }
-    public set fncs($value: tsonicTypeScriptRuntime.Location<arshaler> | undefined) {
+    public set fncs($value: arshaler | undefined) {
         this.$storage.fncs = $value;
     }
     public get isZero(): (($0: addressableValue) => bool) | undefined {
@@ -158,18 +158,6 @@ export class structField implements GoContainerStoredValue<structField$Storage> 
         this.$storage.fieldOptions = fieldOptions.$storageOf($value);
     }
     declare readonly [$goContainerStorageType]: structField$Storage;
-    static $zero(): structField {
-        return new structField({
-            id: 0,
-            index0: 0,
-            index: RuntimeSlice.nil<int>(),
-            typ: void 0,
-            fncs: void 0,
-            isZero: void 0,
-            isEmpty: void 0,
-            fieldOptions: fieldOptions.$storageOf(fieldOptions.$zero())
-        });
-    }
     static $copy($source: structField): structField {
         return new structField({
             id: $source.$storage.id,
@@ -181,6 +169,18 @@ export class structField implements GoContainerStoredValue<structField$Storage> 
             isEmpty: $source.$storage.isEmpty,
             fieldOptions: fieldOptions.$storageOf(fieldOptions.$copy(fieldOptions.$fromStorage($source.$storage.fieldOptions)))
         });
+    }
+    static $zeroStorage(): structField$Storage {
+        return {
+            id: 0,
+            index0: 0,
+            index: RuntimeSlice.nil<int>(),
+            typ: void 0,
+            fncs: void 0,
+            isZero: void 0,
+            isEmpty: void 0,
+            fieldOptions: fieldOptions.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static $go$private$json$matchFoldedName(f: tsonicTypeScriptRuntime.Location<structField> | undefined, name: RuntimeSlice<uint8>, flags: tsonicTypeScriptRuntime.Location<Flags__from_jsonflags> | undefined): bool {
@@ -265,19 +265,19 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
         public set visitChildren($value: bool) {
             this.$storage.visitChildren = $value;
         }
-        static $zero(): queueEntry {
-            return new queueEntry({
-                typ: void 0,
-                index: RuntimeSlice.nil<int>(),
-                visitChildren: false
-            });
-        }
         static $copy($source: queueEntry): queueEntry {
             return new queueEntry({
                 typ: $source.$storage.typ,
                 index: $source.$storage.index,
                 visitChildren: $source.$storage.visitChildren
             });
+        }
+        static $zeroStorage(): queueEntry$Storage {
+            return {
+                typ: void 0,
+                index: RuntimeSlice.nil<int>(),
+                visitChildren: false
+            };
         }
         declare private readonly then?: never;
     }
@@ -430,7 +430,7 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                                     visitChildren: !seen.lookup(tf)
                                 })));
                             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, queueEntry.$storageOf(queueEntry.$zero()));
+                                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, queueEntry.$zeroStorage());
                             }
                         }
                         queue = __gotots_slice_build_1;
@@ -539,7 +539,7 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                     }
                     __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, structField.$storageOf(structField.$copy(f)));
                     for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, structField.$storageOf(structField.$zero()));
+                        __gotots_slice_build_5.$initialize(__gotots_slice_build_7, structField.$zeroStorage());
                     }
                 }
                 inlinedFallbacks = __gotots_slice_build_5;
@@ -744,7 +744,7 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                     }
                     __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, structField.$storageOf(structField.$copy(f)));
                     for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                        __gotots_slice_build_9.$initialize(__gotots_slice_build_11, structField.$storageOf(structField.$zero()));
+                        __gotots_slice_build_9.$initialize(__gotots_slice_build_11, structField.$zeroStorage());
                     }
                 }
                 allFields = __gotots_slice_build_9;
@@ -799,7 +799,7 @@ export function makeStructFields(root: reflect__from_gostdlib.Type | undefined):
                 }
                 __gotots_slice_build_13.set(__gotots_slice_build_12.length + 0, structField.$storageOf(structField.$copy(structField.$fromStorage(allFields.get(0)))));
                 for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
-                    __gotots_slice_build_13.$initialize(__gotots_slice_build_15, structField.$storageOf(structField.$zero()));
+                    __gotots_slice_build_13.$initialize(__gotots_slice_build_15, structField.$zeroStorage());
                 }
             }
             flattened = __gotots_slice_build_13;
@@ -1004,6 +1004,20 @@ export class fieldOptions {
     }
     static $equal($left: fieldOptions, $right: fieldOptions): bool {
         return $left.$storage.name === $right.$storage.name && $left.$storage.quotedName === $right.$storage.quotedName && $left.$storage.hasName === $right.$storage.hasName && $left.$storage.nameNeedEscape === $right.$storage.nameNeedEscape && $left.$storage.casing === $right.$storage.casing && $left.$storage.inline === $right.$storage.inline && $left.$storage.omitzero === $right.$storage.omitzero && $left.$storage.omitempty === $right.$storage.omitempty && $left.$storage.__go_string === $right.$storage.__go_string && $left.$storage.format === $right.$storage.format;
+    }
+    static $zeroStorage(): fieldOptions$Storage {
+        return {
+            name: "",
+            quotedName: "",
+            hasName: false,
+            nameNeedEscape: false,
+            casing: 0,
+            inline: false,
+            omitzero: false,
+            omitempty: false,
+            __go_string: false,
+            format: ""
+        };
     }
     declare private readonly then?: never;
 }

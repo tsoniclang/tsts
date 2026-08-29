@@ -34,7 +34,9 @@ import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
 export class inlayHintState {
     declare private readonly $goType: void;
-    public constructor(public ctx: GoInterface | undefined, public span: TextRange__from_core, public preferences: InlayHintsPreferences__from_lsutil, public quotePreference: QuotePreference__from_lsutil, public file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public converters: {
+    public constructor(public ctx: GoInterface | undefined, public span: TextRange__from_core, public preferences: InlayHintsPreferences__from_lsutil, public quotePreference: QuotePreference__from_lsutil, public file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public converters: {
         value: Converters__from_lsconv;
     } | undefined, public result: RuntimeSlice<tsonicTypeScriptRuntime.Location<InlayHint__from_lsproto> | undefined>) {
     }

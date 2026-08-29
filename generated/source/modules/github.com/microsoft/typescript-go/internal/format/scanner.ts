@@ -43,7 +43,7 @@ export class TextRangeWithKind implements GoContainerStoredValue<TextRangeWithKi
     declare readonly [$goContainerStorageType]: TextRangeWithKind$Storage;
     static $zero(): TextRangeWithKind {
         return new TextRangeWithKind({
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            Loc: TextRange__from_core.$zeroStorage(),
             Kind: 0
         });
     }
@@ -55,6 +55,12 @@ export class TextRangeWithKind implements GoContainerStoredValue<TextRangeWithKi
     }
     static $equal($left: TextRangeWithKind, $right: TextRangeWithKind): bool {
         return TextRange__from_core.$equal(TextRange__from_core.$fromStorage($left.$storage.Loc), TextRange__from_core.$fromStorage($right.$storage.Loc)) && $left.$storage.Kind === $right.$storage.Kind;
+    }
+    static $zeroStorage(): TextRangeWithKind$Storage {
+        return {
+            Loc: TextRange__from_core.$zeroStorage(),
+            Kind: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -78,7 +84,7 @@ export class tokenInfo {
 }
 export class formattingScanner {
     declare private readonly $goType: void;
-    public constructor(public s: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, public startPos: int, public endPos: int, public savedPos: int, public hasLastTokenInfo: bool, public lastTokenInfo: tokenInfo, public lastScanAction: scanAction, public leadingTrivia: RuntimeSlice<TextRangeWithKind$Storage>, public trailingTrivia: RuntimeSlice<TextRangeWithKind$Storage>, public wasNewLine: bool) {
+    public constructor(public s: Scanner__from_scanner | undefined, public startPos: int, public endPos: int, public savedPos: int, public hasLastTokenInfo: bool, public lastTokenInfo: tokenInfo, public lastScanAction: scanAction, public leadingTrivia: RuntimeSlice<TextRangeWithKind$Storage>, public trailingTrivia: RuntimeSlice<TextRangeWithKind$Storage>, public wasNewLine: bool) {
     }
     declare private readonly then?: never;
     static $go$private$format$advance(s: formattingScanner | undefined): void {
@@ -115,7 +121,7 @@ export class formattingScanner {
                 }
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, TextRangeWithKind.$storageOf(TextRangeWithKind.$copy(item)));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextRangeWithKind.$storageOf(TextRangeWithKind.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextRangeWithKind.$zeroStorage());
                 }
             }
             (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).leadingTrivia = __gotots_slice_build_1;
@@ -262,7 +268,7 @@ export class formattingScanner {
                 }
                 __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, TextRangeWithKind.$storageOf(TextRangeWithKind.$copy(trivia)));
                 for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, TextRangeWithKind.$storageOf(TextRangeWithKind.$zero()));
+                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, TextRangeWithKind.$zeroStorage());
                 }
             }
             (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).trailingTrivia = __gotots_slice_build_5;
@@ -305,7 +311,7 @@ export class formattingScanner {
     }
 }
 export function newFormattingScanner(text: gostring, languageVariant: LanguageVariant__from_core, startPos: int, endPos: int, worker: formatSpanWorker | undefined): RuntimeSlice<TextChange__from_core$Storage> {
-    let scan: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = NewScanner__from_scanner();
+    let scan: Scanner__from_scanner | undefined = NewScanner__from_scanner();
     Scanner__from_scanner.SetSkipTrivia(scan, false);
     Scanner__from_scanner.SetLanguageVariant(scan, languageVariant);
     Scanner__from_scanner.SetText(scan, text);

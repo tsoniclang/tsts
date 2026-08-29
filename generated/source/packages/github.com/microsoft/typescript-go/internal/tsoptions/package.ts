@@ -49,7 +49,7 @@ export function $initialize(): void {
     $state.OptionsDeclarations = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined>();
     $state.OptionsForBuild = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined>();
     $state.OptionsForWatch = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined>();
-    $state.TscBuildOption = CommandLineOption.$storageOf(CommandLineOption.$zero());
+    $state.TscBuildOption = CommandLineOption.$zeroStorage();
     $state.WatchNameMap = void 0;
     $state.buildOptionsDidYouMeanDiagnostics = void 0;
     $state.commandLineOptionDeprecated = $goMap$MapOf_string_To_PointerTo_Named_collections$SetOf_string.nil();

@@ -243,8 +243,8 @@ export class CommandLineOption {
     public set ElementOptions($value: CommandLineOptionNameMap) {
         this.$storage.ElementOptions = $value.$value;
     }
-    static $zero(): CommandLineOption {
-        return new CommandLineOption({
+    static $zeroStorage(): CommandLineOption$Storage {
+        return {
             Name: "",
             ShortName: "",
             Kind: ((void CommandLineOptionKind,
@@ -273,7 +273,7 @@ export class CommandLineOption {
             transpileOptionValue: 0,
             listPreserveFalsyValues: false,
             ElementOptions: new CommandLineOptionNameMap(GoMap.nil()).$value
-        });
+        };
     }
     declare private readonly then?: never;
     static DeprecatedKeys(o: tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined): tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined {

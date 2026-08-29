@@ -70,7 +70,9 @@ export function newImportsKey(moduleSpecifier: gostring, topLevelTypeOnly: bool)
 }
 export class importAdder {
     declare private readonly $goType: void;
-    public constructor(public ctx: GoInterface | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public view: View | undefined, public formatOptions: FormatCodeSettings__from_lsutil, public converters: {
+    public constructor(public ctx: GoInterface | undefined, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public view: View | undefined, public formatOptions: FormatCodeSettings__from_lsutil, public converters: {
         value: Converters__from_lsconv;
     } | undefined, public preferences: UserPreferences__from_lsutil, public addToNamespace: RuntimeSlice<{
         value: Fix;
@@ -328,7 +330,9 @@ export class importAdder {
 }
 export function NewImportAdder(ctx: GoInterface | undefined, program: {
     value: Program__from_compiler;
-} | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, view: View | undefined, formatOptions: FormatCodeSettings__from_lsutil, converters: {
+} | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, view: View | undefined, formatOptions: FormatCodeSettings__from_lsutil, converters: {
     value: Converters__from_lsconv;
 } | undefined, preferences: UserPreferences__from_lsutil): ImportAdder | undefined {
     return new GoInterfaceAdapter(new importAdder(ctx, checker__shadow_1, view, FormatCodeSettings__from_lsutil.$copy(formatOptions), converters, UserPreferences__from_lsutil.$copy(preferences), RuntimeSlice.nil<{
@@ -354,7 +358,9 @@ export function reduceAddAsTypeOnlyValues(prevValue: AddAsTypeOnly__from_lsproto
     }
     return prevValue;
 }
-export function TypeToAutoImportableTypeNode(c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, importAdder__shadow_1: ImportAdder | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, contextNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function TypeToAutoImportableTypeNode(c: {
+    value: Checker__from_checker;
+} | undefined, importAdder__shadow_1: ImportAdder | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, contextNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let idToSymbol: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_ast$Symbol.make(0, []);
     let typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Checker__from_checker.TypeToTypeNode(c, t, contextNode, FlagsNone$constant__from_nodebuilder(), idToSymbol);
     if (typeNode === undefined) {

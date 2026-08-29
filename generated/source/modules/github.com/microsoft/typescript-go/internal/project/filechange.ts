@@ -96,19 +96,6 @@ export class FileChange {
     public set Changes($value: RuntimeSlice<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>) {
         this.$storage.Changes = $value;
     }
-    static $zero(): FileChange {
-        return new FileChange({
-            Kind: ((void FileChangeKind,
-                0) as int),
-            URI: ((void DocumentUri__from_lsproto,
-                "") as string),
-            Version: 0,
-            Content: "",
-            LanguageKind: ((void LanguageKind__from_lsproto,
-                "") as string),
-            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
-        });
-    }
     static $copy($source: FileChange): FileChange {
         return new FileChange({
             Kind: ((void FileChangeKind,
@@ -121,6 +108,19 @@ export class FileChange {
                 $source.$storage.LanguageKind) as string),
             Changes: $source.$storage.Changes
         });
+    }
+    static $zeroStorage(): FileChange$Storage {
+        return {
+            Kind: ((void FileChangeKind,
+                0) as int),
+            URI: ((void DocumentUri__from_lsproto,
+                "") as string),
+            Version: 0,
+            Content: "",
+            LanguageKind: ((void LanguageKind__from_lsproto,
+                "") as string),
+            Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
+        };
     }
     declare private readonly then?: never;
 }

@@ -349,8 +349,8 @@ export class CPUInfo {
     public set maxExFunc($value: uint32) {
         this.$storage.maxExFunc = $value;
     }
-    static $zero(): CPUInfo {
-        return new CPUInfo({
+    static $zeroStorage(): CPUInfo$Storage {
+        return {
             BrandName: "",
             VendorID: ((void Vendor,
                 0) as int),
@@ -370,12 +370,12 @@ export class CPUInfo {
             Hz: 0n,
             BoostFreq: 0n,
             Cache: $goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$storageOf($goStruct$Struct_Field_L1I_int_Tag__empty__Field_L1D_int_Tag__empty__Field_L2_int_Tag__empty__Field_L3_int_Tag__empty_.$zero()),
-            SGX: SGXSupport.$storageOf(SGXSupport.$zero()),
-            AMDMemEncryption: AMDMemEncryptionSupport.$storageOf(AMDMemEncryptionSupport.$zero()),
+            SGX: SGXSupport.$zeroStorage(),
+            AMDMemEncryption: AMDMemEncryptionSupport.$zeroStorage(),
             AVX10Level: 0,
             maxFunc: 0,
             maxExFunc: 0
-        });
+        };
     }
     declare private readonly then?: never;
     FeatureSet(): RuntimeSlice<gostring> {
@@ -685,8 +685,8 @@ export class SGXSupport {
     public set EPCSections($value: RuntimeSlice<SGXEPCSection$Storage>) {
         this.$storage.EPCSections = $value;
     }
-    static $zero(): SGXSupport {
-        return new SGXSupport({
+    static $zeroStorage(): SGXSupport$Storage {
+        return {
             Available: false,
             LaunchControl: false,
             SGX1Supported: false,
@@ -694,7 +694,7 @@ export class SGXSupport {
             MaxEnclaveSizeNot64: 0n,
             MaxEnclaveSize64: 0n,
             EPCSections: RuntimeSlice.nil<SGXEPCSection$Storage>()
-        });
+        };
     }
     declare private readonly then?: never;
 }
@@ -752,15 +752,15 @@ export class AMDMemEncryptionSupport {
     public set MinSevNoEsAsid($value: uint32) {
         this.$storage.MinSevNoEsAsid = $value;
     }
-    static $zero(): AMDMemEncryptionSupport {
-        return new AMDMemEncryptionSupport({
+    static $zeroStorage(): AMDMemEncryptionSupport$Storage {
+        return {
             Available: false,
             CBitPossition: 0,
             NumVMPL: 0,
             PhysAddrReduction: 0,
             NumEntryptedGuests: 0,
             MinSevNoEsAsid: 0
-        });
+        };
     }
     declare private readonly then?: never;
 }

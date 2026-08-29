@@ -105,19 +105,19 @@ export class groupNameReference {
     public set name($value: gostring) {
         this.$storage.name = $value;
     }
-    static $zero(): groupNameReference {
-        return new groupNameReference({
-            pos: 0,
-            end: 0,
-            name: ""
-        });
-    }
     static $copy($source: groupNameReference): groupNameReference {
         return new groupNameReference({
             pos: $source.$storage.pos,
             end: $source.$storage.end,
             name: $source.$storage.name
         });
+    }
+    static $zeroStorage(): groupNameReference$Storage {
+        return {
+            pos: 0,
+            end: 0,
+            name: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -154,13 +154,6 @@ export class decimalEscapeValue {
     public set value($value: int) {
         this.$storage.value = $value;
     }
-    static $zero(): decimalEscapeValue {
-        return new decimalEscapeValue({
-            pos: 0,
-            end: 0,
-            value: 0
-        });
-    }
     static $copy($source: decimalEscapeValue): decimalEscapeValue {
         return new decimalEscapeValue({
             pos: $source.$storage.pos,
@@ -168,11 +161,18 @@ export class decimalEscapeValue {
             value: $source.$storage.value
         });
     }
+    static $zeroStorage(): decimalEscapeValue$Storage {
+        return {
+            pos: 0,
+            end: 0,
+            value: 0
+        };
+    }
     declare private readonly then?: never;
 }
 export class regExpParser {
     declare private readonly $goType: void;
-    public constructor(public scanner: tsonicTypeScriptRuntime.Location<Scanner> | undefined, public end: int, public regExpFlags: regularExpressionFlags, public anyUnicodeMode: bool, public unicodeSetsMode: bool, public annexB: bool, public anyUnicodeModeOrNonAnnexB: bool, public namedCaptureGroups: bool, public mayContainStrings: bool, public numberOfCapturingGroups: int, public groupSpecifiers: GoMapValue<gostring, bool>, public groupNameReferences: RuntimeSlice<groupNameReference$Storage>, public decimalEscapes: RuntimeSlice<decimalEscapeValue$Storage>, public namedCapturingGroups: RuntimeSlice<GoMapValue<gostring, bool>>, public pendingLowSurrogate: int32) {
+    public constructor(public scanner: Scanner | undefined, public end: int, public regExpFlags: regularExpressionFlags, public anyUnicodeMode: bool, public unicodeSetsMode: bool, public annexB: bool, public anyUnicodeModeOrNonAnnexB: bool, public namedCaptureGroups: bool, public mayContainStrings: bool, public numberOfCapturingGroups: int, public groupSpecifiers: GoMapValue<gostring, bool>, public groupNameReferences: RuntimeSlice<groupNameReference$Storage>, public decimalEscapes: RuntimeSlice<decimalEscapeValue$Storage>, public namedCapturingGroups: RuntimeSlice<GoMapValue<gostring, bool>>, public pendingLowSurrogate: int32) {
     }
     declare private readonly then?: never;
     static $go$private$scanner$char(p: regExpParser | undefined): int32 {
@@ -200,7 +200,7 @@ export class regExpParser {
         return GetSpellingSuggestionForStrings__from_core(value, Keys$MapOf_string_To_Struct_void$string$Struct_void(Set$Keys$string(values)));
     }
     static $go$private$scanner$incPos(p: regExpParser | undefined, n: int): void {
-        const __gotots_store_2 = (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState;
+        const __gotots_store_2 = ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState;
         __gotots_store_2.pos = __gotots_store_2.pos + n;
     }
     static $go$private$scanner$isClassContentExit(p: regExpParser | undefined, ch: int32): bool {
@@ -218,7 +218,7 @@ export class regExpParser {
         return false;
     }
     static $go$private$scanner$pos(p: regExpParser | undefined): int {
-        return (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.pos;
+        return ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.pos;
     }
     static $go$private$scanner$run(p: regExpParser | undefined): void {
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).anyUnicodeModeOrNonAnnexB = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).anyUnicodeMode || !(p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).annexB;
@@ -454,7 +454,7 @@ export class regExpParser {
                         regExpParser.$go$private$scanner$incPos(p, 1);
                         let digitsStart = regExpParser.$go$private$scanner$pos(p);
                         regExpParser.$go$private$scanner$scanDigits(p);
-                        let minStr = (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue;
+                        let minStr = ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue;
                         if (!(p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).anyUnicodeModeOrNonAnnexB && minStr === "") {
                             isPreviousTermQuantifiable = true;
                             continue;
@@ -462,7 +462,7 @@ export class regExpParser {
                         if (regExpParser.$go$private$scanner$char(p) === 44) {
                             regExpParser.$go$private$scanner$incPos(p, 1);
                             regExpParser.$go$private$scanner$scanDigits(p);
-                            let maxStr = (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue;
+                            let maxStr = ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue;
                             if (minStr === "") {
                                 if (maxStr !== "" || regExpParser.$go$private$scanner$char(p) === 125) {
                                     regExpParser.$go$private$scanner$error(p, $state__diagnostics.Incomplete_quantifier_Digit_expected, digitsStart, 0, RuntimeSlice.nil<GoInterface | undefined>());
@@ -1275,7 +1275,7 @@ export class regExpParser {
         if (ch >= 49 && ch <= 57) {
             let start = regExpParser.$go$private$scanner$pos(p);
             regExpParser.$go$private$scanner$scanDigits(p);
-            const __gotots_results_14 = strconv__from_gostdlib.Atoi((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue);
+            const __gotots_results_14 = strconv__from_gostdlib.Atoi(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue);
             const __gotots_results_15 = [globalThis.Number(BigInt.asIntN(64, __gotots_results_14[0])), GoProviderInterfaceBridge.$from(__gotots_results_14[1])] satisfies [
                 int,
                 $goInterface$Interface_Method_Error_void_to_string | undefined
@@ -1309,7 +1309,7 @@ export class regExpParser {
                         value: val
                     })));
                 for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, decimalEscapeValue.$storageOf(decimalEscapeValue.$zero()));
+                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, decimalEscapeValue.$zeroStorage());
                 }
             }
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).decimalEscapes = __gotots_slice_build_5;
@@ -1322,7 +1322,7 @@ export class regExpParser {
         for (; regExpParser.$go$private$scanner$pos(p) < (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).end && IsDigit__from_stringutil(regExpParser.$go$private$scanner$char(p));) {
             regExpParser.$go$private$scanner$incPos(p, 1);
         }
-        (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue = goStringSlice(regExpParser.$go$private$scanner$text(p), start, regExpParser.$go$private$scanner$pos(p));
+        ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue = goStringSlice(regExpParser.$go$private$scanner$text(p), start, regExpParser.$go$private$scanner$pos(p));
     }
     static $go$private$scanner$scanDisjunction(p: regExpParser | undefined, isInGroup: bool): void {
         for (;;) {
@@ -1345,9 +1345,9 @@ export class regExpParser {
     }
     static $go$private$scanner$scanGroupName(p: regExpParser | undefined, isReference: bool): void {
         Assert__from_debug(regExpParser.$go$private$scanner$pos(p) > 0 && goStringIndex(regExpParser.$go$private$scanner$text(p), regExpParser.$go$private$scanner$pos(p) - 1) === 60, RuntimeSlice.nil<GoInterface | undefined>());
-        (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart = regExpParser.$go$private$scanner$pos(p);
+        ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart = regExpParser.$go$private$scanner$pos(p);
         Scanner.$go$private$scanner$scanIdentifier((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner, 0);
-        if (regExpParser.$go$private$scanner$pos(p) === (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart) {
+        if (regExpParser.$go$private$scanner$pos(p) === ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart) {
             regExpParser.$go$private$scanner$error(p, $state__diagnostics.Expected_a_capturing_group_name, regExpParser.$go$private$scanner$pos(p), 0, RuntimeSlice.nil<GoInterface | undefined>());
         }
         else if (isReference) {
@@ -1358,9 +1358,9 @@ export class regExpParser {
                 __gotots_slice_build_1 = __gotots_slice_build_0.$withLength(__gotots_slice_build_2);
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void groupNameReference.$storageOf, (void groupNameReference.$fromStorage,
                     {
-                        pos: (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart,
+                        pos: ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart,
                         end: regExpParser.$go$private$scanner$pos(p),
-                        name: (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue
+                        name: ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue
                     })));
             }
             else {
@@ -1370,24 +1370,24 @@ export class regExpParser {
                 }
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void groupNameReference.$storageOf, (void groupNameReference.$fromStorage,
                     {
-                        pos: (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart,
+                        pos: ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart,
                         end: regExpParser.$go$private$scanner$pos(p),
-                        name: (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue
+                        name: ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, groupNameReference.$storageOf(groupNameReference.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, groupNameReference.$zeroStorage());
                 }
             }
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).groupNameReferences = __gotots_slice_build_1;
         }
-        else if (regExpParser.$go$private$scanner$namedCapturingGroupsContains(p, (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue)) {
-            regExpParser.$go$private$scanner$error(p, $state__diagnostics.Named_capturing_groups_with_the_same_name_must_be_mutually_exclusive_to_each_other, (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, regExpParser.$go$private$scanner$pos(p) - (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenStart, RuntimeSlice.nil<GoInterface | undefined>());
+        else if (regExpParser.$go$private$scanner$namedCapturingGroupsContains(p, ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue)) {
+            regExpParser.$go$private$scanner$error(p, $state__diagnostics.Named_capturing_groups_with_the_same_name_must_be_mutually_exclusive_to_each_other, ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, regExpParser.$go$private$scanner$pos(p) - ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenStart, RuntimeSlice.nil<GoInterface | undefined>());
         }
         else {
             if ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).namedCapturingGroups.length > 0) {
-                (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).namedCapturingGroups.get((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).namedCapturingGroups.length - 1).store((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue, true);
+                (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).namedCapturingGroups.get((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).namedCapturingGroups.length - 1).store(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue, true);
             }
-            (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).groupSpecifiers.store((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.ScannerState.tokenValue, true);
+            (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).groupSpecifiers.store(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ScannerState.tokenValue, true);
         }
     }
     static $go$private$scanner$scanPatternModifiers(p: regExpParser | undefined, currFlags: regularExpressionFlags): regularExpressionFlags {
@@ -1489,7 +1489,7 @@ export class regExpParser {
         return goStringSlice(regExpParser.$go$private$scanner$text(p), start, regExpParser.$go$private$scanner$pos(p));
     }
     static $go$private$scanner$text(p: regExpParser | undefined): gostring {
-        return (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Scanner>).value.text;
+        return ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).scanner ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).text;
     }
 }
 export function compareDecimalStrings(a: gostring, b: gostring): int {

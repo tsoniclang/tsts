@@ -60,10 +60,10 @@ export class projectReferenceDtsFakingHost {
         return goInterfaceNonNil<CompilerHost>(__gotots_receiver_0).GetCurrentDirectory();
     }
 }
-export function newProjectReferenceDtsFakingHost(loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined): ResolutionHost__from___go_module | undefined {
-    const __gotots_field_3 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
-    const __gotots_field_0 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.projectReferenceFileMapper;
-    const __gotots_field_1 = Set__from_collections.$copy<Path__from_tspath>(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.dtsDirectories);
+export function newProjectReferenceDtsFakingHost(loader: fileLoader | undefined): ResolutionHost__from___go_module | undefined {
+    const __gotots_field_3 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
+    const __gotots_field_0 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper;
+    const __gotots_field_1 = Set__from_collections.$copy<Path__from_tspath>((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).dtsDirectories);
     const __gotots_struct_0 = KnownSymlinks__from_symlinks.$zero();
     const __gotots_field_2 = __gotots_struct_0;
     const __gotots_argument_0 = new GoInterfaceAdapter({ value: new projectReferenceDtsFakingVfs(__gotots_field_0, __gotots_field_1, __gotots_field_2) });

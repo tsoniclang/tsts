@@ -144,7 +144,9 @@ export class Export {
         return (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExportID.ExportName;
     }
 }
-export function SymbolToExport(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): {
+export function SymbolToExport(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined): {
     value: Export;
 } | undefined {
     if (!(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent === undefined) && IsExternalModuleSymbol__from_checker(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent)) {
@@ -189,7 +191,9 @@ export function SymbolToExport(__go_symbol: tsonicTypeScriptRuntime.Location<Sym
     }
     return tryGetModuleExport(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Name, target, moduleSymbol, ch, moduleID, moduleFileName, file);
 }
-export function tryGetModuleExport(exportName: gostring, target: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, moduleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, moduleID: ModuleID, moduleFileName: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
+export function tryGetModuleExport(exportName: gostring, target: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, moduleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined, moduleID: ModuleID, moduleFileName: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
     value: Export;
 } | undefined {
     let exported: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.TryGetMemberInModuleExportsAndProperties(ch, exportName, moduleSymbol);
@@ -199,7 +203,9 @@ export function tryGetModuleExport(exportName: gostring, target: tsonicTypeScrip
     }
     return void 0;
 }
-export function extractFirstExport(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, moduleID: ModuleID, moduleFileName: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
+export function extractFirstExport(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined, moduleID: ModuleID, moduleFileName: gostring, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
     value: Export;
 } | undefined {
     let exports = RuntimeSlice.nil<{

@@ -138,13 +138,13 @@ export function ConvertToTSConfig(configParseResult: tsonicTypeScriptRuntime.Loc
             const __gotots_range_2 = refs;
             for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
                 const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
-                let r: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined = __gotots_range_value_2;
+                let r: ProjectReference__from_core | undefined = __gotots_range_value_2;
                 const __gotots_struct_0 = OrderedMap__from_collections.$zero<gostring, GoInterface | undefined>((): GoMapValue<gostring, GoInterface | undefined> => {
                     return $goMap$MapOf_string_To_Interface_void.nil();
                 });
                 let ref: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, GoInterface | undefined>> | undefined = tsonicTypeScriptRuntime.location<OrderedMap__from_collections<gostring, GoInterface | undefined>>(__gotots_struct_0);
-                OrderedMap$Set$string$Interface_void(ref, "path", new GoInterfaceAdapter(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.OriginalPath));
-                if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Circular) {
+                OrderedMap$Set$string$Interface_void(ref, "path", new GoInterfaceAdapter((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).OriginalPath));
+                if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Circular) {
                     OrderedMap$Set$string$Interface_void(ref, "circular", new $goInterfaceAdapter$bool(true));
                 }
                 references = references.append(void 0, [new $goInterfaceAdapter$PointerTo_Named_collections$OrderedMapOf_string_And_Interface_void(ref)]);
@@ -156,12 +156,12 @@ export function ConvertToTSConfig(configParseResult: tsonicTypeScriptRuntime.Loc
         (config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Files = files;
     }
     if (!(((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ConfigFile === undefined) && !((((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileSpecs === undefined)) {
-        let specs: tsonicTypeScriptRuntime.Location<configFileSpecs> | undefined = (((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileSpecs;
-        let include = filterSameAsDefaultInclude(((specs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedIncludeSpecs);
+        let specs: configFileSpecs | undefined = (((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileSpecs;
+        let include = filterSameAsDefaultInclude((specs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedIncludeSpecs);
         if (include.length > 0) {
             (config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Include = include;
         }
-        (config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Exclude = ((specs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedExcludeSpecs;
+        (config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Exclude = (specs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedExcludeSpecs;
     }
     if (!(((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.CompileOnSave === undefined) &&
         ((((configParseResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.CompileOnSave ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<bool>).value) {

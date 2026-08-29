@@ -235,7 +235,9 @@ export function newEmitHost(ctx: GoInterface | undefined, program: {
     (() => void) | undefined
 ] {
     const __gotots_results_0 = Program.GetTypeCheckerForFile(program, ctx, file);
-    let checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+    let checker: {
+        value: Checker__from_checker;
+    } | undefined = __gotots_results_0[0];
     let done: (() => void) | undefined = __gotots_results_0[1];
     return [
         { value: new emitHost(program, new GoInterfaceAdapter(Checker__from_checker.GetEmitResolver(checker))) }, done];

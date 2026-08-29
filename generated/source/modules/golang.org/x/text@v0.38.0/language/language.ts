@@ -71,6 +71,13 @@ export class Tag {
         $hash = GoMapHash.mix($hash, $source.$storage.full === undefined ? 0 : $source.$storage.full.$go$hash());
         return $hash;
     }
+    static $zeroStorage(): Tag$Storage {
+        return {
+            language: 0,
+            locale: 0,
+            full: void 0
+        };
+    }
     declare private readonly then?: never;
     static $go$private$language__package_1$isCompact(t: tsonicTypeScriptRuntime.Location<Tag> | undefined): bool {
         return Tag__from_compact.IsCompact(tsonicTypeScriptRuntime.projectLocation<Tag, Tag__from_compact>(t, ($go$source: Tag): Tag__from_compact => {
@@ -154,7 +161,7 @@ export class Tag {
                         s: ext
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, Extension.$storageOf(Extension.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, Extension.$zeroStorage());
                 }
             }
             e = __gotots_slice_build_1;
@@ -673,11 +680,6 @@ export class Extension {
     public set s($value: gostring) {
         this.$storage.s = $value;
     }
-    static $zero(): Extension {
-        return new Extension({
-            s: ""
-        });
-    }
     static $copy($source: Extension): Extension {
         return new Extension({
             s: $source.$storage.s
@@ -690,6 +692,11 @@ export class Extension {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.s));
         return $hash;
+    }
+    static $zeroStorage(): Extension$Storage {
+        return {
+            s: ""
+        };
     }
     declare private readonly then?: never;
     String(): gostring {
@@ -733,6 +740,11 @@ export class Base {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.langID));
         return $hash;
     }
+    static $zeroStorage(): Base$Storage {
+        return {
+            langID: 0
+        };
+    }
     declare private readonly then?: never;
     String(): gostring {
         return Language_String__from_language(Base.$storageOf(this).langID);
@@ -775,6 +787,11 @@ export class Script {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.scriptID));
         return $hash;
     }
+    static $zeroStorage(): Script$Storage {
+        return {
+            scriptID: 0
+        };
+    }
     declare private readonly then?: never;
     String(): gostring {
         return Script_String__from_language(Script.$storageOf(this).scriptID);
@@ -816,6 +833,11 @@ export class Region {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.regionID));
         return $hash;
+    }
+    static $zeroStorage(): Region$Storage {
+        return {
+            regionID: 0
+        };
     }
     declare private readonly then?: never;
     String(): gostring {

@@ -95,12 +95,6 @@ export class positionMapEntry {
     public set delta($value: int) {
         this.$storage.delta = $value;
     }
-    static $zero(): positionMapEntry {
-        return new positionMapEntry({
-            utf8Pos: 0,
-            delta: 0
-        });
-    }
     static $copy($source: positionMapEntry): positionMapEntry {
         return new positionMapEntry({
             utf8Pos: $source.$storage.utf8Pos,
@@ -115,6 +109,12 @@ export class positionMapEntry {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.utf8Pos));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.delta));
         return $hash;
+    }
+    static $zeroStorage(): positionMapEntry$Storage {
+        return {
+            utf8Pos: 0,
+            delta: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -165,7 +165,7 @@ export function ComputePositionMap(text: gostring): {
                     delta: delta
                 })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, positionMapEntry.$storageOf(positionMapEntry.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, positionMapEntry.$zeroStorage());
             }
         }
         (pm ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.entries = __gotots_slice_build_1;

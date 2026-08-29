@@ -9,8 +9,8 @@ import { $state } from "./state.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 export function $initialize(): void {
-    $state.DefaultOptionsV1 = Struct.$storageOf(Struct.$zero());
-    $state.DefaultOptionsV2 = Struct.$storageOf(Struct.$zero());
+    $state.DefaultOptionsV1 = Struct.$zeroStorage();
+    $state.DefaultOptionsV2 = Struct.$zeroStorage();
     $state.GetUnknownOption = void 0;
     $state.JoinUnknownOption = void 0;
     {
@@ -22,8 +22,8 @@ export function $initialize(): void {
                             Presence: 3298010072614n,
                             Values: 0n
                         })),
-                    CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
-                    ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
+                    CoderValues: CoderValues.$zeroStorage(),
+                    ArshalValues: ArshalValues.$zeroStorage()
                 }));
     }
     {
@@ -35,8 +35,8 @@ export function $initialize(): void {
                             Presence: 3298010072614n,
                             Values: 3298010072614n
                         })),
-                    CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
-                    ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
+                    CoderValues: CoderValues.$zeroStorage(),
+                    ArshalValues: ArshalValues.$zeroStorage()
                 }));
     }
     {

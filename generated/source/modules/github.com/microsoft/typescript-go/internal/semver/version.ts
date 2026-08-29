@@ -83,6 +83,15 @@ export class Version {
             build: $source.$storage.build
         });
     }
+    static $zeroStorage(): Version$Storage {
+        return {
+            major: 0,
+            minor: 0,
+            patch: 0,
+            prerelease: RuntimeSlice.nil<gostring>(),
+            build: RuntimeSlice.nil<gostring>()
+        };
+    }
     declare private readonly then?: never;
     static Compare(a: tsonicTypeScriptRuntime.Location<Version> | undefined, b: tsonicTypeScriptRuntime.Location<Version> | undefined): int {
         __gotots_control_target_0: {

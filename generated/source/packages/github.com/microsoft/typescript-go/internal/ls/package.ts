@@ -77,7 +77,7 @@ export function $initialize(): void {
     $state.jsDocTagNameCompletionItems = void 0;
     $state.jsDocTagNames = RuntimeSlice.nil<gostring>();
     $state.jsxTagWordPattern = void 0;
-    $state.keywordCompletionsCache = SyncMap__from_collections.$storageOf<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>(SyncMap__from_collections.$zero<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>());
+    $state.keywordCompletionsCache = SyncMap__from_collections.$zeroStorage<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>();
     $state.noCommaCommitCharacters = RuntimeSlice.nil<gostring>();
     $state.quoteReplacer = void 0;
     $state.tokenModifiers = RuntimeSlice.nil<gostring>();

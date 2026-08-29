@@ -352,14 +352,6 @@ export class RequestInfo<Params, Resp> {
     public static $fromStorage<Params, Resp>($source: RequestInfo$Storage<Params, Resp>): RequestInfo<Params, Resp> {
         return new RequestInfo<Params, Resp>($source);
     }
-    static $zero<Params, Resp>(): RequestInfo<Params, Resp> {
-        return new RequestInfo<Params, Resp>({
-            $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
-            $blank1: goArrayAllocate<GoContainerStorage<Resp>, 0>(0),
-            Method: ((void Method,
-                "") as gostring)
-        });
-    }
     static $copy<Params, Resp>($source: RequestInfo<Params, Resp>): RequestInfo<Params, Resp> {
         return new RequestInfo<Params, Resp>({
             $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
@@ -367,6 +359,14 @@ export class RequestInfo<Params, Resp> {
             Method: ((void Method,
                 $source.$storage.Method) as gostring)
         });
+    }
+    static $zeroStorage<Params, Resp>(): RequestInfo$Storage<Params, Resp> {
+        return {
+            $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
+            $blank1: goArrayAllocate<GoContainerStorage<Resp>, 0>(0),
+            Method: ((void Method,
+                "") as gostring)
+        };
     }
     declare private readonly then?: never;
     NewRequestMessage$kernel($go$interface_adapt$T0_to_Interface_void: ($0: Params) => $goInterface$Interface_void | undefined, id: {
@@ -428,19 +428,19 @@ export class NotificationInfo<Params> {
     public static $fromStorage<Params>($source: NotificationInfo$Storage<Params>): NotificationInfo<Params> {
         return new NotificationInfo<Params>($source);
     }
-    static $zero<Params>(): NotificationInfo<Params> {
-        return new NotificationInfo<Params>({
-            $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
-            Method: ((void Method,
-                "") as gostring)
-        });
-    }
     static $copy<Params>($source: NotificationInfo<Params>): NotificationInfo<Params> {
         return new NotificationInfo<Params>({
             $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
             Method: ((void Method,
                 $source.$storage.Method) as gostring)
         });
+    }
+    static $zeroStorage<Params>(): NotificationInfo$Storage<Params> {
+        return {
+            $blank0: goArrayAllocate<GoContainerStorage<Params>, 0>(0),
+            Method: ((void Method,
+                "") as gostring)
+        };
     }
     declare private readonly then?: never;
     NewNotificationMessage$kernel($go$interface_adapt$T0_to_Interface_void: ($0: Params) => $goInterface$Interface_void | undefined, params: Params): {

@@ -67,18 +67,18 @@ export function Insert$SliceOf_PointerTo_Named_format$ruleImpl$PointerTo_Named_f
         return void 0;
     }, $argument0, BigInt.asIntN(64, goNumberToBigInt($argument1)), $argument2);
 }
-export function Insert$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>, $argument1: int, $argument2: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined> {
-    return generic_slices_kernel.SlicesInsertKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>, tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined, tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined> => {
+export function Insert$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction($argument0: RuntimeSlice<CodeAction__from_ls | undefined>, $argument1: int, $argument2: RuntimeSlice<CodeAction__from_ls | undefined>): RuntimeSlice<CodeAction__from_ls | undefined> {
+    return generic_slices_kernel.SlicesInsertKernel<RuntimeSlice<CodeAction__from_ls | undefined>, CodeAction__from_ls | undefined, CodeAction__from_ls | undefined>(($argument0: RuntimeSlice<CodeAction__from_ls | undefined>): RuntimeSlice<CodeAction__from_ls | undefined> => {
         return $argument0;
-    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined> => {
+    }, ($argument0: RuntimeSlice<CodeAction__from_ls | undefined>): RuntimeSlice<CodeAction__from_ls | undefined> => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, ($argument0: CodeAction__from_ls | undefined): CodeAction__from_ls | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, ($argument0: CodeAction__from_ls | undefined): CodeAction__from_ls | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, ($argument0: CodeAction__from_ls | undefined): CodeAction__from_ls | undefined => {
         return $argument0;
-    }, (): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, (): CodeAction__from_ls | undefined => {
         return void 0;
     }, $argument0, BigInt.asIntN(64, goNumberToBigInt($argument1)), $argument2);
 }

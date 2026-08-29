@@ -230,7 +230,9 @@ export function getResolvedPackageNames(ctx: GoInterface | undefined, program: {
                 }
                 if (Set$Len$string(unresolvedPackageNames) > 0) {
                     const __gotots_results_0 = Program__from_compiler.GetTypeChecker(program, ctx);
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_0[0];
                     let done: (() => void) | undefined = __gotots_results_0[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -331,34 +333,54 @@ export function addProjectReferenceOutputMappings(program: {
 }
 export function createCheckerPool(program: Program__from_checker | undefined): [
     (() => [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ]) | undefined,
     (() => void) | undefined,
     (() => int32) | undefined
 ] {
     let getChecker: (() => [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ]) | undefined = void 0;
     let closePool: (() => void) | undefined = void 0;
     let getCreatedCount: (() => int32) | undefined = void 0;
     let maxSize = globalThis.Number(BigInt.asIntN(64, runtime__from_gostdlib.GOMAXPROCS(BigInt.asIntN(64, goNumberToBigInt(0))))) | 0;
-    let pool: GoChannel<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> | undefined = GoChannel.make<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>(maxSize, (): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined => {
+    let pool: GoChannel<{
+        value: Checker__from_checker;
+    } | undefined> | undefined = GoChannel.make<{
+        value: Checker__from_checker;
+    } | undefined>(maxSize, (): {
+        value: Checker__from_checker;
+    } | undefined => {
         return void 0;
-    }, (value: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined => {
+    }, (value: {
+        value: Checker__from_checker;
+    } | undefined): {
+        value: Checker__from_checker;
+    } | undefined => {
         return value;
     });
     let created = named_sync_atomic.SyncAtomicInt32Operations.$zero();
     return [(): [
-            tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+            {
+                value: Checker__from_checker;
+            } | undefined,
             (() => void) | undefined
         ] => {
             let __gotots_receive_0: [
-                tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+                {
+                    value: Checker__from_checker;
+                } | undefined,
                 boolean
             ] | undefined = undefined;
-            const __gotots_select_0 = GoChannel.$selectReceive(pool, (value: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, ok: boolean): void => {
+            const __gotots_select_0 = GoChannel.$selectReceive(pool, (value: {
+                value: Checker__from_checker;
+            } | undefined, ok: boolean): void => {
                 __gotots_receive_0 = [value, ok];
             });
             const __gotots_switch_selection_0 = goSelectReady([__gotots_select_0]);
@@ -367,7 +389,9 @@ export function createCheckerPool(program: Program__from_checker | undefined): [
                     if (__gotots_receive_0 === undefined) {
                         GoPanic.raiseRuntime("selected receive has no result");
                     }
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_receive_0[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_receive_0[0];
                     return [ch, (): void => {
                             GoChannel.send(pool, ch);
                         }];
@@ -382,14 +406,18 @@ export function createCheckerPool(program: Program__from_checker | undefined): [
             for (;;) {
                 let current = atomic__from_gostdlib.Int32.Load(created);
                 if (current >= maxSize) {
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = GoChannel.receive(pool)[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = GoChannel.receive(pool)[0];
                     return [ch, (): void => {
                             GoChannel.send(pool, ch);
                         }];
                 }
                 if (atomic__from_gostdlib.Int32.CompareAndSwap(created, current, current + 1)) {
                     const __gotots_results_7 = NewChecker__from_checker(program, void 0);
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = FirstResult$PointerTo_Named_checker$Checker(__gotots_results_7[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$PointerTo_Named_sync__package_1$Mutex(__gotots_results_7[1])]));
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = FirstResult$PointerTo_Named_checker$Checker(__gotots_results_7[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$PointerTo_Named_sync__package_1$Mutex(__gotots_results_7[1])]));
                     return [ch, (): void => {
                             GoChannel.send(pool, ch);
                         }];

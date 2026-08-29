@@ -207,7 +207,7 @@ export class Location implements GoContainerStoredValue<Location$Storage> {
         return new Location({
             Uri: ((void DocumentUri,
                 "") as string),
-            Range: Range.$storageOf(Range.$zero())
+            Range: Range.$zeroStorage()
         });
     }
     static $copy($source: Location): Location {
@@ -230,6 +230,13 @@ export class Location implements GoContainerStoredValue<Location$Storage> {
             $source.$storage.Uri) as string)));
         $hash = GoMapHash.mix($hash, Range.$hash(Range.$fromStorage($source.$storage.Range)));
         return $hash;
+    }
+    static $zeroStorage(): Location$Storage {
+        return {
+            Uri: ((void DocumentUri,
+                "") as string),
+            Range: Range.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<Location> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -352,7 +359,7 @@ export class ImplementationRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: ImplementationRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -386,7 +393,7 @@ export class ImplementationRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2364 = dec;
-                        const __gotots_store_774 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions>).value;
+                        const __gotots_store_774 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2365 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_774, "DocumentSelector"));
                         const __gotots_argument_2366 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2364, __gotots_argument_2365, __gotots_argument_2366);
@@ -402,7 +409,7 @@ export class ImplementationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2367 = dec;
-                        const __gotots_store_775 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions>).value;
+                        const __gotots_store_775 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2368 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_775, "WorkDoneProgress"));
                         const __gotots_argument_2369 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2367, __gotots_argument_2368, __gotots_argument_2369);
@@ -418,7 +425,7 @@ export class ImplementationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2370 = dec;
-                        const __gotots_store_776 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions>).value;
+                        const __gotots_store_776 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2371 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_776, "Id"));
                         const __gotots_argument_2372 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2370, __gotots_argument_2371, __gotots_argument_2372);
@@ -454,6 +461,11 @@ export class ImplementationRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: ImplementationRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class TypeDefinitionParams {
@@ -628,7 +640,7 @@ export class TypeDefinitionRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TypeDefinitionRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -662,7 +674,7 @@ export class TypeDefinitionRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2537 = dec;
-                        const __gotots_store_830 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions>).value;
+                        const __gotots_store_830 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2538 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_830, "DocumentSelector"));
                         const __gotots_argument_2539 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2537, __gotots_argument_2538, __gotots_argument_2539);
@@ -678,7 +690,7 @@ export class TypeDefinitionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2540 = dec;
-                        const __gotots_store_831 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions>).value;
+                        const __gotots_store_831 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2541 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_831, "WorkDoneProgress"));
                         const __gotots_argument_2542 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2540, __gotots_argument_2541, __gotots_argument_2542);
@@ -694,7 +706,7 @@ export class TypeDefinitionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2543 = dec;
-                        const __gotots_store_832 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions>).value;
+                        const __gotots_store_832 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2544 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_832, "Id"));
                         const __gotots_argument_2545 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2543, __gotots_argument_2544, __gotots_argument_2545);
@@ -730,6 +742,11 @@ export class TypeDefinitionRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TypeDefinitionRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class WorkspaceFolder {
@@ -1285,7 +1302,7 @@ export class DocumentColorRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentColorRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -1319,7 +1336,7 @@ export class DocumentColorRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2569 = dec;
-                        const __gotots_store_840 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions>).value;
+                        const __gotots_store_840 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2570 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_840, "DocumentSelector"));
                         const __gotots_argument_2571 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2569, __gotots_argument_2570, __gotots_argument_2571);
@@ -1335,7 +1352,7 @@ export class DocumentColorRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2572 = dec;
-                        const __gotots_store_841 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions>).value;
+                        const __gotots_store_841 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2573 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_841, "WorkDoneProgress"));
                         const __gotots_argument_2574 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2572, __gotots_argument_2573, __gotots_argument_2574);
@@ -1351,7 +1368,7 @@ export class DocumentColorRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2575 = dec;
-                        const __gotots_store_842 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions>).value;
+                        const __gotots_store_842 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2576 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_842, "Id"));
                         const __gotots_argument_2577 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2575, __gotots_argument_2576, __gotots_argument_2577);
@@ -1387,6 +1404,11 @@ export class DocumentColorRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentColorRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class ColorPresentationParams {
@@ -1703,7 +1725,7 @@ export class TextDocumentRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -1737,7 +1759,7 @@ export class TextDocumentRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2879 = dec;
-                        const __gotots_store_940 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions>).value;
+                        const __gotots_store_940 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2880 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_940, "DocumentSelector"));
                         const __gotots_argument_2881 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2879, __gotots_argument_2880, __gotots_argument_2881);
@@ -1773,6 +1795,9 @@ export class TextDocumentRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TextDocumentRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
     }
 }
 export class FoldingRangeParams {
@@ -2109,7 +2134,7 @@ export class FoldingRangeRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: FoldingRangeRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -2143,7 +2168,7 @@ export class FoldingRangeRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2553 = dec;
-                        const __gotots_store_835 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions>).value;
+                        const __gotots_store_835 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2554 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_835, "DocumentSelector"));
                         const __gotots_argument_2555 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2553, __gotots_argument_2554, __gotots_argument_2555);
@@ -2159,7 +2184,7 @@ export class FoldingRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2556 = dec;
-                        const __gotots_store_836 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions>).value;
+                        const __gotots_store_836 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2557 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_836, "WorkDoneProgress"));
                         const __gotots_argument_2558 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2556, __gotots_argument_2557, __gotots_argument_2558);
@@ -2175,7 +2200,7 @@ export class FoldingRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2559 = dec;
-                        const __gotots_store_837 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions>).value;
+                        const __gotots_store_837 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2560 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_837, "Id"));
                         const __gotots_argument_2561 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2559, __gotots_argument_2560, __gotots_argument_2561);
@@ -2211,6 +2236,11 @@ export class FoldingRangeRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: FoldingRangeRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class DeclarationParams {
@@ -2382,7 +2412,7 @@ export class DeclarationRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DeclarationRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -2418,7 +2448,7 @@ export class DeclarationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1750 = dec;
-                        const __gotots_store_573 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions>).value;
+                        const __gotots_store_573 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1751 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_573, "WorkDoneProgress"));
                         const __gotots_argument_1752 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1750, __gotots_argument_1751, __gotots_argument_1752);
@@ -2432,7 +2462,7 @@ export class DeclarationRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1753 = dec;
-                        const __gotots_store_574 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions>).value;
+                        const __gotots_store_574 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1754 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_574, "DocumentSelector"));
                         const __gotots_argument_1755 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1753, __gotots_argument_1754, __gotots_argument_1755);
@@ -2448,7 +2478,7 @@ export class DeclarationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1756 = dec;
-                        const __gotots_store_575 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions>).value;
+                        const __gotots_store_575 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1757 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_575, "Id"));
                         const __gotots_argument_1758 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1756, __gotots_argument_1757, __gotots_argument_1758);
@@ -2484,6 +2514,11 @@ export class DeclarationRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DeclarationRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.DocumentSelector = $value.DocumentSelector;
+        this.Id = $value.Id;
     }
 }
 export class SelectionRangeParams {
@@ -2760,7 +2795,7 @@ export class SelectionRangeRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: SelectionRangeRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -2796,7 +2831,7 @@ export class SelectionRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2200 = dec;
-                        const __gotots_store_720 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions>).value;
+                        const __gotots_store_720 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2201 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_720, "WorkDoneProgress"));
                         const __gotots_argument_2202 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2200, __gotots_argument_2201, __gotots_argument_2202);
@@ -2810,7 +2845,7 @@ export class SelectionRangeRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2203 = dec;
-                        const __gotots_store_721 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions>).value;
+                        const __gotots_store_721 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2204 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_721, "DocumentSelector"));
                         const __gotots_argument_2205 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2203, __gotots_argument_2204, __gotots_argument_2205);
@@ -2826,7 +2861,7 @@ export class SelectionRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2206 = dec;
-                        const __gotots_store_722 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions>).value;
+                        const __gotots_store_722 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2207 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_722, "Id"));
                         const __gotots_argument_2208 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2206, __gotots_argument_2207, __gotots_argument_2208);
@@ -2862,6 +2897,11 @@ export class SelectionRangeRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: SelectionRangeRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.DocumentSelector = $value.DocumentSelector;
+        this.Id = $value.Id;
     }
 }
 export class WorkDoneProgressCreateParams {
@@ -3426,7 +3466,7 @@ export class CallHierarchyRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: CallHierarchyRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -3460,7 +3500,7 @@ export class CallHierarchyRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1722 = dec;
-                        const __gotots_store_565 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions>).value;
+                        const __gotots_store_565 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1723 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_565, "DocumentSelector"));
                         const __gotots_argument_1724 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1722, __gotots_argument_1723, __gotots_argument_1724);
@@ -3476,7 +3516,7 @@ export class CallHierarchyRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1725 = dec;
-                        const __gotots_store_566 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions>).value;
+                        const __gotots_store_566 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1726 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_566, "WorkDoneProgress"));
                         const __gotots_argument_1727 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1725, __gotots_argument_1726, __gotots_argument_1727);
@@ -3492,7 +3532,7 @@ export class CallHierarchyRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1728 = dec;
-                        const __gotots_store_567 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions>).value;
+                        const __gotots_store_567 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1729 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_567, "Id"));
                         const __gotots_argument_1730 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1728, __gotots_argument_1729, __gotots_argument_1730);
@@ -3528,6 +3568,11 @@ export class CallHierarchyRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: CallHierarchyRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class CallHierarchyIncomingCallsParams {
@@ -4287,7 +4332,7 @@ export class SemanticTokensRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: SemanticTokensRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const missingLegend: uint = 2;
         const _missingLast: uint = 4;
@@ -4322,7 +4367,7 @@ export class SemanticTokensRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1511 = dec;
-                        const __gotots_store_499 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_499 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1512 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_499, "DocumentSelector"));
                         const __gotots_argument_1513 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1511, __gotots_argument_1512, __gotots_argument_1513);
@@ -4338,7 +4383,7 @@ export class SemanticTokensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1514 = dec;
-                        const __gotots_store_500 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_500 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1515 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_500, "WorkDoneProgress"));
                         const __gotots_argument_1516 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1514, __gotots_argument_1515, __gotots_argument_1516);
@@ -4355,7 +4400,7 @@ export class SemanticTokensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1517 = dec;
-                        const __gotots_store_501 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_501 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1518 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$SemanticTokensLegend(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_501, "Legend"));
                         const __gotots_argument_1519 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1517, __gotots_argument_1518, __gotots_argument_1519);
@@ -4371,7 +4416,7 @@ export class SemanticTokensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1520 = dec;
-                        const __gotots_store_502 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_502 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1521 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$BooleanOrEmptyObject(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_502, "Range"));
                         const __gotots_argument_1522 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1520, __gotots_argument_1521, __gotots_argument_1522);
@@ -4387,7 +4432,7 @@ export class SemanticTokensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1523 = dec;
-                        const __gotots_store_503 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_503 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1524 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$BooleanOrSemanticTokensFullDelta(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_503, "Full"));
                         const __gotots_argument_1525 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1523, __gotots_argument_1524, __gotots_argument_1525);
@@ -4403,7 +4448,7 @@ export class SemanticTokensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1526 = dec;
-                        const __gotots_store_504 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions>).value;
+                        const __gotots_store_504 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1527 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_504, "Id"));
                         const __gotots_argument_1528 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1526, __gotots_argument_1527, __gotots_argument_1528);
@@ -4442,6 +4487,14 @@ export class SemanticTokensRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: SemanticTokensRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Legend = $value.Legend;
+        this.Range = $value.Range;
+        this.Full = $value.Full;
+        this.Id = $value.Id;
     }
 }
 export class SemanticTokensDeltaParams {
@@ -5334,7 +5387,7 @@ export class LinkedEditingRangeRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: LinkedEditingRangeRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -5368,7 +5421,7 @@ export class LinkedEditingRangeRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1680 = dec;
-                        const __gotots_store_552 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions>).value;
+                        const __gotots_store_552 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1681 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_552, "DocumentSelector"));
                         const __gotots_argument_1682 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1680, __gotots_argument_1681, __gotots_argument_1682);
@@ -5384,7 +5437,7 @@ export class LinkedEditingRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1683 = dec;
-                        const __gotots_store_553 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions>).value;
+                        const __gotots_store_553 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1684 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_553, "WorkDoneProgress"));
                         const __gotots_argument_1685 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1683, __gotots_argument_1684, __gotots_argument_1685);
@@ -5400,7 +5453,7 @@ export class LinkedEditingRangeRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1686 = dec;
-                        const __gotots_store_554 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions>).value;
+                        const __gotots_store_554 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1687 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_554, "Id"));
                         const __gotots_argument_1688 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1686, __gotots_argument_1687, __gotots_argument_1688);
@@ -5436,6 +5489,11 @@ export class LinkedEditingRangeRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: LinkedEditingRangeRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class CreateFilesParams {
@@ -5663,7 +5721,7 @@ export class FileOperationRegistrationOptions {
         return new FileOperationRegistrationOptions($source.Filters);
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: FileOperationRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingFilters: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -5700,7 +5758,7 @@ export class FileOperationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2187 = dec;
-                        const __gotots_store_716 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions>).value;
+                        const __gotots_store_716 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2188 = new $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$FileOperationFilter(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_716, "Filters"));
                         const __gotots_argument_2189 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2187, __gotots_argument_2188, __gotots_argument_2189);
@@ -5736,6 +5794,9 @@ export class FileOperationRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: FileOperationRegistrationOptions): void {
+        this.Filters = $value.Filters;
     }
 }
 export class RenameFilesParams {
@@ -6229,7 +6290,7 @@ export class MonikerRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: MonikerRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -6263,7 +6324,7 @@ export class MonikerRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2137 = dec;
-                        const __gotots_store_700 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions>).value;
+                        const __gotots_store_700 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2138 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_700, "DocumentSelector"));
                         const __gotots_argument_2139 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2137, __gotots_argument_2138, __gotots_argument_2139);
@@ -6279,7 +6340,7 @@ export class MonikerRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2140 = dec;
-                        const __gotots_store_701 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions>).value;
+                        const __gotots_store_701 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2141 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_701, "WorkDoneProgress"));
                         const __gotots_argument_2142 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2140, __gotots_argument_2141, __gotots_argument_2142);
@@ -6315,6 +6376,10 @@ export class MonikerRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: MonikerRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
     }
 }
 export class TypeHierarchyPrepareParams {
@@ -6686,7 +6751,7 @@ export class TypeHierarchyRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TypeHierarchyRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -6720,7 +6785,7 @@ export class TypeHierarchyRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1693 = dec;
-                        const __gotots_store_556 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions>).value;
+                        const __gotots_store_556 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1694 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_556, "DocumentSelector"));
                         const __gotots_argument_1695 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1693, __gotots_argument_1694, __gotots_argument_1695);
@@ -6736,7 +6801,7 @@ export class TypeHierarchyRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1696 = dec;
-                        const __gotots_store_557 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions>).value;
+                        const __gotots_store_557 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1697 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_557, "WorkDoneProgress"));
                         const __gotots_argument_1698 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1696, __gotots_argument_1697, __gotots_argument_1698);
@@ -6752,7 +6817,7 @@ export class TypeHierarchyRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1699 = dec;
-                        const __gotots_store_558 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions>).value;
+                        const __gotots_store_558 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1700 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_558, "Id"));
                         const __gotots_argument_1701 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1699, __gotots_argument_1700, __gotots_argument_1701);
@@ -6788,6 +6853,11 @@ export class TypeHierarchyRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TypeHierarchyRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Id = $value.Id;
     }
 }
 export class TypeHierarchySupertypesParams {
@@ -7226,7 +7296,7 @@ export class InlineValueRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: InlineValueRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -7262,7 +7332,7 @@ export class InlineValueRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1706 = dec;
-                        const __gotots_store_560 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions>).value;
+                        const __gotots_store_560 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1707 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_560, "WorkDoneProgress"));
                         const __gotots_argument_1708 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1706, __gotots_argument_1707, __gotots_argument_1708);
@@ -7276,7 +7346,7 @@ export class InlineValueRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1709 = dec;
-                        const __gotots_store_561 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions>).value;
+                        const __gotots_store_561 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1710 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_561, "DocumentSelector"));
                         const __gotots_argument_1711 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1709, __gotots_argument_1710, __gotots_argument_1711);
@@ -7292,7 +7362,7 @@ export class InlineValueRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1712 = dec;
-                        const __gotots_store_562 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions>).value;
+                        const __gotots_store_562 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1713 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_562, "Id"));
                         const __gotots_argument_1714 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1712, __gotots_argument_1713, __gotots_argument_1714);
@@ -7328,6 +7398,11 @@ export class InlineValueRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: InlineValueRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.DocumentSelector = $value.DocumentSelector;
+        this.Id = $value.Id;
     }
 }
 export class InlayHintParams {
@@ -7706,7 +7781,7 @@ export class InlayHintRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: InlayHintRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -7742,7 +7817,7 @@ export class InlayHintRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1775 = dec;
-                        const __gotots_store_581 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions>).value;
+                        const __gotots_store_581 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1776 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_581, "WorkDoneProgress"));
                         const __gotots_argument_1777 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1775, __gotots_argument_1776, __gotots_argument_1777);
@@ -7758,7 +7833,7 @@ export class InlayHintRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1778 = dec;
-                        const __gotots_store_582 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions>).value;
+                        const __gotots_store_582 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1779 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_582, "ResolveProvider"));
                         const __gotots_argument_1780 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1778, __gotots_argument_1779, __gotots_argument_1780);
@@ -7772,7 +7847,7 @@ export class InlayHintRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1781 = dec;
-                        const __gotots_store_583 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions>).value;
+                        const __gotots_store_583 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1782 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_583, "DocumentSelector"));
                         const __gotots_argument_1783 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1781, __gotots_argument_1782, __gotots_argument_1783);
@@ -7788,7 +7863,7 @@ export class InlayHintRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1784 = dec;
-                        const __gotots_store_584 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions>).value;
+                        const __gotots_store_584 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1785 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_584, "Id"));
                         const __gotots_argument_1786 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1784, __gotots_argument_1785, __gotots_argument_1786);
@@ -7824,6 +7899,12 @@ export class InlayHintRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: InlayHintRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.ResolveProvider = $value.ResolveProvider;
+        this.DocumentSelector = $value.DocumentSelector;
+        this.Id = $value.Id;
     }
 }
 export class DocumentDiagnosticParams {
@@ -8019,7 +8100,7 @@ export class DiagnosticRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DiagnosticRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const missingInterFileDependencies: uint = 2;
         const missingWorkspaceDiagnostics: uint = 4;
@@ -8055,7 +8136,7 @@ export class DiagnosticRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_1562 = dec;
-                        const __gotots_store_515 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_515 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1563 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_515, "DocumentSelector"));
                         const __gotots_argument_1564 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1562, __gotots_argument_1563, __gotots_argument_1564);
@@ -8071,7 +8152,7 @@ export class DiagnosticRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1565 = dec;
-                        const __gotots_store_516 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_516 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1566 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_516, "WorkDoneProgress"));
                         const __gotots_argument_1567 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1565, __gotots_argument_1566, __gotots_argument_1567);
@@ -8087,7 +8168,7 @@ export class DiagnosticRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1568 = dec;
-                        const __gotots_store_517 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_517 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1569 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_517, "Identifier"));
                         const __gotots_argument_1570 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1568, __gotots_argument_1569, __gotots_argument_1570);
@@ -8101,7 +8182,7 @@ export class DiagnosticRegistrationOptions {
                     missing = missing & ~missingInterFileDependencies;
                     {
                         const __gotots_argument_1571 = dec;
-                        const __gotots_store_518 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_518 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1572 = new $goInterfaceAdapter$PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_518, "InterFileDependencies"));
                         const __gotots_argument_1573 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1571, __gotots_argument_1572, __gotots_argument_1573);
@@ -8115,7 +8196,7 @@ export class DiagnosticRegistrationOptions {
                     missing = missing & ~missingWorkspaceDiagnostics;
                     {
                         const __gotots_argument_1574 = dec;
-                        const __gotots_store_519 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_519 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1575 = new $goInterfaceAdapter$PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_519, "WorkspaceDiagnostics"));
                         const __gotots_argument_1576 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1574, __gotots_argument_1575, __gotots_argument_1576);
@@ -8131,7 +8212,7 @@ export class DiagnosticRegistrationOptions {
                     }
                     {
                         const __gotots_argument_1577 = dec;
-                        const __gotots_store_520 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions>).value;
+                        const __gotots_store_520 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1578 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_520, "Id"));
                         const __gotots_argument_1579 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1577, __gotots_argument_1578, __gotots_argument_1579);
@@ -8173,6 +8254,14 @@ export class DiagnosticRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DiagnosticRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Identifier = $value.Identifier;
+        this.InterFileDependencies = $value.InterFileDependencies;
+        this.WorkspaceDiagnostics = $value.WorkspaceDiagnostics;
+        this.Id = $value.Id;
     }
 }
 export class WorkspaceDiagnosticParams {
@@ -8633,7 +8722,7 @@ export class InlineCompletionList {
 }
 export class InlineCompletionItem {
     declare private readonly $goType: void;
-    public constructor(public InsertText: StringOrStringValue, public FilterText: tsonicTypeScriptRuntime.Location<gostring> | undefined, public Range: tsonicTypeScriptRuntime.Location<Range> | undefined, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined) {
+    public constructor(public InsertText: StringOrStringValue, public FilterText: tsonicTypeScriptRuntime.Location<gostring> | undefined, public Range: tsonicTypeScriptRuntime.Location<Range> | undefined, public Command: Command | undefined) {
     }
     static $copy($source: InlineCompletionItem): InlineCompletionItem {
         return new InlineCompletionItem(StringOrStringValue.$copy($source.InsertText), $source.FilterText, $source.Range, $source.Command);
@@ -8642,14 +8731,16 @@ export class InlineCompletionItem {
         return StringOrStringValue.$equal($left.InsertText, $right.InsertText) &&
             tsonicTypeScriptRuntime.sameLocation($left.FilterText, $right.FilterText) &&
             tsonicTypeScriptRuntime.sameLocation($left.Range, $right.Range) &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command);
+            $left.Command
+                ===
+                    $right.Command;
     }
     static $hash($source: InlineCompletionItem): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, StringOrStringValue.$hash($source.InsertText));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.FilterText));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Range));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer8: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer8 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer8)))($source.Command));
         return $hash;
     }
     declare private readonly then?: never;
@@ -8796,7 +8887,7 @@ export class InlineCompletionRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: InlineCompletionRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -8832,7 +8923,7 @@ export class InlineCompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2738 = dec;
-                        const __gotots_store_893 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions>).value;
+                        const __gotots_store_893 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2739 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_893, "WorkDoneProgress"));
                         const __gotots_argument_2740 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2738, __gotots_argument_2739, __gotots_argument_2740);
@@ -8846,7 +8937,7 @@ export class InlineCompletionRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2741 = dec;
-                        const __gotots_store_894 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions>).value;
+                        const __gotots_store_894 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2742 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_894, "DocumentSelector"));
                         const __gotots_argument_2743 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2741, __gotots_argument_2742, __gotots_argument_2743);
@@ -8862,7 +8953,7 @@ export class InlineCompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2744 = dec;
-                        const __gotots_store_895 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions>).value;
+                        const __gotots_store_895 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2745 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_895, "Id"));
                         const __gotots_argument_2746 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2744, __gotots_argument_2745, __gotots_argument_2746);
@@ -8898,6 +8989,11 @@ export class InlineCompletionRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: InlineCompletionRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.DocumentSelector = $value.DocumentSelector;
+        this.Id = $value.Id;
     }
 }
 export class TextDocumentContentParams {
@@ -9090,7 +9186,7 @@ export class TextDocumentContentRegistrationOptions {
         return new TextDocumentContentRegistrationOptions($source.Schemes, $source.Id);
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentContentRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingSchemes: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -9127,7 +9223,7 @@ export class TextDocumentContentRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2153 = dec;
-                        const __gotots_store_705 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions>).value;
+                        const __gotots_store_705 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2154 = new $goInterfaceAdapter$PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_705, "Schemes"));
                         const __gotots_argument_2155 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2153, __gotots_argument_2154, __gotots_argument_2155);
@@ -9143,7 +9239,7 @@ export class TextDocumentContentRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2156 = dec;
-                        const __gotots_store_706 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions>).value;
+                        const __gotots_store_706 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2157 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_706, "Id"));
                         const __gotots_argument_2158 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2156, __gotots_argument_2157, __gotots_argument_2158);
@@ -9179,6 +9275,10 @@ export class TextDocumentContentRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TextDocumentContentRegistrationOptions): void {
+        this.Schemes = $value.Schemes;
+        this.Id = $value.Id;
     }
 }
 export class TextDocumentContentRefreshParams {
@@ -9724,8 +9824,8 @@ export class InitializeResult {
     }
     static $hash($source: InitializeResult): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer8: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer8 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer8)))($source.Capabilities));
-        $hash = GoMapHash.mix($hash, (($pointer9: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer9 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer9)))($source.ServerInfo));
+        $hash = GoMapHash.mix($hash, (($pointer9: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer9 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer9)))($source.Capabilities));
+        $hash = GoMapHash.mix($hash, (($pointer10: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer10 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer10)))($source.ServerInfo));
         return $hash;
     }
     declare private readonly then?: never;
@@ -9951,11 +10051,11 @@ export class DidChangeConfigurationRegistrationOptions {
     }
     static $hash($source: DidChangeConfigurationRegistrationOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer10: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer10 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer10)))($source.Section));
+        $hash = GoMapHash.mix($hash, (($pointer11: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer11 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer11)))($source.Section));
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DidChangeConfigurationRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         {
             let k = Decoder__from_jsontext.PeekKind(dec);
             if (!(k === 123)) {
@@ -9988,7 +10088,7 @@ export class DidChangeConfigurationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2903 = dec;
-                        const __gotots_store_948 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions>).value;
+                        const __gotots_store_948 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2904 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$StringOrStrings(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_948, "Section"));
                         const __gotots_argument_2905 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2903, __gotots_argument_2904, __gotots_argument_2905);
@@ -10017,6 +10117,9 @@ export class DidChangeConfigurationRegistrationOptions {
             }
         }
         return void 0;
+    }
+    $tsonicReplace($value: DidChangeConfigurationRegistrationOptions): void {
+        this.Section = $value.Section;
     }
 }
 export class ShowMessageParams {
@@ -10680,7 +10783,7 @@ export class TextDocumentChangeRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentChangeRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const missingSyncKind: uint = 2;
         const _missingLast: uint = 4;
@@ -10715,7 +10818,7 @@ export class TextDocumentChangeRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2828 = dec;
-                        const __gotots_store_923 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions>).value;
+                        const __gotots_store_923 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2829 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_923, "DocumentSelector"));
                         const __gotots_argument_2830 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2828, __gotots_argument_2829, __gotots_argument_2830);
@@ -10729,7 +10832,7 @@ export class TextDocumentChangeRegistrationOptions {
                     missing = missing & ~missingSyncKind;
                     {
                         const __gotots_argument_2831 = dec;
-                        const __gotots_store_924 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions>).value;
+                        const __gotots_store_924 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2832 = new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSyncKind(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_924, "SyncKind"));
                         const __gotots_argument_2833 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2831, __gotots_argument_2832, __gotots_argument_2833);
@@ -10768,6 +10871,10 @@ export class TextDocumentChangeRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TextDocumentChangeRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.SyncKind = $value.SyncKind;
     }
 }
 export class DidCloseTextDocumentParams {
@@ -10991,7 +11098,7 @@ export class TextDocumentSaveRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentSaveRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -11025,7 +11132,7 @@ export class TextDocumentSaveRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2759 = dec;
-                        const __gotots_store_900 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions>).value;
+                        const __gotots_store_900 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2760 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_900, "DocumentSelector"));
                         const __gotots_argument_2761 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2759, __gotots_argument_2760, __gotots_argument_2761);
@@ -11041,7 +11148,7 @@ export class TextDocumentSaveRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2762 = dec;
-                        const __gotots_store_901 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions>).value;
+                        const __gotots_store_901 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2763 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_901, "IncludeText"));
                         const __gotots_argument_2764 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2762, __gotots_argument_2763, __gotots_argument_2764);
@@ -11077,6 +11184,10 @@ export class TextDocumentSaveRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TextDocumentSaveRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.IncludeText = $value.IncludeText;
     }
 }
 export class WillSaveTextDocumentParams {
@@ -11423,7 +11534,7 @@ export class DidChangeWatchedFilesRegistrationOptions {
         return new DidChangeWatchedFilesRegistrationOptions($source.Watchers);
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DidChangeWatchedFilesRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingWatchers: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -11460,7 +11571,7 @@ export class DidChangeWatchedFilesRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2870 = dec;
-                        const __gotots_store_937 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions>).value;
+                        const __gotots_store_937 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2871 = new $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$FileSystemWatcher(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_937, "Watchers"));
                         const __gotots_argument_2872 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2870, __gotots_argument_2871, __gotots_argument_2872);
@@ -11496,6 +11607,9 @@ export class DidChangeWatchedFilesRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DidChangeWatchedFilesRegistrationOptions): void {
+        this.Watchers = $value.Watchers;
     }
 }
 export class PublishDiagnosticsParams {
@@ -11797,7 +11911,7 @@ export class CompletionItem {
         value: TextEditOrInsertReplaceEdit;
     } | undefined, public TextEditText: tsonicTypeScriptRuntime.Location<gostring> | undefined, public AdditionalTextEdits: tsonicTypeScriptRuntime.Location<RuntimeSlice<{
         value: TextEdit;
-    } | undefined>> | undefined, public CommitCharacters: tsonicTypeScriptRuntime.Location<RuntimeSlice<gostring>> | undefined, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined, public Data: {
+    } | undefined>> | undefined, public CommitCharacters: tsonicTypeScriptRuntime.Location<RuntimeSlice<gostring>> | undefined, public Command: Command | undefined, public Data: {
         value: CompletionItemData;
     } | undefined) {
     }
@@ -11829,7 +11943,9 @@ export class CompletionItem {
             tsonicTypeScriptRuntime.sameLocation($left.TextEditText, $right.TextEditText) &&
             tsonicTypeScriptRuntime.sameLocation($left.AdditionalTextEdits, $right.AdditionalTextEdits) &&
             tsonicTypeScriptRuntime.sameLocation($left.CommitCharacters, $right.CommitCharacters) &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command) &&
+            $left.Command
+                ===
+                    $right.Command &&
             $left.Data
                 ===
                     $right.Data;
@@ -11837,7 +11953,7 @@ export class CompletionItem {
     static $hash($source: CompletionItem): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Label));
-        $hash = GoMapHash.mix($hash, (($pointer11: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer11 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer11)))($source.LabelDetails));
+        $hash = GoMapHash.mix($hash, (($pointer12: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer12 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer12)))($source.LabelDetails));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Kind));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Tags));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Detail));
@@ -11849,12 +11965,12 @@ export class CompletionItem {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InsertText));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InsertTextFormat));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InsertTextMode));
-        $hash = GoMapHash.mix($hash, (($pointer12: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer12 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer12)))($source.TextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer13: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer13 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer13)))($source.TextEdit));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextEditText));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.AdditionalTextEdits));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.CommitCharacters));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
-        $hash = GoMapHash.mix($hash, (($pointer13: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer13 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer13)))($source.Data));
+        $hash = GoMapHash.mix($hash, (($pointer14: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer14 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer14)))($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer15: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer15 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer15)))($source.Data));
         return $hash;
     }
     declare private readonly then?: never;
@@ -12387,7 +12503,7 @@ export class CompletionRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: CompletionRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -12421,7 +12537,7 @@ export class CompletionRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2771 = dec;
-                        const __gotots_store_904 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_904 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2772 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_904, "DocumentSelector"));
                         const __gotots_argument_2773 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2771, __gotots_argument_2772, __gotots_argument_2773);
@@ -12437,7 +12553,7 @@ export class CompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2774 = dec;
-                        const __gotots_store_905 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_905 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2775 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_905, "WorkDoneProgress"));
                         const __gotots_argument_2776 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2774, __gotots_argument_2775, __gotots_argument_2776);
@@ -12453,7 +12569,7 @@ export class CompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2777 = dec;
-                        const __gotots_store_906 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_906 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2778 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_906, "TriggerCharacters"));
                         const __gotots_argument_2779 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2777, __gotots_argument_2778, __gotots_argument_2779);
@@ -12469,7 +12585,7 @@ export class CompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2780 = dec;
-                        const __gotots_store_907 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_907 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2781 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_907, "AllCommitCharacters"));
                         const __gotots_argument_2782 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2780, __gotots_argument_2781, __gotots_argument_2782);
@@ -12485,7 +12601,7 @@ export class CompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2783 = dec;
-                        const __gotots_store_908 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_908 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2784 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_908, "ResolveProvider"));
                         const __gotots_argument_2785 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2783, __gotots_argument_2784, __gotots_argument_2785);
@@ -12501,7 +12617,7 @@ export class CompletionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2786 = dec;
-                        const __gotots_store_909 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions>).value;
+                        const __gotots_store_909 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2787 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$ServerCompletionItemOptions(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_909, "CompletionItem"));
                         const __gotots_argument_2788 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2786, __gotots_argument_2787, __gotots_argument_2788);
@@ -12537,6 +12653,14 @@ export class CompletionRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: CompletionRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.TriggerCharacters = $value.TriggerCharacters;
+        this.AllCommitCharacters = $value.AllCommitCharacters;
+        this.ResolveProvider = $value.ResolveProvider;
+        this.CompletionItem = $value.CompletionItem;
     }
 }
 export class HoverParams {
@@ -12834,7 +12958,7 @@ export class HoverRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: HoverRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -12868,7 +12992,7 @@ export class HoverRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2753 = dec;
-                        const __gotots_store_898 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HoverRegistrationOptions>).value;
+                        const __gotots_store_898 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2754 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_898, "DocumentSelector"));
                         const __gotots_argument_2755 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2753, __gotots_argument_2754, __gotots_argument_2755);
@@ -12884,7 +13008,7 @@ export class HoverRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2756 = dec;
-                        const __gotots_store_899 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HoverRegistrationOptions>).value;
+                        const __gotots_store_899 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2757 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_899, "WorkDoneProgress"));
                         const __gotots_argument_2758 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2756, __gotots_argument_2757, __gotots_argument_2758);
@@ -12920,6 +13044,10 @@ export class HoverRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: HoverRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
     }
 }
 export class SignatureHelpParams {
@@ -13219,7 +13347,7 @@ export class SignatureHelpRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: SignatureHelpRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -13253,7 +13381,7 @@ export class SignatureHelpRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2882 = dec;
-                        const __gotots_store_941 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions>).value;
+                        const __gotots_store_941 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2883 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_941, "DocumentSelector"));
                         const __gotots_argument_2884 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2882, __gotots_argument_2883, __gotots_argument_2884);
@@ -13269,7 +13397,7 @@ export class SignatureHelpRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2885 = dec;
-                        const __gotots_store_942 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions>).value;
+                        const __gotots_store_942 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2886 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_942, "WorkDoneProgress"));
                         const __gotots_argument_2887 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2885, __gotots_argument_2886, __gotots_argument_2887);
@@ -13285,7 +13413,7 @@ export class SignatureHelpRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2888 = dec;
-                        const __gotots_store_943 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions>).value;
+                        const __gotots_store_943 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2889 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_943, "TriggerCharacters"));
                         const __gotots_argument_2890 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2888, __gotots_argument_2889, __gotots_argument_2890);
@@ -13301,7 +13429,7 @@ export class SignatureHelpRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2891 = dec;
-                        const __gotots_store_944 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions>).value;
+                        const __gotots_store_944 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2892 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_944, "RetriggerCharacters"));
                         const __gotots_argument_2893 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2891, __gotots_argument_2892, __gotots_argument_2893);
@@ -13337,6 +13465,12 @@ export class SignatureHelpRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: SignatureHelpRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.TriggerCharacters = $value.TriggerCharacters;
+        this.RetriggerCharacters = $value.RetriggerCharacters;
     }
 }
 export class DefinitionParams {
@@ -13509,7 +13643,7 @@ export class DefinitionRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DefinitionRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -13543,7 +13677,7 @@ export class DefinitionRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2834 = dec;
-                        const __gotots_store_925 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions>).value;
+                        const __gotots_store_925 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2835 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_925, "DocumentSelector"));
                         const __gotots_argument_2836 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2834, __gotots_argument_2835, __gotots_argument_2836);
@@ -13559,7 +13693,7 @@ export class DefinitionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2837 = dec;
-                        const __gotots_store_926 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions>).value;
+                        const __gotots_store_926 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2838 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_926, "WorkDoneProgress"));
                         const __gotots_argument_2839 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2837, __gotots_argument_2838, __gotots_argument_2839);
@@ -13596,6 +13730,10 @@ export class DefinitionRegistrationOptions {
         }
         return void 0;
     }
+    $tsonicReplace($value: DefinitionRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+    }
 }
 export class ReferenceParams {
     declare private readonly $goType: void;
@@ -13623,7 +13761,7 @@ export class ReferenceParams {
         $hash = GoMapHash.mix($hash, Position.$hash($source.Position));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkDoneToken));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.PartialResultToken));
-        $hash = GoMapHash.mix($hash, (($pointer14: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer14 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer14)))($source.Context));
+        $hash = GoMapHash.mix($hash, (($pointer16: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer16 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer16)))($source.Context));
         return $hash;
     }
     declare private readonly then?: never;
@@ -13797,7 +13935,7 @@ export class ReferenceRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: ReferenceRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -13831,7 +13969,7 @@ export class ReferenceRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2765 = dec;
-                        const __gotots_store_902 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions>).value;
+                        const __gotots_store_902 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2766 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_902, "DocumentSelector"));
                         const __gotots_argument_2767 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2765, __gotots_argument_2766, __gotots_argument_2767);
@@ -13847,7 +13985,7 @@ export class ReferenceRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2768 = dec;
-                        const __gotots_store_903 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions>).value;
+                        const __gotots_store_903 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2769 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_903, "WorkDoneProgress"));
                         const __gotots_argument_2770 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2768, __gotots_argument_2769, __gotots_argument_2770);
@@ -13883,6 +14021,10 @@ export class ReferenceRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: ReferenceRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
     }
 }
 export class DocumentHighlightParams {
@@ -14163,7 +14305,7 @@ export class DocumentHighlightRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentHighlightRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -14197,7 +14339,7 @@ export class DocumentHighlightRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2822 = dec;
-                        const __gotots_store_921 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions>).value;
+                        const __gotots_store_921 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2823 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_921, "DocumentSelector"));
                         const __gotots_argument_2824 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2822, __gotots_argument_2823, __gotots_argument_2824);
@@ -14213,7 +14355,7 @@ export class DocumentHighlightRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2825 = dec;
-                        const __gotots_store_922 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions>).value;
+                        const __gotots_store_922 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2826 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_922, "WorkDoneProgress"));
                         const __gotots_argument_2827 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2825, __gotots_argument_2826, __gotots_argument_2827);
@@ -14249,6 +14391,10 @@ export class DocumentHighlightRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentHighlightRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
     }
 }
 export class DocumentSymbolParams {
@@ -14442,7 +14588,7 @@ export class SymbolInformation {
             Tags: void 0,
             ContainerName: void 0,
             Deprecated: void 0,
-            Location: Location.$storageOf(Location.$zero())
+            Location: Location.$zeroStorage()
         });
     }
     static $copy($source: SymbolInformation): SymbolInformation {
@@ -14470,6 +14616,16 @@ export class SymbolInformation {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Deprecated));
         $hash = GoMapHash.mix($hash, Location.$hash(Location.$fromStorage($source.$storage.Location)));
         return $hash;
+    }
+    static $zeroStorage(): SymbolInformation$Storage {
+        return {
+            Name: "",
+            Kind: 0,
+            Tags: void 0,
+            ContainerName: void 0,
+            Deprecated: void 0,
+            Location: Location.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<SymbolInformation> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -14875,7 +15031,7 @@ export class DocumentSymbolRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentSymbolRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -14909,7 +15065,7 @@ export class DocumentSymbolRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2804 = dec;
-                        const __gotots_store_915 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions>).value;
+                        const __gotots_store_915 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2805 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_915, "DocumentSelector"));
                         const __gotots_argument_2806 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2804, __gotots_argument_2805, __gotots_argument_2806);
@@ -14925,7 +15081,7 @@ export class DocumentSymbolRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2807 = dec;
-                        const __gotots_store_916 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions>).value;
+                        const __gotots_store_916 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2808 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_916, "WorkDoneProgress"));
                         const __gotots_argument_2809 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2807, __gotots_argument_2808, __gotots_argument_2809);
@@ -14941,7 +15097,7 @@ export class DocumentSymbolRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2810 = dec;
-                        const __gotots_store_917 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions>).value;
+                        const __gotots_store_917 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2811 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_917, "Label"));
                         const __gotots_argument_2812 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2810, __gotots_argument_2811, __gotots_argument_2812);
@@ -14977,6 +15133,11 @@ export class DocumentSymbolRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentSymbolRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Label = $value.Label;
     }
 }
 export class CodeActionParams {
@@ -15175,7 +15336,7 @@ export class Command {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<Command> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: Command | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingTitle: uint = 1;
         const missingCommand: uint = 2;
         const _missingLast: uint = 4;
@@ -15210,7 +15371,7 @@ export class Command {
                     missing = missing & ~missingTitle;
                     {
                         const __gotots_argument_927 = dec;
-                        const __gotots_store_305 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command>).value;
+                        const __gotots_store_305 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_928 = new $goInterfaceAdapter$PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_305, "Title"));
                         const __gotots_argument_929 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_927, __gotots_argument_928, __gotots_argument_929);
@@ -15226,7 +15387,7 @@ export class Command {
                     }
                     {
                         const __gotots_argument_930 = dec;
-                        const __gotots_store_306 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command>).value;
+                        const __gotots_store_306 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_931 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_306, "Tooltip"));
                         const __gotots_argument_932 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_930, __gotots_argument_931, __gotots_argument_932);
@@ -15240,7 +15401,7 @@ export class Command {
                     missing = missing & ~missingCommand;
                     {
                         const __gotots_argument_933 = dec;
-                        const __gotots_store_307 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command>).value;
+                        const __gotots_store_307 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_934 = new $goInterfaceAdapter$PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_307, "Command"));
                         const __gotots_argument_935 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_933, __gotots_argument_934, __gotots_argument_935);
@@ -15256,7 +15417,7 @@ export class Command {
                     }
                     {
                         const __gotots_argument_936 = dec;
-                        const __gotots_store_308 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Command>).value;
+                        const __gotots_store_308 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_937 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_Interface_void(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_308, "Arguments"));
                         const __gotots_argument_938 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_936, __gotots_argument_937, __gotots_argument_938);
@@ -15296,6 +15457,12 @@ export class Command {
         }
         return void 0;
     }
+    $tsonicReplace($value: Command): void {
+        this.Title = $value.Title;
+        this.Tooltip = $value.Tooltip;
+        this.Command = $value.Command;
+        this.Arguments = $value.Arguments;
+    }
 }
 export class CodeAction {
     declare private readonly $goType: void;
@@ -15303,7 +15470,7 @@ export class CodeAction {
         value: Diagnostic;
     } | undefined>> | undefined, public IsPreferred: tsonicTypeScriptRuntime.Location<bool> | undefined, public Disabled: tsonicTypeScriptRuntime.Location<CodeActionDisabled> | undefined, public Edit: {
         value: WorkspaceEdit;
-    } | undefined, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined, public Data: tsonicTypeScriptRuntime.Location<CodeActionData> | undefined, public Tags: tsonicTypeScriptRuntime.Location<RuntimeSlice<CodeActionTag>> | undefined) {
+    } | undefined, public Command: Command | undefined, public Data: tsonicTypeScriptRuntime.Location<CodeActionData> | undefined, public Tags: tsonicTypeScriptRuntime.Location<RuntimeSlice<CodeActionTag>> | undefined) {
     }
     static $zero(): CodeAction {
         return new CodeAction("", void 0, void 0, void 0, void 0, void 0, void 0, void 0, void 0);
@@ -15320,7 +15487,9 @@ export class CodeAction {
             $left.Edit
                 ===
                     $right.Edit &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command) &&
+            $left.Command
+                ===
+                    $right.Command &&
             tsonicTypeScriptRuntime.sameLocation($left.Data, $right.Data) &&
             tsonicTypeScriptRuntime.sameLocation($left.Tags, $right.Tags);
     }
@@ -15331,8 +15500,8 @@ export class CodeAction {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Diagnostics));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.IsPreferred));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Disabled));
-        $hash = GoMapHash.mix($hash, (($pointer15: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer15 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer15)))($source.Edit));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer17: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer17 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer17)))($source.Edit));
+        $hash = GoMapHash.mix($hash, (($pointer18: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer18 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer18)))($source.Command));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Data));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Tags));
         return $hash;
@@ -15565,7 +15734,7 @@ export class CodeActionRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: CodeActionRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -15599,7 +15768,7 @@ export class CodeActionRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2840 = dec;
-                        const __gotots_store_927 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions>).value;
+                        const __gotots_store_927 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2841 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_927, "DocumentSelector"));
                         const __gotots_argument_2842 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2840, __gotots_argument_2841, __gotots_argument_2842);
@@ -15615,7 +15784,7 @@ export class CodeActionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2843 = dec;
-                        const __gotots_store_928 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions>).value;
+                        const __gotots_store_928 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2844 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_928, "WorkDoneProgress"));
                         const __gotots_argument_2845 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2843, __gotots_argument_2844, __gotots_argument_2845);
@@ -15631,7 +15800,7 @@ export class CodeActionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2846 = dec;
-                        const __gotots_store_929 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions>).value;
+                        const __gotots_store_929 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2847 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_Named_lsproto$CodeActionKind(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_929, "CodeActionKinds"));
                         const __gotots_argument_2848 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2846, __gotots_argument_2847, __gotots_argument_2848);
@@ -15647,7 +15816,7 @@ export class CodeActionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2849 = dec;
-                        const __gotots_store_930 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions>).value;
+                        const __gotots_store_930 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2850 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_PointerTo_Named_lsproto$CodeActionKindDocumentation(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_930, "Documentation"));
                         const __gotots_argument_2851 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2849, __gotots_argument_2850, __gotots_argument_2851);
@@ -15663,7 +15832,7 @@ export class CodeActionRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2852 = dec;
-                        const __gotots_store_931 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions>).value;
+                        const __gotots_store_931 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2853 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_931, "ResolveProvider"));
                         const __gotots_argument_2854 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2852, __gotots_argument_2853, __gotots_argument_2854);
@@ -15699,6 +15868,13 @@ export class CodeActionRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: CodeActionRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.CodeActionKinds = $value.CodeActionKinds;
+        this.Documentation = $value.Documentation;
+        this.ResolveProvider = $value.ResolveProvider;
     }
 }
 export class WorkspaceSymbolParams {
@@ -16033,7 +16209,7 @@ export class WorkspaceSymbolRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: WorkspaceSymbolRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         {
             let k = Decoder__from_jsontext.PeekKind(dec);
             if (!(k === 123)) {
@@ -16066,7 +16242,7 @@ export class WorkspaceSymbolRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2747 = dec;
-                        const __gotots_store_896 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions>).value;
+                        const __gotots_store_896 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2748 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_896, "WorkDoneProgress"));
                         const __gotots_argument_2749 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2747, __gotots_argument_2748, __gotots_argument_2749);
@@ -16082,7 +16258,7 @@ export class WorkspaceSymbolRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2750 = dec;
-                        const __gotots_store_897 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions>).value;
+                        const __gotots_store_897 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2751 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_897, "ResolveProvider"));
                         const __gotots_argument_2752 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2750, __gotots_argument_2751, __gotots_argument_2752);
@@ -16111,6 +16287,10 @@ export class WorkspaceSymbolRegistrationOptions {
             }
         }
         return void 0;
+    }
+    $tsonicReplace($value: WorkspaceSymbolRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.ResolveProvider = $value.ResolveProvider;
     }
 }
 export class CodeLensParams {
@@ -16245,7 +16425,7 @@ export class CodeLensParams {
 }
 export class CodeLens {
     declare private readonly $goType: void;
-    public constructor(public Range: Range, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined, public Data: {
+    public constructor(public Range: Range, public Command: Command | undefined, public Data: {
         value: CodeLensData;
     } | undefined) {
     }
@@ -16257,7 +16437,9 @@ export class CodeLens {
     }
     static $equal($left: CodeLens, $right: CodeLens): bool {
         return Range.$equal($left.Range, $right.Range) &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command) &&
+            $left.Command
+                ===
+                    $right.Command &&
             $left.Data
                 ===
                     $right.Data;
@@ -16265,8 +16447,8 @@ export class CodeLens {
     static $hash($source: CodeLens): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, Range.$hash($source.Range));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
-        $hash = GoMapHash.mix($hash, (($pointer16: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer16 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer16)))($source.Data));
+        $hash = GoMapHash.mix($hash, (($pointer19: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer19 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer19)))($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer20: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer20 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer20)))($source.Data));
         return $hash;
     }
     declare private readonly then?: never;
@@ -16397,7 +16579,7 @@ export class CodeLensRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: CodeLensRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -16431,7 +16613,7 @@ export class CodeLensRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2855 = dec;
-                        const __gotots_store_932 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions>).value;
+                        const __gotots_store_932 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2856 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_932, "DocumentSelector"));
                         const __gotots_argument_2857 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2855, __gotots_argument_2856, __gotots_argument_2857);
@@ -16447,7 +16629,7 @@ export class CodeLensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2858 = dec;
-                        const __gotots_store_933 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions>).value;
+                        const __gotots_store_933 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2859 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_933, "WorkDoneProgress"));
                         const __gotots_argument_2860 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2858, __gotots_argument_2859, __gotots_argument_2860);
@@ -16463,7 +16645,7 @@ export class CodeLensRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2861 = dec;
-                        const __gotots_store_934 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions>).value;
+                        const __gotots_store_934 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2862 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_934, "ResolveProvider"));
                         const __gotots_argument_2863 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2861, __gotots_argument_2862, __gotots_argument_2863);
@@ -16499,6 +16681,11 @@ export class CodeLensRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: CodeLensRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.ResolveProvider = $value.ResolveProvider;
     }
 }
 export class DocumentLinkParams {
@@ -16796,7 +16983,7 @@ export class DocumentLinkRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentLinkRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -16830,7 +17017,7 @@ export class DocumentLinkRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2906 = dec;
-                        const __gotots_store_949 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions>).value;
+                        const __gotots_store_949 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2907 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_949, "DocumentSelector"));
                         const __gotots_argument_2908 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2906, __gotots_argument_2907, __gotots_argument_2908);
@@ -16846,7 +17033,7 @@ export class DocumentLinkRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2909 = dec;
-                        const __gotots_store_950 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions>).value;
+                        const __gotots_store_950 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2910 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_950, "WorkDoneProgress"));
                         const __gotots_argument_2911 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2909, __gotots_argument_2910, __gotots_argument_2911);
@@ -16862,7 +17049,7 @@ export class DocumentLinkRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2912 = dec;
-                        const __gotots_store_951 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions>).value;
+                        const __gotots_store_951 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2913 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_951, "ResolveProvider"));
                         const __gotots_argument_2914 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2912, __gotots_argument_2913, __gotots_argument_2914);
@@ -16898,6 +17085,11 @@ export class DocumentLinkRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentLinkRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.ResolveProvider = $value.ResolveProvider;
     }
 }
 export class DocumentFormattingParams {
@@ -17056,7 +17248,7 @@ export class DocumentFormattingRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentFormattingRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -17090,7 +17282,7 @@ export class DocumentFormattingRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2789 = dec;
-                        const __gotots_store_910 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions>).value;
+                        const __gotots_store_910 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2790 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_910, "DocumentSelector"));
                         const __gotots_argument_2791 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2789, __gotots_argument_2790, __gotots_argument_2791);
@@ -17106,7 +17298,7 @@ export class DocumentFormattingRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2792 = dec;
-                        const __gotots_store_911 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions>).value;
+                        const __gotots_store_911 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2793 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_911, "WorkDoneProgress"));
                         const __gotots_argument_2794 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2792, __gotots_argument_2793, __gotots_argument_2794);
@@ -17142,6 +17334,10 @@ export class DocumentFormattingRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentFormattingRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
     }
 }
 export class DocumentRangeFormattingParams {
@@ -17321,7 +17517,7 @@ export class DocumentRangeFormattingRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentRangeFormattingRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -17355,7 +17551,7 @@ export class DocumentRangeFormattingRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2795 = dec;
-                        const __gotots_store_912 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions>).value;
+                        const __gotots_store_912 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2796 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_912, "DocumentSelector"));
                         const __gotots_argument_2797 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2795, __gotots_argument_2796, __gotots_argument_2797);
@@ -17371,7 +17567,7 @@ export class DocumentRangeFormattingRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2798 = dec;
-                        const __gotots_store_913 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions>).value;
+                        const __gotots_store_913 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2799 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_913, "WorkDoneProgress"));
                         const __gotots_argument_2800 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2798, __gotots_argument_2799, __gotots_argument_2800);
@@ -17387,7 +17583,7 @@ export class DocumentRangeFormattingRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2801 = dec;
-                        const __gotots_store_914 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions>).value;
+                        const __gotots_store_914 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2802 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_914, "RangesSupport"));
                         const __gotots_argument_2803 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2801, __gotots_argument_2802, __gotots_argument_2803);
@@ -17423,6 +17619,11 @@ export class DocumentRangeFormattingRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentRangeFormattingRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.RangesSupport = $value.RangesSupport;
     }
 }
 export class DocumentRangesFormattingParams {
@@ -17743,7 +17944,7 @@ export class DocumentOnTypeFormattingRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: DocumentOnTypeFormattingRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const missingFirstTriggerCharacter: uint = 2;
         const _missingLast: uint = 4;
@@ -17778,7 +17979,7 @@ export class DocumentOnTypeFormattingRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2813 = dec;
-                        const __gotots_store_918 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions>).value;
+                        const __gotots_store_918 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2814 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_918, "DocumentSelector"));
                         const __gotots_argument_2815 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2813, __gotots_argument_2814, __gotots_argument_2815);
@@ -17792,7 +17993,7 @@ export class DocumentOnTypeFormattingRegistrationOptions {
                     missing = missing & ~missingFirstTriggerCharacter;
                     {
                         const __gotots_argument_2816 = dec;
-                        const __gotots_store_919 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions>).value;
+                        const __gotots_store_919 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2817 = new $goInterfaceAdapter$PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_919, "FirstTriggerCharacter"));
                         const __gotots_argument_2818 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2816, __gotots_argument_2817, __gotots_argument_2818);
@@ -17808,7 +18009,7 @@ export class DocumentOnTypeFormattingRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2819 = dec;
-                        const __gotots_store_920 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions>).value;
+                        const __gotots_store_920 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2820 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_920, "MoreTriggerCharacter"));
                         const __gotots_argument_2821 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2819, __gotots_argument_2820, __gotots_argument_2821);
@@ -17847,6 +18048,11 @@ export class DocumentOnTypeFormattingRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: DocumentOnTypeFormattingRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.FirstTriggerCharacter = $value.FirstTriggerCharacter;
+        this.MoreTriggerCharacter = $value.MoreTriggerCharacter;
     }
 }
 export class RenameParams {
@@ -18025,7 +18231,7 @@ export class RenameRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: RenameRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -18059,7 +18265,7 @@ export class RenameRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2894 = dec;
-                        const __gotots_store_945 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameRegistrationOptions>).value;
+                        const __gotots_store_945 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2895 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_945, "DocumentSelector"));
                         const __gotots_argument_2896 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2894, __gotots_argument_2895, __gotots_argument_2896);
@@ -18075,7 +18281,7 @@ export class RenameRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2897 = dec;
-                        const __gotots_store_946 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameRegistrationOptions>).value;
+                        const __gotots_store_946 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2898 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_946, "WorkDoneProgress"));
                         const __gotots_argument_2899 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2897, __gotots_argument_2898, __gotots_argument_2899);
@@ -18091,7 +18297,7 @@ export class RenameRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2900 = dec;
-                        const __gotots_store_947 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RenameRegistrationOptions>).value;
+                        const __gotots_store_947 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2901 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_947, "PrepareProvider"));
                         const __gotots_argument_2902 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2900, __gotots_argument_2901, __gotots_argument_2902);
@@ -18127,6 +18333,11 @@ export class RenameRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: RenameRegistrationOptions): void {
+        this.DocumentSelector = $value.DocumentSelector;
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.PrepareProvider = $value.PrepareProvider;
     }
 }
 export class PrepareRenameParams {
@@ -18398,7 +18609,7 @@ export class ExecuteCommandRegistrationOptions {
         return new ExecuteCommandRegistrationOptions($source.WorkDoneProgress, $source.Commands);
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: ExecuteCommandRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingCommands: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -18434,7 +18645,7 @@ export class ExecuteCommandRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2864 = dec;
-                        const __gotots_store_935 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions>).value;
+                        const __gotots_store_935 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2865 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_935, "WorkDoneProgress"));
                         const __gotots_argument_2866 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2864, __gotots_argument_2865, __gotots_argument_2866);
@@ -18451,7 +18662,7 @@ export class ExecuteCommandRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2867 = dec;
-                        const __gotots_store_936 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions>).value;
+                        const __gotots_store_936 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2868 = new $goInterfaceAdapter$PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_936, "Commands"));
                         const __gotots_argument_2869 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2867, __gotots_argument_2868, __gotots_argument_2869);
@@ -18488,6 +18699,10 @@ export class ExecuteCommandRegistrationOptions {
         }
         return void 0;
     }
+    $tsonicReplace($value: ExecuteCommandRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.Commands = $value.Commands;
+    }
 }
 export class ApplyWorkspaceEditParams {
     declare private readonly $goType: void;
@@ -18512,7 +18727,7 @@ export class ApplyWorkspaceEditParams {
     static $hash($source: ApplyWorkspaceEditParams): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Label));
-        $hash = GoMapHash.mix($hash, (($pointer17: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer17 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer17)))($source.Edit));
+        $hash = GoMapHash.mix($hash, (($pointer21: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer21 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer21)))($source.Edit));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Metadata));
         return $hash;
     }
@@ -19867,8 +20082,8 @@ export class Range implements GoContainerStoredValue<Range$Storage> {
     declare readonly [$goContainerStorageType]: Range$Storage;
     static $zero(): Range {
         return new Range({
-            Start: Position.$storageOf(Position.$zero()),
-            End: Position.$storageOf(Position.$zero())
+            Start: Position.$zeroStorage(),
+            End: Position.$zeroStorage()
         });
     }
     static $copy($source: Range): Range {
@@ -19885,6 +20100,12 @@ export class Range implements GoContainerStoredValue<Range$Storage> {
         $hash = GoMapHash.mix($hash, Position.$hash(Position.$fromStorage($source.$storage.Start)));
         $hash = GoMapHash.mix($hash, Position.$hash(Position.$fromStorage($source.$storage.End)));
         return $hash;
+    }
+    static $zeroStorage(): Range$Storage {
+        return {
+            Start: Position.$zeroStorage(),
+            End: Position.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static Compare(s: tsonicTypeScriptRuntime.Location<Range> | undefined, other: tsonicTypeScriptRuntime.Location<Range> | undefined): int {
@@ -20914,6 +21135,12 @@ export class Position {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Character));
         return $hash;
     }
+    static $zeroStorage(): Position$Storage {
+        return {
+            Line: 0,
+            Character: 0
+        };
+    }
     declare private readonly then?: never;
     static Compare(s: tsonicTypeScriptRuntime.Location<Position> | undefined, other: tsonicTypeScriptRuntime.Location<Position> | undefined): int {
         {
@@ -21212,9 +21439,9 @@ export class SemanticTokensOptions {
     static $hash($source: SemanticTokensOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkDoneProgress));
-        $hash = GoMapHash.mix($hash, (($pointer18: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer18 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer18)))($source.Legend));
+        $hash = GoMapHash.mix($hash, (($pointer22: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer22 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer22)))($source.Legend));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Range));
-        $hash = GoMapHash.mix($hash, (($pointer19: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer19 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer19)))($source.Full));
+        $hash = GoMapHash.mix($hash, (($pointer23: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer23 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer23)))($source.Full));
         return $hash;
     }
     declare private readonly then?: never;
@@ -22235,7 +22462,7 @@ export class FileOperationFilter {
     static $hash($source: FileOperationFilter): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Scheme));
-        $hash = GoMapHash.mix($hash, (($pointer20: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer20 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer20)))($source.Pattern));
+        $hash = GoMapHash.mix($hash, (($pointer24: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer24 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer24)))($source.Pattern));
         return $hash;
     }
     declare private readonly then?: never;
@@ -23246,7 +23473,7 @@ export class InlineValueOptions {
 }
 export class InlayHintLabelPart {
     declare private readonly $goType: void;
-    public constructor(public Value: gostring, public Tooltip: tsonicTypeScriptRuntime.Location<StringOrMarkupContent> | undefined, public Location: tsonicTypeScriptRuntime.Location<Location> | undefined, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined) {
+    public constructor(public Value: gostring, public Tooltip: tsonicTypeScriptRuntime.Location<StringOrMarkupContent> | undefined, public Location: tsonicTypeScriptRuntime.Location<Location> | undefined, public Command: Command | undefined) {
     }
     static $copy($source: InlayHintLabelPart): InlayHintLabelPart {
         return new InlayHintLabelPart($source.Value, $source.Tooltip, $source.Location, $source.Command);
@@ -23255,14 +23482,16 @@ export class InlayHintLabelPart {
         return $left.Value === $right.Value &&
             tsonicTypeScriptRuntime.sameLocation($left.Tooltip, $right.Tooltip) &&
             tsonicTypeScriptRuntime.sameLocation($left.Location, $right.Location) &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command);
+            $left.Command
+                ===
+                    $right.Command;
     }
     static $hash($source: InlayHintLabelPart): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Value));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Tooltip));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Location));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer25: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer25 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer25)))($source.Command));
         return $hash;
     }
     declare private readonly then?: never;
@@ -24064,13 +24293,6 @@ export class PreviousResultId {
     public set Value($value: gostring) {
         this.$storage.Value = $value;
     }
-    static $zero(): PreviousResultId {
-        return new PreviousResultId({
-            Uri: ((void DocumentUri,
-                "") as string),
-            Value: ""
-        });
-    }
     static $copy($source: PreviousResultId): PreviousResultId {
         return new PreviousResultId({
             Uri: ((void DocumentUri,
@@ -24091,6 +24313,13 @@ export class PreviousResultId {
             $source.$storage.Uri) as string)));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.Value));
         return $hash;
+    }
+    static $zeroStorage(): PreviousResultId$Storage {
+        return {
+            Uri: ((void DocumentUri,
+                "") as string),
+            Value: ""
+        };
     }
     declare private readonly then?: never;
     static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<PreviousResultId> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -24646,7 +24875,7 @@ export class TextDocumentContentOptions {
         return new TextDocumentContentOptions($source.Schemes);
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentContentOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingSchemes: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -24683,7 +24912,7 @@ export class TextDocumentContentOptions {
                     }
                     {
                         const __gotots_argument_2159 = dec;
-                        const __gotots_store_707 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentOptions>).value;
+                        const __gotots_store_707 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2160 = new $goInterfaceAdapter$PointerTo_SliceOf_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_707, "Schemes"));
                         const __gotots_argument_2161 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2159, __gotots_argument_2160, __gotots_argument_2161);
@@ -24720,6 +24949,9 @@ export class TextDocumentContentOptions {
         }
         return void 0;
     }
+    $tsonicReplace($value: TextDocumentContentOptions): void {
+        this.Schemes = $value.Schemes;
+    }
 }
 export class Registration {
     declare private readonly $goType: void;
@@ -24739,7 +24971,7 @@ export class Registration {
     static $hash($source: Registration): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Id));
-        $hash = GoMapHash.mix($hash, (($pointer21: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer21 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer21)))($source.RegisterOptions));
+        $hash = GoMapHash.mix($hash, (($pointer26: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer26 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer26)))($source.RegisterOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -25359,626 +25591,530 @@ export class Registration {
                 method) as string)) {
                 case "textDocument/implementation": {
                     let v = ImplementationRegistrationOptions.$zero();
-                    const v$location = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next => v = v$next);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions(v$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentImplementation =
-                        v$location;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentImplementation = v;
                     break;
                 }
                 case "textDocument/typeDefinition": {
                     let v = TypeDefinitionRegistrationOptions.$zero();
-                    const v$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next2 => v = v$next2);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions(v$location2), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentTypeDefinition =
-                        v$location2;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentTypeDefinition = v;
                     break;
                 }
                 case "textDocument/documentColor": {
                     let v = DocumentColorRegistrationOptions.$zero();
-                    const v$location3 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next3 => v = v$next3);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions(v$location3), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentColor =
-                        v$location3;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentColor = v;
                     break;
                 }
                 case "textDocument/colorPresentation": {
                     let v = ColorPresentationRegistrationOptions.$zero();
-                    const v$location4 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next4 => v = v$next4);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions(v$location4), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ColorPresentationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentColorPresentation =
-                        v$location4;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentColorPresentation = v;
                     break;
                 }
                 case "textDocument/foldingRange": {
                     let v = FoldingRangeRegistrationOptions.$zero();
-                    const v$location5 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next5 => v = v$next5);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions(v$location5), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentFoldingRange =
-                        v$location5;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentFoldingRange = v;
                     break;
                 }
                 case "textDocument/declaration": {
                     let v = DeclarationRegistrationOptions.$zero();
-                    const v$location6 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next6 => v = v$next6);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions(v$location6), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDeclaration =
-                        v$location6;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDeclaration = v;
                     break;
                 }
                 case "textDocument/selectionRange": {
                     let v = SelectionRangeRegistrationOptions.$zero();
-                    const v$location7 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next7 => v = v$next7);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions(v$location7), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSelectionRange =
-                        v$location7;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSelectionRange = v;
                     break;
                 }
                 case "textDocument/prepareCallHierarchy": {
                     let v = CallHierarchyRegistrationOptions.$zero();
-                    const v$location8 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next8 => v = v$next8);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions(v$location8), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentPrepareCallHierarchy =
-                        v$location8;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentPrepareCallHierarchy = v;
                     break;
                 }
                 case "textDocument/semanticTokens": {
                     let v = SemanticTokensRegistrationOptions.$zero();
-                    const v$location9 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next9 => v = v$next9);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions(v$location9), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSemanticTokens =
-                        v$location9;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSemanticTokens = v;
                     break;
                 }
                 case "textDocument/linkedEditingRange": {
                     let v = LinkedEditingRangeRegistrationOptions.$zero();
-                    const v$location10 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next10 => v = v$next10);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions(v$location10), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentLinkedEditingRange =
-                        v$location10;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentLinkedEditingRange = v;
                     break;
                 }
                 case "workspace/willCreateFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location11 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next11 => v = v$next11);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location11), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillCreateFiles =
-                        v$location11;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillCreateFiles = v;
                     break;
                 }
                 case "workspace/willRenameFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location12 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next12 => v = v$next12);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location12), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillRenameFiles =
-                        v$location12;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillRenameFiles = v;
                     break;
                 }
                 case "workspace/willDeleteFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location13 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next13 => v = v$next13);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location13), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillDeleteFiles =
-                        v$location13;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceWillDeleteFiles = v;
                     break;
                 }
                 case "textDocument/moniker": {
                     let v = MonikerRegistrationOptions.$zero();
-                    const v$location14 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next14 => v = v$next14);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions(v$location14), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentMoniker =
-                        v$location14;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentMoniker = v;
                     break;
                 }
                 case "textDocument/prepareTypeHierarchy": {
                     let v = TypeHierarchyRegistrationOptions.$zero();
-                    const v$location15 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next15 => v = v$next15);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions(v$location15), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentPrepareTypeHierarchy =
-                        v$location15;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentPrepareTypeHierarchy = v;
                     break;
                 }
                 case "textDocument/inlineValue": {
                     let v = InlineValueRegistrationOptions.$zero();
-                    const v$location16 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next16 => v = v$next16);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions(v$location16), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlineValue =
-                        v$location16;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlineValue = v;
                     break;
                 }
                 case "textDocument/inlayHint": {
                     let v = InlayHintRegistrationOptions.$zero();
-                    const v$location17 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next17 => v = v$next17);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions(v$location17), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlayHint =
-                        v$location17;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlayHint = v;
                     break;
                 }
                 case "textDocument/diagnostic": {
                     let v = DiagnosticRegistrationOptions.$zero();
-                    const v$location18 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next18 => v = v$next18);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions(v$location18), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDiagnostic =
-                        v$location18;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDiagnostic = v;
                     break;
                 }
                 case "textDocument/inlineCompletion": {
                     let v = InlineCompletionRegistrationOptions.$zero();
-                    const v$location19 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next19 => v = v$next19);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions(v$location19), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineCompletionRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlineCompletion =
-                        v$location19;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentInlineCompletion = v;
                     break;
                 }
                 case "workspace/textDocumentContent": {
                     let v = TextDocumentContentRegistrationOptions.$zero();
-                    const v$location20 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next20 => v = v$next20);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions(v$location20), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceTextDocumentContent =
-                        v$location20;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceTextDocumentContent = v;
                     break;
                 }
                 case "textDocument/willSaveWaitUntil": {
                     let v = TextDocumentRegistrationOptions.$zero();
-                    const v$location21 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next21 => v = v$next21);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v$location21), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentWillSaveWaitUntil =
-                        v$location21;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentWillSaveWaitUntil = v;
                     break;
                 }
                 case "textDocument/completion": {
                     let v = CompletionRegistrationOptions.$zero();
-                    const v$location22 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next22 => v = v$next22);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationOptions(v$location22), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CompletionRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCompletion =
-                        v$location22;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCompletion = v;
                     break;
                 }
                 case "textDocument/hover": {
                     let v = HoverRegistrationOptions.$zero();
-                    const v$location23 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next23 => v = v$next23);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOptions(v$location23), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$HoverRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentHover =
-                        v$location23;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentHover = v;
                     break;
                 }
                 case "textDocument/signatureHelp": {
                     let v = SignatureHelpRegistrationOptions.$zero();
-                    const v$location24 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next24 => v = v$next24);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions(v$location24), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SignatureHelpRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSignatureHelp =
-                        v$location24;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentSignatureHelp = v;
                     break;
                 }
                 case "textDocument/definition": {
                     let v = DefinitionRegistrationOptions.$zero();
-                    const v$location25 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next25 => v = v$next25);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationOptions(v$location25), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DefinitionRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDefinition =
-                        v$location25;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDefinition = v;
                     break;
                 }
                 case "textDocument/references": {
                     let v = ReferenceRegistrationOptions.$zero();
-                    const v$location26 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next26 => v = v$next26);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOptions(v$location26), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ReferenceRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentReferences =
-                        v$location26;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentReferences = v;
                     break;
                 }
                 case "textDocument/documentHighlight": {
                     let v = DocumentHighlightRegistrationOptions.$zero();
-                    const v$location27 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next27 => v = v$next27);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions(v$location27), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentHighlightRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentHighlight =
-                        v$location27;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentHighlight = v;
                     break;
                 }
                 case "textDocument/documentSymbol": {
                     let v = DocumentSymbolRegistrationOptions.$zero();
-                    const v$location28 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next28 => v = v$next28);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions(v$location28), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSymbolRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentSymbol =
-                        v$location28;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentSymbol = v;
                     break;
                 }
                 case "textDocument/codeAction": {
                     let v = CodeActionRegistrationOptions.$zero();
-                    const v$location29 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next29 => v = v$next29);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationOptions(v$location29), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CodeActionRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCodeAction =
-                        v$location29;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCodeAction = v;
                     break;
                 }
                 case "workspace/symbol": {
                     let v = WorkspaceSymbolRegistrationOptions.$zero();
-                    const v$location30 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next30 => v = v$next30);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions(v$location30), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$WorkspaceSymbolRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceSymbol =
-                        v$location30;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceSymbol = v;
                     break;
                 }
                 case "textDocument/codeLens": {
                     let v = CodeLensRegistrationOptions.$zero();
-                    const v$location31 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next31 => v = v$next31);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOptions(v$location31), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CodeLensRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCodeLens =
-                        v$location31;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentCodeLens = v;
                     break;
                 }
                 case "textDocument/documentLink": {
                     let v = DocumentLinkRegistrationOptions.$zero();
-                    const v$location32 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next32 => v = v$next32);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions(v$location32), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentLinkRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentLink =
-                        v$location32;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDocumentLink = v;
                     break;
                 }
                 case "textDocument/formatting": {
                     let v = DocumentFormattingRegistrationOptions.$zero();
-                    const v$location33 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next33 => v = v$next33);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions(v$location33), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentFormattingRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentFormatting =
-                        v$location33;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentFormatting = v;
                     break;
                 }
                 case "textDocument/rangeFormatting": {
                     let v = DocumentRangeFormattingRegistrationOptions.$zero();
-                    const v$location34 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next34 => v = v$next34);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions(v$location34), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRangeFormatting =
-                        v$location34;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRangeFormatting = v;
                     break;
                 }
                 case "textDocument/rangesFormatting": {
                     let v = DocumentRangeFormattingRegistrationOptions.$zero();
-                    const v$location35 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next35 => v = v$next35);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions(v$location35), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentRangeFormattingRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRangesFormatting =
-                        v$location35;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRangesFormatting = v;
                     break;
                 }
                 case "textDocument/onTypeFormatting": {
                     let v = DocumentOnTypeFormattingRegistrationOptions.$zero();
-                    const v$location36 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next36 => v = v$next36);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions(v$location36), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentOnTypeFormattingRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentOnTypeFormatting =
-                        v$location36;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentOnTypeFormatting = v;
                     break;
                 }
                 case "textDocument/rename": {
                     let v = RenameRegistrationOptions.$zero();
-                    const v$location37 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next37 => v = v$next37);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptions(v$location37), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$RenameRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRename =
-                        v$location37;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentRename = v;
                     break;
                 }
                 case "workspace/executeCommand": {
                     let v = ExecuteCommandRegistrationOptions.$zero();
-                    const v$location38 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next38 => v = v$next38);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions(v$location38), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ExecuteCommandRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceExecuteCommand =
-                        v$location38;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceExecuteCommand = v;
                     break;
                 }
                 case "workspace/didCreateFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location39 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next39 => v = v$next39);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location39), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidCreateFiles =
-                        v$location39;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidCreateFiles = v;
                     break;
                 }
                 case "workspace/didRenameFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location40 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next40 => v = v$next40);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location40), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidRenameFiles =
-                        v$location40;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidRenameFiles = v;
                     break;
                 }
                 case "workspace/didDeleteFiles": {
                     let v = FileOperationRegistrationOptions.$zero();
-                    const v$location41 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next41 => v = v$next41);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v$location41), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FileOperationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidDeleteFiles =
-                        v$location41;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidDeleteFiles = v;
                     break;
                 }
                 case "workspace/didChangeConfiguration": {
                     let v = DidChangeConfigurationRegistrationOptions.$zero();
-                    const v$location42 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next42 => v = v$next42);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions(v$location42), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeConfigurationRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidChangeConfiguration =
-                        v$location42;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidChangeConfiguration = v;
                     break;
                 }
                 case "textDocument/didOpen": {
                     let v = TextDocumentRegistrationOptions.$zero();
-                    const v$location43 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next43 => v = v$next43);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v$location43), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidOpen =
-                        v$location43;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidOpen = v;
                     break;
                 }
                 case "textDocument/didChange": {
                     let v = TextDocumentChangeRegistrationOptions.$zero();
-                    const v$location44 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next44 => v = v$next44);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions(v$location44), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentChangeRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidChange =
-                        v$location44;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidChange = v;
                     break;
                 }
                 case "textDocument/didClose": {
                     let v = TextDocumentRegistrationOptions.$zero();
-                    const v$location45 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next45 => v = v$next45);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v$location45), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidClose =
-                        v$location45;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidClose = v;
                     break;
                 }
                 case "textDocument/didSave": {
                     let v = TextDocumentSaveRegistrationOptions.$zero();
-                    const v$location46 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next46 => v = v$next46);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions(v$location46), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentSaveRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidSave =
-                        v$location46;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentDidSave = v;
                     break;
                 }
                 case "textDocument/willSave": {
                     let v = TextDocumentRegistrationOptions.$zero();
-                    const v$location47 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next47 => v = v$next47);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v$location47), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentWillSave =
-                        v$location47;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TextDocumentWillSave = v;
                     break;
                 }
                 case "workspace/didChangeWatchedFiles": {
                     let v = DidChangeWatchedFilesRegistrationOptions.$zero();
-                    const v$location48 = tsonicTypeScriptRuntime.boundLocation({}, () => v, v$next48 => v = v$next48);
                     {
-                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions(v$location48), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+                        let err: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(rawRegisterOptions.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DidChangeWatchedFilesRegistrationOptions(v), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                         if (!(err === undefined)) {
                             return err;
                         }
                     }
-                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidChangeWatchedFiles =
-                        v$location48;
+                    ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegisterOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.WorkspaceDidChangeWatchedFiles = v;
                     break;
                 }
                 default: {
@@ -25995,112 +26131,208 @@ export class Registration {
 }
 export class RegisterOptions {
     declare private readonly $goType: void;
-    public constructor(public TextDocumentImplementation: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions> | undefined, public TextDocumentTypeDefinition: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions> | undefined, public TextDocumentDocumentColor: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions> | undefined, public TextDocumentColorPresentation: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions> | undefined, public TextDocumentFoldingRange: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions> | undefined, public TextDocumentDeclaration: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions> | undefined, public TextDocumentSelectionRange: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions> | undefined, public TextDocumentPrepareCallHierarchy: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions> | undefined, public TextDocumentSemanticTokens: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions> | undefined, public TextDocumentLinkedEditingRange: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions> | undefined, public WorkspaceWillCreateFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WorkspaceWillRenameFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WorkspaceWillDeleteFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public TextDocumentMoniker: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions> | undefined, public TextDocumentPrepareTypeHierarchy: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions> | undefined, public TextDocumentInlineValue: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions> | undefined, public TextDocumentInlayHint: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions> | undefined, public TextDocumentDiagnostic: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions> | undefined, public TextDocumentInlineCompletion: tsonicTypeScriptRuntime.Location<InlineCompletionRegistrationOptions> | undefined, public WorkspaceTextDocumentContent: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions> | undefined, public TextDocumentWillSaveWaitUntil: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions> | undefined, public TextDocumentCompletion: tsonicTypeScriptRuntime.Location<CompletionRegistrationOptions> | undefined, public TextDocumentHover: tsonicTypeScriptRuntime.Location<HoverRegistrationOptions> | undefined, public TextDocumentSignatureHelp: tsonicTypeScriptRuntime.Location<SignatureHelpRegistrationOptions> | undefined, public TextDocumentDefinition: tsonicTypeScriptRuntime.Location<DefinitionRegistrationOptions> | undefined, public TextDocumentReferences: tsonicTypeScriptRuntime.Location<ReferenceRegistrationOptions> | undefined, public TextDocumentDocumentHighlight: tsonicTypeScriptRuntime.Location<DocumentHighlightRegistrationOptions> | undefined, public TextDocumentDocumentSymbol: tsonicTypeScriptRuntime.Location<DocumentSymbolRegistrationOptions> | undefined, public TextDocumentCodeAction: tsonicTypeScriptRuntime.Location<CodeActionRegistrationOptions> | undefined, public WorkspaceSymbol: tsonicTypeScriptRuntime.Location<WorkspaceSymbolRegistrationOptions> | undefined, public TextDocumentCodeLens: tsonicTypeScriptRuntime.Location<CodeLensRegistrationOptions> | undefined, public TextDocumentDocumentLink: tsonicTypeScriptRuntime.Location<DocumentLinkRegistrationOptions> | undefined, public TextDocumentFormatting: tsonicTypeScriptRuntime.Location<DocumentFormattingRegistrationOptions> | undefined, public TextDocumentRangeFormatting: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions> | undefined, public TextDocumentRangesFormatting: tsonicTypeScriptRuntime.Location<DocumentRangeFormattingRegistrationOptions> | undefined, public TextDocumentOnTypeFormatting: tsonicTypeScriptRuntime.Location<DocumentOnTypeFormattingRegistrationOptions> | undefined, public TextDocumentRename: tsonicTypeScriptRuntime.Location<RenameRegistrationOptions> | undefined, public WorkspaceExecuteCommand: tsonicTypeScriptRuntime.Location<ExecuteCommandRegistrationOptions> | undefined, public WorkspaceDidCreateFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WorkspaceDidRenameFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WorkspaceDidDeleteFiles: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WorkspaceDidChangeConfiguration: tsonicTypeScriptRuntime.Location<DidChangeConfigurationRegistrationOptions> | undefined, public TextDocumentDidOpen: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions> | undefined, public TextDocumentDidChange: tsonicTypeScriptRuntime.Location<TextDocumentChangeRegistrationOptions> | undefined, public TextDocumentDidClose: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions> | undefined, public TextDocumentDidSave: tsonicTypeScriptRuntime.Location<TextDocumentSaveRegistrationOptions> | undefined, public TextDocumentWillSave: tsonicTypeScriptRuntime.Location<TextDocumentRegistrationOptions> | undefined, public WorkspaceDidChangeWatchedFiles: tsonicTypeScriptRuntime.Location<DidChangeWatchedFilesRegistrationOptions> | undefined) {
+    public constructor(public TextDocumentImplementation: ImplementationRegistrationOptions | undefined, public TextDocumentTypeDefinition: TypeDefinitionRegistrationOptions | undefined, public TextDocumentDocumentColor: DocumentColorRegistrationOptions | undefined, public TextDocumentColorPresentation: ColorPresentationRegistrationOptions | undefined, public TextDocumentFoldingRange: FoldingRangeRegistrationOptions | undefined, public TextDocumentDeclaration: DeclarationRegistrationOptions | undefined, public TextDocumentSelectionRange: SelectionRangeRegistrationOptions | undefined, public TextDocumentPrepareCallHierarchy: CallHierarchyRegistrationOptions | undefined, public TextDocumentSemanticTokens: SemanticTokensRegistrationOptions | undefined, public TextDocumentLinkedEditingRange: LinkedEditingRangeRegistrationOptions | undefined, public WorkspaceWillCreateFiles: FileOperationRegistrationOptions | undefined, public WorkspaceWillRenameFiles: FileOperationRegistrationOptions | undefined, public WorkspaceWillDeleteFiles: FileOperationRegistrationOptions | undefined, public TextDocumentMoniker: MonikerRegistrationOptions | undefined, public TextDocumentPrepareTypeHierarchy: TypeHierarchyRegistrationOptions | undefined, public TextDocumentInlineValue: InlineValueRegistrationOptions | undefined, public TextDocumentInlayHint: InlayHintRegistrationOptions | undefined, public TextDocumentDiagnostic: DiagnosticRegistrationOptions | undefined, public TextDocumentInlineCompletion: InlineCompletionRegistrationOptions | undefined, public WorkspaceTextDocumentContent: TextDocumentContentRegistrationOptions | undefined, public TextDocumentWillSaveWaitUntil: TextDocumentRegistrationOptions | undefined, public TextDocumentCompletion: CompletionRegistrationOptions | undefined, public TextDocumentHover: HoverRegistrationOptions | undefined, public TextDocumentSignatureHelp: SignatureHelpRegistrationOptions | undefined, public TextDocumentDefinition: DefinitionRegistrationOptions | undefined, public TextDocumentReferences: ReferenceRegistrationOptions | undefined, public TextDocumentDocumentHighlight: DocumentHighlightRegistrationOptions | undefined, public TextDocumentDocumentSymbol: DocumentSymbolRegistrationOptions | undefined, public TextDocumentCodeAction: CodeActionRegistrationOptions | undefined, public WorkspaceSymbol: WorkspaceSymbolRegistrationOptions | undefined, public TextDocumentCodeLens: CodeLensRegistrationOptions | undefined, public TextDocumentDocumentLink: DocumentLinkRegistrationOptions | undefined, public TextDocumentFormatting: DocumentFormattingRegistrationOptions | undefined, public TextDocumentRangeFormatting: DocumentRangeFormattingRegistrationOptions | undefined, public TextDocumentRangesFormatting: DocumentRangeFormattingRegistrationOptions | undefined, public TextDocumentOnTypeFormatting: DocumentOnTypeFormattingRegistrationOptions | undefined, public TextDocumentRename: RenameRegistrationOptions | undefined, public WorkspaceExecuteCommand: ExecuteCommandRegistrationOptions | undefined, public WorkspaceDidCreateFiles: FileOperationRegistrationOptions | undefined, public WorkspaceDidRenameFiles: FileOperationRegistrationOptions | undefined, public WorkspaceDidDeleteFiles: FileOperationRegistrationOptions | undefined, public WorkspaceDidChangeConfiguration: DidChangeConfigurationRegistrationOptions | undefined, public TextDocumentDidOpen: TextDocumentRegistrationOptions | undefined, public TextDocumentDidChange: TextDocumentChangeRegistrationOptions | undefined, public TextDocumentDidClose: TextDocumentRegistrationOptions | undefined, public TextDocumentDidSave: TextDocumentSaveRegistrationOptions | undefined, public TextDocumentWillSave: TextDocumentRegistrationOptions | undefined, public WorkspaceDidChangeWatchedFiles: DidChangeWatchedFilesRegistrationOptions | undefined) {
     }
     static $copy($source: RegisterOptions): RegisterOptions {
         return new RegisterOptions($source.TextDocumentImplementation, $source.TextDocumentTypeDefinition, $source.TextDocumentDocumentColor, $source.TextDocumentColorPresentation, $source.TextDocumentFoldingRange, $source.TextDocumentDeclaration, $source.TextDocumentSelectionRange, $source.TextDocumentPrepareCallHierarchy, $source.TextDocumentSemanticTokens, $source.TextDocumentLinkedEditingRange, $source.WorkspaceWillCreateFiles, $source.WorkspaceWillRenameFiles, $source.WorkspaceWillDeleteFiles, $source.TextDocumentMoniker, $source.TextDocumentPrepareTypeHierarchy, $source.TextDocumentInlineValue, $source.TextDocumentInlayHint, $source.TextDocumentDiagnostic, $source.TextDocumentInlineCompletion, $source.WorkspaceTextDocumentContent, $source.TextDocumentWillSaveWaitUntil, $source.TextDocumentCompletion, $source.TextDocumentHover, $source.TextDocumentSignatureHelp, $source.TextDocumentDefinition, $source.TextDocumentReferences, $source.TextDocumentDocumentHighlight, $source.TextDocumentDocumentSymbol, $source.TextDocumentCodeAction, $source.WorkspaceSymbol, $source.TextDocumentCodeLens, $source.TextDocumentDocumentLink, $source.TextDocumentFormatting, $source.TextDocumentRangeFormatting, $source.TextDocumentRangesFormatting, $source.TextDocumentOnTypeFormatting, $source.TextDocumentRename, $source.WorkspaceExecuteCommand, $source.WorkspaceDidCreateFiles, $source.WorkspaceDidRenameFiles, $source.WorkspaceDidDeleteFiles, $source.WorkspaceDidChangeConfiguration, $source.TextDocumentDidOpen, $source.TextDocumentDidChange, $source.TextDocumentDidClose, $source.TextDocumentDidSave, $source.TextDocumentWillSave, $source.WorkspaceDidChangeWatchedFiles);
     }
     static $equal($left: RegisterOptions, $right: RegisterOptions): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.TextDocumentImplementation, $right.TextDocumentImplementation)
+        return $left.TextDocumentImplementation
+            ===
+                $right.TextDocumentImplementation
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.TextDocumentTypeDefinition, $right.TextDocumentTypeDefinition) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDocumentColor, $right.TextDocumentDocumentColor) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentColorPresentation, $right.TextDocumentColorPresentation) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentFoldingRange, $right.TextDocumentFoldingRange) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDeclaration, $right.TextDocumentDeclaration) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentSelectionRange, $right.TextDocumentSelectionRange) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentPrepareCallHierarchy, $right.TextDocumentPrepareCallHierarchy) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentSemanticTokens, $right.TextDocumentSemanticTokens) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentLinkedEditingRange, $right.TextDocumentLinkedEditingRange) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceWillCreateFiles, $right.WorkspaceWillCreateFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceWillRenameFiles, $right.WorkspaceWillRenameFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceWillDeleteFiles, $right.WorkspaceWillDeleteFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentMoniker, $right.TextDocumentMoniker) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentPrepareTypeHierarchy, $right.TextDocumentPrepareTypeHierarchy) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentInlineValue, $right.TextDocumentInlineValue) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentInlayHint, $right.TextDocumentInlayHint) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDiagnostic, $right.TextDocumentDiagnostic) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentInlineCompletion, $right.TextDocumentInlineCompletion) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceTextDocumentContent, $right.WorkspaceTextDocumentContent) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentWillSaveWaitUntil, $right.TextDocumentWillSaveWaitUntil) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentCompletion, $right.TextDocumentCompletion) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentHover, $right.TextDocumentHover) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentSignatureHelp, $right.TextDocumentSignatureHelp) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDefinition, $right.TextDocumentDefinition) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentReferences, $right.TextDocumentReferences) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDocumentHighlight, $right.TextDocumentDocumentHighlight) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDocumentSymbol, $right.TextDocumentDocumentSymbol) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentCodeAction, $right.TextDocumentCodeAction) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceSymbol, $right.WorkspaceSymbol) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentCodeLens, $right.TextDocumentCodeLens) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDocumentLink, $right.TextDocumentDocumentLink) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentFormatting, $right.TextDocumentFormatting) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentRangeFormatting, $right.TextDocumentRangeFormatting) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentRangesFormatting, $right.TextDocumentRangesFormatting) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentOnTypeFormatting, $right.TextDocumentOnTypeFormatting) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentRename, $right.TextDocumentRename) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceExecuteCommand, $right.WorkspaceExecuteCommand) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceDidCreateFiles, $right.WorkspaceDidCreateFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceDidRenameFiles, $right.WorkspaceDidRenameFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceDidDeleteFiles, $right.WorkspaceDidDeleteFiles) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceDidChangeConfiguration, $right.WorkspaceDidChangeConfiguration) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDidOpen, $right.TextDocumentDidOpen) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDidChange, $right.TextDocumentDidChange) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDidClose, $right.TextDocumentDidClose) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentDidSave, $right.TextDocumentDidSave) &&
-            tsonicTypeScriptRuntime.sameLocation($left.TextDocumentWillSave, $right.TextDocumentWillSave) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WorkspaceDidChangeWatchedFiles, $right.WorkspaceDidChangeWatchedFiles);
+                $left.TextDocumentTypeDefinition
+                    ===
+                        $right.TextDocumentTypeDefinition &&
+            $left.TextDocumentDocumentColor
+                ===
+                    $right.TextDocumentDocumentColor &&
+            $left.TextDocumentColorPresentation
+                ===
+                    $right.TextDocumentColorPresentation &&
+            $left.TextDocumentFoldingRange
+                ===
+                    $right.TextDocumentFoldingRange &&
+            $left.TextDocumentDeclaration
+                ===
+                    $right.TextDocumentDeclaration &&
+            $left.TextDocumentSelectionRange
+                ===
+                    $right.TextDocumentSelectionRange &&
+            $left.TextDocumentPrepareCallHierarchy
+                ===
+                    $right.TextDocumentPrepareCallHierarchy &&
+            $left.TextDocumentSemanticTokens
+                ===
+                    $right.TextDocumentSemanticTokens &&
+            $left.TextDocumentLinkedEditingRange
+                ===
+                    $right.TextDocumentLinkedEditingRange &&
+            $left.WorkspaceWillCreateFiles
+                ===
+                    $right.WorkspaceWillCreateFiles &&
+            $left.WorkspaceWillRenameFiles
+                ===
+                    $right.WorkspaceWillRenameFiles &&
+            $left.WorkspaceWillDeleteFiles
+                ===
+                    $right.WorkspaceWillDeleteFiles &&
+            $left.TextDocumentMoniker
+                ===
+                    $right.TextDocumentMoniker &&
+            $left.TextDocumentPrepareTypeHierarchy
+                ===
+                    $right.TextDocumentPrepareTypeHierarchy &&
+            $left.TextDocumentInlineValue
+                ===
+                    $right.TextDocumentInlineValue &&
+            $left.TextDocumentInlayHint
+                ===
+                    $right.TextDocumentInlayHint &&
+            $left.TextDocumentDiagnostic
+                ===
+                    $right.TextDocumentDiagnostic &&
+            $left.TextDocumentInlineCompletion
+                ===
+                    $right.TextDocumentInlineCompletion &&
+            $left.WorkspaceTextDocumentContent
+                ===
+                    $right.WorkspaceTextDocumentContent &&
+            $left.TextDocumentWillSaveWaitUntil
+                ===
+                    $right.TextDocumentWillSaveWaitUntil &&
+            $left.TextDocumentCompletion
+                ===
+                    $right.TextDocumentCompletion &&
+            $left.TextDocumentHover
+                ===
+                    $right.TextDocumentHover &&
+            $left.TextDocumentSignatureHelp
+                ===
+                    $right.TextDocumentSignatureHelp &&
+            $left.TextDocumentDefinition
+                ===
+                    $right.TextDocumentDefinition &&
+            $left.TextDocumentReferences
+                ===
+                    $right.TextDocumentReferences &&
+            $left.TextDocumentDocumentHighlight
+                ===
+                    $right.TextDocumentDocumentHighlight &&
+            $left.TextDocumentDocumentSymbol
+                ===
+                    $right.TextDocumentDocumentSymbol &&
+            $left.TextDocumentCodeAction
+                ===
+                    $right.TextDocumentCodeAction &&
+            $left.WorkspaceSymbol
+                ===
+                    $right.WorkspaceSymbol &&
+            $left.TextDocumentCodeLens
+                ===
+                    $right.TextDocumentCodeLens &&
+            $left.TextDocumentDocumentLink
+                ===
+                    $right.TextDocumentDocumentLink &&
+            $left.TextDocumentFormatting
+                ===
+                    $right.TextDocumentFormatting &&
+            $left.TextDocumentRangeFormatting
+                ===
+                    $right.TextDocumentRangeFormatting &&
+            $left.TextDocumentRangesFormatting
+                ===
+                    $right.TextDocumentRangesFormatting &&
+            $left.TextDocumentOnTypeFormatting
+                ===
+                    $right.TextDocumentOnTypeFormatting &&
+            $left.TextDocumentRename
+                ===
+                    $right.TextDocumentRename &&
+            $left.WorkspaceExecuteCommand
+                ===
+                    $right.WorkspaceExecuteCommand &&
+            $left.WorkspaceDidCreateFiles
+                ===
+                    $right.WorkspaceDidCreateFiles &&
+            $left.WorkspaceDidRenameFiles
+                ===
+                    $right.WorkspaceDidRenameFiles &&
+            $left.WorkspaceDidDeleteFiles
+                ===
+                    $right.WorkspaceDidDeleteFiles &&
+            $left.WorkspaceDidChangeConfiguration
+                ===
+                    $right.WorkspaceDidChangeConfiguration &&
+            $left.TextDocumentDidOpen
+                ===
+                    $right.TextDocumentDidOpen &&
+            $left.TextDocumentDidChange
+                ===
+                    $right.TextDocumentDidChange &&
+            $left.TextDocumentDidClose
+                ===
+                    $right.TextDocumentDidClose &&
+            $left.TextDocumentDidSave
+                ===
+                    $right.TextDocumentDidSave &&
+            $left.TextDocumentWillSave
+                ===
+                    $right.TextDocumentWillSave &&
+            $left.WorkspaceDidChangeWatchedFiles
+                ===
+                    $right.WorkspaceDidChangeWatchedFiles;
     }
     static $hash($source: RegisterOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentImplementation));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentTypeDefinition));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDocumentColor));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentColorPresentation));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentFoldingRange));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDeclaration));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentSelectionRange));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentPrepareCallHierarchy));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentSemanticTokens));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentLinkedEditingRange));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceWillCreateFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceWillRenameFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceWillDeleteFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentMoniker));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentPrepareTypeHierarchy));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentInlineValue));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentInlayHint));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDiagnostic));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentInlineCompletion));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceTextDocumentContent));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentWillSaveWaitUntil));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentCompletion));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentHover));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentSignatureHelp));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDefinition));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentReferences));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDocumentHighlight));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDocumentSymbol));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentCodeAction));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceSymbol));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentCodeLens));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDocumentLink));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentFormatting));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentRangeFormatting));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentRangesFormatting));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentOnTypeFormatting));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentRename));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceExecuteCommand));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceDidCreateFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceDidRenameFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceDidDeleteFiles));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceDidChangeConfiguration));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDidOpen));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDidChange));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDidClose));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentDidSave));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentWillSave));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceDidChangeWatchedFiles));
+        $hash = GoMapHash.mix($hash, (($pointer27: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer27 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer27)))($source.TextDocumentImplementation));
+        $hash = GoMapHash.mix($hash, (($pointer28: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer28 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer28)))($source.TextDocumentTypeDefinition));
+        $hash = GoMapHash.mix($hash, (($pointer29: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer29 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer29)))($source.TextDocumentDocumentColor));
+        $hash = GoMapHash.mix($hash, (($pointer30: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer30 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer30)))($source.TextDocumentColorPresentation));
+        $hash = GoMapHash.mix($hash, (($pointer31: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer31 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer31)))($source.TextDocumentFoldingRange));
+        $hash = GoMapHash.mix($hash, (($pointer32: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer32 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer32)))($source.TextDocumentDeclaration));
+        $hash = GoMapHash.mix($hash, (($pointer33: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer33 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer33)))($source.TextDocumentSelectionRange));
+        $hash = GoMapHash.mix($hash, (($pointer34: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer34 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer34)))($source.TextDocumentPrepareCallHierarchy));
+        $hash = GoMapHash.mix($hash, (($pointer35: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer35 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer35)))($source.TextDocumentSemanticTokens));
+        $hash = GoMapHash.mix($hash, (($pointer36: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer36 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer36)))($source.TextDocumentLinkedEditingRange));
+        $hash = GoMapHash.mix($hash, (($pointer37: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer37 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer37)))($source.WorkspaceWillCreateFiles));
+        $hash = GoMapHash.mix($hash, (($pointer38: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer38 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer38)))($source.WorkspaceWillRenameFiles));
+        $hash = GoMapHash.mix($hash, (($pointer39: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer39 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer39)))($source.WorkspaceWillDeleteFiles));
+        $hash = GoMapHash.mix($hash, (($pointer40: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer40 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer40)))($source.TextDocumentMoniker));
+        $hash = GoMapHash.mix($hash, (($pointer41: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer41 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer41)))($source.TextDocumentPrepareTypeHierarchy));
+        $hash = GoMapHash.mix($hash, (($pointer42: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer42 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer42)))($source.TextDocumentInlineValue));
+        $hash = GoMapHash.mix($hash, (($pointer43: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer43 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer43)))($source.TextDocumentInlayHint));
+        $hash = GoMapHash.mix($hash, (($pointer44: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer44 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer44)))($source.TextDocumentDiagnostic));
+        $hash = GoMapHash.mix($hash, (($pointer45: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer45 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer45)))($source.TextDocumentInlineCompletion));
+        $hash = GoMapHash.mix($hash, (($pointer46: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer46 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer46)))($source.WorkspaceTextDocumentContent));
+        $hash = GoMapHash.mix($hash, (($pointer47: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer47 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer47)))($source.TextDocumentWillSaveWaitUntil));
+        $hash = GoMapHash.mix($hash, (($pointer48: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer48 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer48)))($source.TextDocumentCompletion));
+        $hash = GoMapHash.mix($hash, (($pointer49: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer49 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer49)))($source.TextDocumentHover));
+        $hash = GoMapHash.mix($hash, (($pointer50: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer50 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer50)))($source.TextDocumentSignatureHelp));
+        $hash = GoMapHash.mix($hash, (($pointer51: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer51 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer51)))($source.TextDocumentDefinition));
+        $hash = GoMapHash.mix($hash, (($pointer52: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer52 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer52)))($source.TextDocumentReferences));
+        $hash = GoMapHash.mix($hash, (($pointer53: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer53 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer53)))($source.TextDocumentDocumentHighlight));
+        $hash = GoMapHash.mix($hash, (($pointer54: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer54 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer54)))($source.TextDocumentDocumentSymbol));
+        $hash = GoMapHash.mix($hash, (($pointer55: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer55 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer55)))($source.TextDocumentCodeAction));
+        $hash = GoMapHash.mix($hash, (($pointer56: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer56 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer56)))($source.WorkspaceSymbol));
+        $hash = GoMapHash.mix($hash, (($pointer57: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer57 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer57)))($source.TextDocumentCodeLens));
+        $hash = GoMapHash.mix($hash, (($pointer58: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer58 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer58)))($source.TextDocumentDocumentLink));
+        $hash = GoMapHash.mix($hash, (($pointer59: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer59 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer59)))($source.TextDocumentFormatting));
+        $hash = GoMapHash.mix($hash, (($pointer60: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer60 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer60)))($source.TextDocumentRangeFormatting));
+        $hash = GoMapHash.mix($hash, (($pointer61: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer61 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer61)))($source.TextDocumentRangesFormatting));
+        $hash = GoMapHash.mix($hash, (($pointer62: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer62 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer62)))($source.TextDocumentOnTypeFormatting));
+        $hash = GoMapHash.mix($hash, (($pointer63: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer63 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer63)))($source.TextDocumentRename));
+        $hash = GoMapHash.mix($hash, (($pointer64: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer64 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer64)))($source.WorkspaceExecuteCommand));
+        $hash = GoMapHash.mix($hash, (($pointer65: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer65 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer65)))($source.WorkspaceDidCreateFiles));
+        $hash = GoMapHash.mix($hash, (($pointer66: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer66 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer66)))($source.WorkspaceDidRenameFiles));
+        $hash = GoMapHash.mix($hash, (($pointer67: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer67 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer67)))($source.WorkspaceDidDeleteFiles));
+        $hash = GoMapHash.mix($hash, (($pointer68: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer68 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer68)))($source.WorkspaceDidChangeConfiguration));
+        $hash = GoMapHash.mix($hash, (($pointer69: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer69 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer69)))($source.TextDocumentDidOpen));
+        $hash = GoMapHash.mix($hash, (($pointer70: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer70 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer70)))($source.TextDocumentDidChange));
+        $hash = GoMapHash.mix($hash, (($pointer71: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer71 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer71)))($source.TextDocumentDidClose));
+        $hash = GoMapHash.mix($hash, (($pointer72: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer72 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer72)))($source.TextDocumentDidSave));
+        $hash = GoMapHash.mix($hash, (($pointer73: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer73 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer73)))($source.TextDocumentWillSave));
+        $hash = GoMapHash.mix($hash, (($pointer74: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer74 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer74)))($source.WorkspaceDidChangeWatchedFiles));
         return $hash;
     }
     declare private readonly then?: never;
@@ -26372,41 +26604,41 @@ export class ServerCapabilities {
     static $hash($source: ServerCapabilities): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.PositionEncoding));
-        $hash = GoMapHash.mix($hash, (($pointer22: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer22 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer22)))($source.TextDocumentSync));
-        $hash = GoMapHash.mix($hash, (($pointer23: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer23 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer23)))($source.CompletionProvider));
-        $hash = GoMapHash.mix($hash, (($pointer24: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer24 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer24)))($source.HoverProvider));
-        $hash = GoMapHash.mix($hash, (($pointer25: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer25 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer25)))($source.SignatureHelpProvider));
+        $hash = GoMapHash.mix($hash, (($pointer75: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer75 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer75)))($source.TextDocumentSync));
+        $hash = GoMapHash.mix($hash, (($pointer76: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer76 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer76)))($source.CompletionProvider));
+        $hash = GoMapHash.mix($hash, (($pointer77: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer77 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer77)))($source.HoverProvider));
+        $hash = GoMapHash.mix($hash, (($pointer78: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer78 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer78)))($source.SignatureHelpProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DeclarationProvider));
-        $hash = GoMapHash.mix($hash, (($pointer26: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer26 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer26)))($source.DefinitionProvider));
-        $hash = GoMapHash.mix($hash, (($pointer27: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer27 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer27)))($source.TypeDefinitionProvider));
-        $hash = GoMapHash.mix($hash, (($pointer28: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer28 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer28)))($source.ImplementationProvider));
-        $hash = GoMapHash.mix($hash, (($pointer29: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer29 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer29)))($source.ReferencesProvider));
-        $hash = GoMapHash.mix($hash, (($pointer30: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer30 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer30)))($source.DocumentHighlightProvider));
-        $hash = GoMapHash.mix($hash, (($pointer31: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer31 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer31)))($source.DocumentSymbolProvider));
-        $hash = GoMapHash.mix($hash, (($pointer32: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer32 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer32)))($source.CodeActionProvider));
-        $hash = GoMapHash.mix($hash, (($pointer33: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer33 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer33)))($source.CodeLensProvider));
+        $hash = GoMapHash.mix($hash, (($pointer79: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer79 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer79)))($source.DefinitionProvider));
+        $hash = GoMapHash.mix($hash, (($pointer80: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer80 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer80)))($source.TypeDefinitionProvider));
+        $hash = GoMapHash.mix($hash, (($pointer81: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer81 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer81)))($source.ImplementationProvider));
+        $hash = GoMapHash.mix($hash, (($pointer82: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer82 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer82)))($source.ReferencesProvider));
+        $hash = GoMapHash.mix($hash, (($pointer83: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer83 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer83)))($source.DocumentHighlightProvider));
+        $hash = GoMapHash.mix($hash, (($pointer84: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer84 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer84)))($source.DocumentSymbolProvider));
+        $hash = GoMapHash.mix($hash, (($pointer85: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer85 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer85)))($source.CodeActionProvider));
+        $hash = GoMapHash.mix($hash, (($pointer86: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer86 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer86)))($source.CodeLensProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DocumentLinkProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.ColorProvider));
-        $hash = GoMapHash.mix($hash, (($pointer34: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer34 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer34)))($source.WorkspaceSymbolProvider));
-        $hash = GoMapHash.mix($hash, (($pointer35: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer35 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer35)))($source.DocumentFormattingProvider));
-        $hash = GoMapHash.mix($hash, (($pointer36: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer36 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer36)))($source.DocumentRangeFormattingProvider));
-        $hash = GoMapHash.mix($hash, (($pointer37: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer37 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer37)))($source.DocumentOnTypeFormattingProvider));
-        $hash = GoMapHash.mix($hash, (($pointer38: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer38 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer38)))($source.RenameProvider));
-        $hash = GoMapHash.mix($hash, (($pointer39: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer39 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer39)))($source.FoldingRangeProvider));
-        $hash = GoMapHash.mix($hash, (($pointer40: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer40 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer40)))($source.SelectionRangeProvider));
+        $hash = GoMapHash.mix($hash, (($pointer87: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer87 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer87)))($source.WorkspaceSymbolProvider));
+        $hash = GoMapHash.mix($hash, (($pointer88: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer88 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer88)))($source.DocumentFormattingProvider));
+        $hash = GoMapHash.mix($hash, (($pointer89: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer89 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer89)))($source.DocumentRangeFormattingProvider));
+        $hash = GoMapHash.mix($hash, (($pointer90: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer90 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer90)))($source.DocumentOnTypeFormattingProvider));
+        $hash = GoMapHash.mix($hash, (($pointer91: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer91 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer91)))($source.RenameProvider));
+        $hash = GoMapHash.mix($hash, (($pointer92: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer92 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer92)))($source.FoldingRangeProvider));
+        $hash = GoMapHash.mix($hash, (($pointer93: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer93 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer93)))($source.SelectionRangeProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.ExecuteCommandProvider));
-        $hash = GoMapHash.mix($hash, (($pointer41: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer41 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer41)))($source.CallHierarchyProvider));
-        $hash = GoMapHash.mix($hash, (($pointer42: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer42 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer42)))($source.LinkedEditingRangeProvider));
-        $hash = GoMapHash.mix($hash, (($pointer43: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer43 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer43)))($source.SemanticTokensProvider));
+        $hash = GoMapHash.mix($hash, (($pointer94: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer94 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer94)))($source.CallHierarchyProvider));
+        $hash = GoMapHash.mix($hash, (($pointer95: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer95 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer95)))($source.LinkedEditingRangeProvider));
+        $hash = GoMapHash.mix($hash, (($pointer96: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer96 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer96)))($source.SemanticTokensProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.MonikerProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TypeHierarchyProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InlineValueProvider));
-        $hash = GoMapHash.mix($hash, (($pointer44: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer44 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer44)))($source.InlayHintProvider));
-        $hash = GoMapHash.mix($hash, (($pointer45: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer45 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer45)))($source.DiagnosticProvider));
+        $hash = GoMapHash.mix($hash, (($pointer97: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer97 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer97)))($source.InlayHintProvider));
+        $hash = GoMapHash.mix($hash, (($pointer98: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer98 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer98)))($source.DiagnosticProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InlineCompletionProvider));
-        $hash = GoMapHash.mix($hash, (($pointer46: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer46 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer46)))($source.Workspace));
-        $hash = GoMapHash.mix($hash, (($pointer47: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer47 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer47)))($source.Experimental));
-        $hash = GoMapHash.mix($hash, (($pointer48: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer48 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer48)))($source.VSOnAutoInsertProvider));
+        $hash = GoMapHash.mix($hash, (($pointer99: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer99 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer99)))($source.Workspace));
+        $hash = GoMapHash.mix($hash, (($pointer100: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer100 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer100)))($source.Experimental));
+        $hash = GoMapHash.mix($hash, (($pointer101: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer101 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer101)))($source.VSOnAutoInsertProvider));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.VSReferencesProvider));
         return $hash;
     }
@@ -28170,7 +28402,7 @@ export class CompletionItemDefaults {
     static $hash($source: CompletionItemDefaults): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.CommitCharacters));
-        $hash = GoMapHash.mix($hash, (($pointer49: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer49 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer49)))($source.EditRange));
+        $hash = GoMapHash.mix($hash, (($pointer102: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer102 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer102)))($source.EditRange));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InsertTextFormat));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InsertTextMode));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Data));
@@ -28667,7 +28899,7 @@ export class SignatureHelpContext {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.TriggerKind));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TriggerCharacter));
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.IsRetrigger));
-        $hash = GoMapHash.mix($hash, (($pointer50: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer50 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer50)))($source.ActiveSignatureHelp));
+        $hash = GoMapHash.mix($hash, (($pointer103: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer103 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer103)))($source.ActiveSignatureHelp));
         return $hash;
     }
     declare private readonly then?: never;
@@ -28822,8 +29054,8 @@ export class SignatureInformation {
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Label));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Documentation));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Parameters));
-        $hash = GoMapHash.mix($hash, (($pointer51: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer51 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer51)))($source.ActiveParameter));
-        $hash = GoMapHash.mix($hash, (($pointer52: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer52 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer52)))($source.VSColorizedLabel));
+        $hash = GoMapHash.mix($hash, (($pointer104: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer104 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer104)))($source.ActiveParameter));
+        $hash = GoMapHash.mix($hash, (($pointer105: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer105 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer105)))($source.VSColorizedLabel));
         return $hash;
     }
     declare private readonly then?: never;
@@ -31672,7 +31904,7 @@ export class SnippetTextEdit {
     static $hash($source: SnippetTextEdit): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, Range.$hash($source.Range));
-        $hash = GoMapHash.mix($hash, (($pointer53: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer53 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer53)))($source.Snippet));
+        $hash = GoMapHash.mix($hash, (($pointer106: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer106 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer106)))($source.Snippet));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.AnnotationId));
         return $hash;
     }
@@ -32104,7 +32336,7 @@ export class FileOperationPattern {
     static $hash($source: FileOperationPattern): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Glob));
-        $hash = GoMapHash.mix($hash, (($pointer54: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer54 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer54)))($source.Matches));
+        $hash = GoMapHash.mix($hash, (($pointer107: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer107 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer107)))($source.Matches));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Options));
         return $hash;
     }
@@ -33017,7 +33249,7 @@ export class TextDocumentSyncOptions {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Change));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WillSave));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WillSaveWaitUntil));
-        $hash = GoMapHash.mix($hash, (($pointer55: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer55 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer55)))($source.Save));
+        $hash = GoMapHash.mix($hash, (($pointer108: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer108 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer108)))($source.Save));
         return $hash;
     }
     declare private readonly then?: never;
@@ -33171,7 +33403,7 @@ export class WorkspaceOptions {
     static $hash($source: WorkspaceOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WorkspaceFolders));
-        $hash = GoMapHash.mix($hash, (($pointer56: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer56 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer56)))($source.FileOperations));
+        $hash = GoMapHash.mix($hash, (($pointer109: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer109 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer109)))($source.FileOperations));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TextDocumentContent));
         return $hash;
     }
@@ -34108,19 +34340,21 @@ export class ParameterInformation {
 }
 export class CodeActionKindDocumentation {
     declare private readonly $goType: void;
-    public constructor(public Kind: CodeActionKind, public Command: tsonicTypeScriptRuntime.Location<Command> | undefined) {
+    public constructor(public Kind: CodeActionKind, public Command: Command | undefined) {
     }
     static $copy($source: CodeActionKindDocumentation): CodeActionKindDocumentation {
         return new CodeActionKindDocumentation($source.Kind, $source.Command);
     }
     static $equal($left: CodeActionKindDocumentation, $right: CodeActionKindDocumentation): bool {
         return $left.Kind.$value === $right.Kind.$value &&
-            tsonicTypeScriptRuntime.sameLocation($left.Command, $right.Command);
+            $left.Command
+                ===
+                    $right.Command;
     }
     static $hash($source: CodeActionKindDocumentation): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Kind.$value));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Command));
+        $hash = GoMapHash.mix($hash, (($pointer110: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer110 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer110)))($source.Command));
         return $hash;
     }
     declare private readonly then?: never;
@@ -35664,28 +35898,40 @@ export class WorkspaceFoldersServerCapabilities {
 }
 export class FileOperationOptions {
     declare private readonly $goType: void;
-    public constructor(public DidCreate: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WillCreate: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public DidRename: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WillRename: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public DidDelete: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined, public WillDelete: tsonicTypeScriptRuntime.Location<FileOperationRegistrationOptions> | undefined) {
+    public constructor(public DidCreate: FileOperationRegistrationOptions | undefined, public WillCreate: FileOperationRegistrationOptions | undefined, public DidRename: FileOperationRegistrationOptions | undefined, public WillRename: FileOperationRegistrationOptions | undefined, public DidDelete: FileOperationRegistrationOptions | undefined, public WillDelete: FileOperationRegistrationOptions | undefined) {
     }
     static $copy($source: FileOperationOptions): FileOperationOptions {
         return new FileOperationOptions($source.DidCreate, $source.WillCreate, $source.DidRename, $source.WillRename, $source.DidDelete, $source.WillDelete);
     }
     static $equal($left: FileOperationOptions, $right: FileOperationOptions): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.DidCreate, $right.DidCreate)
+        return $left.DidCreate
+            ===
+                $right.DidCreate
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.WillCreate, $right.WillCreate) &&
-            tsonicTypeScriptRuntime.sameLocation($left.DidRename, $right.DidRename) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WillRename, $right.WillRename) &&
-            tsonicTypeScriptRuntime.sameLocation($left.DidDelete, $right.DidDelete) &&
-            tsonicTypeScriptRuntime.sameLocation($left.WillDelete, $right.WillDelete);
+                $left.WillCreate
+                    ===
+                        $right.WillCreate &&
+            $left.DidRename
+                ===
+                    $right.DidRename &&
+            $left.WillRename
+                ===
+                    $right.WillRename &&
+            $left.DidDelete
+                ===
+                    $right.DidDelete &&
+            $left.WillDelete
+                ===
+                    $right.WillDelete;
     }
     static $hash($source: FileOperationOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DidCreate));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WillCreate));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DidRename));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WillRename));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DidDelete));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.WillDelete));
+        $hash = GoMapHash.mix($hash, (($pointer111: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer111 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer111)))($source.DidCreate));
+        $hash = GoMapHash.mix($hash, (($pointer112: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer112 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer112)))($source.WillCreate));
+        $hash = GoMapHash.mix($hash, (($pointer113: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer113 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer113)))($source.DidRename));
+        $hash = GoMapHash.mix($hash, (($pointer114: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer114 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer114)))($source.WillRename));
+        $hash = GoMapHash.mix($hash, (($pointer115: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer115 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer115)))($source.DidDelete));
+        $hash = GoMapHash.mix($hash, (($pointer116: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer116 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer116)))($source.WillDelete));
         return $hash;
     }
     declare private readonly then?: never;
@@ -35970,7 +36216,7 @@ export class TextDocumentFilterLanguage {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentFilterLanguage | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingLanguage: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -36004,7 +36250,7 @@ export class TextDocumentFilterLanguage {
                     missing = missing & ~missingLanguage;
                     {
                         const __gotots_argument_1646 = dec;
-                        const __gotots_store_542 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage>).value;
+                        const __gotots_store_542 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1647 = new $goInterfaceAdapter$PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_542, "Language"));
                         const __gotots_argument_1648 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1646, __gotots_argument_1647, __gotots_argument_1648);
@@ -36020,7 +36266,7 @@ export class TextDocumentFilterLanguage {
                     }
                     {
                         const __gotots_argument_1649 = dec;
-                        const __gotots_store_543 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage>).value;
+                        const __gotots_store_543 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1650 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_543, "Scheme"));
                         const __gotots_argument_1651 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1649, __gotots_argument_1650, __gotots_argument_1651);
@@ -36036,7 +36282,7 @@ export class TextDocumentFilterLanguage {
                     }
                     {
                         const __gotots_argument_1652 = dec;
-                        const __gotots_store_544 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage>).value;
+                        const __gotots_store_544 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1653 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$PatternOrRelativePattern(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_544, "Pattern"));
                         const __gotots_argument_1654 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1652, __gotots_argument_1653, __gotots_argument_1654);
@@ -36073,6 +36319,11 @@ export class TextDocumentFilterLanguage {
         }
         return void 0;
     }
+    $tsonicReplace($value: TextDocumentFilterLanguage): void {
+        this.Language = $value.Language;
+        this.Scheme = $value.Scheme;
+        this.Pattern = $value.Pattern;
+    }
 }
 export class TextDocumentFilterScheme {
     declare private readonly $goType: void;
@@ -36097,7 +36348,7 @@ export class TextDocumentFilterScheme {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentFilterScheme | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingScheme: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -36133,7 +36384,7 @@ export class TextDocumentFilterScheme {
                     }
                     {
                         const __gotots_argument_1628 = dec;
-                        const __gotots_store_536 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme>).value;
+                        const __gotots_store_536 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1629 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_536, "Language"));
                         const __gotots_argument_1630 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1628, __gotots_argument_1629, __gotots_argument_1630);
@@ -36147,7 +36398,7 @@ export class TextDocumentFilterScheme {
                     missing = missing & ~missingScheme;
                     {
                         const __gotots_argument_1631 = dec;
-                        const __gotots_store_537 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme>).value;
+                        const __gotots_store_537 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1632 = new $goInterfaceAdapter$PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_537, "Scheme"));
                         const __gotots_argument_1633 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1631, __gotots_argument_1632, __gotots_argument_1633);
@@ -36163,7 +36414,7 @@ export class TextDocumentFilterScheme {
                     }
                     {
                         const __gotots_argument_1634 = dec;
-                        const __gotots_store_538 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme>).value;
+                        const __gotots_store_538 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1635 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$PatternOrRelativePattern(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_538, "Pattern"));
                         const __gotots_argument_1636 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1634, __gotots_argument_1635, __gotots_argument_1636);
@@ -36200,6 +36451,11 @@ export class TextDocumentFilterScheme {
         }
         return void 0;
     }
+    $tsonicReplace($value: TextDocumentFilterScheme): void {
+        this.Language = $value.Language;
+        this.Scheme = $value.Scheme;
+        this.Pattern = $value.Pattern;
+    }
 }
 export class TextDocumentFilterPattern {
     declare private readonly $goType: void;
@@ -36224,7 +36480,7 @@ export class TextDocumentFilterPattern {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: TextDocumentFilterPattern | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingPattern: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -36260,7 +36516,7 @@ export class TextDocumentFilterPattern {
                     }
                     {
                         const __gotots_argument_1637 = dec;
-                        const __gotots_store_539 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern>).value;
+                        const __gotots_store_539 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1638 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_539, "Language"));
                         const __gotots_argument_1639 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1637, __gotots_argument_1638, __gotots_argument_1639);
@@ -36276,7 +36532,7 @@ export class TextDocumentFilterPattern {
                     }
                     {
                         const __gotots_argument_1640 = dec;
-                        const __gotots_store_540 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern>).value;
+                        const __gotots_store_540 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1641 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_540, "Scheme"));
                         const __gotots_argument_1642 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1640, __gotots_argument_1641, __gotots_argument_1642);
@@ -36290,7 +36546,7 @@ export class TextDocumentFilterPattern {
                     missing = missing & ~missingPattern;
                     {
                         const __gotots_argument_1643 = dec;
-                        const __gotots_store_541 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern>).value;
+                        const __gotots_store_541 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_1644 = new $goInterfaceAdapter$PointerTo_Named_lsproto$PatternOrRelativePattern(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_541, "Pattern"));
                         const __gotots_argument_1645 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1643, __gotots_argument_1644, __gotots_argument_1645);
@@ -36326,6 +36582,11 @@ export class TextDocumentFilterPattern {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: TextDocumentFilterPattern): void {
+        this.Language = $value.Language;
+        this.Scheme = $value.Scheme;
+        this.Pattern = $value.Pattern;
     }
 }
 export class WorkspaceEditClientCapabilities {
@@ -44802,7 +45063,7 @@ export class CompletionItemData {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.Position));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Source));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.Name));
-        $hash = GoMapHash.mix($hash, (($pointer57: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer57 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer57)))($source.AutoImport));
+        $hash = GoMapHash.mix($hash, (($pointer117: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer117 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer117)))($source.AutoImport));
         return $hash;
     }
     declare private readonly then?: never;
@@ -45330,13 +45591,13 @@ export class VSReferenceItem {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.VSDefinitionId));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.VSKind));
         $hash = GoMapHash.mix($hash, Location.$hash($source.VSLocation));
-        $hash = GoMapHash.mix($hash, (($pointer58: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer58 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer58)))($source.VSDefinitionText));
+        $hash = GoMapHash.mix($hash, (($pointer118: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer118 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer118)))($source.VSDefinitionText));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.VSProjectName));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.VSContainingType));
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: VSReferenceItem | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingVSId: uint = 1;
         const missingVSLocation: uint = 2;
         const _missingLast: uint = 4;
@@ -45371,7 +45632,7 @@ export class VSReferenceItem {
                     missing = missing & ~missingVSId;
                     {
                         const __gotots_argument_3187 = dec;
-                        const __gotots_store_1046 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1046 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3188 = new $goInterfaceAdapter$PointerTo_int32(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1046, "VSId"));
                         const __gotots_argument_3189 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3187, __gotots_argument_3188, __gotots_argument_3189);
@@ -45387,7 +45648,7 @@ export class VSReferenceItem {
                     }
                     {
                         const __gotots_argument_3190 = dec;
-                        const __gotots_store_1047 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1047 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3191 = new $goInterfaceAdapter$PointerTo_PointerTo_int32(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1047, "VSDefinitionId"));
                         const __gotots_argument_3192 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3190, __gotots_argument_3191, __gotots_argument_3192);
@@ -45403,7 +45664,7 @@ export class VSReferenceItem {
                     }
                     {
                         const __gotots_argument_3193 = dec;
-                        const __gotots_store_1048 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1048 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3194 = new $goInterfaceAdapter$PointerTo_PointerTo_SliceOf_Named_lsproto$VSReferenceKind(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1048, "VSKind"));
                         const __gotots_argument_3195 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3193, __gotots_argument_3194, __gotots_argument_3195);
@@ -45417,7 +45678,7 @@ export class VSReferenceItem {
                     missing = missing & ~missingVSLocation;
                     {
                         const __gotots_argument_3196 = dec;
-                        const __gotots_store_1049 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1049 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3197 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1049, "VSLocation"));
                         const __gotots_argument_3198 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3196, __gotots_argument_3197, __gotots_argument_3198);
@@ -45433,7 +45694,7 @@ export class VSReferenceItem {
                     }
                     {
                         const __gotots_argument_3199 = dec;
-                        const __gotots_store_1050 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1050 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3200 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$VSClassifiedTextElement(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1050, "VSDefinitionText"));
                         const __gotots_argument_3201 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3199, __gotots_argument_3200, __gotots_argument_3201);
@@ -45449,7 +45710,7 @@ export class VSReferenceItem {
                     }
                     {
                         const __gotots_argument_3202 = dec;
-                        const __gotots_store_1051 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1051 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3203 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1051, "VSProjectName"));
                         const __gotots_argument_3204 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3202, __gotots_argument_3203, __gotots_argument_3204);
@@ -45465,7 +45726,7 @@ export class VSReferenceItem {
                     }
                     {
                         const __gotots_argument_3205 = dec;
-                        const __gotots_store_1052 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem>).value;
+                        const __gotots_store_1052 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_3206 = new $goInterfaceAdapter$PointerTo_PointerTo_string(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1052, "VSContainingType"));
                         const __gotots_argument_3207 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3205, __gotots_argument_3206, __gotots_argument_3207);
@@ -45504,6 +45765,15 @@ export class VSReferenceItem {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: VSReferenceItem): void {
+        this.VSId = $value.VSId;
+        this.VSDefinitionId = $value.VSDefinitionId;
+        this.VSKind = $value.VSKind;
+        this.VSLocation = $value.VSLocation;
+        this.VSDefinitionText = $value.VSDefinitionText;
+        this.VSProjectName = $value.VSProjectName;
+        this.VSContainingType = $value.VSContainingType;
     }
 }
 export class VSOnAutoInsertParams {
@@ -45659,7 +45929,7 @@ export class VSOnAutoInsertResponseItem {
     static $hash($source: VSOnAutoInsertResponseItem): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.VSTextEditFormat));
-        $hash = GoMapHash.mix($hash, (($pointer59: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer59 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer59)))($source.VSTextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer119: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer119 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer119)))($source.VSTextEdit));
         return $hash;
     }
     declare private readonly then?: never;
@@ -45780,7 +46050,7 @@ export class RequestFailureTelemetryEvent {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, StringLiteralLanguageServerErrorResponse.$hash($source.EventName));
         $hash = GoMapHash.mix($hash, StringLiteralError.$hash($source.TelemetryPurpose));
-        $hash = GoMapHash.mix($hash, (($pointer60: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer60 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer60)))($source.Properties));
+        $hash = GoMapHash.mix($hash, (($pointer120: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer120 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer120)))($source.Properties));
         return $hash;
     }
     declare private readonly then?: never;
@@ -46692,7 +46962,7 @@ export class PerformanceStatsTelemetryEvent {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, StringLiteralLanguageServerPerformanceStats.$hash($source.EventName));
         $hash = GoMapHash.mix($hash, StringLiteralUsage.$hash($source.TelemetryPurpose));
-        $hash = GoMapHash.mix($hash, (($pointer61: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer61 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer61)))($source.Measurements));
+        $hash = GoMapHash.mix($hash, (($pointer121: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer121 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer121)))($source.Measurements));
         return $hash;
     }
     declare private readonly then?: never;
@@ -46857,7 +47127,7 @@ export class PerformanceStatsTelemetryMeasurements {
 }
 export class ProjectInfoTelemetryEvent {
     declare private readonly $goType: void;
-    public constructor(public EventName: StringLiteralLanguageServerProjectInfo, public TelemetryPurpose: StringLiteralUsage, public Properties: GoMapValue<gostring, gostring>, public Measurements: tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements> | undefined) {
+    public constructor(public EventName: StringLiteralLanguageServerProjectInfo, public TelemetryPurpose: StringLiteralUsage, public Properties: GoMapValue<gostring, gostring>, public Measurements: ProjectInfoTelemetryMeasurements | undefined) {
     }
     static $zero(): ProjectInfoTelemetryEvent {
         return new ProjectInfoTelemetryEvent(StringLiteralLanguageServerProjectInfo.$zero(), StringLiteralUsage.$zero(), GoMap.nil<gostring, gostring>(""), void 0);
@@ -47028,6 +47298,18 @@ export class ProjectInfoTelemetryMeasurements {
         return $hash;
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: ProjectInfoTelemetryMeasurements): void {
+        this.JsFileCount = $value.JsFileCount;
+        this.JsFileSize = $value.JsFileSize;
+        this.JsxFileCount = $value.JsxFileCount;
+        this.JsxFileSize = $value.JsxFileSize;
+        this.TsFileCount = $value.TsFileCount;
+        this.TsFileSize = $value.TsFileSize;
+        this.TsxFileCount = $value.TsxFileCount;
+        this.TsxFileSize = $value.TsxFileSize;
+        this.DtsFileCount = $value.DtsFileCount;
+        this.DtsFileSize = $value.DtsFileSize;
+    }
 }
 export class MultiDocumentHighlight {
     declare private readonly $goType: void;
@@ -47673,7 +47955,7 @@ export class ColorPresentationRegistrationOptions {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: ColorPresentationRegistrationOptions | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingDocumentSelector: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -47709,7 +47991,7 @@ export class ColorPresentationRegistrationOptions {
                     }
                     {
                         const __gotots_argument_2873 = dec;
-                        const __gotots_store_938 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions>).value;
+                        const __gotots_store_938 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2874 = new $goInterfaceAdapter$PointerTo_PointerTo_bool(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_938, "WorkDoneProgress"));
                         const __gotots_argument_2875 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2873, __gotots_argument_2874, __gotots_argument_2875);
@@ -47723,7 +48005,7 @@ export class ColorPresentationRegistrationOptions {
                     missing = missing & ~missingDocumentSelector;
                     {
                         const __gotots_argument_2876 = dec;
-                        const __gotots_store_939 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ColorPresentationRegistrationOptions>).value;
+                        const __gotots_store_939 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                         const __gotots_argument_2877 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentSelectorOrNull(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_939, "DocumentSelector"));
                         const __gotots_argument_2878 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2876, __gotots_argument_2877, __gotots_argument_2878);
@@ -47759,6 +48041,10 @@ export class ColorPresentationRegistrationOptions {
             return errMissing(missingProps);
         }
         return void 0;
+    }
+    $tsonicReplace($value: ColorPresentationRegistrationOptions): void {
+        this.WorkDoneProgress = $value.WorkDoneProgress;
+        this.DocumentSelector = $value.DocumentSelector;
     }
 }
 export class SemanticTokenType {
@@ -50010,7 +50296,7 @@ export class BooleanOrSemanticTokensFullDelta {
     static $hash($source: BooleanOrSemanticTokensFullDelta): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer62: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer62 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer62)))($source.SemanticTokensFullDelta));
+        $hash = GoMapHash.mix($hash, (($pointer122: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer122 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer122)))($source.SemanticTokensFullDelta));
         return $hash;
     }
     declare private readonly then?: never;
@@ -50124,14 +50410,6 @@ export class TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
     } | undefined) {
         this.$storage.DeleteFile = $value;
     }
-    static $zero(): TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
-        return new TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile({
-            TextDocumentEdit: void 0,
-            CreateFile: void 0,
-            RenameFile: void 0,
-            DeleteFile: void 0
-        });
-    }
     static $copy($source: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile): TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
         return new TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile({
             TextDocumentEdit: $source.$storage.TextDocumentEdit,
@@ -50157,11 +50435,19 @@ export class TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
     }
     static $hash($source: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer63: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer63 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer63)))($source.$storage.TextDocumentEdit));
-        $hash = GoMapHash.mix($hash, (($pointer64: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer64 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer64)))($source.$storage.CreateFile));
-        $hash = GoMapHash.mix($hash, (($pointer65: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer65 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer65)))($source.$storage.RenameFile));
-        $hash = GoMapHash.mix($hash, (($pointer66: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer66 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer66)))($source.$storage.DeleteFile));
+        $hash = GoMapHash.mix($hash, (($pointer123: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer123 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer123)))($source.$storage.TextDocumentEdit));
+        $hash = GoMapHash.mix($hash, (($pointer124: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer124 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer124)))($source.$storage.CreateFile));
+        $hash = GoMapHash.mix($hash, (($pointer125: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer125 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer125)))($source.$storage.RenameFile));
+        $hash = GoMapHash.mix($hash, (($pointer126: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer126 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer126)))($source.$storage.DeleteFile));
         return $hash;
+    }
+    static $zeroStorage(): TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile$Storage {
+        return {
+            TextDocumentEdit: void 0,
+            CreateFile: void 0,
+            RenameFile: void 0,
+            DeleteFile: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -50311,7 +50597,7 @@ export class StringOrMarkupContent {
     static $hash($source: StringOrMarkupContent): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.String));
-        $hash = GoMapHash.mix($hash, (($pointer67: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer67 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer67)))($source.MarkupContent));
+        $hash = GoMapHash.mix($hash, (($pointer127: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer127 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer127)))($source.MarkupContent));
         return $hash;
     }
     declare private readonly then?: never;
@@ -50420,12 +50706,6 @@ export class WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticR
     } | undefined) {
         this.$storage.UnchangedDocumentDiagnosticReport = $value;
     }
-    static $zero(): WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport {
-        return new WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport({
-            FullDocumentDiagnosticReport: void 0,
-            UnchangedDocumentDiagnosticReport: void 0
-        });
-    }
     static $copy($source: WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport): WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport {
         return new WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport({
             FullDocumentDiagnosticReport: $source.$storage.FullDocumentDiagnosticReport,
@@ -50443,9 +50723,15 @@ export class WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticR
     }
     static $hash($source: WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer68: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer68 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer68)))($source.$storage.FullDocumentDiagnosticReport));
-        $hash = GoMapHash.mix($hash, (($pointer69: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer69 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer69)))($source.$storage.UnchangedDocumentDiagnosticReport));
+        $hash = GoMapHash.mix($hash, (($pointer128: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer128 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer128)))($source.$storage.FullDocumentDiagnosticReport));
+        $hash = GoMapHash.mix($hash, (($pointer129: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer129 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer129)))($source.$storage.UnchangedDocumentDiagnosticReport));
         return $hash;
+    }
+    static $zeroStorage(): WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport$Storage {
+        return {
+            FullDocumentDiagnosticReport: void 0,
+            UnchangedDocumentDiagnosticReport: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<WorkspaceFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -50513,7 +50799,7 @@ export class StringOrStringValue {
     static $hash($source: StringOrStringValue): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.String));
-        $hash = GoMapHash.mix($hash, (($pointer70: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer70 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer70)))($source.StringValue));
+        $hash = GoMapHash.mix($hash, (($pointer130: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer130 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer130)))($source.StringValue));
         return $hash;
     }
     declare private readonly then?: never;
@@ -50709,7 +50995,7 @@ export class InitializationOptionsOrNull {
     }
     static $hash($source: InitializationOptionsOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer71: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer71 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer71)))($source.InitializationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer131: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer131 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer131)))($source.InitializationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -50918,12 +51204,6 @@ export class TextDocumentContentChangePartialOrWholeDocument {
     } | undefined) {
         this.$storage.WholeDocument = $value;
     }
-    static $zero(): TextDocumentContentChangePartialOrWholeDocument {
-        return new TextDocumentContentChangePartialOrWholeDocument({
-            Partial: void 0,
-            WholeDocument: void 0
-        });
-    }
     static $copy($source: TextDocumentContentChangePartialOrWholeDocument): TextDocumentContentChangePartialOrWholeDocument {
         return new TextDocumentContentChangePartialOrWholeDocument({
             Partial: $source.$storage.Partial,
@@ -50941,9 +51221,15 @@ export class TextDocumentContentChangePartialOrWholeDocument {
     }
     static $hash($source: TextDocumentContentChangePartialOrWholeDocument): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer72: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer72 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer72)))($source.$storage.Partial));
-        $hash = GoMapHash.mix($hash, (($pointer73: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer73 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer73)))($source.$storage.WholeDocument));
+        $hash = GoMapHash.mix($hash, (($pointer132: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer132 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer132)))($source.$storage.Partial));
+        $hash = GoMapHash.mix($hash, (($pointer133: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer133 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer133)))($source.$storage.WholeDocument));
         return $hash;
+    }
+    static $zeroStorage(): TextDocumentContentChangePartialOrWholeDocument$Storage {
+        return {
+            Partial: void 0,
+            WholeDocument: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<TextDocumentContentChangePartialOrWholeDocument> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -51008,8 +51294,8 @@ export class TextEditOrInsertReplaceEdit {
     }
     static $hash($source: TextEditOrInsertReplaceEdit): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer74: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer74 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer74)))($source.TextEdit));
-        $hash = GoMapHash.mix($hash, (($pointer75: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer75 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer75)))($source.InsertReplaceEdit));
+        $hash = GoMapHash.mix($hash, (($pointer134: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer134 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer134)))($source.TextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer135: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer135 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer135)))($source.InsertReplaceEdit));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51082,9 +51368,9 @@ export class MarkupContentOrStringOrMarkedStringWithLanguageOrMarkedStrings {
     }
     static $hash($source: MarkupContentOrStringOrMarkedStringWithLanguageOrMarkedStrings): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer76: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer76 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer76)))($source.MarkupContent));
+        $hash = GoMapHash.mix($hash, (($pointer136: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer136 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer136)))($source.MarkupContent));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.String));
-        $hash = GoMapHash.mix($hash, (($pointer77: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer77 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer77)))($source.MarkedStringWithLanguage));
+        $hash = GoMapHash.mix($hash, (($pointer137: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer137 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer137)))($source.MarkedStringWithLanguage));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.MarkedStrings));
         return $hash;
     }
@@ -51225,7 +51511,7 @@ export class LocationOrLocationUriOnly {
     static $hash($source: LocationOrLocationUriOnly): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Location));
-        $hash = GoMapHash.mix($hash, (($pointer78: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer78 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer78)))($source.LocationUriOnly));
+        $hash = GoMapHash.mix($hash, (($pointer138: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer138 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer138)))($source.LocationUriOnly));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51296,9 +51582,9 @@ export class WorkDoneProgressBeginOrReportOrEnd {
     }
     static $hash($source: WorkDoneProgressBeginOrReportOrEnd): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer79: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer79 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer79)))($source.Begin));
-        $hash = GoMapHash.mix($hash, (($pointer80: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer80 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer80)))($source.Report));
-        $hash = GoMapHash.mix($hash, (($pointer81: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer81 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer81)))($source.End));
+        $hash = GoMapHash.mix($hash, (($pointer139: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer139 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer139)))($source.Begin));
+        $hash = GoMapHash.mix($hash, (($pointer140: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer140 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer140)))($source.Report));
+        $hash = GoMapHash.mix($hash, (($pointer141: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer141 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer141)))($source.End));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51405,13 +51691,6 @@ export class TextEditOrAnnotatedTextEditOrSnippetTextEdit {
     } | undefined) {
         this.$storage.SnippetTextEdit = $value;
     }
-    static $zero(): TextEditOrAnnotatedTextEditOrSnippetTextEdit {
-        return new TextEditOrAnnotatedTextEditOrSnippetTextEdit({
-            TextEdit: void 0,
-            AnnotatedTextEdit: void 0,
-            SnippetTextEdit: void 0
-        });
-    }
     static $copy($source: TextEditOrAnnotatedTextEditOrSnippetTextEdit): TextEditOrAnnotatedTextEditOrSnippetTextEdit {
         return new TextEditOrAnnotatedTextEditOrSnippetTextEdit({
             TextEdit: $source.$storage.TextEdit,
@@ -51433,10 +51712,17 @@ export class TextEditOrAnnotatedTextEditOrSnippetTextEdit {
     }
     static $hash($source: TextEditOrAnnotatedTextEditOrSnippetTextEdit): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer82: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer82 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer82)))($source.$storage.TextEdit));
-        $hash = GoMapHash.mix($hash, (($pointer83: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer83 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer83)))($source.$storage.AnnotatedTextEdit));
-        $hash = GoMapHash.mix($hash, (($pointer84: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer84 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer84)))($source.$storage.SnippetTextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer142: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer142 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer142)))($source.$storage.TextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer143: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer143 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer143)))($source.$storage.AnnotatedTextEdit));
+        $hash = GoMapHash.mix($hash, (($pointer144: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer144 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer144)))($source.$storage.SnippetTextEdit));
         return $hash;
+    }
+    static $zeroStorage(): TextEditOrAnnotatedTextEditOrSnippetTextEdit$Storage {
+        return {
+            TextEdit: void 0,
+            AnnotatedTextEdit: void 0,
+            SnippetTextEdit: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<TextEditOrAnnotatedTextEditOrSnippetTextEdit> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -51507,7 +51793,7 @@ export class TextDocumentSyncOptionsOrKind {
     }
     static $hash($source: TextDocumentSyncOptionsOrKind): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer85: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer85 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer85)))($source.Options));
+        $hash = GoMapHash.mix($hash, (($pointer145: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer145 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer145)))($source.Options));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Kind));
         return $hash;
     }
@@ -51570,7 +51856,7 @@ export class BooleanOrHoverOptions {
     static $hash($source: BooleanOrHoverOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer86: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer86 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer86)))($source.HoverOptions));
+        $hash = GoMapHash.mix($hash, (($pointer146: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer146 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer146)))($source.HoverOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51624,7 +51910,7 @@ export class BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public DeclarationOptions: {
         value: DeclarationOptions;
-    } | undefined, public DeclarationRegistrationOptions: tsonicTypeScriptRuntime.Location<DeclarationRegistrationOptions> | undefined) {
+    } | undefined, public DeclarationRegistrationOptions: DeclarationRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions): BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
         return new BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions($source.Boolean, $source.DeclarationOptions, $source.DeclarationRegistrationOptions);
@@ -51635,13 +51921,15 @@ export class BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
                 $left.DeclarationOptions
                     ===
                         $right.DeclarationOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.DeclarationRegistrationOptions, $right.DeclarationRegistrationOptions);
+            $left.DeclarationRegistrationOptions
+                ===
+                    $right.DeclarationRegistrationOptions;
     }
     static $hash($source: BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer87: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer87 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer87)))($source.DeclarationOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DeclarationRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer147: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer147 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer147)))($source.DeclarationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer148: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer148 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer148)))($source.DeclarationRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51684,8 +51972,7 @@ export class BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions>).value.DeclarationRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<DeclarationRegistrationOptions>(DeclarationRegistrationOptions.$zero());
+                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions>).value.DeclarationRegistrationOptions = DeclarationRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DeclarationRegistrationOptions(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions>).value.DeclarationRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -51726,7 +52013,7 @@ export class BooleanOrDefinitionOptions {
     static $hash($source: BooleanOrDefinitionOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer88: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer88 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer88)))($source.DefinitionOptions));
+        $hash = GoMapHash.mix($hash, (($pointer149: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer149 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer149)))($source.DefinitionOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51780,7 +52067,7 @@ export class BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public TypeDefinitionOptions: {
         value: TypeDefinitionOptions;
-    } | undefined, public TypeDefinitionRegistrationOptions: tsonicTypeScriptRuntime.Location<TypeDefinitionRegistrationOptions> | undefined) {
+    } | undefined, public TypeDefinitionRegistrationOptions: TypeDefinitionRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions): BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
         return new BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions($source.Boolean, $source.TypeDefinitionOptions, $source.TypeDefinitionRegistrationOptions);
@@ -51791,13 +52078,15 @@ export class BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
                 $left.TypeDefinitionOptions
                     ===
                         $right.TypeDefinitionOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.TypeDefinitionRegistrationOptions, $right.TypeDefinitionRegistrationOptions);
+            $left.TypeDefinitionRegistrationOptions
+                ===
+                    $right.TypeDefinitionRegistrationOptions;
     }
     static $hash($source: BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer89: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer89 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer89)))($source.TypeDefinitionOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TypeDefinitionRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer150: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer150 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer150)))($source.TypeDefinitionOptions));
+        $hash = GoMapHash.mix($hash, (($pointer151: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer151 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer151)))($source.TypeDefinitionRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51844,8 +52133,7 @@ export class BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeDefinitionRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<TypeDefinitionRegistrationOptions>(TypeDefinitionRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeDefinitionRegistrationOptions = TypeDefinitionRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeDefinitionRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeDefinitionRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -51871,7 +52159,7 @@ export class BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public ImplementationOptions: {
         value: ImplementationOptions;
-    } | undefined, public ImplementationRegistrationOptions: tsonicTypeScriptRuntime.Location<ImplementationRegistrationOptions> | undefined) {
+    } | undefined, public ImplementationRegistrationOptions: ImplementationRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrImplementationOptionsOrImplementationRegistrationOptions): BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
         return new BooleanOrImplementationOptionsOrImplementationRegistrationOptions($source.Boolean, $source.ImplementationOptions, $source.ImplementationRegistrationOptions);
@@ -51882,13 +52170,15 @@ export class BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
                 $left.ImplementationOptions
                     ===
                         $right.ImplementationOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.ImplementationRegistrationOptions, $right.ImplementationRegistrationOptions);
+            $left.ImplementationRegistrationOptions
+                ===
+                    $right.ImplementationRegistrationOptions;
     }
     static $hash($source: BooleanOrImplementationOptionsOrImplementationRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer90: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer90 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer90)))($source.ImplementationOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.ImplementationRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer152: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer152 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer152)))($source.ImplementationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer153: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer153 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer153)))($source.ImplementationRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -51935,8 +52225,7 @@ export class BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImplementationRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<ImplementationRegistrationOptions>(ImplementationRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImplementationRegistrationOptions = ImplementationRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$ImplementationRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImplementationRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -51977,7 +52266,7 @@ export class BooleanOrReferenceOptions {
     static $hash($source: BooleanOrReferenceOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer91: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer91 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer91)))($source.ReferenceOptions));
+        $hash = GoMapHash.mix($hash, (($pointer154: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer154 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer154)))($source.ReferenceOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52046,7 +52335,7 @@ export class BooleanOrDocumentHighlightOptions {
     static $hash($source: BooleanOrDocumentHighlightOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer92: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer92 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer92)))($source.DocumentHighlightOptions));
+        $hash = GoMapHash.mix($hash, (($pointer155: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer155 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer155)))($source.DocumentHighlightOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52115,7 +52404,7 @@ export class BooleanOrDocumentSymbolOptions {
     static $hash($source: BooleanOrDocumentSymbolOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer93: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer93 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer93)))($source.DocumentSymbolOptions));
+        $hash = GoMapHash.mix($hash, (($pointer156: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer156 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer156)))($source.DocumentSymbolOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52184,7 +52473,7 @@ export class BooleanOrCodeActionOptions {
     static $hash($source: BooleanOrCodeActionOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer94: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer94 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer94)))($source.CodeActionOptions));
+        $hash = GoMapHash.mix($hash, (($pointer157: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer157 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer157)))($source.CodeActionOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52238,7 +52527,7 @@ export class BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public DocumentColorOptions: {
         value: DocumentColorOptions;
-    } | undefined, public DocumentColorRegistrationOptions: tsonicTypeScriptRuntime.Location<DocumentColorRegistrationOptions> | undefined) {
+    } | undefined, public DocumentColorRegistrationOptions: DocumentColorRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions): BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
         return new BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions($source.Boolean, $source.DocumentColorOptions, $source.DocumentColorRegistrationOptions);
@@ -52249,13 +52538,15 @@ export class BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
                 $left.DocumentColorOptions
                     ===
                         $right.DocumentColorOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.DocumentColorRegistrationOptions, $right.DocumentColorRegistrationOptions);
+            $left.DocumentColorRegistrationOptions
+                ===
+                    $right.DocumentColorRegistrationOptions;
     }
     static $hash($source: BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer95: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer95 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer95)))($source.DocumentColorOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.DocumentColorRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer158: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer158 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer158)))($source.DocumentColorOptions));
+        $hash = GoMapHash.mix($hash, (($pointer159: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer159 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer159)))($source.DocumentColorRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52298,8 +52589,7 @@ export class BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions>).value.DocumentColorRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<DocumentColorRegistrationOptions>(DocumentColorRegistrationOptions.$zero());
+                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions>).value.DocumentColorRegistrationOptions = DocumentColorRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentColorRegistrationOptions(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions>).value.DocumentColorRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -52340,7 +52630,7 @@ export class BooleanOrWorkspaceSymbolOptions {
     static $hash($source: BooleanOrWorkspaceSymbolOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer96: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer96 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer96)))($source.WorkspaceSymbolOptions));
+        $hash = GoMapHash.mix($hash, (($pointer160: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer160 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer160)))($source.WorkspaceSymbolOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52409,7 +52699,7 @@ export class BooleanOrDocumentFormattingOptions {
     static $hash($source: BooleanOrDocumentFormattingOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer97: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer97 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer97)))($source.DocumentFormattingOptions));
+        $hash = GoMapHash.mix($hash, (($pointer161: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer161 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer161)))($source.DocumentFormattingOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52478,7 +52768,7 @@ export class BooleanOrDocumentRangeFormattingOptions {
     static $hash($source: BooleanOrDocumentRangeFormattingOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer98: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer98 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer98)))($source.DocumentRangeFormattingOptions));
+        $hash = GoMapHash.mix($hash, (($pointer162: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer162 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer162)))($source.DocumentRangeFormattingOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52547,7 +52837,7 @@ export class BooleanOrRenameOptions {
     static $hash($source: BooleanOrRenameOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer99: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer99 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer99)))($source.RenameOptions));
+        $hash = GoMapHash.mix($hash, (($pointer163: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer163 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer163)))($source.RenameOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52601,7 +52891,7 @@ export class BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public FoldingRangeOptions: {
         value: FoldingRangeOptions;
-    } | undefined, public FoldingRangeRegistrationOptions: tsonicTypeScriptRuntime.Location<FoldingRangeRegistrationOptions> | undefined) {
+    } | undefined, public FoldingRangeRegistrationOptions: FoldingRangeRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions): BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
         return new BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions($source.Boolean, $source.FoldingRangeOptions, $source.FoldingRangeRegistrationOptions);
@@ -52612,13 +52902,15 @@ export class BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
                 $left.FoldingRangeOptions
                     ===
                         $right.FoldingRangeOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.FoldingRangeRegistrationOptions, $right.FoldingRangeRegistrationOptions);
+            $left.FoldingRangeRegistrationOptions
+                ===
+                    $right.FoldingRangeRegistrationOptions;
     }
     static $hash($source: BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer100: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer100 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer100)))($source.FoldingRangeOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.FoldingRangeRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer164: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer164 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer164)))($source.FoldingRangeOptions));
+        $hash = GoMapHash.mix($hash, (($pointer165: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer165 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer165)))($source.FoldingRangeRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52665,8 +52957,7 @@ export class BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FoldingRangeRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<FoldingRangeRegistrationOptions>(FoldingRangeRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FoldingRangeRegistrationOptions = FoldingRangeRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$FoldingRangeRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FoldingRangeRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -52692,7 +52983,7 @@ export class BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public SelectionRangeOptions: {
         value: SelectionRangeOptions;
-    } | undefined, public SelectionRangeRegistrationOptions: tsonicTypeScriptRuntime.Location<SelectionRangeRegistrationOptions> | undefined) {
+    } | undefined, public SelectionRangeRegistrationOptions: SelectionRangeRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions): BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
         return new BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions($source.Boolean, $source.SelectionRangeOptions, $source.SelectionRangeRegistrationOptions);
@@ -52703,13 +52994,15 @@ export class BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
                 $left.SelectionRangeOptions
                     ===
                         $right.SelectionRangeOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.SelectionRangeRegistrationOptions, $right.SelectionRangeRegistrationOptions);
+            $left.SelectionRangeRegistrationOptions
+                ===
+                    $right.SelectionRangeRegistrationOptions;
     }
     static $hash($source: BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer101: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer101 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer101)))($source.SelectionRangeOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.SelectionRangeRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer166: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer166 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer166)))($source.SelectionRangeOptions));
+        $hash = GoMapHash.mix($hash, (($pointer167: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer167 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer167)))($source.SelectionRangeRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52756,8 +53049,7 @@ export class BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SelectionRangeRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<SelectionRangeRegistrationOptions>(SelectionRangeRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SelectionRangeRegistrationOptions = SelectionRangeRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SelectionRangeRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SelectionRangeRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -52783,7 +53075,7 @@ export class BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public CallHierarchyOptions: {
         value: CallHierarchyOptions;
-    } | undefined, public CallHierarchyRegistrationOptions: tsonicTypeScriptRuntime.Location<CallHierarchyRegistrationOptions> | undefined) {
+    } | undefined, public CallHierarchyRegistrationOptions: CallHierarchyRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions): BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
         return new BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions($source.Boolean, $source.CallHierarchyOptions, $source.CallHierarchyRegistrationOptions);
@@ -52794,13 +53086,15 @@ export class BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
                 $left.CallHierarchyOptions
                     ===
                         $right.CallHierarchyOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.CallHierarchyRegistrationOptions, $right.CallHierarchyRegistrationOptions);
+            $left.CallHierarchyRegistrationOptions
+                ===
+                    $right.CallHierarchyRegistrationOptions;
     }
     static $hash($source: BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer102: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer102 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer102)))($source.CallHierarchyOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.CallHierarchyRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer168: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer168 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer168)))($source.CallHierarchyOptions));
+        $hash = GoMapHash.mix($hash, (($pointer169: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer169 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer169)))($source.CallHierarchyRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52847,8 +53141,7 @@ export class BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CallHierarchyRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<CallHierarchyRegistrationOptions>(CallHierarchyRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CallHierarchyRegistrationOptions = CallHierarchyRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$CallHierarchyRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CallHierarchyRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -52874,7 +53167,7 @@ export class BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationO
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public LinkedEditingRangeOptions: {
         value: LinkedEditingRangeOptions;
-    } | undefined, public LinkedEditingRangeRegistrationOptions: tsonicTypeScriptRuntime.Location<LinkedEditingRangeRegistrationOptions> | undefined) {
+    } | undefined, public LinkedEditingRangeRegistrationOptions: LinkedEditingRangeRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions): BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions {
         return new BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions($source.Boolean, $source.LinkedEditingRangeOptions, $source.LinkedEditingRangeRegistrationOptions);
@@ -52885,13 +53178,15 @@ export class BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationO
                 $left.LinkedEditingRangeOptions
                     ===
                         $right.LinkedEditingRangeOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.LinkedEditingRangeRegistrationOptions, $right.LinkedEditingRangeRegistrationOptions);
+            $left.LinkedEditingRangeRegistrationOptions
+                ===
+                    $right.LinkedEditingRangeRegistrationOptions;
     }
     static $hash($source: BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer103: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer103 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer103)))($source.LinkedEditingRangeOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.LinkedEditingRangeRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer170: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer170 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer170)))($source.LinkedEditingRangeOptions));
+        $hash = GoMapHash.mix($hash, (($pointer171: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer171 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer171)))($source.LinkedEditingRangeRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -52938,8 +53233,7 @@ export class BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationO
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LinkedEditingRangeRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<LinkedEditingRangeRegistrationOptions>(LinkedEditingRangeRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LinkedEditingRangeRegistrationOptions = LinkedEditingRangeRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$LinkedEditingRangeRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LinkedEditingRangeRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -52965,7 +53259,7 @@ export class SemanticTokensOptionsOrRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Options: {
         value: SemanticTokensOptions;
-    } | undefined, public RegistrationOptions: tsonicTypeScriptRuntime.Location<SemanticTokensRegistrationOptions> | undefined) {
+    } | undefined, public RegistrationOptions: SemanticTokensRegistrationOptions | undefined) {
     }
     static $copy($source: SemanticTokensOptionsOrRegistrationOptions): SemanticTokensOptionsOrRegistrationOptions {
         return new SemanticTokensOptionsOrRegistrationOptions($source.Options, $source.RegistrationOptions);
@@ -52975,12 +53269,14 @@ export class SemanticTokensOptionsOrRegistrationOptions {
             ===
                 $right.Options
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.RegistrationOptions, $right.RegistrationOptions);
+                $left.RegistrationOptions
+                    ===
+                        $right.RegistrationOptions;
     }
     static $hash($source: SemanticTokensOptionsOrRegistrationOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer104: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer104 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer104)))($source.Options));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.RegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer172: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer172 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer172)))($source.Options));
+        $hash = GoMapHash.mix($hash, (($pointer173: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer173 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer173)))($source.RegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53011,8 +53307,7 @@ export class SemanticTokensOptionsOrRegistrationOptions {
         }
         switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
             case 0: {
-                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions =
-                    tsonicTypeScriptRuntime.location<SemanticTokensRegistrationOptions>(SemanticTokensRegistrationOptions.$zero());
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions = SemanticTokensRegistrationOptions.$zero();
                 return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$SemanticTokensRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                 break;
             }
@@ -53029,7 +53324,7 @@ export class BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public MonikerOptions: {
         value: MonikerOptions;
-    } | undefined, public MonikerRegistrationOptions: tsonicTypeScriptRuntime.Location<MonikerRegistrationOptions> | undefined) {
+    } | undefined, public MonikerRegistrationOptions: MonikerRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrMonikerOptionsOrMonikerRegistrationOptions): BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
         return new BooleanOrMonikerOptionsOrMonikerRegistrationOptions($source.Boolean, $source.MonikerOptions, $source.MonikerRegistrationOptions);
@@ -53040,13 +53335,15 @@ export class BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
                 $left.MonikerOptions
                     ===
                         $right.MonikerOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.MonikerRegistrationOptions, $right.MonikerRegistrationOptions);
+            $left.MonikerRegistrationOptions
+                ===
+                    $right.MonikerRegistrationOptions;
     }
     static $hash($source: BooleanOrMonikerOptionsOrMonikerRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer105: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer105 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer105)))($source.MonikerOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.MonikerRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer174: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer174 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer174)))($source.MonikerOptions));
+        $hash = GoMapHash.mix($hash, (($pointer175: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer175 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer175)))($source.MonikerRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53089,8 +53386,7 @@ export class BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrMonikerOptionsOrMonikerRegistrationOptions>).value.MonikerRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<MonikerRegistrationOptions>(MonikerRegistrationOptions.$zero());
+                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrMonikerOptionsOrMonikerRegistrationOptions>).value.MonikerRegistrationOptions = MonikerRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$MonikerRegistrationOptions(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrMonikerOptionsOrMonikerRegistrationOptions>).value.MonikerRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -53116,7 +53412,7 @@ export class BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public TypeHierarchyOptions: {
         value: TypeHierarchyOptions;
-    } | undefined, public TypeHierarchyRegistrationOptions: tsonicTypeScriptRuntime.Location<TypeHierarchyRegistrationOptions> | undefined) {
+    } | undefined, public TypeHierarchyRegistrationOptions: TypeHierarchyRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions): BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
         return new BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions($source.Boolean, $source.TypeHierarchyOptions, $source.TypeHierarchyRegistrationOptions);
@@ -53127,13 +53423,15 @@ export class BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
                 $left.TypeHierarchyOptions
                     ===
                         $right.TypeHierarchyOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.TypeHierarchyRegistrationOptions, $right.TypeHierarchyRegistrationOptions);
+            $left.TypeHierarchyRegistrationOptions
+                ===
+                    $right.TypeHierarchyRegistrationOptions;
     }
     static $hash($source: BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer106: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer106 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer106)))($source.TypeHierarchyOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.TypeHierarchyRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer176: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer176 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer176)))($source.TypeHierarchyOptions));
+        $hash = GoMapHash.mix($hash, (($pointer177: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer177 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer177)))($source.TypeHierarchyRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53176,8 +53474,7 @@ export class BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions>).value.TypeHierarchyRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<TypeHierarchyRegistrationOptions>(TypeHierarchyRegistrationOptions.$zero());
+                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions>).value.TypeHierarchyRegistrationOptions = TypeHierarchyRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TypeHierarchyRegistrationOptions(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions>).value.TypeHierarchyRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -53203,7 +53500,7 @@ export class BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public InlineValueOptions: {
         value: InlineValueOptions;
-    } | undefined, public InlineValueRegistrationOptions: tsonicTypeScriptRuntime.Location<InlineValueRegistrationOptions> | undefined) {
+    } | undefined, public InlineValueRegistrationOptions: InlineValueRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions): BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
         return new BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions($source.Boolean, $source.InlineValueOptions, $source.InlineValueRegistrationOptions);
@@ -53214,13 +53511,15 @@ export class BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
                 $left.InlineValueOptions
                     ===
                         $right.InlineValueOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.InlineValueRegistrationOptions, $right.InlineValueRegistrationOptions);
+            $left.InlineValueRegistrationOptions
+                ===
+                    $right.InlineValueRegistrationOptions;
     }
     static $hash($source: BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer107: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer107 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer107)))($source.InlineValueOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InlineValueRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer178: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer178 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer178)))($source.InlineValueOptions));
+        $hash = GoMapHash.mix($hash, (($pointer179: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer179 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer179)))($source.InlineValueRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53263,8 +53562,7 @@ export class BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions>).value.InlineValueRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<InlineValueRegistrationOptions>(InlineValueRegistrationOptions.$zero());
+                            ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions>).value.InlineValueRegistrationOptions = InlineValueRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlineValueRegistrationOptions(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions>).value.InlineValueRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -53290,7 +53588,7 @@ export class BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Boolean: tsonicTypeScriptRuntime.Location<bool> | undefined, public InlayHintOptions: {
         value: InlayHintOptions;
-    } | undefined, public InlayHintRegistrationOptions: tsonicTypeScriptRuntime.Location<InlayHintRegistrationOptions> | undefined) {
+    } | undefined, public InlayHintRegistrationOptions: InlayHintRegistrationOptions | undefined) {
     }
     static $copy($source: BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions): BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
         return new BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions($source.Boolean, $source.InlayHintOptions, $source.InlayHintRegistrationOptions);
@@ -53301,13 +53599,15 @@ export class BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
                 $left.InlayHintOptions
                     ===
                         $right.InlayHintOptions &&
-            tsonicTypeScriptRuntime.sameLocation($left.InlayHintRegistrationOptions, $right.InlayHintRegistrationOptions);
+            $left.InlayHintRegistrationOptions
+                ===
+                    $right.InlayHintRegistrationOptions;
     }
     static $hash($source: BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer108: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer108 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer108)))($source.InlayHintOptions));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.InlayHintRegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer180: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer180 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer180)))($source.InlayHintOptions));
+        $hash = GoMapHash.mix($hash, (($pointer181: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer181 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer181)))($source.InlayHintRegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53354,8 +53654,7 @@ export class BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
                     }
                     switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
                         case 0: {
-                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InlayHintRegistrationOptions =
-                                tsonicTypeScriptRuntime.location<InlayHintRegistrationOptions>(InlayHintRegistrationOptions.$zero());
+                            (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InlayHintRegistrationOptions = InlayHintRegistrationOptions.$zero();
                             return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$InlayHintRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.InlayHintRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                             break;
                         }
@@ -53381,7 +53680,7 @@ export class DiagnosticOptionsOrRegistrationOptions {
     declare private readonly $goType: void;
     public constructor(public Options: {
         value: DiagnosticOptions;
-    } | undefined, public RegistrationOptions: tsonicTypeScriptRuntime.Location<DiagnosticRegistrationOptions> | undefined) {
+    } | undefined, public RegistrationOptions: DiagnosticRegistrationOptions | undefined) {
     }
     static $copy($source: DiagnosticOptionsOrRegistrationOptions): DiagnosticOptionsOrRegistrationOptions {
         return new DiagnosticOptionsOrRegistrationOptions($source.Options, $source.RegistrationOptions);
@@ -53391,12 +53690,14 @@ export class DiagnosticOptionsOrRegistrationOptions {
             ===
                 $right.Options
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.RegistrationOptions, $right.RegistrationOptions);
+                $left.RegistrationOptions
+                    ===
+                        $right.RegistrationOptions;
     }
     static $hash($source: DiagnosticOptionsOrRegistrationOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer109: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer109 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer109)))($source.Options));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.RegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer182: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer182 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer182)))($source.Options));
+        $hash = GoMapHash.mix($hash, (($pointer183: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer183 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer183)))($source.RegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53427,8 +53728,7 @@ export class DiagnosticOptionsOrRegistrationOptions {
         }
         switch (jsonObjectHasKey(data.$value, RuntimeSlice.literal<gostring>(["documentSelector"]))) {
             case 0: {
-                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions =
-                    tsonicTypeScriptRuntime.location<DiagnosticRegistrationOptions>(DiagnosticRegistrationOptions.$zero());
+                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions = DiagnosticRegistrationOptions.$zero();
                 return Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$DiagnosticRegistrationOptions((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.RegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                 break;
             }
@@ -53460,7 +53760,7 @@ export class BooleanOrInlineCompletionOptions {
     static $hash($source: BooleanOrInlineCompletionOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer110: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer110 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer110)))($source.InlineCompletionOptions));
+        $hash = GoMapHash.mix($hash, (($pointer184: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer184 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer184)))($source.InlineCompletionOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53528,7 +53828,7 @@ export class PatternOrRelativePattern {
     static $hash($source: PatternOrRelativePattern): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Pattern));
-        $hash = GoMapHash.mix($hash, (($pointer111: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer111 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer111)))($source.RelativePattern));
+        $hash = GoMapHash.mix($hash, (($pointer185: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer185 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer185)))($source.RelativePattern));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53586,7 +53886,7 @@ export class RangeOrEditRangeWithInsertReplace {
     static $hash($source: RangeOrEditRangeWithInsertReplace): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Range));
-        $hash = GoMapHash.mix($hash, (($pointer112: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer112 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer112)))($source.EditRangeWithInsertReplace));
+        $hash = GoMapHash.mix($hash, (($pointer186: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer186 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer186)))($source.EditRangeWithInsertReplace));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53651,7 +53951,7 @@ export class BooleanOrSaveOptions {
     static $hash($source: BooleanOrSaveOptions): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer113: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer113 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer113)))($source.SaveOptions));
+        $hash = GoMapHash.mix($hash, (($pointer187: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer187 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer187)))($source.SaveOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53703,20 +54003,24 @@ export class BooleanOrSaveOptions {
 }
 export class TextDocumentContentOptionsOrRegistrationOptions {
     declare private readonly $goType: void;
-    public constructor(public Options: tsonicTypeScriptRuntime.Location<TextDocumentContentOptions> | undefined, public RegistrationOptions: tsonicTypeScriptRuntime.Location<TextDocumentContentRegistrationOptions> | undefined) {
+    public constructor(public Options: TextDocumentContentOptions | undefined, public RegistrationOptions: TextDocumentContentRegistrationOptions | undefined) {
     }
     static $copy($source: TextDocumentContentOptionsOrRegistrationOptions): TextDocumentContentOptionsOrRegistrationOptions {
         return new TextDocumentContentOptionsOrRegistrationOptions($source.Options, $source.RegistrationOptions);
     }
     static $equal($left: TextDocumentContentOptionsOrRegistrationOptions, $right: TextDocumentContentOptionsOrRegistrationOptions): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.Options, $right.Options)
+        return $left.Options
+            ===
+                $right.Options
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.RegistrationOptions, $right.RegistrationOptions);
+                $left.RegistrationOptions
+                    ===
+                        $right.RegistrationOptions;
     }
     static $hash($source: TextDocumentContentOptionsOrRegistrationOptions): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Options));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.RegistrationOptions));
+        $hash = GoMapHash.mix($hash, (($pointer188: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer188 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer188)))($source.Options));
+        $hash = GoMapHash.mix($hash, (($pointer189: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer189 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer189)))($source.RegistrationOptions));
         return $hash;
     }
     declare private readonly then?: never;
@@ -53742,22 +54046,18 @@ export class TextDocumentContentOptionsOrRegistrationOptions {
             return err;
         }
         let vOptions = TextDocumentContentOptions.$zero();
-        const vOptions$location = tsonicTypeScriptRuntime.boundLocation({}, () => vOptions, vOptions$next => vOptions = vOptions$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOptions(vOptions$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentOptions(vOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentOptionsOrRegistrationOptions>).value.Options =
-                    vOptions$location;
+                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentOptionsOrRegistrationOptions>).value.Options = vOptions;
                 return void 0;
             }
         }
         let vRegistrationOptions = TextDocumentContentRegistrationOptions.$zero();
-        const vRegistrationOptions$location = tsonicTypeScriptRuntime.boundLocation({}, () => vRegistrationOptions, vRegistrationOptions$next => vRegistrationOptions = vRegistrationOptions$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions(vRegistrationOptions$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentContentRegistrationOptions(vRegistrationOptions), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentOptionsOrRegistrationOptions>).value.RegistrationOptions =
-                    vRegistrationOptions$location;
+                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentContentOptionsOrRegistrationOptions>).value.RegistrationOptions = vRegistrationOptions;
                 return void 0;
             }
         }
@@ -53900,7 +54200,7 @@ export class WorkspaceFolderOrURI {
     }
     static $hash($source: WorkspaceFolderOrURI): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer114: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer114 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer114)))($source.WorkspaceFolder));
+        $hash = GoMapHash.mix($hash, (($pointer190: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer190 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer190)))($source.WorkspaceFolder));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.URI));
         return $hash;
     }
@@ -53962,7 +54262,7 @@ export class BooleanOrClientSemanticTokensRequestFullDelta {
     static $hash($source: BooleanOrClientSemanticTokensRequestFullDelta): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.Boolean));
-        $hash = GoMapHash.mix($hash, (($pointer115: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer115 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer115)))($source.ClientSemanticTokensRequestFullDelta));
+        $hash = GoMapHash.mix($hash, (($pointer191: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer191 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer191)))($source.ClientSemanticTokensRequestFullDelta));
         return $hash;
     }
     declare private readonly then?: never;
@@ -54736,7 +55036,7 @@ export class SemanticTokensOrNull implements GoContainerStoredValue<SemanticToke
     }
     static $hash($source: SemanticTokensOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer116: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer116 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer116)))($source.$storage.SemanticTokens));
+        $hash = GoMapHash.mix($hash, (($pointer192: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer192 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer192)))($source.$storage.SemanticTokens));
         return $hash;
     }
     declare private readonly then?: never;
@@ -54833,8 +55133,8 @@ export class SemanticTokensOrSemanticTokensDeltaOrNull implements GoContainerSto
     }
     static $hash($source: SemanticTokensOrSemanticTokensDeltaOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer117: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer117 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer117)))($source.$storage.SemanticTokens));
-        $hash = GoMapHash.mix($hash, (($pointer118: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer118 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer118)))($source.$storage.SemanticTokensDelta));
+        $hash = GoMapHash.mix($hash, (($pointer193: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer193 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer193)))($source.$storage.SemanticTokens));
+        $hash = GoMapHash.mix($hash, (($pointer194: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer194 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer194)))($source.$storage.SemanticTokensDelta));
         return $hash;
     }
     declare private readonly then?: never;
@@ -54935,7 +55235,7 @@ export class LinkedEditingRangesOrNull implements GoContainerStoredValue<LinkedE
     }
     static $hash($source: LinkedEditingRangesOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer119: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer119 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer119)))($source.$storage.LinkedEditingRanges));
+        $hash = GoMapHash.mix($hash, (($pointer195: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer195 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer195)))($source.$storage.LinkedEditingRanges));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55014,7 +55314,7 @@ export class WorkspaceEditOrNull implements GoStoredValue<WorkspaceEditOrNull$St
     }
     static $hash($source: WorkspaceEditOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer120: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer120 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer120)))($source.$storage.WorkspaceEdit));
+        $hash = GoMapHash.mix($hash, (($pointer196: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer196 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer196)))($source.$storage.WorkspaceEdit));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55391,8 +55691,8 @@ export class RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticRep
     }
     static $hash($source: RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer121: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer121 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer121)))($source.$storage.FullDocumentDiagnosticReport));
-        $hash = GoMapHash.mix($hash, (($pointer122: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer122 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer122)))($source.$storage.UnchangedDocumentDiagnosticReport));
+        $hash = GoMapHash.mix($hash, (($pointer197: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer197 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer197)))($source.$storage.FullDocumentDiagnosticReport));
+        $hash = GoMapHash.mix($hash, (($pointer198: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer198 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer198)))($source.$storage.UnchangedDocumentDiagnosticReport));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55496,7 +55796,7 @@ export class InlineCompletionListOrItemsOrNull implements GoContainerStoredValue
     }
     static $hash($source: InlineCompletionListOrItemsOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer123: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer123 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer123)))($source.$storage.List));
+        $hash = GoMapHash.mix($hash, (($pointer199: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer199 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer199)))($source.$storage.List));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Items));
         return $hash;
     }
@@ -55586,7 +55886,7 @@ export class MessageActionItemOrNull implements GoContainerStoredValue<MessageAc
     }
     static $hash($source: MessageActionItemOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer124: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer124 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer124)))($source.$storage.MessageActionItem));
+        $hash = GoMapHash.mix($hash, (($pointer200: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer200 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer200)))($source.$storage.MessageActionItem));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55756,7 +56056,7 @@ export class CompletionItemsOrListOrNull implements GoContainerStoredValue<Compl
     static $hash($source: CompletionItemsOrListOrNull): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Items));
-        $hash = GoMapHash.mix($hash, (($pointer125: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer125 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer125)))($source.$storage.List));
+        $hash = GoMapHash.mix($hash, (($pointer201: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer201 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer201)))($source.$storage.List));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55845,7 +56145,7 @@ export class HoverOrNull implements GoContainerStoredValue<HoverOrNull$Storage> 
     }
     static $hash($source: HoverOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer126: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer126 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer126)))($source.$storage.Hover));
+        $hash = GoMapHash.mix($hash, (($pointer202: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer202 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer202)))($source.$storage.Hover));
         return $hash;
     }
     declare private readonly then?: never;
@@ -55923,7 +56223,7 @@ export class SignatureHelpOrNull implements GoContainerStoredValue<SignatureHelp
     }
     static $hash($source: SignatureHelpOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer127: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer127 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer127)))($source.$storage.SignatureHelp));
+        $hash = GoMapHash.mix($hash, (($pointer203: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer203 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer203)))($source.$storage.SignatureHelp));
         return $hash;
     }
     declare private readonly then?: never;
@@ -56232,7 +56532,7 @@ export class SymbolInformationsOrDocumentSymbolsOrNull implements GoContainerSto
     }
 }
 export type CommandOrCodeAction$Storage = {
-    Command: tsonicTypeScriptRuntime.Location<Command> | undefined;
+    Command: Command | undefined;
     CodeAction: tsonicTypeScriptRuntime.Location<CodeAction> | undefined;
 };
 export class CommandOrCodeAction {
@@ -56245,10 +56545,10 @@ export class CommandOrCodeAction {
     public static $fromStorage($source: CommandOrCodeAction$Storage): CommandOrCodeAction {
         return new CommandOrCodeAction($source);
     }
-    public get Command(): tsonicTypeScriptRuntime.Location<Command> | undefined {
+    public get Command(): Command | undefined {
         return this.$storage.Command;
     }
-    public set Command($value: tsonicTypeScriptRuntime.Location<Command> | undefined) {
+    public set Command($value: Command | undefined) {
         this.$storage.Command = $value;
     }
     public get CodeAction(): tsonicTypeScriptRuntime.Location<CodeAction> | undefined {
@@ -56257,12 +56557,6 @@ export class CommandOrCodeAction {
     public set CodeAction($value: tsonicTypeScriptRuntime.Location<CodeAction> | undefined) {
         this.$storage.CodeAction = $value;
     }
-    static $zero(): CommandOrCodeAction {
-        return new CommandOrCodeAction({
-            Command: void 0,
-            CodeAction: void 0
-        });
-    }
     static $copy($source: CommandOrCodeAction): CommandOrCodeAction {
         return new CommandOrCodeAction({
             Command: $source.$storage.Command,
@@ -56270,15 +56564,23 @@ export class CommandOrCodeAction {
         });
     }
     static $equal($left: CommandOrCodeAction, $right: CommandOrCodeAction): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.$storage.Command, $right.$storage.Command)
+        return $left.$storage.Command
+            ===
+                $right.$storage.Command
             &&
                 tsonicTypeScriptRuntime.sameLocation($left.$storage.CodeAction, $right.$storage.CodeAction);
     }
     static $hash($source: CommandOrCodeAction): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Command));
+        $hash = GoMapHash.mix($hash, (($pointer204: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer204 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer204)))($source.$storage.Command));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.CodeAction));
         return $hash;
+    }
+    static $zeroStorage(): CommandOrCodeAction$Storage {
+        return {
+            Command: void 0,
+            CodeAction: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<CommandOrCodeAction> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -56306,12 +56608,10 @@ export class CommandOrCodeAction {
             return err;
         }
         let vCommand = Command.$zero();
-        const vCommand$location = tsonicTypeScriptRuntime.boundLocation({}, () => vCommand, vCommand$next => vCommand = vCommand$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$Command(vCommand$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$Command(vCommand), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                CommandOrCodeAction.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommandOrCodeAction>).value).Command =
-                    vCommand$location;
+                CommandOrCodeAction.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommandOrCodeAction>).value).Command = vCommand;
                 return void 0;
             }
         }
@@ -56722,8 +57022,8 @@ export class RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull
     static $hash($source: RangeOrPrepareRenamePlaceholderOrPrepareRenameDefaultBehaviorOrNull): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Range));
-        $hash = GoMapHash.mix($hash, (($pointer128: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer128 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer128)))($source.$storage.PrepareRenamePlaceholder));
-        $hash = GoMapHash.mix($hash, (($pointer129: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer129 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer129)))($source.$storage.PrepareRenameDefaultBehavior));
+        $hash = GoMapHash.mix($hash, (($pointer205: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer205 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer205)))($source.$storage.PrepareRenamePlaceholder));
+        $hash = GoMapHash.mix($hash, (($pointer206: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer206 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer206)))($source.$storage.PrepareRenameDefaultBehavior));
         return $hash;
     }
     declare private readonly then?: never;
@@ -56993,7 +57293,7 @@ export class VSOnAutoInsertResponseItemOrNull implements GoContainerStoredValue<
     }
     static $hash($source: VSOnAutoInsertResponseItemOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer130: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer130 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer130)))($source.$storage.VSOnAutoInsertResponseItem));
+        $hash = GoMapHash.mix($hash, (($pointer207: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer207 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer207)))($source.$storage.VSOnAutoInsertResponseItem));
         return $hash;
     }
     declare private readonly then?: never;
@@ -57029,7 +57329,7 @@ export class VSOnAutoInsertResponseItemOrNull implements GoContainerStoredValue<
     }
 }
 export type VSReferenceItemsOrNull$Storage = {
-    VSReferenceItems: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined>> | undefined;
+    VSReferenceItems: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem | undefined>> | undefined;
 };
 export class VSReferenceItemsOrNull implements GoStoredValue<VSReferenceItemsOrNull$Storage>, GoContainerStoredValue<VSReferenceItemsOrNull$Storage> {
     declare private readonly $goType: void;
@@ -57041,10 +57341,10 @@ export class VSReferenceItemsOrNull implements GoStoredValue<VSReferenceItemsOrN
     public static $fromStorage($source: VSReferenceItemsOrNull$Storage): VSReferenceItemsOrNull {
         return new VSReferenceItemsOrNull($source);
     }
-    public get VSReferenceItems(): tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined>> | undefined {
+    public get VSReferenceItems(): tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem | undefined>> | undefined {
         return this.$storage.VSReferenceItems;
     }
-    public set VSReferenceItems($value: tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined>> | undefined) {
+    public set VSReferenceItems($value: tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem | undefined>> | undefined) {
         this.$storage.VSReferenceItems = $value;
     }
     declare readonly [$goStorageType]: VSReferenceItemsOrNull$Storage;
@@ -57088,7 +57388,7 @@ export class VSReferenceItemsOrNull implements GoStoredValue<VSReferenceItemsOrN
             }
             case 91: {
                 VSReferenceItemsOrNull.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItemsOrNull>).value).VSReferenceItems =
-                    tsonicTypeScriptRuntime.location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined>>(RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<VSReferenceItem> | undefined>());
+                    tsonicTypeScriptRuntime.location<RuntimeSlice<VSReferenceItem | undefined>>(RuntimeSlice.nil<VSReferenceItem | undefined>());
                 return UnmarshalDecode__from_json__package_1(dec, new $goInterfaceAdapter$PointerTo_SliceOf_PointerTo_Named_lsproto$VSReferenceItem(VSReferenceItemsOrNull.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItemsOrNull>).value).VSReferenceItems), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                 break;
             }
@@ -57179,9 +57479,9 @@ export class RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProje
     }
     static $hash($source: RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer131: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer131 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer131)))($source.$storage.RequestFailureTelemetryEvent));
-        $hash = GoMapHash.mix($hash, (($pointer132: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer132 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer132)))($source.$storage.PerformanceStatsTelemetryEvent));
-        $hash = GoMapHash.mix($hash, (($pointer133: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer133 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer133)))($source.$storage.ProjectInfoTelemetryEvent));
+        $hash = GoMapHash.mix($hash, (($pointer208: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer208 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer208)))($source.$storage.RequestFailureTelemetryEvent));
+        $hash = GoMapHash.mix($hash, (($pointer209: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer209 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer209)))($source.$storage.PerformanceStatsTelemetryEvent));
+        $hash = GoMapHash.mix($hash, (($pointer210: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer210 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer210)))($source.$storage.ProjectInfoTelemetryEvent));
         return $hash;
     }
     declare private readonly then?: never;
@@ -57255,9 +57555,9 @@ export class RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProje
     }
 }
 export type TextDocumentFilterLanguageOrSchemeOrPattern$Storage = {
-    Language: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage> | undefined;
-    Scheme: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme> | undefined;
-    Pattern: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern> | undefined;
+    Language: TextDocumentFilterLanguage | undefined;
+    Scheme: TextDocumentFilterScheme | undefined;
+    Pattern: TextDocumentFilterPattern | undefined;
 };
 export class TextDocumentFilterLanguageOrSchemeOrPattern {
     declare private readonly $goType: void;
@@ -57269,30 +57569,23 @@ export class TextDocumentFilterLanguageOrSchemeOrPattern {
     public static $fromStorage($source: TextDocumentFilterLanguageOrSchemeOrPattern$Storage): TextDocumentFilterLanguageOrSchemeOrPattern {
         return new TextDocumentFilterLanguageOrSchemeOrPattern($source);
     }
-    public get Language(): tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage> | undefined {
+    public get Language(): TextDocumentFilterLanguage | undefined {
         return this.$storage.Language;
     }
-    public set Language($value: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguage> | undefined) {
+    public set Language($value: TextDocumentFilterLanguage | undefined) {
         this.$storage.Language = $value;
     }
-    public get Scheme(): tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme> | undefined {
+    public get Scheme(): TextDocumentFilterScheme | undefined {
         return this.$storage.Scheme;
     }
-    public set Scheme($value: tsonicTypeScriptRuntime.Location<TextDocumentFilterScheme> | undefined) {
+    public set Scheme($value: TextDocumentFilterScheme | undefined) {
         this.$storage.Scheme = $value;
     }
-    public get Pattern(): tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern> | undefined {
+    public get Pattern(): TextDocumentFilterPattern | undefined {
         return this.$storage.Pattern;
     }
-    public set Pattern($value: tsonicTypeScriptRuntime.Location<TextDocumentFilterPattern> | undefined) {
+    public set Pattern($value: TextDocumentFilterPattern | undefined) {
         this.$storage.Pattern = $value;
-    }
-    static $zero(): TextDocumentFilterLanguageOrSchemeOrPattern {
-        return new TextDocumentFilterLanguageOrSchemeOrPattern({
-            Language: void 0,
-            Scheme: void 0,
-            Pattern: void 0
-        });
     }
     static $copy($source: TextDocumentFilterLanguageOrSchemeOrPattern): TextDocumentFilterLanguageOrSchemeOrPattern {
         return new TextDocumentFilterLanguageOrSchemeOrPattern({
@@ -57302,17 +57595,30 @@ export class TextDocumentFilterLanguageOrSchemeOrPattern {
         });
     }
     static $equal($left: TextDocumentFilterLanguageOrSchemeOrPattern, $right: TextDocumentFilterLanguageOrSchemeOrPattern): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.$storage.Language, $right.$storage.Language)
+        return $left.$storage.Language
+            ===
+                $right.$storage.Language
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.$storage.Scheme, $right.$storage.Scheme) &&
-            tsonicTypeScriptRuntime.sameLocation($left.$storage.Pattern, $right.$storage.Pattern);
+                $left.$storage.Scheme
+                    ===
+                        $right.$storage.Scheme &&
+            $left.$storage.Pattern
+                ===
+                    $right.$storage.Pattern;
     }
     static $hash($source: TextDocumentFilterLanguageOrSchemeOrPattern): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Language));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Scheme));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Pattern));
+        $hash = GoMapHash.mix($hash, (($pointer211: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer211 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer211)))($source.$storage.Language));
+        $hash = GoMapHash.mix($hash, (($pointer212: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer212 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer212)))($source.$storage.Scheme));
+        $hash = GoMapHash.mix($hash, (($pointer213: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer213 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer213)))($source.$storage.Pattern));
         return $hash;
+    }
+    static $zeroStorage(): TextDocumentFilterLanguageOrSchemeOrPattern$Storage {
+        return {
+            Language: void 0,
+            Scheme: void 0,
+            Pattern: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -57344,32 +57650,26 @@ export class TextDocumentFilterLanguageOrSchemeOrPattern {
             return err;
         }
         let vLanguage = TextDocumentFilterLanguage.$zero();
-        const vLanguage$location = tsonicTypeScriptRuntime.boundLocation({}, () => vLanguage, vLanguage$next => vLanguage = vLanguage$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguage(vLanguage$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterLanguage(vLanguage), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Language =
-                    vLanguage$location;
+                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Language = vLanguage;
                 return void 0;
             }
         }
         let vScheme = TextDocumentFilterScheme.$zero();
-        const vScheme$location = tsonicTypeScriptRuntime.boundLocation({}, () => vScheme, vScheme$next => vScheme = vScheme$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterScheme(vScheme$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterScheme(vScheme), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Scheme =
-                    vScheme$location;
+                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Scheme = vScheme;
                 return void 0;
             }
         }
         let vPattern = TextDocumentFilterPattern.$zero();
-        const vPattern$location = tsonicTypeScriptRuntime.boundLocation({}, () => vPattern, vPattern$next => vPattern = vPattern$next);
         {
-            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPattern(vPattern$location), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
+            let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = Unmarshal__from_json__package_1(data.$value, new $goInterfaceAdapter$PointerTo_Named_lsproto$TextDocumentFilterPattern(vPattern), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
             if (err__shadow_1 === undefined) {
-                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Pattern =
-                    vPattern$location;
+                TextDocumentFilterLanguageOrSchemeOrPattern.$storageOf(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TextDocumentFilterLanguageOrSchemeOrPattern>).value).Pattern = vPattern;
                 return void 0;
             }
         }
@@ -57408,12 +57708,6 @@ export class StringOrMarkedStringWithLanguage {
     } | undefined) {
         this.$storage.MarkedStringWithLanguage = $value;
     }
-    static $zero(): StringOrMarkedStringWithLanguage {
-        return new StringOrMarkedStringWithLanguage({
-            String: void 0,
-            MarkedStringWithLanguage: void 0
-        });
-    }
     static $copy($source: StringOrMarkedStringWithLanguage): StringOrMarkedStringWithLanguage {
         return new StringOrMarkedStringWithLanguage({
             String: $source.$storage.String,
@@ -57430,8 +57724,14 @@ export class StringOrMarkedStringWithLanguage {
     static $hash($source: StringOrMarkedStringWithLanguage): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.String));
-        $hash = GoMapHash.mix($hash, (($pointer134: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer134 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer134)))($source.$storage.MarkedStringWithLanguage));
+        $hash = GoMapHash.mix($hash, (($pointer214: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer214 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer214)))($source.$storage.MarkedStringWithLanguage));
         return $hash;
+    }
+    static $zeroStorage(): StringOrMarkedStringWithLanguage$Storage {
+        return {
+            String: void 0,
+            MarkedStringWithLanguage: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<StringOrMarkedStringWithLanguage> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -57523,13 +57823,6 @@ export class InlineValueTextOrVariableLookupOrEvaluatableExpression {
     } | undefined) {
         this.$storage.EvaluatableExpression = $value;
     }
-    static $zero(): InlineValueTextOrVariableLookupOrEvaluatableExpression {
-        return new InlineValueTextOrVariableLookupOrEvaluatableExpression({
-            Text: void 0,
-            VariableLookup: void 0,
-            EvaluatableExpression: void 0
-        });
-    }
     static $copy($source: InlineValueTextOrVariableLookupOrEvaluatableExpression): InlineValueTextOrVariableLookupOrEvaluatableExpression {
         return new InlineValueTextOrVariableLookupOrEvaluatableExpression({
             Text: $source.$storage.Text,
@@ -57551,10 +57844,17 @@ export class InlineValueTextOrVariableLookupOrEvaluatableExpression {
     }
     static $hash($source: InlineValueTextOrVariableLookupOrEvaluatableExpression): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, (($pointer135: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer135 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer135)))($source.$storage.Text));
-        $hash = GoMapHash.mix($hash, (($pointer136: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer136 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer136)))($source.$storage.VariableLookup));
-        $hash = GoMapHash.mix($hash, (($pointer137: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer137 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer137)))($source.$storage.EvaluatableExpression));
+        $hash = GoMapHash.mix($hash, (($pointer215: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer215 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer215)))($source.$storage.Text));
+        $hash = GoMapHash.mix($hash, (($pointer216: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer216 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer216)))($source.$storage.VariableLookup));
+        $hash = GoMapHash.mix($hash, (($pointer217: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer217 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer217)))($source.$storage.EvaluatableExpression));
         return $hash;
+    }
+    static $zeroStorage(): InlineValueTextOrVariableLookupOrEvaluatableExpression$Storage {
+        return {
+            Text: void 0,
+            VariableLookup: void 0,
+            EvaluatableExpression: void 0
+        };
     }
     declare private readonly then?: never;
     static MarshalJSONTo(o: tsonicTypeScriptRuntime.Location<InlineValueTextOrVariableLookupOrEvaluatableExpression> | undefined, enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {

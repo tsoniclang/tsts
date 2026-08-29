@@ -404,10 +404,8 @@ export function NewRefCountCache<K, V, AcquireArgs>(options: RefCountCacheOption
     return { value: RefCountCache.$fromStorage<K, V, AcquireArgs>({
             Options: RefCountCacheOptions.$storageOf(RefCountCacheOptions.$copy(options)),
             parse: parse,
-            entries: SyncMap__from_collections.$storageOf<K, {
+            entries: SyncMap__from_collections.$zeroStorage<K, {
                 value: refCountCacheEntry<V>;
-            } | undefined>(SyncMap__from_collections.$zero<K, {
-                value: refCountCacheEntry<V>;
-            } | undefined>())
+            } | undefined>()
         }) };
 }

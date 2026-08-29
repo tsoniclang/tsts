@@ -57,6 +57,12 @@ export class FlowType {
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.incomplete));
         return $hash;
     }
+    static $zeroStorage(): FlowType$Storage {
+        return {
+            t: void 0,
+            incomplete: false
+        };
+    }
     declare private readonly then?: never;
     static $go$private$checker$isNil(ft: tsonicTypeScriptRuntime.Location<FlowType> | undefined): bool {
         return FlowType.$storageOf(((ft ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FlowType>).value).t === undefined;
@@ -88,12 +94,6 @@ export class SharedFlow {
     public set flowType($value: FlowType) {
         this.$storage.flowType = FlowType.$storageOf($value);
     }
-    static $zero(): SharedFlow {
-        return new SharedFlow({
-            flow: void 0,
-            flowType: FlowType.$storageOf(FlowType.$zero())
-        });
-    }
     static $copy($source: SharedFlow): SharedFlow {
         return new SharedFlow({
             flow: $source.$storage.flow,
@@ -109,6 +109,12 @@ export class SharedFlow {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.flow));
         $hash = GoMapHash.mix($hash, FlowType.$hash(FlowType.$fromStorage($source.$storage.flowType)));
         return $hash;
+    }
+    static $zeroStorage(): SharedFlow$Storage {
+        return {
+            flow: void 0,
+            flowType: FlowType.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }

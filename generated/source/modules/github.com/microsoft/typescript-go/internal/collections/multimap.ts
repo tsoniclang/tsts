@@ -1,4 +1,3 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type * as iter__from_gostdlib from "@gotots/gostdlib/iter.js";
 import type { GoMapValue } from "@gotots/runtime/map.js";
 import type { int } from "@gotots/runtime/scalars.js";
@@ -25,13 +24,13 @@ export class MultiMap<K, V> {
         });
     }
     declare private readonly then?: never;
-    static Add$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_container_storage$T1_to_T1: ($0: GoContainerStorage<V>) => V, $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$to_container_storage$T1_to_T1: ($0: V) => GoContainerStorage<V>, $go$zero$void_to_T1: () => V, key: K, value: V): void {
-        if (MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M.isNil()) {
-            MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M = $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1(RuntimeSlice.nil<GoContainerStorage<V>>());
+    static Add$kernel<K, V>(s: MultiMap<K, V> | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$from_container_storage$T1_to_T1: ($0: GoContainerStorage<V>) => V, $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$to_container_storage$T1_to_T1: ($0: V) => GoContainerStorage<V>, $go$zero$void_to_T1: () => V, key: K, value: V): void {
+        if (MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M.isNil()) {
+            MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M = $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1(RuntimeSlice.nil<GoContainerStorage<V>>());
         }
-        const __gotots_store_0 = MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M;
+        const __gotots_store_0 = MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M;
         const __gotots_store_1 = key;
-        const __gotots_slice_build_0 = MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M.lookup(key);
+        const __gotots_slice_build_0 = MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M.lookup(key);
         const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
         let __gotots_slice_build_1 = __gotots_slice_build_0;
         if (__gotots_slice_build_2 <= __gotots_slice_build_0.capacity) {
@@ -50,25 +49,25 @@ export class MultiMap<K, V> {
         }
         __gotots_store_0.store(__gotots_store_1, __gotots_slice_build_1);
     }
-    static Get<K, V>(s: tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined, key: K): RuntimeSlice<GoContainerStorage<V>> {
-        return MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M.lookup(key);
+    static Get<K, V>(s: MultiMap<K, V> | undefined, key: K): RuntimeSlice<GoContainerStorage<V>> {
+        return MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M.lookup(key);
     }
-    static Len$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined, $go$length$MapOf_T0_To_SliceOf_T1_to_int: ($0: GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>) => int): int {
-        return $go$length$MapOf_T0_To_SliceOf_T1_to_int(MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M);
+    static Len$kernel<K, V>(s: MultiMap<K, V> | undefined, $go$length$MapOf_T0_To_SliceOf_T1_to_int: ($0: GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>) => int): int {
+        return $go$length$MapOf_T0_To_SliceOf_T1_to_int(MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M);
     }
-    static Values$kernel<K, V>(s: tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined, $go$convert$MapOf_T0_To_SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$copy$SliceOf_T1_to_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => RuntimeSlice<GoContainerStorage<V>>): iter__from_gostdlib.Seq<RuntimeSlice<GoContainerStorage<V>>> {
-        return generic_maps_kernel.MapsValuesKernel<GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, K, RuntimeSlice<GoContainerStorage<V>>>($go$convert$MapOf_T0_To_SliceOf_T1_to_MapOf_T0_To_SliceOf_T1, $go$copy$SliceOf_T1_to_SliceOf_T1, MultiMap.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap<K, V>>).value).M);
+    static Values$kernel<K, V>(s: MultiMap<K, V> | undefined, $go$convert$MapOf_T0_To_SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$copy$SliceOf_T1_to_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => RuntimeSlice<GoContainerStorage<V>>): iter__from_gostdlib.Seq<RuntimeSlice<GoContainerStorage<V>>> {
+        return generic_maps_kernel.MapsValuesKernel<GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, K, RuntimeSlice<GoContainerStorage<V>>>($go$convert$MapOf_T0_To_SliceOf_T1_to_MapOf_T0_To_SliceOf_T1, $go$copy$SliceOf_T1_to_SliceOf_T1, MultiMap.$storageOf((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M);
     }
 }
-export function NewMultiMapWithSizeHint$kernel<K, V>($go$map_construct$SliceOf_T1_int_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>, $1: int) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, hint: int): tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined {
-    return tsonicTypeScriptRuntime.location<MultiMap<K, V>>(MultiMap.$fromStorage<K, V>({
+export function NewMultiMapWithSizeHint$kernel<K, V>($go$map_construct$SliceOf_T1_int_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>, $1: int) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, hint: int): MultiMap<K, V> | undefined {
+    return MultiMap.$fromStorage<K, V>({
         M: $go$map_construct$SliceOf_T1_int_to_MapOf_T0_To_SliceOf_T1(RuntimeSlice.nil<GoContainerStorage<V>>(), hint)
-    }));
+    });
 }
-export function GroupBy$kernel<K, V>($go$copy$T1_to_T1: ($0: V) => V, $go$from_container_storage$T1_to_T1: ($0: GoContainerStorage<V>) => V, $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$to_container_storage$T1_to_T1: ($0: V) => GoContainerStorage<V>, $go$zero$void_to_T1: () => V, $go$zero$void_to_MapOf_T0_To_SliceOf_T1: () => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, items: RuntimeSlice<GoContainerStorage<V>>, groupId: (($0: V) => K) | undefined): tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined {
-    let m: tsonicTypeScriptRuntime.Location<MultiMap<K, V>> | undefined = tsonicTypeScriptRuntime.location<MultiMap<K, V>>(MultiMap.$fromStorage<K, V>({
+export function GroupBy$kernel<K, V>($go$copy$T1_to_T1: ($0: V) => V, $go$from_container_storage$T1_to_T1: ($0: GoContainerStorage<V>) => V, $go$map_construct$SliceOf_T1_to_MapOf_T0_To_SliceOf_T1: ($0: RuntimeSlice<GoContainerStorage<V>>) => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, $go$to_container_storage$T1_to_T1: ($0: V) => GoContainerStorage<V>, $go$zero$void_to_T1: () => V, $go$zero$void_to_MapOf_T0_To_SliceOf_T1: () => GoMapValue<K, RuntimeSlice<GoContainerStorage<V>>>, items: RuntimeSlice<GoContainerStorage<V>>, groupId: (($0: V) => K) | undefined): MultiMap<K, V> | undefined {
+    let m: MultiMap<K, V> | undefined = MultiMap.$fromStorage<K, V>({
         M: $go$zero$void_to_MapOf_T0_To_SliceOf_T1()
-    }));
+    });
     const __gotots_range_0 = items;
     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
         const __gotots_range_value_0 = $go$copy$T1_to_T1($go$from_container_storage$T1_to_T1(__gotots_range_0.get(__gotots_range_index_0)));

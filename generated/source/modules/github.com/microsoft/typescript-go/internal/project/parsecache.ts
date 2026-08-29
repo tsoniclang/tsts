@@ -49,9 +49,9 @@ export class ParseCacheKey implements GoContainerStoredValue<ParseCacheKey$Stora
     declare readonly [$goContainerStorageType]: ParseCacheKey$Storage;
     static $zero(): ParseCacheKey {
         return new ParseCacheKey({
-            SourceFileParseOptions: SourceFileParseOptions__from_ast.$storageOf(SourceFileParseOptions__from_ast.$zero()),
+            SourceFileParseOptions: SourceFileParseOptions__from_ast.$zeroStorage(),
             ScriptKind: 0,
-            Hash: Uint128__from_xxh3.$storageOf(Uint128__from_xxh3.$zero())
+            Hash: Uint128__from_xxh3.$zeroStorage()
         });
     }
     static $copy($source: ParseCacheKey): ParseCacheKey {
@@ -70,6 +70,13 @@ export class ParseCacheKey implements GoContainerStoredValue<ParseCacheKey$Stora
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.ScriptKind));
         $hash = GoMapHash.mix($hash, Uint128__from_xxh3.$hash(Uint128__from_xxh3.$fromStorage($source.$storage.Hash)));
         return $hash;
+    }
+    static $zeroStorage(): ParseCacheKey$Storage {
+        return {
+            SourceFileParseOptions: SourceFileParseOptions__from_ast.$zeroStorage(),
+            ScriptKind: 0,
+            Hash: Uint128__from_xxh3.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }

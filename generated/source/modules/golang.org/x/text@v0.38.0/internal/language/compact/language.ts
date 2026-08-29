@@ -60,6 +60,13 @@ export class Tag {
             full: $source.$storage.full
         });
     }
+    static $zeroStorage(): Tag$Storage {
+        return {
+            language: 0,
+            locale: 0,
+            full: void 0
+        };
+    }
     declare private readonly then?: never;
     static IsCompact(t: tsonicTypeScriptRuntime.Location<Tag> | undefined): bool {
         return Tag.$storageOf(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Tag>).value).full === undefined;

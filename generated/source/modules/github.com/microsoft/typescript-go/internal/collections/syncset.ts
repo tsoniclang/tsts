@@ -26,7 +26,7 @@ export class SyncSet<T> {
     }
     static $zero<T>(): SyncSet<T> {
         return new SyncSet<T>({
-            m: SyncMap.$storageOf<T, GoEmptyStruct>(SyncMap.$zero<T, GoEmptyStruct>())
+            m: SyncMap.$zeroStorage<T, GoEmptyStruct>()
         });
     }
     static $copy<T>($source: SyncSet<T>): SyncSet<T> {

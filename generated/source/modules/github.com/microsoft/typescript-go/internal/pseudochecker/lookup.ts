@@ -33,8 +33,8 @@ export function IsInConstContext(node: tsonicTypeScriptRuntime.Location<Node__fr
     });
     return IsConstAssertion__from_ast(maybeAssertion);
 }
-export function isUndefinedPseudoType(t: tsonicTypeScriptRuntime.Location<PseudoType> | undefined): bool {
-    return ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindUndefined$constant() || (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindMaybeConstLocation$constant() && isUndefinedPseudoType((PseudoType.AsPseudoTypeMaybeConstLocation(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ConstType));
+export function isUndefinedPseudoType(t: PseudoType | undefined): bool {
+    return (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindUndefined$constant() || ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindMaybeConstLocation$constant() && isUndefinedPseudoType((PseudoType.AsPseudoTypeMaybeConstLocation(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ConstType));
 }
 export function typeNodeCouldReferToUndefined(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     for (; Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindParenthesizedType$constant__from_ast();) {
@@ -82,19 +82,19 @@ export function typeNodeCouldReferToUndefined(node: tsonicTypeScriptRuntime.Loca
         }
     }
 }
-export function couldAlreadyReferToUndefinedType(t: tsonicTypeScriptRuntime.Location<PseudoType> | undefined): bool {
-    if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindNoResult$constant() || ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindInferred$constant() || isUndefinedPseudoType(t)) {
+export function couldAlreadyReferToUndefinedType(t: PseudoType | undefined): bool {
+    if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindNoResult$constant() || (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindInferred$constant() || isUndefinedPseudoType(t)) {
         return true;
     }
-    if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindMaybeConstLocation$constant()) {
+    if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindMaybeConstLocation$constant()) {
         let mc: PseudoTypeMaybeConstLocation | undefined = PseudoType.AsPseudoTypeMaybeConstLocation(t);
         return couldAlreadyReferToUndefinedType((mc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).RegularType);
     }
-    if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindDirect$constant()) {
+    if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindDirect$constant()) {
         let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (PseudoType.AsPseudoTypeDirect(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).TypeNode;
         return typeNodeCouldReferToUndefined(node);
     }
-    if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindUnion$constant()) {
+    if ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindUnion$constant()) {
         return Some$PointerTo_Named_pseudochecker$PseudoType((PseudoType.AsPseudoTypeUnion(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Types, couldAlreadyReferToUndefinedType);
     }
     return false;
@@ -114,11 +114,11 @@ export function lastRequiredParamIndex(params: RuntimeSlice<tsonicTypeScriptRunt
     }
     return 0;
 }
-export function addUndefinedIfDefinitelyRequired(expr: tsonicTypeScriptRuntime.Location<PseudoType> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+export function addUndefinedIfDefinitelyRequired(expr: PseudoType | undefined): PseudoType | undefined {
     if (couldAlreadyReferToUndefinedType(expr)) {
         return expr;
     }
-    return NewPseudoTypeUnion(RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<PseudoType> | undefined>([expr, $state.PseudoTypeUndefined]));
+    return NewPseudoTypeUnion(RuntimeSlice.literal<PseudoType | undefined>([expr, $state.PseudoTypeUndefined]));
 }
 export function isContextuallyTyped(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     return !(FindAncestor__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent, (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {

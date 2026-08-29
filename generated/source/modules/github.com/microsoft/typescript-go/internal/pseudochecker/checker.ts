@@ -33,7 +33,7 @@ export class PseudoChecker {
     declare private readonly then?: never;
     static GetReturnTypeOfSignature(ch: {
         value: PseudoChecker;
-    } | undefined, signatureNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, signatureNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         switch (Node__from_ast.$storageOf(((signatureNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
             case KindGetAccessor$constant__from_ast(): {
                 return PseudoChecker.GetTypeOfAccessor(ch, signatureNode);
@@ -64,16 +64,16 @@ export class PseudoChecker {
     }
     static GetTypeOfAccessor(ch: {
         value: PseudoChecker;
-    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
-        let annotated: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromAccessor(ch, __go_accessor);
-        if (((annotated ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindNoResult$constant()) {
+    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
+        let annotated: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromAccessor(ch, __go_accessor);
+        if ((annotated ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindNoResult$constant()) {
             return PseudoChecker.$go$private$pseudochecker$inferAccessorType(ch, __go_accessor);
         }
         return annotated;
     }
     static GetTypeOfDeclaration(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
             case KindParameter$constant__from_ast(): {
                 return PseudoChecker.$go$private$pseudochecker$typeFromParameter(ch, Node__from_ast.AsParameterDeclaration(node));
@@ -249,7 +249,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$createReturnFromSignature(ch: {
         value: PseudoChecker;
-    } | undefined, fn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, fn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         if (IsFunctionLike__from_ast(fn)) {
             let d: tsonicTypeScriptRuntime.Location<FunctionLikeBase__from_ast> | undefined = Node__from_ast.FunctionLikeData(fn);
             let r: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FunctionLikeBase__from_ast.$storageOf(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionLikeBase__from_ast>).value).Type;
@@ -264,7 +264,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$getAccessorMember(ch: {
         value: PseudoChecker;
-    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoObjectElement> | undefined {
+    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoObjectElement | undefined {
         let allAccessors = GetAllAccessorDeclarationsForDeclaration__from_ast(__go_accessor, Symbol__from_ast.$storageOf(((Node__from_ast.Symbol(__go_accessor) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations);
         if (!(allAccessors.GetAccessor === undefined) && !((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((allAccessors.GetAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined) && !(allAccessors.SetAccessor === undefined) && NodeList__from_ast.$storageOf((((void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
@@ -279,7 +279,7 @@ export class PseudoChecker {
             }
         }
         if (tsonicTypeScriptRuntime.sameLocation(__go_accessor, allAccessors.FirstAccessor)) {
-            let accessorType: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromAccessor(ch, __go_accessor);
+            let accessorType: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromAccessor(ch, __go_accessor);
             let __go_readonly = IsGetAccessorDeclaration__from_ast(__go_accessor) && allAccessors.SecondAccessor === undefined;
             return NewPseudoPropertyAssignment(__go_readonly, name, false, accessorType);
         }
@@ -324,7 +324,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$inferAccessorType(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         if (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindGetAccessor$constant__from_ast()) {
             return PseudoChecker.$go$private$pseudochecker$createReturnFromSignature(ch, node);
         }
@@ -332,7 +332,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromAccessor(ch: {
         value: PseudoChecker;
-    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, __go_accessor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         let accessorDeclarations = GetAllAccessorDeclarationsForDeclaration__from_ast(__go_accessor, Symbol__from_ast.$storageOf(((DeclarationBase__from_ast.$storageOf(((Node__from_ast.DeclarationData(__go_accessor) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationBase__from_ast>).value).Symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations);
         let accessorType: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = PseudoChecker.$go$private$pseudochecker$getTypeAnnotationFromAllAccessorDeclarations(ch, __go_accessor, AllAccessorDeclarations__from_ast.$copy(accessorDeclarations));
         if (!(accessorType === undefined) && !IsTypePredicateNode__from_ast(accessorType)) {
@@ -350,7 +350,7 @@ export class PseudoChecker {
         value: PseudoChecker;
     } | undefined, node: {
         value: ArrayLiteralExpression__from_ast;
-    } | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined): PseudoType | undefined {
         {
             let errorNodes = PseudoChecker.$go$private$pseudochecker$canGetTypeFromArrayLiteral(ch, node);
             if (!errorNodes.isNil()) {
@@ -397,7 +397,7 @@ export class PseudoChecker {
             const __gotots_argument_20 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NewPseudoTypeInferred(__gotots_argument_20);
         }
-        let results = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<PseudoType> | undefined>(0, NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length, void 0);
+        let results = RuntimeSlice.make<PseudoType | undefined>(0, NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length, void 0);
         const __gotots_range_0 = NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
@@ -408,7 +408,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromExpandoProperty(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         let declaredType: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.Type(node);
         if (!(declaredType === undefined)) {
             return NewPseudoTypeDirect(declaredType);
@@ -417,7 +417,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromExpression(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
             case KindOmittedExpression$constant__from_ast(): {
                 return $state.PseudoTypeUndefined;
@@ -504,12 +504,12 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromFunctionLikeExpression(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         if (!(FunctionLikeBase__from_ast.$storageOf(((Node__from_ast.FunctionLikeData(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionLikeBase__from_ast>).value).FullSignature === undefined)) {
             return NewPseudoTypeDirect(FunctionLikeBase__from_ast.$storageOf(((Node__from_ast.FunctionLikeData(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionLikeBase__from_ast>).value).FullSignature);
         }
-        let returnType: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$createReturnFromSignature(ch, node);
-        if (((returnType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindNoResult$constant()) {
+        let returnType: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$createReturnFromSignature(ch, node);
+        if ((returnType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindNoResult$constant()) {
             return NewPseudoTypeInferred((void Node__from_ast.AsNode,
                 node));
         }
@@ -521,7 +521,7 @@ export class PseudoChecker {
         value: PseudoChecker;
     } | undefined, node: {
         value: ObjectLiteralExpression__from_ast;
-    } | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined): PseudoType | undefined {
         {
             let errorNodes = PseudoChecker.$go$private$pseudochecker$canGetTypeFromObjectLiteral(ch, node);
             if (!errorNodes.isNil()) {
@@ -538,9 +538,9 @@ export class PseudoChecker {
             }
         }
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties === undefined || NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length === 0) {
-            return NewPseudoTypeObjectLiteral(RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<PseudoObjectElement> | undefined>());
+            return NewPseudoTypeObjectLiteral(RuntimeSlice.nil<PseudoObjectElement | undefined>());
         }
-        let results = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<PseudoObjectElement> | undefined>(0, NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length, void 0);
+        let results = RuntimeSlice.make<PseudoObjectElement | undefined>(0, NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length, void 0);
         const __gotots_range_1 = NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
         for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
             const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
@@ -565,7 +565,7 @@ export class PseudoChecker {
                 }
                 case KindSetAccessor$constant__from_ast():
                 case KindGetAccessor$constant__from_ast(): {
-                    let member: tsonicTypeScriptRuntime.Location<PseudoObjectElement> | undefined = PseudoChecker.$go$private$pseudochecker$getAccessorMember(ch, e, Node__from_ast.Name(e));
+                    let member: PseudoObjectElement | undefined = PseudoChecker.$go$private$pseudochecker$getAccessorMember(ch, e, Node__from_ast.Name(e));
                     if (!(member === undefined)) {
                         results = results.append(void 0, [member]);
                     }
@@ -577,7 +577,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromParameter(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined): PseudoType | undefined {
         let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
             (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -605,7 +605,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromParameterWorker(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined, selfIdx: int, lastRequired: int): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined, selfIdx: int, lastRequired: int): PseudoType | undefined {
         let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
             (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -616,7 +616,7 @@ export class PseudoChecker {
         let hasRequiredAfter = selfIdx < lastRequired - 1;
         let declaredType: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Type;
         if (!(declaredType === undefined)) {
-            let result: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = NewPseudoTypeDirect(declaredType);
+            let result: PseudoType | undefined = NewPseudoTypeDirect(declaredType);
             if ((ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictNullChecks && !(ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Initializer === undefined) && hasRequiredAfter) {
                 return addUndefinedIfDefinitelyRequired(result);
             }
@@ -630,7 +630,7 @@ export class PseudoChecker {
             __gotots_logical_result_0 = !isContextuallyTyped(__gotots_argument_8);
         }
         if (__gotots_logical_result_0) {
-            let expr: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Initializer);
+            let expr: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Initializer);
             if (!(ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictNullChecks) {
                 return expr;
             }
@@ -646,7 +646,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromPrimitiveLiteralPrefix(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast> | undefined): PseudoType | undefined {
         const __gotots_store_9 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
@@ -686,7 +686,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromProperty(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         let t: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.Type(node);
         if (!(t === undefined)) {
             return NewPseudoTypeDirect(t);
@@ -697,9 +697,9 @@ export class PseudoChecker {
                 if (HasModifier__from_ast(node, ModifierFlagsReadonly$constant__from_ast()) && IsTemplateExpression__from_ast(init)) {
                     return NewPseudoTypeNoResult(node);
                 }
-                let expr: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
-                if (!(expr === undefined) && (!(((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
-                    if (!(((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindDirect$constant()) && !(NamedMemberBase__from_ast.$storageOf((Node__from_ast.AsPropertyDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken === undefined) && Node__from_ast.$storageOf(((NamedMemberBase__from_ast.$storageOf((Node__from_ast.AsPropertyDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindQuestionToken$constant__from_ast()) {
+                let expr: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
+                if (!(expr === undefined) && (!((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
+                    if (!((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindDirect$constant()) && !(NamedMemberBase__from_ast.$storageOf((Node__from_ast.AsPropertyDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken === undefined) && Node__from_ast.$storageOf(((NamedMemberBase__from_ast.$storageOf((Node__from_ast.AsPropertyDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindQuestionToken$constant__from_ast()) {
                         return addUndefinedIfDefinitelyRequired(expr);
                     }
                     return expr;
@@ -710,7 +710,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromPropertyAssignment(ch: {
         value: PseudoChecker;
-    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         let annotation: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.Type(node);
         if (!(annotation === undefined)) {
             return NewPseudoTypeDirect(annotation);
@@ -718,8 +718,8 @@ export class PseudoChecker {
         if (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindPropertyAssignment$constant__from_ast()) {
             let init: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.Initializer(node);
             if (!(init === undefined)) {
-                let expr: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
-                if (!(expr === undefined) && (!(((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
+                let expr: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
+                if (!(expr === undefined) && (!((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
                     return expr;
                 }
             }
@@ -728,7 +728,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromSingleReturnExpression(ch: {
         value: PseudoChecker;
-    } | undefined, fn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, fn: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         let candidateExpr: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (!(fn === undefined) && !NodeIsMissing__from_ast(Node__from_ast.Body(fn))) {
             let flags = GetFunctionFlags__from_ast(fn);
@@ -777,7 +777,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromTypeAssertion(ch: {
         value: PseudoChecker;
-    } | undefined, expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): PseudoType | undefined {
         if (IsConstTypeReference__from_ast(typeNode)) {
             return PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, expression);
         }
@@ -785,7 +785,7 @@ export class PseudoChecker {
     }
     static $go$private$pseudochecker$typeFromVariable(ch: {
         value: PseudoChecker;
-    } | undefined, declaration: tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast> | undefined): tsonicTypeScriptRuntime.Location<PseudoType> | undefined {
+    } | undefined, declaration: tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast> | undefined): PseudoType | undefined {
         let t: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = VariableDeclaration__from_ast.$storageOf(((declaration ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).Type;
         if (!(t === undefined)) {
             return NewPseudoTypeDirect(t);
@@ -807,8 +807,8 @@ export class PseudoChecker {
                     const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     return NewPseudoTypeNoResult(__gotots_argument_6);
                 }
-                let expr: tsonicTypeScriptRuntime.Location<PseudoType> | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
-                if (!(expr === undefined) && (!(((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PseudoType>).value.Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
+                let expr: PseudoType | undefined = PseudoChecker.$go$private$pseudochecker$typeFromExpression(ch, init);
+                if (!(expr === undefined) && (!((expr ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Kind === PseudoTypeKindInferred$constant()) || (PseudoType.AsPseudoTypeInferred(expr) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorNodes.length > 0)) {
                     return expr;
                 }
             }

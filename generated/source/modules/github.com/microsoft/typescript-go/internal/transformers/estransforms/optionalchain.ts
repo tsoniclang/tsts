@@ -32,7 +32,7 @@ export class optionalChainTransformer {
                     return optionalChainTransformer.$go$private$estransforms$visitOptionalExpression(ch, node, false, false);
                 }
                 const __gotots_store_1 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                return NodeVisitor__from_ast.VisitEachChild(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Transformer")), node);
+                return NodeVisitor__from_ast.VisitEachChild(Transformer__from_transformers.Visitor(__gotots_store_1.Transformer), node);
                 break;
             }
             case KindDeleteExpression$constant__from_ast(): {
@@ -41,7 +41,7 @@ export class optionalChainTransformer {
             }
             default: {
                 const __gotots_store_2 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                return NodeVisitor__from_ast.VisitEachChild(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Transformer")), node);
+                return NodeVisitor__from_ast.VisitEachChild(Transformer__from_transformers.Visitor(__gotots_store_2.Transformer), node);
                 break;
             }
         }
@@ -72,10 +72,10 @@ export class optionalChainTransformer {
             if (!((Node__from_ast.$storageOf(((unwrapped ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsOptionalChain$constant__from_ast()) >>> 0 === 0)) {
                 let expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = optionalChainTransformer.$go$private$estransforms$visitParenthesizedExpression(ch, Node__from_ast.AsParenthesizedExpression(CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Expression), true, false);
                 const __gotots_store_4 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                let args: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "Transformer")), CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments);
+                let args: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(__gotots_store_4.Transformer), CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments);
                 if (IsSyntheticReferenceExpression__from_ast(expression)) {
                     const __gotots_store_5 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                    let res: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.NewFunctionCallCall(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "Transformer")), (Node__from_ast.AsSyntheticReferenceExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, (Node__from_ast.AsSyntheticReferenceExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisArg, NodeList__from_ast.$storageOf(((args ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);
+                    let res: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.NewFunctionCallCall(Transformer__from_transformers.Factory(__gotots_store_5.Transformer), (Node__from_ast.AsSyntheticReferenceExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, (Node__from_ast.AsSyntheticReferenceExpression(expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisArg, NodeList__from_ast.$storageOf(((args ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);
                     Node__from_ast.$storageOf(((res ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                         (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -85,7 +85,7 @@ export class optionalChainTransformer {
                                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                                 CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault)).Node)).Loc)));
                     const __gotots_store_6 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                    const __gotots_receiver_3 = Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "Transformer"));
+                    const __gotots_receiver_3 = Transformer__from_transformers.EmitContext(__gotots_store_6.Transformer);
                     const __gotots_argument_5 = res;
                     const __gotots_store_7 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -98,7 +98,7 @@ export class optionalChainTransformer {
                     return res;
                 }
                 const __gotots_store_8 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                const __gotots_store_9 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                const __gotots_store_9 = (Transformer__from_transformers.Factory(__gotots_store_8.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 return NodeFactory__from_ast.UpdateCallExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeFactory"), node, expression, void 0, void 0, args, (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                     (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                         (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -110,7 +110,7 @@ export class optionalChainTransformer {
             }
         }
         const __gotots_store_10 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_receiver_4 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Transformer"));
+        const __gotots_receiver_4 = Transformer__from_transformers.Visitor(__gotots_store_10.Transformer);
         const __gotots_store_11 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
@@ -128,7 +128,7 @@ export class optionalChainTransformer {
             return optionalChainTransformer.$go$private$estransforms$visitNonOptionalExpression(ch, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, false, true);
         }
         const __gotots_store_56 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_receiver_12 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_56, "Transformer"));
+        const __gotots_receiver_12 = Transformer__from_transformers.Visitor(__gotots_store_56.Transformer);
         const __gotots_store_57 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
@@ -152,7 +152,7 @@ export class optionalChainTransformer {
             }
             default: {
                 const __gotots_store_66 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                return NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_66, "Transformer")), (void Node__from_ast.AsNode,
+                return NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_66.Transformer), (void Node__from_ast.AsNode,
                     node));
                 break;
             }
@@ -170,14 +170,14 @@ export class optionalChainTransformer {
             capturedLeft = (Node__from_ast.AsSyntheticReferenceExpression(left) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression;
         }
         const __gotots_store_12 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        let leftExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.RestoreOuterExpressions(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "Transformer")), expression, capturedLeft, OEKPartiallyEmittedExpressions$constant__from_ast());
+        let leftExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.RestoreOuterExpressions(Transformer__from_transformers.Factory(__gotots_store_12.Transformer), expression, capturedLeft, OEKPartiallyEmittedExpressions$constant__from_ast());
         if (!IsSimpleCopiableExpression__from_transformers(capturedLeft)) {
             const __gotots_store_13 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            capturedLeft = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "Transformer")));
+            capturedLeft = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(__gotots_store_13.Transformer));
             const __gotots_store_14 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "Transformer")), capturedLeft);
+            EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(__gotots_store_14.Transformer), capturedLeft);
             const __gotots_store_15 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            leftExpression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "Transformer")), capturedLeft, leftExpression);
+            leftExpression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(__gotots_store_15.Transformer), capturedLeft, leftExpression);
         }
         let rightExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = capturedLeft;
         let thisArg: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
@@ -193,11 +193,11 @@ export class optionalChainTransformer {
                     if (i === chain.length - 1 && captureThisArg) {
                         if (!IsSimpleCopiableExpression__from_transformers(rightExpression)) {
                             const __gotots_store_16 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            thisArg = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "Transformer")));
+                            thisArg = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(__gotots_store_16.Transformer));
                             const __gotots_store_17 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "Transformer")), thisArg);
+                            EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(__gotots_store_17.Transformer), thisArg);
                             const __gotots_store_18 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            rightExpression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "Transformer")), thisArg, rightExpression);
+                            rightExpression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(__gotots_store_18.Transformer), thisArg, rightExpression);
                         }
                         else {
                             thisArg = rightExpression;
@@ -205,23 +205,23 @@ export class optionalChainTransformer {
                     }
                     if (Node__from_ast.$storageOf(((segment ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindElementAccessExpression$constant__from_ast()) {
                         const __gotots_store_19 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_store_20 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_20 = (Transformer__from_transformers.Factory(__gotots_store_19.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                         const __gotots_receiver_5 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "NodeFactory");
                         const __gotots_argument_8 = rightExpression;
                         const __gotots_argument_9 = void 0;
                         const __gotots_store_21 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_argument_10 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Transformer")), ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(segment) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression);
+                        const __gotots_argument_10 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_21.Transformer), ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(segment) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression);
                         const __gotots_argument_11 = NodeFlagsNone$constant__from_ast();
                         rightExpression = NodeFactory__from_ast.NewElementAccessExpression(__gotots_receiver_5, __gotots_argument_8, __gotots_argument_9, __gotots_argument_10, __gotots_argument_11);
                     }
                     else {
                         const __gotots_store_22 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_store_23 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_22, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_23 = (Transformer__from_transformers.Factory(__gotots_store_22.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                         const __gotots_receiver_6 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "NodeFactory");
                         const __gotots_argument_12 = rightExpression;
                         const __gotots_argument_13 = void 0;
                         const __gotots_store_24 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_argument_14 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "Transformer")), PropertyAccessExpression__from_ast.Name(Node__from_ast.AsPropertyAccessExpression(segment)));
+                        const __gotots_argument_14 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_24.Transformer), PropertyAccessExpression__from_ast.Name(Node__from_ast.AsPropertyAccessExpression(segment)));
                         const __gotots_argument_15 = NodeFlagsNone$constant__from_ast();
                         rightExpression = NodeFactory__from_ast.NewPropertyAccessExpression(__gotots_receiver_6, __gotots_argument_12, __gotots_argument_13, __gotots_argument_14, __gotots_argument_15);
                     }
@@ -230,36 +230,36 @@ export class optionalChainTransformer {
                 case KindCallExpression$constant__from_ast(): {
                     if (i === 0 && !(leftThisArg === undefined)) {
                         const __gotots_store_25 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        if (!EmitContext__from_printer.HasAutoGenerateInfo(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "Transformer")), leftThisArg)) {
+                        if (!EmitContext__from_printer.HasAutoGenerateInfo(Transformer__from_transformers.EmitContext(__gotots_store_25.Transformer), leftThisArg)) {
                             const __gotots_receiver_7 = leftThisArg;
                             const __gotots_store_26 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            const __gotots_argument_16 = new GoInterfaceAdapter(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "Transformer")));
+                            const __gotots_argument_16 = new GoInterfaceAdapter(Transformer__from_transformers.Factory(__gotots_store_26.Transformer));
                             leftThisArg = Node__from_ast.Clone(__gotots_receiver_7, __gotots_argument_16);
                             const __gotots_store_27 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            EmitContext__from_printer.AddEmitFlags(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "Transformer")), leftThisArg, EFNoComments$constant__from_printer());
+                            EmitContext__from_printer.AddEmitFlags(Transformer__from_transformers.EmitContext(__gotots_store_27.Transformer), leftThisArg, EFNoComments$constant__from_printer());
                         }
                         let callThisArg: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = leftThisArg;
                         if (Node__from_ast.$storageOf(((leftThisArg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindSuperKeyword$constant__from_ast()) {
                             const __gotots_store_28 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                            callThisArg = NodeFactory__from_printer.NewThisExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "Transformer")));
+                            callThisArg = NodeFactory__from_printer.NewThisExpression(Transformer__from_transformers.Factory(__gotots_store_28.Transformer));
                         }
                         const __gotots_store_29 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_receiver_8 = Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "Transformer"));
+                        const __gotots_receiver_8 = Transformer__from_transformers.Factory(__gotots_store_29.Transformer);
                         const __gotots_argument_17 = rightExpression;
                         const __gotots_argument_18 = callThisArg;
                         const __gotots_store_30 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_argument_19 = NodeList__from_ast.$storageOf(((NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "Transformer")), Node__from_ast.ArgumentList(segment)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
+                        const __gotots_argument_19 = NodeList__from_ast.$storageOf(((NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(__gotots_store_30.Transformer), Node__from_ast.ArgumentList(segment)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
                         rightExpression = NodeFactory__from_printer.NewFunctionCallCall(__gotots_receiver_8, __gotots_argument_17, __gotots_argument_18, __gotots_argument_19);
                     }
                     else {
                         const __gotots_store_31 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_store_32 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_32 = (Transformer__from_transformers.Factory(__gotots_store_31.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                         const __gotots_receiver_9 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "NodeFactory");
                         const __gotots_argument_20 = rightExpression;
                         const __gotots_argument_21 = void 0;
                         const __gotots_argument_22 = void 0;
                         const __gotots_store_33 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_argument_23 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "Transformer")), Node__from_ast.ArgumentList(segment));
+                        const __gotots_argument_23 = NodeVisitor__from_ast.VisitNodes(Transformer__from_transformers.Visitor(__gotots_store_33.Transformer), Node__from_ast.ArgumentList(segment));
                         const __gotots_argument_24 = NodeFlagsNone$constant__from_ast();
                         rightExpression = NodeFactory__from_ast.NewCallExpression(__gotots_receiver_9, __gotots_argument_20, __gotots_argument_21, __gotots_argument_22, __gotots_argument_23, __gotots_argument_24);
                     }
@@ -267,49 +267,49 @@ export class optionalChainTransformer {
                 }
             }
             const __gotots_store_34 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "Transformer")), rightExpression, segment);
+            EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(__gotots_store_34.Transformer), rightExpression, segment);
         }
         let target: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (isDelete) {
             const __gotots_store_35 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_36 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_36 = (Transformer__from_transformers.Factory(__gotots_store_35.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_10 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeFactory");
             const __gotots_store_37 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_argument_25 = Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_37, "Transformer"));
+            const __gotots_argument_25 = Transformer__from_transformers.EmitContext(__gotots_store_37.Transformer);
             const __gotots_argument_26 = leftExpression;
             const __gotots_argument_27 = capturedLeft;
             const __gotots_argument_28 = true;
             const __gotots_argument_29 = createNotNullCondition(__gotots_argument_25, __gotots_argument_26, __gotots_argument_27, __gotots_argument_28);
             const __gotots_store_38 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_39 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_39 = (Transformer__from_transformers.Factory(__gotots_store_38.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_30 = NodeFactory__from_ast.NewToken(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NodeFactory"), KindQuestionToken$constant__from_ast());
             const __gotots_store_40 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_argument_31 = NodeFactory__from_printer.NewTrueExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "Transformer")));
+            const __gotots_argument_31 = NodeFactory__from_printer.NewTrueExpression(Transformer__from_transformers.Factory(__gotots_store_40.Transformer));
             const __gotots_store_41 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_42 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_42 = (Transformer__from_transformers.Factory(__gotots_store_41.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_32 = NodeFactory__from_ast.NewToken(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "NodeFactory"), KindColonToken$constant__from_ast());
             const __gotots_store_43 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_44 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_43, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_44 = (Transformer__from_transformers.Factory(__gotots_store_43.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_33 = NodeFactory__from_ast.NewDeleteExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_44, "NodeFactory"), rightExpression);
             target = NodeFactory__from_ast.NewConditionalExpression(__gotots_receiver_10, __gotots_argument_29, __gotots_argument_30, __gotots_argument_31, __gotots_argument_32, __gotots_argument_33);
         }
         else {
             const __gotots_store_45 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_46 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_45, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_46 = (Transformer__from_transformers.Factory(__gotots_store_45.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_11 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_46, "NodeFactory");
             const __gotots_store_47 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_argument_34 = Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_47, "Transformer"));
+            const __gotots_argument_34 = Transformer__from_transformers.EmitContext(__gotots_store_47.Transformer);
             const __gotots_argument_35 = leftExpression;
             const __gotots_argument_36 = capturedLeft;
             const __gotots_argument_37 = true;
             const __gotots_argument_38 = createNotNullCondition(__gotots_argument_34, __gotots_argument_35, __gotots_argument_36, __gotots_argument_37);
             const __gotots_store_48 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_49 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_48, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_49 = (Transformer__from_transformers.Factory(__gotots_store_48.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_39 = NodeFactory__from_ast.NewToken(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_49, "NodeFactory"), KindQuestionToken$constant__from_ast());
             const __gotots_store_50 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_argument_40 = NodeFactory__from_printer.NewVoidZeroExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "Transformer")));
+            const __gotots_argument_40 = NodeFactory__from_printer.NewVoidZeroExpression(Transformer__from_transformers.Factory(__gotots_store_50.Transformer));
             const __gotots_store_51 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_52 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_51, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_52 = (Transformer__from_transformers.Factory(__gotots_store_51.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_41 = NodeFactory__from_ast.NewToken(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_52, "NodeFactory"), KindColonToken$constant__from_ast());
             const __gotots_argument_42 = rightExpression;
             target = NodeFactory__from_ast.NewConditionalExpression(__gotots_receiver_11, __gotots_argument_38, __gotots_argument_39, __gotots_argument_40, __gotots_argument_41, __gotots_argument_42);
@@ -317,11 +317,11 @@ export class optionalChainTransformer {
         Node__from_ast.$storageOf(((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)));
         if (!(thisArg === undefined)) {
             const __gotots_store_53 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_54 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_54 = (Transformer__from_transformers.Factory(__gotots_store_53.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             target = NodeFactory__from_ast.NewSyntheticReferenceExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_54, "NodeFactory"), target, thisArg);
         }
         const __gotots_store_55 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_55, "Transformer")), target, (void Node__from_ast.AsNode,
+        EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(__gotots_store_55.Transformer), target, (void Node__from_ast.AsNode,
             node));
         return target;
     }
@@ -332,15 +332,15 @@ export class optionalChainTransformer {
                 value: SyntheticReferenceExpression__from_ast;
             } | undefined = Node__from_ast.AsSyntheticReferenceExpression(expr);
             const __gotots_store_58 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_59 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_58, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_59 = (Transformer__from_transformers.Factory(__gotots_store_58.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_13 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_59, "NodeFactory");
             const __gotots_store_60 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_61 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_60, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_61 = (Transformer__from_transformers.Factory(__gotots_store_60.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_argument_44 = NodeFactory__from_ast.UpdateParenthesizedExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeFactory"), node, (synth ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression);
             const __gotots_argument_45: SyntheticReferenceExpression__from_ast["ThisArg"] = (synth ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisArg;
             let res: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewSyntheticReferenceExpression(__gotots_receiver_13, __gotots_argument_44, __gotots_argument_45);
             const __gotots_store_62 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_receiver_14 = Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_62, "Transformer"));
+            const __gotots_receiver_14 = Transformer__from_transformers.EmitContext(__gotots_store_62.Transformer);
             const __gotots_argument_46 = res;
             const __gotots_store_63 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -355,7 +355,7 @@ export class optionalChainTransformer {
             return res;
         }
         const __gotots_store_64 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_store_65 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_64, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_65 = (Transformer__from_transformers.Factory(__gotots_store_64.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         return NodeFactory__from_ast.UpdateParenthesizedExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_65, "NodeFactory"), node, expr);
     }
     static $go$private$estransforms$visitPropertyOrElementAccessExpression(ch: optionalChainTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, captureThisArg: bool, isDelete: bool): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -364,17 +364,17 @@ export class optionalChainTransformer {
                 node), captureThisArg, isDelete);
         }
         const __gotots_store_67 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        let expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_67, "Transformer")), Node__from_ast.Expression(node));
+        let expression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_67.Transformer), Node__from_ast.Expression(node));
         Assert__from_debug(expression === undefined || !IsSyntheticReferenceExpression__from_ast(expression), RuntimeSlice.nil<GoInterface | undefined>());
         let thisArg: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
         if (captureThisArg) {
             if (!IsSimpleCopiableExpression__from_transformers(expression)) {
                 const __gotots_store_68 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                thisArg = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_68, "Transformer")));
+                thisArg = NodeFactory__from_printer.NewTempVariable(Transformer__from_transformers.Factory(__gotots_store_68.Transformer));
                 const __gotots_store_69 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_69, "Transformer")), thisArg);
+                EmitContext__from_printer.AddVariableDeclaration(Transformer__from_transformers.EmitContext(__gotots_store_69.Transformer), thisArg);
                 const __gotots_store_70 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                expression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_70, "Transformer")), thisArg, expression);
+                expression = NodeFactory__from_printer.NewAssignmentExpression(Transformer__from_transformers.Factory(__gotots_store_70.Transformer), thisArg, expression);
             }
             else {
                 thisArg = expression;
@@ -383,13 +383,13 @@ export class optionalChainTransformer {
         if (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindPropertyAccessExpression$constant__from_ast()) {
             let p: tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast> | undefined = Node__from_ast.AsPropertyAccessExpression(node);
             const __gotots_store_71 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_72 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_71, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_72 = (Transformer__from_transformers.Factory(__gotots_store_71.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_15 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_72, "NodeFactory");
             const __gotots_argument_48 = p;
             const __gotots_argument_49 = expression;
             const __gotots_argument_50 = void 0;
             const __gotots_store_73 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_argument_51 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_73, "Transformer")), PropertyAccessExpression__from_ast.Name(p));
+            const __gotots_argument_51 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_73.Transformer), PropertyAccessExpression__from_ast.Name(p));
             const __gotots_argument_52 = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                 (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -404,13 +404,13 @@ export class optionalChainTransformer {
         else {
             let p: tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast> | undefined = Node__from_ast.AsElementAccessExpression(node);
             const __gotots_store_74 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_75 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_74, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_75 = (Transformer__from_transformers.Factory(__gotots_store_74.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             const __gotots_receiver_17 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_75, "NodeFactory");
             const __gotots_argument_54 = p;
             const __gotots_argument_55 = expression;
             const __gotots_argument_56 = void 0;
             const __gotots_store_76 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_receiver_16 = Transformer__from_transformers.Visitor(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "Transformer"));
+            const __gotots_receiver_16 = Transformer__from_transformers.Visitor(__gotots_store_76.Transformer);
             const __gotots_store_77 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -434,10 +434,10 @@ export class optionalChainTransformer {
         }
         if (!(thisArg === undefined)) {
             const __gotots_store_78 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            const __gotots_store_79 = (Transformer__from_transformers.Factory(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_78, "Transformer")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_79 = (Transformer__from_transformers.Factory(__gotots_store_78.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             let res: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewSyntheticReferenceExpression(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_79, "NodeFactory"), expression, thisArg);
             const __gotots_store_80 = (ch ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_80, "Transformer")), res, (void Node__from_ast.AsNode,
+            EmitContext__from_printer.SetOriginal(Transformer__from_transformers.EmitContext(__gotots_store_80.Transformer), res, (void Node__from_ast.AsNode,
                 node));
             return res;
         }
@@ -466,10 +466,10 @@ export function flattenChain(chain: tsonicTypeScriptRuntime.Location<Node__from_
 export function isCallChain(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     return IsCallExpression__from_ast(node) && !((Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsOptionalChain$constant__from_ast()) >>> 0 === 0);
 }
-export function newOptionalChainTransformer(opts: TransformOptions__from_transformers | undefined): tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined {
+export function newOptionalChainTransformer(opts: TransformOptions__from_transformers | undefined): Transformer__from_transformers | undefined {
     let tx: optionalChainTransformer | undefined = new optionalChainTransformer(Transformer__from_transformers.$zero());
     const __gotots_store_0 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-    const __gotots_receiver_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Transformer");
+    const __gotots_receiver_1 = __gotots_store_0.Transformer;
     const __gotots_receiver_0 = tx;
     const __gotots_argument_0 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return optionalChainTransformer.$go$private$estransforms$visit(__gotots_receiver_0, $argument0);

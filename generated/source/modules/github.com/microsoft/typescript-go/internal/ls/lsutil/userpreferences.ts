@@ -444,15 +444,6 @@ export class fieldInfo {
     public set configInvert($value: bool) {
         this.$storage.configInvert = $value;
     }
-    static $zero(): fieldInfo {
-        return new fieldInfo({
-            rawName: "",
-            configPath: "",
-            fieldPath: RuntimeSlice.nil<int>(),
-            rawInvert: false,
-            configInvert: false
-        });
-    }
     static $copy($source: fieldInfo): fieldInfo {
         return new fieldInfo({
             rawName: $source.$storage.rawName,
@@ -461,6 +452,15 @@ export class fieldInfo {
             rawInvert: $source.$storage.rawInvert,
             configInvert: $source.$storage.configInvert
         });
+    }
+    static $zeroStorage(): fieldInfo$Storage {
+        return {
+            rawName: "",
+            configPath: "",
+            fieldPath: RuntimeSlice.nil<int>(),
+            rawInvert: false,
+            configInvert: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -506,7 +506,7 @@ export function collectFieldInfos(t: reflect__from_gostdlib.Type | undefined, in
                         __gotots_slice_build_3.set(__gotots_slice_build_0.length + __gotots_slice_build_5, __gotots_slice_build_2.get(__gotots_slice_build_5));
                     }
                     for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
-                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, fieldInfo.$storageOf(fieldInfo.$zero()));
+                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, fieldInfo.$zeroStorage());
                     }
                 }
                 infos = __gotots_slice_build_3;
@@ -560,7 +560,7 @@ export function collectFieldInfos(t: reflect__from_gostdlib.Type | undefined, in
             }
             __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, fieldInfo.$storageOf(fieldInfo.$copy(info)));
             for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-                __gotots_slice_build_7.$initialize(__gotots_slice_build_9, fieldInfo.$storageOf(fieldInfo.$zero()));
+                __gotots_slice_build_7.$initialize(__gotots_slice_build_9, fieldInfo.$zeroStorage());
             }
         }
         infos = __gotots_slice_build_7;

@@ -344,7 +344,7 @@ export class Program {
                         __gotots_return_0 = void 0;
                         break __gotots_return_block_0;
                     }
-                    let buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo> | undefined = snapshotToBuildInfo((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshot, (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program, buildInfoFileName);
+                    let buildInfo: BuildInfo | undefined = snapshotToBuildInfo((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshot, (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program, buildInfoFileName);
                     const __gotots_results_0 = Marshal__from_json__package_1(new $goInterfaceAdapter$PointerTo_Named_incremental$BuildInfo(buildInfo), RuntimeSlice.nil<Options__from_jsonopts | undefined>());
                     let text = __gotots_results_0[0];
                     let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_0[1];

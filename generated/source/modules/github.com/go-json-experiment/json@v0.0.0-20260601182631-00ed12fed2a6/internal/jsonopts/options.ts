@@ -54,9 +54,9 @@ export class Struct {
     }
     static $zero(): Struct {
         return new Struct({
-            Flags: Flags__from_jsonflags.$storageOf(Flags__from_jsonflags.$zero()),
-            CoderValues: CoderValues.$storageOf(CoderValues.$zero()),
-            ArshalValues: ArshalValues.$storageOf(ArshalValues.$zero())
+            Flags: Flags__from_jsonflags.$zeroStorage(),
+            CoderValues: CoderValues.$zeroStorage(),
+            ArshalValues: ArshalValues.$zeroStorage()
         });
     }
     static $copy($source: Struct): Struct {
@@ -75,6 +75,13 @@ export class Struct {
         $hash = GoMapHash.mix($hash, CoderValues.$hash(CoderValues.$fromStorage($source.$storage.CoderValues)));
         $hash = GoMapHash.mix($hash, ArshalValues.$hash(ArshalValues.$fromStorage($source.$storage.ArshalValues)));
         return $hash;
+    }
+    static $zeroStorage(): Struct$Storage {
+        return {
+            Flags: Flags__from_jsonflags.$zeroStorage(),
+            CoderValues: CoderValues.$zeroStorage(),
+            ArshalValues: ArshalValues.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static InitializeMultiline(s: tsonicTypeScriptRuntime.Location<Struct> | undefined): void {
@@ -242,14 +249,6 @@ export class CoderValues {
     public set DepthLimit($value: int) {
         this.$storage.DepthLimit = $value;
     }
-    static $zero(): CoderValues {
-        return new CoderValues({
-            Indent: "",
-            IndentPrefix: "",
-            ByteLimit: 0n,
-            DepthLimit: 0
-        });
-    }
     static $copy($source: CoderValues): CoderValues {
         return new CoderValues({
             Indent: $source.$storage.Indent,
@@ -268,6 +267,14 @@ export class CoderValues {
         $hash = GoMapHash.mix($hash, GoMapHash.bigint($source.$storage.ByteLimit));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.DepthLimit));
         return $hash;
+    }
+    static $zeroStorage(): CoderValues$Storage {
+        return {
+            Indent: "",
+            IndentPrefix: "",
+            ByteLimit: 0n,
+            DepthLimit: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -304,13 +311,6 @@ export class ArshalValues {
     public set Format($value: gostring) {
         this.$storage.Format = $value;
     }
-    static $zero(): ArshalValues {
-        return new ArshalValues({
-            Marshalers: void 0,
-            Unmarshalers: void 0,
-            Format: ""
-        });
-    }
     static $copy($source: ArshalValues): ArshalValues {
         return new ArshalValues({
             Marshalers: $source.$storage.Marshalers,
@@ -327,6 +327,13 @@ export class ArshalValues {
         $hash = GoMapHash.mix($hash, $source.$storage.Unmarshalers === undefined ? 0 : $source.$storage.Unmarshalers.$go$hash());
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.Format));
         return $hash;
+    }
+    static $zeroStorage(): ArshalValues$Storage {
+        return {
+            Marshalers: void 0,
+            Unmarshalers: void 0,
+            Format: ""
+        };
     }
     declare private readonly then?: never;
 }

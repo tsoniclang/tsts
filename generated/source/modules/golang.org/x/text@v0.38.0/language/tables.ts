@@ -52,14 +52,6 @@ export class mutualIntelligibility {
     public set oneway($value: bool) {
         this.$storage.oneway = $value;
     }
-    static $zero(): mutualIntelligibility {
-        return new mutualIntelligibility({
-            want: 0,
-            have: 0,
-            distance: 0,
-            oneway: false
-        });
-    }
     static $copy($source: mutualIntelligibility): mutualIntelligibility {
         return new mutualIntelligibility({
             want: $source.$storage.want,
@@ -67,6 +59,14 @@ export class mutualIntelligibility {
             distance: $source.$storage.distance,
             oneway: $source.$storage.oneway
         });
+    }
+    static $zeroStorage(): mutualIntelligibility$Storage {
+        return {
+            want: 0,
+            have: 0,
+            distance: 0,
+            oneway: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -117,15 +117,6 @@ export class scriptIntelligibility {
     public set distance($value: uint8) {
         this.$storage.distance = $value;
     }
-    static $zero(): scriptIntelligibility {
-        return new scriptIntelligibility({
-            wantLang: 0,
-            haveLang: 0,
-            wantScript: 0,
-            haveScript: 0,
-            distance: 0
-        });
-    }
     static $copy($source: scriptIntelligibility): scriptIntelligibility {
         return new scriptIntelligibility({
             wantLang: $source.$storage.wantLang,
@@ -134,6 +125,15 @@ export class scriptIntelligibility {
             haveScript: $source.$storage.haveScript,
             distance: $source.$storage.distance
         });
+    }
+    static $zeroStorage(): scriptIntelligibility$Storage {
+        return {
+            wantLang: 0,
+            haveLang: 0,
+            wantScript: 0,
+            haveScript: 0,
+            distance: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -177,14 +177,6 @@ export class regionIntelligibility {
     public set distance($value: uint8) {
         this.$storage.distance = $value;
     }
-    static $zero(): regionIntelligibility {
-        return new regionIntelligibility({
-            lang: 0,
-            script: 0,
-            group: 0,
-            distance: 0
-        });
-    }
     static $copy($source: regionIntelligibility): regionIntelligibility {
         return new regionIntelligibility({
             lang: $source.$storage.lang,
@@ -192,6 +184,14 @@ export class regionIntelligibility {
             group: $source.$storage.group,
             distance: $source.$storage.distance
         });
+    }
+    static $zeroStorage(): regionIntelligibility$Storage {
+        return {
+            lang: 0,
+            script: 0,
+            group: 0,
+            distance: 0
+        };
     }
     declare private readonly then?: never;
 }

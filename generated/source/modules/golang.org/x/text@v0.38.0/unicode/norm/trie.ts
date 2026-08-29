@@ -36,19 +36,19 @@ export class valueRange {
     public set hi($value: uint8) {
         this.$storage.hi = $value;
     }
-    static $zero(): valueRange {
-        return new valueRange({
-            value: 0,
-            lo: 0,
-            hi: 0
-        });
-    }
     static $copy($source: valueRange): valueRange {
         return new valueRange({
             value: $source.$storage.value,
             lo: $source.$storage.lo,
             hi: $source.$storage.hi
         });
+    }
+    static $zeroStorage(): valueRange$Storage {
+        return {
+            value: 0,
+            lo: 0,
+            hi: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -78,11 +78,11 @@ export class sparseBlocks {
     public set offset($value: RuntimeSlice<uint16>) {
         this.$storage.offset = $value;
     }
-    static $zero(): sparseBlocks {
-        return new sparseBlocks({
+    static $zeroStorage(): sparseBlocks$Storage {
+        return {
             values: RuntimeSlice.nil<valueRange$Storage>(),
             offset: RuntimeSlice.nil<uint16>()
-        });
+        };
     }
     declare private readonly then?: never;
     static $go$private$norm$lookup(t: tsonicTypeScriptRuntime.Location<sparseBlocks> | undefined, n: uint32, b: uint8): uint16 {

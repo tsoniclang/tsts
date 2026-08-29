@@ -23,13 +23,18 @@ export class OrderedSet<T> {
     }
     static $zero<T>($go$zero$void_to_MapOf_T0_To_Struct_void: () => GoMapValue<T, GoEmptyStruct>): OrderedSet<T> {
         return new OrderedSet<T>({
-            m: OrderedMap.$storageOf<T, GoEmptyStruct>(OrderedMap.$zero<T, GoEmptyStruct>($go$zero$void_to_MapOf_T0_To_Struct_void))
+            m: OrderedMap.$zeroStorage<T, GoEmptyStruct>($go$zero$void_to_MapOf_T0_To_Struct_void)
         });
     }
     static $copy<T>($source: OrderedSet<T>): OrderedSet<T> {
         return new OrderedSet<T>({
             m: OrderedMap.$storageOf<T, GoEmptyStruct>(OrderedMap.$copy<T, GoEmptyStruct>(OrderedMap.$fromStorage<T, GoEmptyStruct>($source.$storage.m)))
         });
+    }
+    static $zeroStorage<T>($go$zero$void_to_MapOf_T0_To_Struct_void: () => GoMapValue<T, GoEmptyStruct>): OrderedSet$Storage<T> {
+        return {
+            m: OrderedMap.$zeroStorage<T, GoEmptyStruct>($go$zero$void_to_MapOf_T0_To_Struct_void)
+        };
     }
     declare private readonly then?: never;
     static Add$kernel<T>(s: tsonicTypeScriptRuntime.Location<OrderedSet<T>> | undefined, $go$copy$T0_to_T0: ($0: T) => T, $go$from_container_storage$T0_to_T0: ($0: GoContainerStorage<T>) => T, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct) => GoMapValue<T, GoEmptyStruct>, $go$to_container_storage$T0_to_T0: ($0: T) => GoContainerStorage<T>, $go$zero$void_to_T0: () => T, value: T): void {

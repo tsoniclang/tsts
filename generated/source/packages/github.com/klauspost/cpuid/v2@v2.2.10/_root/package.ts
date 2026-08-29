@@ -53,7 +53,7 @@ export function $initialize(): void {
     VMware = VMware$constant();
     X87 = X87$constant();
     XenHVM = XenHVM$constant();
-    $state.CPU = CPUInfo.$storageOf(CPUInfo.$zero());
+    $state.CPU = CPUInfo.$zeroStorage();
     $state._FeatureID_index = GoArray.zero<uint16, 228>(228, 0);
     $state._Vendor_index = GoArray.zero<uint8, 33>(33, 0);
     $state.cpuid = void 0;

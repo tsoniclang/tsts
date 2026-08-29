@@ -48,17 +48,17 @@ export class tableRow {
     public set value($value: gostring) {
         this.$storage.value = $value;
     }
-    static $zero(): tableRow {
-        return new tableRow({
-            name: "",
-            value: ""
-        });
-    }
     static $copy($source: tableRow): tableRow {
         return new tableRow({
             name: $source.$storage.name,
             value: $source.$storage.value
         });
+    }
+    static $zeroStorage(): tableRow$Storage {
+        return {
+            name: "",
+            value: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -109,7 +109,7 @@ export class table {
                     value: fmt__from_gostdlib.Sprint(RuntimeSlice.literal<$goInterface$Interface_void | undefined>([value]))
                 })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, tableRow.$storageOf(tableRow.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, tableRow.$zeroStorage());
             }
         }
         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rows = __gotots_slice_build_1;

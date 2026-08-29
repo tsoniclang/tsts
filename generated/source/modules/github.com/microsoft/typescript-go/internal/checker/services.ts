@@ -23,12 +23,14 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
-export function runWithInferenceBlockedFromSourceNode$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, c: tsonicTypeScriptRuntime.Location<Checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, fn: (() => T) | undefined): T {
+export function runWithInferenceBlockedFromSourceNode$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, c: {
+    value: Checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, fn: (() => T) | undefined): T {
     let containingCall: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, IsCallLikeExpression__from_ast);
     if (!(containingCall === undefined)) {
         let toMarkSkip: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = node;
         for (;;) {
-            const __gotots_store_0 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+            const __gotots_store_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             Set$Add$PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "skipDirectInferenceNodes"), toMarkSkip);
             toMarkSkip = Node__from_ast.$storageOf(((toMarkSkip ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
             if (toMarkSkip === undefined ||
@@ -37,14 +39,16 @@ export function runWithInferenceBlockedFromSourceNode$kernel<T>($go$copy$T0_to_T
             }
         }
     }
-    ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.isInferencePartiallyBlocked = true;
+    (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isInferencePartiallyBlocked = true;
     let result: T = $go$copy$T0_to_T0(runWithoutResolvedSignatureCaching$kernel<T>($go$copy$T0_to_T0, c, node, fn));
-    ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.isInferencePartiallyBlocked = false;
-    const __gotots_store_1 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+    (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.isInferencePartiallyBlocked = false;
+    const __gotots_store_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
     Set$Clear$PointerTo_Named_ast$Node(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "skipDirectInferenceNodes"));
     return $go$copy$T0_to_T0(result);
 }
-export function GetResolvedSignatureForSignatureHelp(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, argumentCount: int, c: tsonicTypeScriptRuntime.Location<Checker> | undefined): [
+export function GetResolvedSignatureForSignatureHelp(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, argumentCount: int, c: {
+    value: Checker;
+} | undefined): [
     tsonicTypeScriptRuntime.Location<Signature> | undefined,
     RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature> | undefined>
 ] {
@@ -57,7 +61,9 @@ export function GetResolvedSignatureForSignatureHelp(node: tsonicTypeScriptRunti
         }
         declare private readonly then?: never;
     }
-    function runWithoutResolvedSignatureCaching$Named_result($argument0: tsonicTypeScriptRuntime.Location<Checker> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $argument2: (() => result) | undefined): result {
+    function runWithoutResolvedSignatureCaching$Named_result($argument0: {
+        value: Checker;
+    } | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $argument2: (() => result) | undefined): result {
         return runWithoutResolvedSignatureCaching$kernel<result>(($argument0: result): result => {
             return result.$copy($argument0);
         }, $argument0, $argument1, $argument2);
@@ -70,18 +76,20 @@ export function GetResolvedSignatureForSignatureHelp(node: tsonicTypeScriptRunti
     });
     return [res.signature, res.candidates];
 }
-export function runWithoutResolvedSignatureCaching$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, c: tsonicTypeScriptRuntime.Location<Checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, fn: (() => T) | undefined): T {
+export function runWithoutResolvedSignatureCaching$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, c: {
+    value: Checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, fn: (() => T) | undefined): T {
     let ancestorNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, IsCallLikeOrFunctionLikeExpression__from_ast);
     if (!(ancestorNode === undefined)) {
         let cachedResolvedSignatures: GoMapValue<tsonicTypeScriptRuntime.Location<SignatureLinks> | undefined, tsonicTypeScriptRuntime.Location<Signature> | undefined> = GoMap.make(0, []);
         let cachedTypes: GoMapValue<tsonicTypeScriptRuntime.Location<ValueSymbolLinks> | undefined, tsonicTypeScriptRuntime.Location<Type> | undefined> = $goMap$MapOf_PointerTo_Named_checker$ValueSymbolLinks_To_PointerTo_Named_checker$Type.make(0, []);
         for (; !(ancestorNode === undefined);) {
-            const __gotots_store_3 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+            const __gotots_store_3 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             let signatureLinks: tsonicTypeScriptRuntime.Location<SignatureLinks> | undefined = LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$SignatureLinks(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "signatureLinks"), ancestorNode);
             cachedResolvedSignatures.store(signatureLinks, SignatureLinks.$storageOf(((signatureLinks ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureLinks>).value).resolvedSignature);
             SignatureLinks.$storageOf(((signatureLinks ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SignatureLinks>).value).resolvedSignature = void 0;
             if (IsFunctionExpressionOrArrowFunction__from_ast(ancestorNode)) {
-                const __gotots_store_4 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+                const __gotots_store_4 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 let symbolLinks: tsonicTypeScriptRuntime.Location<ValueSymbolLinks> | undefined = LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$ValueSymbolLinks(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "valueSymbolLinks"), Checker.$go$private$checker$getSymbolOfDeclaration(c, ancestorNode));
                 let resolvedType: tsonicTypeScriptRuntime.Location<Type> | undefined = ValueSymbolLinks.$storageOf(((symbolLinks ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ValueSymbolLinks>).value).resolvedType;
                 cachedTypes.store(symbolLinks, resolvedType);

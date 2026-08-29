@@ -1,9 +1,8 @@
-import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { TransformOptions as TransformOptions__from_transformers, Transformer as Transformer__from_transformers } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/transformers/package.js";
 import { CompilerOptions as CompilerOptions__from_core, ScriptTargetES2016$constant as ScriptTargetES2016$constant__from_core, ScriptTargetES2017$constant as ScriptTargetES2017$constant__from_core, ScriptTargetES2018$constant as ScriptTargetES2018$constant__from_core, ScriptTargetES2019$constant as ScriptTargetES2019$constant__from_core, ScriptTargetES2020$constant as ScriptTargetES2020$constant__from_core, ScriptTargetES2021$constant as ScriptTargetES2021$constant__from_core, ScriptTargetES2022$constant as ScriptTargetES2022$constant__from_core, ScriptTargetES2023$constant as ScriptTargetES2023$constant__from_core, ScriptTargetES2024$constant as ScriptTargetES2024$constant__from_core, ScriptTargetES2025$constant as ScriptTargetES2025$constant__from_core, ScriptTargetESNext$constant as ScriptTargetESNext$constant__from_core } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/core/package.js";
 import { $state } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/transformers/estransforms/state.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
-export function GetESTransformer(opts: TransformOptions__from_transformers | undefined): tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined {
+export function GetESTransformer(opts: TransformOptions__from_transformers | undefined): Transformer__from_transformers | undefined {
     let options: {
         value: CompilerOptions__from_core;
     } | undefined = (opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).CompilerOptions;

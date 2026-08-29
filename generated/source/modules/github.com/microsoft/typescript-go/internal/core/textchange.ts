@@ -35,12 +35,6 @@ export class TextChange implements GoContainerStoredValue<TextChange$Storage> {
         this.$storage.NewText = $value;
     }
     declare readonly [$goContainerStorageType]: TextChange$Storage;
-    static $zero(): TextChange {
-        return new TextChange({
-            TextRange: TextRange.$storageOf(TextRange.$zero()),
-            NewText: ""
-        });
-    }
     static $copy($source: TextChange): TextChange {
         return new TextChange({
             TextRange: TextRange.$storageOf(TextRange.$copy(TextRange.$fromStorage($source.$storage.TextRange))),
@@ -55,6 +49,12 @@ export class TextChange implements GoContainerStoredValue<TextChange$Storage> {
         $hash = GoMapHash.mix($hash, TextRange.$hash(TextRange.$fromStorage($source.$storage.TextRange)));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.NewText));
         return $hash;
+    }
+    static $zeroStorage(): TextChange$Storage {
+        return {
+            TextRange: TextRange.$zeroStorage(),
+            NewText: ""
+        };
     }
     declare private readonly then?: never;
     ApplyTo(text: gostring): gostring {

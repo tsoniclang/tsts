@@ -117,7 +117,9 @@ export class invocation {
     }
     declare private readonly then?: never;
 }
-export function createTypeHelpItems(ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, argumentInfo: argumentListInfo | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): {
+export function createTypeHelpItems(ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, argumentInfo: argumentListInfo | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): {
     value: SignatureHelp__from_lsproto;
 } | undefined {
     let typeParameters = Checker__from_checker.GetLocalTypeParametersOfClassOrInterfaceOrTypeAlias(c, __go_symbol);
@@ -158,11 +160,13 @@ export function createTypeHelpItems(ctx: $goInterface$Interface_Method_context$D
     }
     return help;
 }
-export function getTypeHelpItem(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, typeParameter: RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): signatureInformation {
+export function getTypeHelpItem(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, typeParameter: RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): signatureInformation {
     let printer__shadow_1: Printer__from_printer | undefined = NewPrinter__from_printer(new PrinterOptions__from_printer(false, NewLineKindLF$constant__from_core(), false, 0, false, false, false, false, false, false, false, false), new PrintHandlers__from_printer(void 0, void 0, void 0, void 0, void 0, void 0, void 0), void 0);
     const __gotots_slice_build_0 = goSliceAllocate<signatureHelpParameter$Storage>(typeParameter.length, null);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, signatureHelpParameter.$storageOf(signatureHelpParameter.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, signatureHelpParameter.$zeroStorage());
     }
     let parameters = __gotots_slice_build_0;
     const __gotots_range_2 = typeParameter;
@@ -200,7 +204,9 @@ export function getTypeHelpItem(__go_symbol: tsonicTypeScriptRuntime.Location<Sy
         } | undefined>()
     });
 }
-export function returnTypeToDisplayParts(candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, vsCapability: bool): {
+export function returnTypeToDisplayParts(candidateSignature: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, vsCapability: bool): {
     value: displayPartsWriter;
 } | undefined {
     let dpw: {
@@ -233,7 +239,9 @@ export function returnTypeToDisplayParts(candidateSignature: tsonicTypeScriptRun
 export function signatureHelpNodeBuilderFlags$constant(): Flags__from_nodebuilder {
     return 70246400;
 }
-export function createSignatureHelpParameterForTypeParameter(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, p: Printer__from_printer | undefined): signatureHelpParameter {
+export function createSignatureHelpParameterForTypeParameter(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, enclosingDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined, p: Printer__from_printer | undefined): signatureHelpParameter {
     let display = Printer__from_printer.Emit(p, NodeBuilder__from_checker.TypeParameterToDeclaration(NewNodeBuilder__from_checker(c, NewEmitContext__from_printer()), t, enclosingDeclaration, signatureHelpNodeBuilderFlags$constant(), InternalFlagsNone$constant__from_nodebuilder(), void 0), sourceFile);
     const display$location = tsonicTypeScriptRuntime.boundLocation({}, () => display, display$next => display = display$next);
     return signatureHelpParameter.$fromStorage({
@@ -295,17 +303,6 @@ export class signatureInformation {
     } | undefined>) {
         this.$storage.ColorizedRuns = $value;
     }
-    static $zero(): signatureInformation {
-        return new signatureInformation({
-            Label: "",
-            Documentation: void 0,
-            Parameters: RuntimeSlice.nil<signatureHelpParameter$Storage>(),
-            IsVariadic: false,
-            ColorizedRuns: RuntimeSlice.nil<{
-                value: VSClassifiedTextRun__from_lsproto;
-            } | undefined>()
-        });
-    }
     static $copy($source: signatureInformation): signatureInformation {
         return new signatureInformation({
             Label: $source.$storage.Label,
@@ -314,6 +311,17 @@ export class signatureInformation {
             IsVariadic: $source.$storage.IsVariadic,
             ColorizedRuns: $source.$storage.ColorizedRuns
         });
+    }
+    static $zeroStorage(): signatureInformation$Storage {
+        return {
+            Label: "",
+            Documentation: void 0,
+            Parameters: RuntimeSlice.nil<signatureHelpParameter$Storage>(),
+            IsVariadic: false,
+            ColorizedRuns: RuntimeSlice.nil<{
+                value: VSClassifiedTextRun__from_lsproto;
+            } | undefined>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -365,19 +373,19 @@ export class signatureHelpParameter implements GoContainerStoredValue<signatureH
         this.$storage.isOptional = $value;
     }
     declare readonly [$goContainerStorageType]: signatureHelpParameter$Storage;
-    static $zero(): signatureHelpParameter {
-        return new signatureHelpParameter({
-            parameterInfo: void 0,
-            isRest: false,
-            isOptional: false
-        });
-    }
     static $copy($source: signatureHelpParameter): signatureHelpParameter {
         return new signatureHelpParameter({
             parameterInfo: $source.$storage.parameterInfo,
             isRest: $source.$storage.isRest,
             isOptional: $source.$storage.isOptional
         });
+    }
+    static $zeroStorage(): signatureHelpParameter$Storage {
+        return {
+            parameterInfo: void 0,
+            isRest: false,
+            isOptional: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -428,7 +436,9 @@ export class CandidateOrTypeInfo {
     }
     declare private readonly then?: never;
 }
-export function getCandidateOrTypeInfo(info: argumentListInfo | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, startingToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, onlyUseSyntacticOwners: bool): CandidateOrTypeInfo | undefined {
+export function getCandidateOrTypeInfo(info: argumentListInfo | undefined, c: {
+    value: Checker__from_checker;
+} | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, startingToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, onlyUseSyntacticOwners: bool): CandidateOrTypeInfo | undefined {
     if (!(((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).invocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.callInvocation === undefined)) {
         if (onlyUseSyntacticOwners && !isSyntacticOwner(startingToken, (((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).invocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.callInvocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node, sourceFile)) {
             return void 0;
@@ -509,7 +519,9 @@ export function containsPrecedingToken(startingToken: tsonicTypeScriptRuntime.Lo
     }
     return false;
 }
-export function getContainingArgumentInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, isManuallyInvoked: bool, position__shadow_1: int): argumentListInfo | undefined {
+export function getContainingArgumentInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, isManuallyInvoked: bool, position__shadow_1: int): argumentListInfo | undefined {
     let firstArgumentInfo: argumentListInfo | undefined = void 0;
     for (let n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = node; !IsSourceFile__from_ast(n) && (isManuallyInvoked || !IsBlock__from_ast(n)); n = Node__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent) {
         Assert__from_debug(RangeContainsRange(TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((Node__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc)), TextRange__from_core.$copy(TextRange__from_core.$fromStorage(Node__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc))), RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("Not a subspan. Child: "), new GoInterfaceAdapter(Node__from_ast.KindString(n)), new GoInterfaceAdapter(", parent: "), new GoInterfaceAdapter(Node__from_ast.KindString(Node__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent))]));
@@ -531,7 +543,9 @@ export function getContainingArgumentInfo(node: tsonicTypeScriptRuntime.Location
     }
     return firstArgumentInfo;
 }
-export function getImmediatelyContainingArgumentOrContextualParameterInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): argumentListInfo | undefined {
+export function getImmediatelyContainingArgumentOrContextualParameterInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): argumentListInfo | undefined {
     let result: argumentListInfo | undefined = tryGetParameterInfo(node, sourceFile, checker__shadow_1);
     if (result === undefined) {
         return getImmediatelyContainingArgumentInfo(node, position__shadow_1, sourceFile, checker__shadow_1);
@@ -546,7 +560,9 @@ export class argumentListInfo {
     }
     declare private readonly then?: never;
 }
-export function getImmediatelyContainingArgumentInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): argumentListInfo | undefined {
+export function getImmediatelyContainingArgumentInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): argumentListInfo | undefined {
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
     if (IsCallOrNewExpression__from_ast(parent)) {
         let info: argumentOrParameterListInfo | undefined = getArgumentOrParameterListInfo(node, sourceFile, c);
@@ -661,7 +677,9 @@ export class contextualSignatureLocationInfo {
 }
 export function getSpreadElementCount(node: {
     value: SpreadElement__from_ast;
-} | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): int {
+} | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): int {
     let spreadType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(c, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression);
     if (IsTupleType__from_checker(spreadType)) {
         let tupleType: {
@@ -685,13 +703,19 @@ export function getSpreadElementCount(node: {
     }
     return 0;
 }
-export function getArgumentIndex(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_arguments: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): int {
+export function getArgumentIndex(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_arguments: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): int {
     return getArgumentIndexOrCount(getTokenFromNodeList(__go_arguments, Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent, sourceFile), node, c);
 }
-export function getArgumentCount(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_arguments: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): int {
+export function getArgumentCount(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_arguments: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): int {
     return getArgumentIndexOrCount(getTokenFromNodeList(__go_arguments, Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent, sourceFile), void 0, c);
 }
-export function getArgumentIndexOrCount(__go_arguments: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): int {
+export function getArgumentIndexOrCount(__go_arguments: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): int {
     let argumentIndex = 0;
     let skipComma = false;
     const __gotots_range_0 = __go_arguments;
@@ -736,7 +760,9 @@ export class argumentOrParameterListInfo {
     }
     declare private readonly then?: never;
 }
-export function getArgumentOrParameterListInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): argumentOrParameterListInfo | undefined {
+export function getArgumentOrParameterListInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): argumentOrParameterListInfo | undefined {
     let info: argumentOrParameterListAndIndex | undefined = getArgumentOrParameterListAndIndex(node, sourceFile, c);
     if (info === undefined) {
         return void 0;
@@ -771,7 +797,9 @@ export class argumentOrParameterListAndIndex {
     }
     declare private readonly then?: never;
 }
-export function getArgumentOrParameterListAndIndex(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): argumentOrParameterListAndIndex | undefined {
+export function getArgumentOrParameterListAndIndex(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): argumentOrParameterListAndIndex | undefined {
     if (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindLessThanToken$constant__from_ast() || Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindOpenParenToken$constant__from_ast()) {
         let list: tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined = getChildListThatStartsWithOpenerToken(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent, node);
         return new argumentOrParameterListAndIndex(list, 0);
@@ -818,7 +846,9 @@ export function getChildListThatStartsWithOpenerToken(parent: tsonicTypeScriptRu
     }
     return void 0;
 }
-export function tryGetParameterInfo(startingToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): argumentListInfo | undefined {
+export function tryGetParameterInfo(startingToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): argumentListInfo | undefined {
     let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getAdjustedNode(startingToken);
     if (node === undefined) {
         return void 0;
@@ -858,7 +888,9 @@ export function chooseBetterSymbol(s: tsonicTypeScriptRuntime.Location<Symbol__f
     }
     return s;
 }
-export function getContextualSignatureLocationInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): contextualSignatureLocationInfo | undefined {
+export function getContextualSignatureLocationInfo(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, c: {
+    value: Checker__from_checker;
+} | undefined): contextualSignatureLocationInfo | undefined {
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
     switch (Node__from_ast.$storageOf(((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindParenthesizedExpression$constant__from_ast():
@@ -942,7 +974,7 @@ export function getTokenFromNodeList(nodeList: tsonicTypeScriptRuntime.Location<
             nodeListIndex++;
         }
         else {
-            let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, left);
+            let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, left);
             let token = Scanner__from_scanner.Token(scanner__shadow_1);
             let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_1);
             let tokenEnd = Scanner__from_scanner.TokenEnd(scanner__shadow_1);

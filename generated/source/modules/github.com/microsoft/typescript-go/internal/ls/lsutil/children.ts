@@ -21,7 +21,7 @@ export function GetLastChild(node: tsonicTypeScriptRuntime.Location<Node__from_a
         tokenStartPos = Node__from_ast.Pos(node);
     }
     let lastToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
-    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, tokenStartPos);
+    let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, tokenStartPos);
     for (let startPos = tokenStartPos; startPos < Node__from_ast.End(node);) {
         let tokenKind = Scanner__from_scanner.Token(scanner__shadow_1);
         let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_1);
@@ -101,7 +101,7 @@ export function GetFirstToken(node: tsonicTypeScriptRuntime.Location<Node__from_
     else {
         tokenEndPosition = Node__from_ast.End(node);
     }
-    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, Node__from_ast.Pos(node));
+    let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, Node__from_ast.Pos(node));
     let firstToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
     if (Node__from_ast.Pos(node) < tokenEndPosition) {
         let tokenKind = Scanner__from_scanner.Token(scanner__shadow_1);

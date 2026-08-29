@@ -3,7 +3,6 @@ import type { GoMapValue } from "@gotots/runtime/map.js";
 import type { int } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import type { GoContainerStorage } from "@gotots/runtime/storage.js";
-import type { Arena$Storage } from "../../modules/github.com/microsoft/typescript-go/internal/core/arena.js";
 import * as genericSlicesKernel from "@gotots/gostdlib/internal/facets/generic-slices-kernel.js";
 import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { LinkStore } from "../../modules/github.com/microsoft/typescript-go/internal/core/linkstore.js";
@@ -22,7 +21,7 @@ export function arenaNew<T>(arenaPointer: tsonicTypeScriptRuntime.Location<Arena
     arena.data = data;
     return indexAddress(data, index);
 }
-export function linkStoreGet<K, V>(storePointer: tsonicTypeScriptRuntime.Location<LinkStore<K, V>> | undefined, sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<V>>) => int, convertSlice: (slice: RuntimeSlice<GoContainerStorage<V>>) => RuntimeSlice<GoContainerStorage<V>>, copyValue: (value: V) => V, fromContainerStorage: (value: GoContainerStorage<V>) => V, indexAddress: (slice: RuntimeSlice<GoContainerStorage<V>>, index: int) => tsonicTypeScriptRuntime.Location<V> | undefined, sliceLength: (slice: RuntimeSlice<GoContainerStorage<V>>) => int, constructMap: (zero: tsonicTypeScriptRuntime.Location<V> | undefined) => GoMapValue<K, tsonicTypeScriptRuntime.Location<V> | undefined>, toContainerStorage: (value: V) => GoContainerStorage<V>, zeroValue: () => V, key: K): tsonicTypeScriptRuntime.Location<V> | undefined {
+export function linkStoreGet<K, V>(storePointer: tsonicTypeScriptRuntime.Location<LinkStore<K, V>> | undefined, _sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<V>>) => int, _convertSlice: (slice: RuntimeSlice<GoContainerStorage<V>>) => RuntimeSlice<GoContainerStorage<V>>, _copyValue: (value: V) => V, _fromContainerStorage: (value: GoContainerStorage<V>) => V, _indexAddress: (slice: RuntimeSlice<GoContainerStorage<V>>, index: int) => tsonicTypeScriptRuntime.Location<V> | undefined, _sliceLength: (slice: RuntimeSlice<GoContainerStorage<V>>) => int, constructMap: (zero: tsonicTypeScriptRuntime.Location<V> | undefined) => GoMapValue<K, tsonicTypeScriptRuntime.Location<V> | undefined>, _toContainerStorage: (value: V) => GoContainerStorage<V>, zeroValue: () => V, key: K): tsonicTypeScriptRuntime.Location<V> | undefined {
     const store = LinkStore.$storageOf((storePointer ??
         GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
     let value = store.entries.lookup(key);
@@ -32,7 +31,8 @@ export function linkStoreGet<K, V>(storePointer: tsonicTypeScriptRuntime.Locatio
     if (store.entries.isNil()) {
         store.entries = constructMap(undefined);
     }
-    value = Arena.New$kernel(tsonicTypeScriptRuntime.projectLocation<Arena$Storage<V>, Arena<V>>(tsonicTypeScriptRuntime.propertyLocation(store, "arena"), Arena.$fromStorage, Arena.$storageOf), sliceCapacity, convertSlice, copyValue, fromContainerStorage, indexAddress, sliceLength, toContainerStorage, zeroValue);
+    value =
+        tsonicTypeScriptRuntime.location(zeroValue());
     store.entries.store(key, value);
     return value;
 }

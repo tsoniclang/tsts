@@ -3,7 +3,7 @@ import { $goProviderInterfaceBridge$Named_error as GoProviderInterfaceBridge } f
 import { $state } from "./state.js";
 import * as errors__from_gostdlib from "@gotots/gostdlib/errors.js";
 export function $initialize(): void {
-    $state.AllowInternalUse = NotForPublicUse.$storageOf(NotForPublicUse.$zero());
+    $state.AllowInternalUse = NotForPublicUse.$zeroStorage();
     $state.ErrCycle = void 0;
     $state.ErrNilInterface = void 0;
     $state.ErrNonNilReference = void 0;

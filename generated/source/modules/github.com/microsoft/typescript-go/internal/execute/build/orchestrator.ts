@@ -614,7 +614,7 @@ export class Orchestrator {
                     let subReference = __gotots_range_value_4;
                     let upstream: {
                         value: BuildTask;
-                    } | undefined = Orchestrator.$go$private$build$setupBuildTask(o, subReference, task, inCircularContext || ((ParsedCommandLine__from_tsoptions.ProjectReferences((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get(index) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Circular, completed, analyzing, circularityStack);
+                    } | undefined = Orchestrator.$go$private$build$setupBuildTask(o, subReference, task, inCircularContext || (ParsedCommandLine__from_tsoptions.ProjectReferences((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get(index) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Circular, completed, analyzing, circularityStack);
                     if (!(upstream === undefined)) {
                         (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream = (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.upStream.append(void 0, [
                             { value: new upstreamTask(upstream, index) },

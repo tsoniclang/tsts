@@ -526,7 +526,7 @@ export class Session {
                                     "") as string)
                             })));
                         for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                            __gotots_slice_build_17.$initialize(__gotots_slice_build_19, FileChange.$storageOf(FileChange.$zero()));
+                            __gotots_slice_build_17.$initialize(__gotots_slice_build_19, FileChange.$zeroStorage());
                         }
                     }
                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges = __gotots_slice_build_17;
@@ -567,7 +567,7 @@ export class Session {
     } | undefined>): void {
         const __gotots_slice_build_0 = goSliceAllocate<FileChange__from_project$Storage>(0, changes.length);
         for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-            __gotots_slice_build_0.$initialize(__gotots_slice_build_1, FileChange.$storageOf(FileChange.$zero()));
+            __gotots_slice_build_0.$initialize(__gotots_slice_build_1, FileChange.$zeroStorage());
         }
         let fileChanges = __gotots_slice_build_0;
         const __gotots_range_17 = changes;
@@ -627,7 +627,7 @@ export class Session {
                         Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
                     })));
                 for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
-                    __gotots_slice_build_3.$initialize(__gotots_slice_build_5, FileChange.$storageOf(FileChange.$zero()));
+                    __gotots_slice_build_3.$initialize(__gotots_slice_build_5, FileChange.$zeroStorage());
                 }
             }
             fileChanges = __gotots_slice_build_3;
@@ -659,7 +659,7 @@ export class Session {
                 __gotots_slice_build_9.set(__gotots_slice_build_6.length + __gotots_slice_build_11, __gotots_slice_build_8.get(__gotots_slice_build_11));
             }
             for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                __gotots_slice_build_9.$initialize(__gotots_slice_build_11, FileChange.$storageOf(FileChange.$zero()));
+                __gotots_slice_build_9.$initialize(__gotots_slice_build_11, FileChange.$zeroStorage());
             }
         }
         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges = __gotots_slice_build_9;
@@ -706,7 +706,7 @@ export class Session {
                     Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
                 })));
             for (let __gotots_slice_build_27 = __gotots_slice_build_26; __gotots_slice_build_27 < __gotots_slice_build_25.capacity; __gotots_slice_build_27++) {
-                __gotots_slice_build_25.$initialize(__gotots_slice_build_27, FileChange.$storageOf(FileChange.$zero()));
+                __gotots_slice_build_25.$initialize(__gotots_slice_build_27, FileChange.$zeroStorage());
             }
         }
         (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges = __gotots_slice_build_25;
@@ -760,7 +760,7 @@ export class Session {
                                 Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
                             })));
                         for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
-                            __gotots_slice_build_13.$initialize(__gotots_slice_build_15, FileChange.$storageOf(FileChange.$zero()));
+                            __gotots_slice_build_13.$initialize(__gotots_slice_build_15, FileChange.$zeroStorage());
                         }
                     }
                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges = __gotots_slice_build_13;
@@ -847,7 +847,7 @@ export class Session {
                                 Changes: RuntimeSlice.nil<TextDocumentContentChangePartialOrWholeDocument__from_lsproto$Storage>()
                             })));
                         for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
-                            __gotots_slice_build_21.$initialize(__gotots_slice_build_23, FileChange.$storageOf(FileChange.$zero()));
+                            __gotots_slice_build_21.$initialize(__gotots_slice_build_23, FileChange.$zeroStorage());
                         }
                     }
                     (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.pendingFileChanges = __gotots_slice_build_21;
@@ -3650,9 +3650,8 @@ export function boolTelemetry(v: bool): gostring {
     }
     return "false";
 }
-export function countFileStats(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>): tsonicTypeScriptRuntime.Location<ProjectInfoTelemetryMeasurements__from_lsproto> | undefined {
+export function countFileStats(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>): ProjectInfoTelemetryMeasurements__from_lsproto | undefined {
     let stats = ProjectInfoTelemetryMeasurements__from_lsproto.$zero();
-    const stats$location = tsonicTypeScriptRuntime.boundLocation({}, () => stats, stats$next => stats = stats$next);
     const __gotots_range_16 = sourceFiles;
     for (let __gotots_range_index_8 = 0; __gotots_range_index_8 < __gotots_range_16.length; __gotots_range_index_8++) {
         const __gotots_range_value_30 = __gotots_range_16.get(__gotots_range_index_8);
@@ -3699,7 +3698,7 @@ export function countFileStats(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime
             }
         }
     }
-    return stats$location;
+    return stats;
 }
 export function updateWatch$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, $go$from_storage$T0_to_T0: ($0: GoStorage<T>) => T, ctx: GoInterface | undefined, session: {
     value: Session;

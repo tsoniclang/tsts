@@ -112,19 +112,21 @@ export class upstreamTask {
 }
 export class buildInfoEntry {
     declare private readonly $goType: void;
-    public constructor(public buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined, public path: Path__from_tspath, public mTime: time__from_gostdlib.Time, public dtsTime: tsonicTypeScriptRuntime.Location<time__from_gostdlib.Time> | undefined) {
+    public constructor(public buildInfo: BuildInfo__from_incremental | undefined, public path: Path__from_tspath, public mTime: time__from_gostdlib.Time, public dtsTime: tsonicTypeScriptRuntime.Location<time__from_gostdlib.Time> | undefined) {
     }
     static $copy($source: buildInfoEntry): buildInfoEntry {
         return new buildInfoEntry($source.buildInfo, $source.path, named_time.TimeOperations.$copy($source.mTime), $source.dtsTime);
     }
     static $equal($left: buildInfoEntry, $right: buildInfoEntry): bool {
-        return tsonicTypeScriptRuntime.sameLocation($left.buildInfo, $right.buildInfo)
+        return $left.buildInfo
+            ===
+                $right.buildInfo
             && $left.path.$value === $right.path.$value && named_time.TimeOperations.$equal($left.mTime, $right.mTime) &&
             tsonicTypeScriptRuntime.sameLocation($left.dtsTime, $right.dtsTime);
     }
     static $hash($source: buildInfoEntry): number {
         let $hash = 2166136261;
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.buildInfo));
+        $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.buildInfo));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.path.$value));
         $hash = GoMapHash.mix($hash, named_time.TimeOperations.$hash($source.mTime));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.dtsTime));
@@ -390,7 +392,7 @@ export class BuildTask {
                         __gotots_return_0 = named_time.TimeOperations.$copy(named_time.TimeOperations.$copy(((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.dtsTime ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<time__from_gostdlib.Time>).value));
                         break __gotots_return_block_0;
                     }
-                    let dtsTime = host.GetMTime((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host, GetNormalizedAbsolutePath__from_tspath(((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.LatestChangedDtsFile, GetDirectoryPath__from_tspath(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path.$value)));
+                    let dtsTime = host.GetMTime((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host, GetNormalizedAbsolutePath__from_tspath((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LatestChangedDtsFile, GetDirectoryPath__from_tspath(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path.$value)));
                     const dtsTime$location = tsonicTypeScriptRuntime.boundLocation({}, () => dtsTime, dtsTime$next => dtsTime = dtsTime$next);
                     ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.dtsTime =
                         dtsTime$location;
@@ -450,7 +452,7 @@ export class BuildTask {
                 value: upstreamTask;
             } | undefined = __gotots_range_value_9;
             if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StopBuildOnErrors) && upToDateStatus.$go$private$build$isError(((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status)) {
-                return { value: new upToDateStatus(upToDateStatusTypeUpstreamErrors$constant(), new $goInterfaceAdapter$PointerTo_Named_build$upstreamErrors({ value: new upstreamErrors(((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path, (((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind === upToDateStatusTypeUpstreamErrors$constant()) })) };
+                return { value: new upToDateStatus(upToDateStatusTypeUpstreamErrors$constant(), new $goInterfaceAdapter$PointerTo_Named_build$upstreamErrors({ value: new upstreamErrors((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path, (((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.status ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind === upToDateStatusTypeUpstreamErrors$constant()) })) };
             }
         }
         if (Tristate_IsTrue__from_core((((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Command ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BuildOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Force)) {
@@ -458,25 +460,25 @@ export class BuildTask {
         }
         let buildInfoPath = ParsedCommandLine__from_tsoptions.GetBuildInfoFileName((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved);
         const __gotots_results_0 = BuildTask.$go$private$build$loadOrStoreBuildInfo(t, orchestrator, configPath, buildInfoPath);
-        let buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined = __gotots_results_0[0];
+        let buildInfo: BuildInfo__from_incremental | undefined = __gotots_results_0[0];
         let buildInfoTime = __gotots_results_0[1];
         if (buildInfo === undefined) {
             return { value: new upToDateStatus(upToDateStatusTypeOutputMissing$constant(), new GoInterfaceAdapter(buildInfoPath)) };
         }
         if (!BuildInfo__from_incremental.IsValidVersion(buildInfo)) {
-            return { value: new upToDateStatus(upToDateStatusTypeTsVersionOutputOfDate$constant(), new GoInterfaceAdapter(((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.Version)) };
+            return { value: new upToDateStatus(upToDateStatusTypeTsVersionOutputOfDate$constant(), new GoInterfaceAdapter((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Version)) };
         }
-        if (((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.Errors || (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoCheck) && (((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.SemanticErrors || ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.CheckPending))) {
+        if ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Errors || (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoCheck) && ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticErrors || (buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).CheckPending))) {
             return { value: new upToDateStatus(upToDateStatusTypeOutOfDateBuildInfoWithErrors$constant(), new GoInterfaceAdapter(buildInfoPath)) };
         }
         if (CompilerOptions__from_core.IsIncremental(ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved))) {
             if (!BuildInfo__from_incremental.IsIncremental(buildInfo)) {
                 return { value: new upToDateStatus(upToDateStatusTypeOutOfDateOptions$constant(), new GoInterfaceAdapter(buildInfoPath)) };
             }
-            if ((CompilerOptions__from_core.GetEmitDeclarations(ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved)) && !((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.EmitDiagnosticsPerFile.isNil()) || (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoCheck) && (!((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.ChangeFileSet.isNil() || !((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.SemanticDiagnosticsPerFile.isNil()))) {
+            if ((CompilerOptions__from_core.GetEmitDeclarations(ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved)) && !(buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitDiagnosticsPerFile.isNil()) || (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoCheck) && (!(buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ChangeFileSet.isNil() || !(buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticDiagnosticsPerFile.isNil()))) {
                 return { value: new upToDateStatus(upToDateStatusTypeOutOfDateBuildInfoWithErrors$constant(), new GoInterfaceAdapter(buildInfoPath)) };
             }
-            if (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoEmit) && (!((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.ChangeFileSet.isNil() || !((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental>).value.AffectedFilesPendingEmit.isNil())) {
+            if (!Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoEmit) && (!(buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ChangeFileSet.isNil() || !(buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AffectedFilesPendingEmit.isNil())) {
                 return { value: new upToDateStatus(upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit$constant(), new GoInterfaceAdapter(buildInfoPath)) };
             }
             if (BuildInfo__from_incremental.IsEmitPending(buildInfo, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved, GetDirectoryPath__from_tspath(GetNormalizedAbsolutePath__from_tspath(buildInfoPath, (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparePathsOptions.CurrentDirectory)))) {
@@ -655,14 +657,14 @@ export class BuildTask {
                 continue;
             }
             if (BuildTask.$go$private$build$hasConflictingBuildInfo(t, orchestrator, (upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.task)) {
-                return { value: new upToDateStatus(upToDateStatusTypeInputFileNewer$constant(), new $goInterfaceAdapter$PointerTo_Named_build$inputOutputName({ value: new inputOutputName(((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path, oldestOutputFileAndTime.file) })) };
+                return { value: new upToDateStatus(upToDateStatusTypeInputFileNewer$constant(), new $goInterfaceAdapter$PointerTo_Named_build$inputOutputName({ value: new inputOutputName((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path, oldestOutputFileAndTime.file) })) };
             }
             let newestDtsChangeTime = BuildTask.$go$private$build$getLatestChangedDtsMTime((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.task, orchestrator);
             if (!newestDtsChangeTime.IsZero() && newestDtsChangeTime.Before(named_time.TimeOperations.$copy(oldestOutputFileAndTime.time))) {
                 refDtsUnchanged = true;
                 continue;
             }
-            return { value: new upToDateStatus(upToDateStatusTypeInputFileNewer$constant(), new $goInterfaceAdapter$PointerTo_Named_build$inputOutputName({ value: new inputOutputName(((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path, oldestOutputFileAndTime.file) })) };
+            return { value: new upToDateStatus(upToDateStatusTypeInputFileNewer$constant(), new $goInterfaceAdapter$PointerTo_Named_build$inputOutputName({ value: new inputOutputName((ParsedCommandLine__from_tsoptions.ProjectReferences((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolved).get((upstream ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.refIndex) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path, oldestOutputFileAndTime.file) })) };
         }
         let checkInputFileTime: (($0: gostring) => {
             value: upToDateStatus;
@@ -845,13 +847,13 @@ export class BuildTask {
     } | undefined, orchestrator: {
         value: Orchestrator;
     } | undefined, configPath: Path__from_tspath, buildInfoFileName: gostring): [
-        tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined,
+        BuildInfo__from_incremental | undefined,
         time__from_gostdlib.Time
     ] {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
         let __gotots_return_0: [
-            tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined,
+            BuildInfo__from_incremental | undefined,
             time__from_gostdlib.Time
         ] = [void 0, named_time.TimeOperations.$zero()];
         try {
@@ -914,7 +916,7 @@ export class BuildTask {
         value: BuildTask;
     } | undefined, orchestrator: {
         value: Orchestrator;
-    } | undefined, buildInfoFileName: gostring, buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined, hasChangedDtsFile: bool): void {
+    } | undefined, buildInfoFileName: gostring, buildInfo: BuildInfo__from_incremental | undefined, hasChangedDtsFile: bool): void {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
@@ -1431,7 +1433,7 @@ export class BuildTask {
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_17).WriteFile(__gotots_argument_43, __gotots_argument_44);
         if (err === undefined) {
             if (!(data === undefined) && !((data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).BuildInfo === undefined)) {
-                BuildTask.$go$private$build$onBuildInfoEmit(t, orchestrator, fileName, (($value: GoInterface | undefined): tsonicTypeScriptRuntime.Location<BuildInfo__from_incremental> | undefined => {
+                BuildTask.$go$private$build$onBuildInfoEmit(t, orchestrator, fileName, (($value: GoInterface | undefined): BuildInfo__from_incremental | undefined => {
                     if (!$goInterfaceAdapter$PointerTo_Named_incremental$BuildInfo.$is($value)) {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }

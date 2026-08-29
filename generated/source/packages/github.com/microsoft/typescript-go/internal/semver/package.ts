@@ -16,7 +16,7 @@ export function $initialize(): void {
     $state.prereleaseRegexp = void 0;
     $state.rangeRegExp = void 0;
     $state.versionRegexp = void 0;
-    $state.versionZero = Version.$storageOf(Version.$zero());
+    $state.versionZero = Version.$zeroStorage();
     $state.whitespaceRegExp = void 0;
     {
         const __gotots_conversion_0 = regexp__from_gostdlib.MustCompile("(?i)^(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:-([a-z0-9-.]+))?(?:\\+([a-z0-9-.]+))?)?)?$");

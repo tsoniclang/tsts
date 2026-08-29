@@ -65,16 +65,16 @@ export function BinarySearchFunc$SliceOf_PointerTo_Named_checker$Type$PointerTo_
         bool
     ];
 }
-export function BinarySearchFunc$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>, $argument1: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined, $argument2: (($0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined, $1: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined) => int) | undefined): [
+export function BinarySearchFunc$SliceOf_PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction$PointerTo_Named_ls$CodeAction($argument0: RuntimeSlice<CodeAction__from_ls | undefined>, $argument1: CodeAction__from_ls | undefined, $argument2: (($0: CodeAction__from_ls | undefined, $1: CodeAction__from_ls | undefined) => int) | undefined): [
     int,
     bool
 ] {
     const __gotots_callee_4 = $argument2;
-    const __gotots_results_4 = generic_slices_kernel.SlicesBinarySearchFuncKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>, tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined, tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined, tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined> => {
+    const __gotots_results_4 = generic_slices_kernel.SlicesBinarySearchFuncKernel<RuntimeSlice<CodeAction__from_ls | undefined>, CodeAction__from_ls | undefined, CodeAction__from_ls | undefined, CodeAction__from_ls | undefined>(($argument0: RuntimeSlice<CodeAction__from_ls | undefined>): RuntimeSlice<CodeAction__from_ls | undefined> => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, ($argument0: CodeAction__from_ls | undefined): CodeAction__from_ls | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined): tsonicTypeScriptRuntime.Location<CodeAction__from_ls> | undefined => {
+    }, ($argument0: CodeAction__from_ls | undefined): CodeAction__from_ls | undefined => {
         return $argument0;
     }, $argument0, $argument1, __gotots_callee_4 === undefined ? undefined : ($providerArgument0, $providerArgument1) => {
         return BigInt.asIntN(64, goNumberToBigInt(__gotots_callee_4($providerArgument0, $providerArgument1)));

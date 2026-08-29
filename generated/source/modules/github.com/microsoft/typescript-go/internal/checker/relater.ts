@@ -167,11 +167,6 @@ export class RecursionId implements GoContainerStoredValue<RecursionId$Storage> 
         this.$storage.value = $value;
     }
     declare readonly [$goContainerStorageType]: RecursionId$Storage;
-    static $zero(): RecursionId {
-        return new RecursionId({
-            value: void 0
-        });
-    }
     static $copy($source: RecursionId): RecursionId {
         return new RecursionId({
             value: $source.$storage.value
@@ -179,6 +174,11 @@ export class RecursionId implements GoContainerStoredValue<RecursionId$Storage> 
     }
     static $equal($left: RecursionId, $right: RecursionId): bool {
         return goInterfaceEqual($left.$storage.value, $right.$storage.value);
+    }
+    static $zeroStorage(): RecursionId$Storage {
+        return {
+            value: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -295,7 +295,9 @@ export function excludeProperties(properties: RuntimeSlice<tsonicTypeScriptRunti
 }
 export class TypeDiscriminator {
     declare private readonly $goType: void;
-    public constructor(public c: tsonicTypeScriptRuntime.Location<Checker> | undefined, public props: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public isRelatedTo: (($0: tsonicTypeScriptRuntime.Location<Type> | undefined, $1: tsonicTypeScriptRuntime.Location<Type> | undefined) => Ternary) | undefined) {
+    public constructor(public c: {
+        value: Checker;
+    } | undefined, public props: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public isRelatedTo: (($0: tsonicTypeScriptRuntime.Location<Type> | undefined, $1: tsonicTypeScriptRuntime.Location<Type> | undefined) => Ternary) | undefined) {
     }
     declare private readonly then?: never;
     static $go$private$checker$len(d: TypeDiscriminator | undefined): int {
@@ -370,7 +372,9 @@ export class ErrorChain {
 }
 export class Relater {
     declare private readonly $goType: void;
-    public constructor(public c: tsonicTypeScriptRuntime.Location<Checker> | undefined, public relation: {
+    public constructor(public c: {
+        value: Checker;
+    } | undefined, public relation: {
         value: Relation;
     } | undefined, public errorNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public errorChain: {
         value: ErrorChain;
@@ -502,17 +506,17 @@ export class Relater {
     static $go$private$checker$hasExcessProperties(r: {
         value: Relater;
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined, reportErrors: bool): bool {
-        if (!isExcessPropertyCheckTarget(target) || !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.noImplicitAny && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsJSLiteral$constant()) >>> 0 === 0)) {
+        if (!isExcessPropertyCheckTarget(target) || !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.noImplicitAny && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsJSLiteral$constant()) >>> 0 === 0)) {
             return false;
         }
         let isComparingJsxAttributes = !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsJsxAttributes$constant()) >>> 0 === 0);
         if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.assignableRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.assignableRelation
             ||
                 (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) && (Checker.$go$private$checker$isTypeSubsetOf((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalObjectType, target) || (!isComparingJsxAttributes && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target)))) {
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) && (Checker.$go$private$checker$isTypeSubsetOf((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalObjectType, target) || (!isComparingJsxAttributes && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target)))) {
             return false;
         }
         let reducedTarget: tsonicTypeScriptRuntime.Location<Type> | undefined = target;
@@ -631,12 +635,12 @@ export class Relater {
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined, sourceIsPrimitive: bool, reportErrors: bool, intersectionState: IntersectionState): Ternary {
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
             return Relater.$go$private$checker$indexSignaturesIdenticalTo(r, source, target);
         }
         let indexInfos = Checker.$go$private$checker$getIndexInfosOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
         let targetHasStringIndex = Some$PointerTo_Named_checker$IndexInfo(indexInfos, (info: tsonicTypeScriptRuntime.Location<IndexInfo> | undefined): bool => {
-            return tsonicTypeScriptRuntime.sameLocation(IndexInfo.$storageOf(((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexInfo>).value).keyType, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.stringType);
+            return tsonicTypeScriptRuntime.sameLocation(IndexInfo.$storageOf(((info ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexInfo>).value).keyType, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stringType);
         });
         let result = TernaryTrue$constant();
         const __gotots_range_10 = indexInfos;
@@ -647,7 +651,7 @@ export class Relater {
             __gotots_control_target_12: {
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) && !sourceIsPrimitive && targetHasStringIndex && !((((IndexInfo.$storageOf(((targetInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexInfo>).value).valueType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsAny$constant()) >>> 0 === 0)) {
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) && !sourceIsPrimitive && targetHasStringIndex && !((((IndexInfo.$storageOf(((targetInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexInfo>).value).valueType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsAny$constant()) >>> 0 === 0)) {
                     related = TernaryTrue$constant();
                 }
                 else if (Checker.$go$private$checker$isGenericMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) && targetHasStringIndex) {
@@ -667,11 +671,11 @@ export class Relater {
     static $go$private$checker$isPropertySymbolTypeRelated(r: {
         value: Relater;
     } | undefined, sourceProp: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, targetProp: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, getTypeOfSourceProperty: (($0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Type> | undefined) | undefined, reportErrors: bool, intersectionState: IntersectionState): Ternary {
-        let targetIsOptional = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictNullChecks && !((Symbol__from_ast.$storageOf(((targetProp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).CheckFlags & CheckFlagsPartial$constant__from_ast()) >>> 0 === 0);
+        let targetIsOptional = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictNullChecks && !((Symbol__from_ast.$storageOf(((targetProp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).CheckFlags & CheckFlagsPartial$constant__from_ast()) >>> 0 === 0);
         let effectiveTarget: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$addOptionalityEx((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, Checker.$go$private$checker$getNonMissingTypeOfSymbol((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, targetProp), false, targetIsOptional);
         if (!((((effectiveTarget ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & IfElse$Named_checker$TypeFlags((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation, TypeFlagsAny$constant(), TypeFlagsAnyOrUnknown$constant())) >>> 0 === 0)) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation, TypeFlagsAny$constant(), TypeFlagsAnyOrUnknown$constant())) >>> 0 === 0)) {
             return TernaryTrue$constant();
         }
         const __gotots_callee_3 = getTypeOfSourceProperty;
@@ -695,7 +699,7 @@ export class Relater {
         if (!((((originalSource ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsObject$constant()) >>> 0 === 0) && !((((originalTarget ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsPrimitive$constant()) >>> 0 === 0)) {
             let __gotots_logical_result_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation
                 && (((originalTarget ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsNever$constant()) >>> 0 === 0 && Checker.$go$private$checker$isSimpleTypeRelatedTo((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, originalTarget, originalSource, (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation, new ErrorReporter(void 0));
             if (!__gotots_logical_result_0) {
                 const __gotots_receiver_1: Relater["c"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c;
@@ -728,7 +732,7 @@ export class Relater {
         }
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
             if (!(((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags === ((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags)) {
                 return TernaryFalse$constant();
             }
@@ -762,7 +766,7 @@ export class Relater {
         }
         let __gotots_logical_result_1 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation
             && (((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsNever$constant()) >>> 0 === 0 && Checker.$go$private$checker$isSimpleTypeRelatedTo((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target, source, (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation, new ErrorReporter(void 0));
         if (!__gotots_logical_result_1) {
             const __gotots_receiver_3: Relater["c"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c;
@@ -795,7 +799,7 @@ export class Relater {
             }
             let isPerformingCommonPropertyChecks = (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) || isUnitType(source)) && (intersectionState & IntersectionStateTarget$constant()) >>> 0 === 0 && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (282198012)) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalObjectType) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (269484032)) >>> 0 === 0) && Checker.$go$private$checker$isWeakType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target) && (Checker.$go$private$checker$getPropertiesOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source).length > 0 || Checker.$go$private$checker$typeHasCallOrConstructSignatures((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source));
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) || isUnitType(source)) && (intersectionState & IntersectionStateTarget$constant()) >>> 0 === 0 && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (282198012)) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalObjectType) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (269484032)) >>> 0 === 0) && Checker.$go$private$checker$isWeakType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target) && (Checker.$go$private$checker$getPropertiesOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source).length > 0 || Checker.$go$private$checker$typeHasCallOrConstructSignatures((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source));
             let isComparingJsxAttributes = !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsJsxAttributes$constant()) >>> 0 === 0);
             if (isPerformingCommonPropertyChecks && !Checker.$go$private$checker$hasCommonProperties((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target, isComparingJsxAttributes)) {
                 if (reportErrors) {
@@ -853,16 +857,16 @@ export class Relater {
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined, reportErrors: bool): Ternary {
         let modifiersRelated = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation
             || (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation
                 && getMappedTypeModifiers(source) === getMappedTypeModifiers(target) || !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) && Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) <= Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) && Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) <= Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
         if (modifiersRelated) {
             let targetConstraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getConstraintTypeFromMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
-            let sourceConstraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, Checker.$go$private$checker$getConstraintTypeFromMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source), IfElse$PointerTo_Named_checker$TypeMapper(Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) < 0, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reportUnmeasurableMapper, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reportUnreliableMapper));
+            let sourceConstraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, Checker.$go$private$checker$getConstraintTypeFromMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source), IfElse$PointerTo_Named_checker$TypeMapper(Checker.$go$private$checker$getCombinedMappedTypeOptionality((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) < 0, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportUnmeasurableMapper, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportUnreliableMapper));
             {
                 let result = Relater.$go$private$checker$isRelatedTo(r, targetConstraint, sourceConstraint, RecursionFlagsBoth$constant(), reportErrors);
                 if (!(result === TernaryFalse$constant())) {
@@ -897,8 +901,8 @@ export class Relater {
             if (Checker.$go$private$checker$isApplicableIndexType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, Checker.$go$private$checker$getLiteralTypeFromProperty((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, prop, TypeFlagsStringOrNumberLiteralOrUnique$constant(), false), keyType)) {
                 let propType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getNonMissingTypeOfSymbol((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, prop);
                 let t: tsonicTypeScriptRuntime.Location<Type> | undefined = void 0;
-                if ((((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.exactOptionalPropertyTypes || !((((propType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUndefined$constant()) >>> 0 === 0) ||
-                    tsonicTypeScriptRuntime.sameLocation(keyType, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.numberType) || (Symbol__from_ast.$storageOf(((prop ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsOptional$constant__from_ast()) >>> 0 === 0) {
+                if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.exactOptionalPropertyTypes || !((((propType ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUndefined$constant()) >>> 0 === 0) ||
+                    tsonicTypeScriptRuntime.sameLocation(keyType, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.numberType) || (Symbol__from_ast.$storageOf(((prop ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsOptional$constant__from_ast()) >>> 0 === 0) {
                     t = propType;
                 }
                 else {
@@ -969,7 +973,7 @@ export class Relater {
         const excludedProperties$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => excludedProperties, excludedProperties$next2 => excludedProperties = excludedProperties$next2);
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
             return Relater.$go$private$checker$propertiesIdenticalTo(r, source, target, Set__from_collections.$copy<gostring>(excludedProperties));
         }
         let result = TernaryTrue$constant();
@@ -1106,11 +1110,11 @@ export class Relater {
         }
         let requireOptionalProperties = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.subtypeRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subtypeRelation
             ||
                 (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) && !isObjectLiteralType(source) && !Checker.$go$private$checker$isEmptyArrayLiteralType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) && !isTupleType(source);
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) && !isObjectLiteralType(source) && !Checker.$go$private$checker$isEmptyArrayLiteralType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source) && !isTupleType(source);
         let unmatchedProperty: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker.$go$private$checker$getUnmatchedProperty((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target, requireOptionalProperties, false);
         if (!(unmatchedProperty === undefined)) {
             if (reportErrors && Checker.$go$private$checker$shouldReportUnmatchedPropertyError((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target)) {
@@ -1154,7 +1158,7 @@ export class Relater {
                     const __gotots_argument_47 = intersectionState;
                     const __gotots_argument_48 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                         ===
-                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation;
+                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation;
                     let related = Relater.$go$private$checker$propertyRelatedTo(__gotots_receiver_15, __gotots_argument_41, __gotots_argument_42, __gotots_argument_43, __gotots_argument_44, __gotots_argument_45, __gotots_argument_46, __gotots_argument_47, __gotots_argument_48);
                     if (related === TernaryFalse$constant()) {
                         return TernaryFalse$constant();
@@ -1203,7 +1207,7 @@ export class Relater {
         }
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation
             && Checker.$go$private$checker$isReadonlySymbol((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, sourceProp) && !Checker.$go$private$checker$isReadonlySymbol((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, targetProp)) {
             return TernaryFalse$constant();
         }
@@ -1237,7 +1241,7 @@ export class Relater {
                     }
                     const __gotots_results_0 = getRelationKey(source, target, intersectionState, (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                         ===
-                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation, false);
+                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation, false);
                     let id = __gotots_results_0[0];
                     let constrained = __gotots_results_0[1];
                     {
@@ -1246,7 +1250,7 @@ export class Relater {
                             if (reportErrors && !((entry & RelationComparisonResultFailed$constant()) >>> 0 === 0) && (entry & RelationComparisonResultOverflow$constant()) >>> 0 === 0) {
                             }
                             else {
-                                const __gotots_store_1 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+                                const __gotots_store_1 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                                 __gotots_store_1.reliabilityFlags = (__gotots_store_1.reliabilityFlags | (entry & (24)) >>> 0) >>> 0;
                                 if (reportErrors && !((entry & RelationComparisonResultOverflow$constant()) >>> 0 === 0)) {
                                     let message: {
@@ -1276,7 +1280,7 @@ export class Relater {
                     if (constrained) {
                         const __gotots_results_1 = getRelationKey(source, target, intersectionState, (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                             ===
-                                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation, true);
+                                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation, true);
                         let broadestEquivalentId = __gotots_results_1[0];
                         const __gotots_store_3 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                         if (Set__from_collections.Has<CacheHashKey>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "maybeKeysSet"), CacheHashKey.$copy(broadestEquivalentId))) {
@@ -1304,7 +1308,7 @@ export class Relater {
                         }
                         __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, CacheHashKey.$storageOf(CacheHashKey.$copy(id)));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CacheHashKey.$storageOf(CacheHashKey.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, CacheHashKey.$zeroStorage());
                         }
                     }
                     (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.maybeKeys = __gotots_slice_build_1;
@@ -1325,14 +1329,14 @@ export class Relater {
                             __gotots_store_6.expandingFlags = __gotots_store_6.expandingFlags | 2;
                         }
                     }
-                    let saveReliabilityFlags = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reliabilityFlags;
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reliabilityFlags = 0;
+                    let saveReliabilityFlags: Checker["reliabilityFlags"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reliabilityFlags;
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reliabilityFlags = 0;
                     let result = 0;
                     if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.expandingFlags === ExpandingFlagsBoth$constant()) {
                         {
                             let tr: {
                                 value: Tracer;
-                            } | undefined = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.tracer;
+                            } | undefined = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracer;
                             if (!(tr === undefined)) {
                                 Tracer.Instant(tr, PhaseCheckTypes$constant__from_tracing(), "recursiveTypeRelatedTo_DepthLimit", $goMap$MapOf_string_To_Interface_void.make(4, [["sourceId", new $goInterfaceAdapter$Named_checker$TypeId(((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)], ["targetId", new $goInterfaceAdapter$Named_checker$TypeId(((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)], ["depth", new $goInterfaceAdapter$int((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceStack.length)], ["targetDepth", new $goInterfaceAdapter$int((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.targetStack.length)]]));
                             }
@@ -1343,7 +1347,7 @@ export class Relater {
                         {
                             let tr: {
                                 value: Tracer;
-                            } | undefined = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.tracer;
+                            } | undefined = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracer;
                             if (!(tr === undefined)) {
                                 const __gotots_callee_0: (() => void) | undefined = Tracer.Push(tr, PhaseCheckTypes$constant__from_tracing(), "structuredTypeRelatedTo", $goMap$MapOf_string_To_Interface_void.make(2, [["sourceId", new $goInterfaceAdapter$Named_checker$TypeId(((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)], ["targetId", new $goInterfaceAdapter$Named_checker$TypeId(((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)]]), false);
                                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -1354,8 +1358,8 @@ export class Relater {
                         }
                         result = Relater.$go$private$checker$structuredTypeRelatedTo(r, source, target, reportErrors, intersectionState);
                     }
-                    let propagatingVarianceFlags = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reliabilityFlags;
-                    const __gotots_store_7 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+                    let propagatingVarianceFlags: Checker["reliabilityFlags"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reliabilityFlags;
+                    const __gotots_store_7 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     __gotots_store_7.reliabilityFlags = (__gotots_store_7.reliabilityFlags | saveReliabilityFlags) >>> 0;
                     if (!((recursionFlags & RecursionFlagsSource$constant()) >>> 0 === 0)) {
                         (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceStack = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceStack.slice(0, (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceStack.length - 1, null);
@@ -1595,7 +1599,7 @@ export class Relater {
                 Relater.$go$private$checker$tryElaborateErrorsForPrimitivesAndObjects(r, source, target);
             }
             else if (!(((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.__go_symbol === undefined) && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsObject$constant()) >>> 0 === 0) &&
-                tsonicTypeScriptRuntime.sameLocation((((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalObjectType, source)) {
+                tsonicTypeScriptRuntime.sameLocation(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalObjectType, source)) {
                 Relater.$go$private$checker$reportError(r, $state__diagnostics.The_Object_type_is_assignable_to_very_few_other_types_Did_you_mean_to_use_the_any_type_instead, RuntimeSlice.nil<GoInterface | undefined>());
             }
             else if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsJsxAttributes$constant()) >>> 0 === 0) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIntersection$constant()) >>> 0 === 0)) {
@@ -1656,7 +1660,7 @@ export class Relater {
         else {
             targetFlags = ((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags;
         }
-        if (!((targetFlags & TypeFlagsTypeParameter$constant()) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.markerSuperTypeForCheck) && !tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.markerSubTypeForCheck)) {
+        if (!((targetFlags & TypeFlagsTypeParameter$constant()) >>> 0 === 0) && !tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.markerSuperTypeForCheck) && !tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.markerSubTypeForCheck)) {
             let constraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getBaseConstraintOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
             __gotots_control_target_2: {
                 if (!(constraint === undefined) && Checker.$go$private$checker$isTypeAssignableTo((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, generalizedSource, constraint)) {
@@ -1675,13 +1679,13 @@ export class Relater {
             __gotots_control_target_3: {
                 if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) {
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) {
                     message = $state__diagnostics.Type_0_is_not_comparable_to_type_1;
                 }
                 else if (sourceType === targetType) {
                     message = $state__diagnostics.Type_0_is_not_assignable_to_type_1_Two_different_types_with_this_name_exist_but_they_are_unrelated;
                 }
-                else if ((((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.exactOptionalPropertyTypes && Checker.$go$private$checker$getExactOptionalUnassignableProperties((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target).length !== 0) {
+                else if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.exactOptionalPropertyTypes && Checker.$go$private$checker$getExactOptionalUnassignableProperties((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target).length !== 0) {
                     message = $state__diagnostics.Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_types_of_the_target_s_properties;
                 }
                 else {
@@ -1699,7 +1703,7 @@ export class Relater {
         else if (message
             ===
                 $state__diagnostics.Argument_of_type_0_is_not_assignable_to_parameter_of_type_1
-            && (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.exactOptionalPropertyTypes && Checker.$go$private$checker$getExactOptionalUnassignableProperties((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target).length > 0) {
+            && ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.exactOptionalPropertyTypes && Checker.$go$private$checker$getExactOptionalUnassignableProperties((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, target).length > 0) {
             message = $state__diagnostics.Argument_of_type_0_is_not_assignable_to_parameter_of_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_types_of_the_target_s_properties;
         }
         {
@@ -1881,12 +1885,12 @@ export class Relater {
         __gotots_control_target_15: {
             if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.subtypeRelation) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subtypeRelation) {
                 checkMode = SignatureCheckModeStrictTopSignature$constant();
             }
             else if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) {
                 checkMode = 24;
             }
         }
@@ -1909,7 +1913,7 @@ export class Relater {
             Relater.$go$private$checker$reportError(__gotots_receiver_22, $argument0, $argument1);
         });
         const __gotots_argument_71 = new TypeComparer(isRelatedToWorker);
-        const __gotots_argument_72 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reportUnreliableMapper;
+        const __gotots_argument_72: Checker["reportUnreliableMapper"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportUnreliableMapper;
         return Checker.$go$private$checker$compareSignaturesRelated(__gotots_receiver_23, __gotots_argument_66, __gotots_argument_67, __gotots_argument_68, __gotots_argument_69, __gotots_argument_70, __gotots_argument_71, __gotots_argument_72);
     }
     static $go$private$checker$signaturesIdenticalTo(r: {
@@ -1948,13 +1952,13 @@ export class Relater {
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined, kind: SignatureKind, reportErrors: bool, intersectionState: IntersectionState): Ternary {
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
             return Relater.$go$private$checker$signaturesIdenticalTo(r, source, target, kind);
         }
-        if (tsonicTypeScriptRuntime.sameLocation(source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.anyFunctionType)) {
+        if (tsonicTypeScriptRuntime.sameLocation(source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.anyFunctionType)) {
             return TernaryTrue$constant();
         }
-        if (tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.anyFunctionType)) {
+        if (tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.anyFunctionType)) {
             return TernaryFalse$constant();
         }
         let sourceSignatures = Checker.$go$private$checker$getSignaturesOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, kind);
@@ -1991,7 +1995,7 @@ export class Relater {
             else if (sourceSignatures.length === 1 && targetSignatures.length === 1) {
                 let eraseGenerics = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation;
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation;
                 result = Relater.$go$private$checker$signatureRelatedTo(r, sourceSignatures.get(0), targetSignatures.get(0), eraseGenerics, reportErrors, intersectionState);
             }
             else {
@@ -2049,7 +2053,7 @@ export class Relater {
         let result = Relater.$go$private$checker$structuredTypeRelatedToWorker(r, source, target, reportErrors, intersectionState);
         if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation)) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation)) {
             if (result === TernaryFalse$constant() && (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIntersection$constant()) >>> 0 === 0) || !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTypeParameter$constant()) >>> 0 === 0) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUnion$constant()) >>> 0 === 0))) {
                 let sourceTypes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>();
                 if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIntersection$constant()) >>> 0 === 0)) {
@@ -2131,7 +2135,7 @@ export class Relater {
         __gotots_control_target_6: {
             if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
                 __gotots_control_target_7: {
                     if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsUnionOrIntersection$constant()) >>> 0 === 0)) {
                         let result__shadow_1 = Relater.$go$private$checker$eachTypeRelatedToSomeType(r, source, target);
@@ -2225,7 +2229,7 @@ export class Relater {
             if (variances.length === 0) {
                 return TernaryUnknown$constant();
             }
-            const __gotots_store_13 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value;
+            const __gotots_store_13 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
             let params = TypeAliasLinks.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Symbol$Named_checker$TypeAliasLinks(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "typeAliasLinks"), (((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.alias ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasLinks>).value).typeParameters;
             let minParams = Checker.$go$private$checker$getMinTypeArgumentCount((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, params);
             let nodeIsInJsFile = IsInJSFile__from_ast(Symbol__from_ast.$storageOf((((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.alias ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration);
@@ -2269,7 +2273,7 @@ export class Relater {
                 }
                 if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation
                     && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTypeParameter$constant()) >>> 0 === 0)) {
                     {
                         let constraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getConstraintOfTypeParameter((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source);
@@ -2297,11 +2301,11 @@ export class Relater {
                 }
                 if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.assignableRelation
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.assignableRelation
                     ||
                         (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                             ===
-                                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) {
+                                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) {
                     let objectType: tsonicTypeScriptRuntime.Location<Type> | undefined = (Type.AsIndexedAccessType(target) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.objectType;
                     let indexType: tsonicTypeScriptRuntime.Location<Type> | undefined = (Type.AsIndexedAccessType(target) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.indexType;
                     let baseObjectType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getBaseConstraintOrType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, objectType);
@@ -2406,13 +2410,13 @@ export class Relater {
                 if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsTemplateLiteral$constant()) >>> 0 === 0)) {
                     if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                         ===
-                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) {
+                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) {
                         if (Checker.$go$private$checker$templateLiteralTypesDefinitelyUnrelated((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, Type.AsTemplateLiteralType(source), Type.AsTemplateLiteralType(target))) {
                             return TernaryFalse$constant();
                         }
                         return TernaryTrue$constant();
                     }
-                    Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reportUnreliableMapper);
+                    Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportUnreliableMapper);
                 }
                 const __gotots_receiver_10: Relater["c"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c;
                 const __gotots_argument_28 = source;
@@ -2434,7 +2438,7 @@ export class Relater {
             }
             else if (Checker.$go$private$checker$isGenericMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target) && !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation)) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation)) {
                 let keysRemapped = !(((Type.AsMappedType(target) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.declaration ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NameType === undefined);
                 let templateType: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getTemplateTypeFromMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target);
                 let modifiers = getMappedTypeModifiers(target);
@@ -2497,14 +2501,14 @@ export class Relater {
                 if ((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIndexedAccess$constant()) >>> 0 === 0 || (((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIndexedAccess$constant()) >>> 0 === 0) {
                     let constraint: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getConstraintOfType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source);
                     if (constraint === undefined) {
-                        constraint = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.unknownType;
+                        constraint = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.unknownType;
                     }
                     result = Relater.$go$private$checker$isRelatedToEx(r, constraint, target, RecursionFlagsSource$constant(), false, void 0, intersectionState);
                     if (!(result === TernaryFalse$constant())) {
                         return result;
                     }
                     let constraintWithThis: tsonicTypeScriptRuntime.Location<Type> | undefined = Checker.$go$private$checker$getTypeWithThisArgument((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, constraint, source, false);
-                    result = Relater.$go$private$checker$isRelatedToEx(r, constraintWithThis, target, RecursionFlagsSource$constant(), reportErrors && !tsonicTypeScriptRuntime.sameLocation(constraint, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.unknownType) && ((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags) >>> 0 & TypeFlagsTypeParameter$constant()) >>> 0 === 0, void 0, intersectionState);
+                    result = Relater.$go$private$checker$isRelatedToEx(r, constraintWithThis, target, RecursionFlagsSource$constant(), reportErrors && !tsonicTypeScriptRuntime.sameLocation(constraint, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.unknownType) && ((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags) >>> 0 & TypeFlagsTypeParameter$constant()) >>> 0 === 0, void 0, intersectionState);
                     if (!(result === TernaryFalse$constant())) {
                         return result;
                     }
@@ -2521,7 +2525,7 @@ export class Relater {
             }
             else if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsIndex$constant()) >>> 0 === 0)) {
                 let isDeferredMappedIndex = Checker.$go$private$checker$shouldDeferIndexType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, (Type.AsIndexType(source) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.target, (Type.AsIndexType(source) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.indexFlags) && !(((((Type.AsIndexType(source) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsMapped$constant()) >>> 0 === 0);
-                result = Relater.$go$private$checker$isRelatedTo(r, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.stringNumberSymbolType, target, RecursionFlagsSource$constant(), reportErrors && !isDeferredMappedIndex);
+                result = Relater.$go$private$checker$isRelatedTo(r, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stringNumberSymbolType, target, RecursionFlagsSource$constant(), reportErrors && !isDeferredMappedIndex);
                 if (!(result === TernaryFalse$constant())) {
                     return result;
                 }
@@ -2630,9 +2634,9 @@ export class Relater {
             else {
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.subtypeRelation) && !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subtypeRelation) && !((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) && isPartialMappedType(target) && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source)) {
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) && isPartialMappedType(target) && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source)) {
                     return TernaryTrue$constant();
                 }
                 if (Checker.$go$private$checker$isGenericMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target)) {
@@ -2647,7 +2651,7 @@ export class Relater {
                 let sourceIsPrimitive = !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsPrimitive$constant()) >>> 0 === 0);
                 if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                     ===
-                        (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation)) {
+                        ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation)) {
                     source = Checker.$go$private$checker$getApparentType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source);
                 }
                 else if (Checker.$go$private$checker$isGenericMappedType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source)) {
@@ -2701,11 +2705,11 @@ export class Relater {
                         if (!__gotots_switch_match_13) {
                             __gotots_switch_match_13 = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                                 ===
-                                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.subtypeRelation
+                                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subtypeRelation
                                 ||
                                     (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                                         ===
-                                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsFreshLiteral$constant()) >>> 0 === 0) && !Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source);
+                                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) && Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsFreshLiteral$constant()) >>> 0 === 0) && !Checker.$go$private$checker$isEmptyObjectType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source);
                         }
                         if (__gotots_switch_match_13) {
                             __gotots_switch_selection_4 = 3;
@@ -2736,8 +2740,8 @@ export class Relater {
                         case 1: {
                             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                                 ===
-                                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation)) {
-                                return Relater.$go$private$checker$isRelatedTo(r, Checker.$go$private$checker$getIndexTypeOfTypeEx((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.numberType, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.anyType), Checker.$go$private$checker$getIndexTypeOfTypeEx((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.numberType, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.anyType), RecursionFlagsBoth$constant(), reportErrors);
+                                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation)) {
+                                return Relater.$go$private$checker$isRelatedTo(r, Checker.$go$private$checker$getIndexTypeOfTypeEx((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.numberType, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.anyType), Checker.$go$private$checker$getIndexTypeOfTypeEx((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.numberType, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.anyType), RecursionFlagsBoth$constant(), reportErrors);
                             }
                             return TernaryFalse$constant();
                             break;
@@ -2802,7 +2806,7 @@ export class Relater {
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined): void {
         let tr: {
             value: Tracer;
-        } | undefined = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.tracer;
+        } | undefined = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracer;
         if (tr === undefined) {
             return;
         }
@@ -2843,19 +2847,19 @@ export class Relater {
     static $go$private$checker$tryElaborateErrorsForPrimitivesAndObjects(r: {
         value: Relater;
     } | undefined, source: tsonicTypeScriptRuntime.Location<Type> | undefined, target: tsonicTypeScriptRuntime.Location<Type> | undefined): void {
-        let __gotots_logical_result_2 = (tsonicTypeScriptRuntime.sameLocation(source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalStringType)
+        let __gotots_logical_result_2 = (tsonicTypeScriptRuntime.sameLocation(source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalStringType)
             &&
-                tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.stringType)) || (tsonicTypeScriptRuntime.sameLocation(source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalNumberType)
+                tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stringType)) || (tsonicTypeScriptRuntime.sameLocation(source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalNumberType)
             &&
-                tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.numberType)) || (tsonicTypeScriptRuntime.sameLocation(source, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.globalBooleanType)
+                tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.numberType)) || (tsonicTypeScriptRuntime.sameLocation(source, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.globalBooleanType)
             &&
-                tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.booleanType));
+                tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.booleanType));
         if (!__gotots_logical_result_2) {
             const __gotots_equal_operand_0 = source;
-            const __gotots_callee_0 = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.getGlobalESSymbolType;
+            const __gotots_callee_0: Checker["getGlobalESSymbolType"] = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.getGlobalESSymbolType;
             __gotots_logical_result_2 = (tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))())
                 &&
-                    tsonicTypeScriptRuntime.sameLocation(target, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.esSymbolType));
+                    tsonicTypeScriptRuntime.sameLocation(target, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.esSymbolType));
         }
         if (__gotots_logical_result_2) {
             Relater.$go$private$checker$reportError(r, $state__diagnostics.X_0_is_a_primitive_but_1_is_a_wrapper_object_Prefer_using_0_when_possible, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(Checker.TypeToString((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, target)), new GoInterfaceAdapter(Checker.TypeToString((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source))]));
@@ -2867,7 +2871,7 @@ export class Relater {
         if (sources.length !== targets.length &&
             (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
             return TernaryFalse$constant();
         }
         let length = globalThis.Math.min(sources.length, targets.length);
@@ -2888,7 +2892,7 @@ export class Relater {
                 if (!((varianceFlags & VarianceFlagsUnmeasurable$constant()) >>> 0 === 0)) {
                     if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                         ===
-                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.identityRelation) {
+                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.identityRelation) {
                         related = Relater.$go$private$checker$isRelatedTo(r, s, t, RecursionFlagsBoth$constant(), false);
                     }
                     else {
@@ -2896,8 +2900,8 @@ export class Relater {
                     }
                 }
                 else {
-                    if ((((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.inVarianceComputation && !((varianceFlags & VarianceFlagsUnreliable$constant()) >>> 0 === 0)) {
-                        Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, s, (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.reportUnreliableMapper);
+                    if (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.inVarianceComputation && !((varianceFlags & VarianceFlagsUnreliable$constant()) >>> 0 === 0)) {
+                        Checker.$go$private$checker$instantiateType((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, s, ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.reportUnreliableMapper);
                     }
                     if (variance === VarianceFlagsCovariant$constant()) {
                         related = Relater.$go$private$checker$isRelatedToEx(r, s, t, RecursionFlagsBoth$constant(), reportErrors, void 0, intersectionState);
@@ -2944,7 +2948,7 @@ export class Relater {
                 {
                     let tr: {
                         value: Tracer;
-                    } | undefined = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.tracer;
+                    } | undefined = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.tracer;
                     if (!(tr === undefined)) {
                         Tracer.Instant(tr, PhaseCheckTypes$constant__from_tracing(), "typeRelatedToDiscriminatedType_DepthLimit", $goMap$MapOf_string_To_Interface_void.make(3, [["sourceId", new $goInterfaceAdapter$Named_checker$TypeId(((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)], ["targetId", new $goInterfaceAdapter$Named_checker$TypeId(((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.id)], ["numCombinations", new $goInterfaceAdapter$int(numCombinations)]]));
                     }
@@ -3009,10 +3013,10 @@ export class Relater {
                     }
                     let related = Relater.$go$private$checker$propertyRelatedTo(r, source, target, sourceProperty, targetProperty, ($0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined => {
                         return combination.get(i);
-                    }, false, IntersectionStateNone$constant(), (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictNullChecks ||
+                    }, false, IntersectionStateNone$constant(), ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictNullChecks ||
                         (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                             ===
-                                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation);
+                                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation);
                     if (related === TernaryFalse$constant()) {
                         continue outer;
                     }
@@ -3071,7 +3075,7 @@ export class Relater {
         }
         if ((intersectionState & IntersectionStateSource$constant()) >>> 0 === 0 && (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) || !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsFreshLiteral$constant()) >>> 0 === 0)) && Checker.$go$private$checker$isObjectTypeWithInferableIndex((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source)) {
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) || !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsFreshLiteral$constant()) >>> 0 === 0)) && Checker.$go$private$checker$isObjectTypeWithInferableIndex((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c, source)) {
             return Relater.$go$private$checker$membersRelatedToIndexInfo(r, source, targetInfo, reportErrors, intersectionState);
         }
         if (reportErrors) {
@@ -3089,13 +3093,13 @@ export class Relater {
             }
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsPrimitiveUnion$constant()) >>> 0 === 0) && (((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsEnumLiteral$constant()) >>> 0 === 0 && (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (13312)) >>> 0 === 0) || ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.objectFlags & ObjectFlagsPrimitiveUnion$constant()) >>> 0 === 0) && (((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsEnumLiteral$constant()) >>> 0 === 0 && (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & (13312)) >>> 0 === 0) || ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.subtypeRelation
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.subtypeRelation
                 ||
                     (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                         ===
-                            (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.strictSubtypeRelation) && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsNumberLiteral$constant()) >>> 0 === 0))) {
+                            ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.strictSubtypeRelation) && !((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsNumberLiteral$constant()) >>> 0 === 0))) {
                 let alternateForm: tsonicTypeScriptRuntime.Location<Type> | undefined = void 0;
                 if (tsonicTypeScriptRuntime.sameLocation(source, (Type.AsLiteralType(source) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.regularType)) {
                     alternateForm = (Type.AsLiteralType(source) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.freshType;
@@ -3106,13 +3110,13 @@ export class Relater {
                 let primitive: tsonicTypeScriptRuntime.Location<Type> | undefined = void 0;
                 __gotots_control_target_5: {
                     if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsStringLiteral$constant()) >>> 0 === 0)) {
-                        primitive = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.stringType;
+                        primitive = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.stringType;
                     }
                     else if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsNumberLiteral$constant()) >>> 0 === 0)) {
-                        primitive = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.numberType;
+                        primitive = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.numberType;
                     }
                     else if (!((((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsBigIntLiteral$constant()) >>> 0 === 0)) {
-                        primitive = (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.bigintType;
+                        primitive = ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.bigintType;
                     }
                 }
                 if (!(primitive === undefined) && containsType(targetTypes, primitive) || !(alternateForm === undefined) && containsType(targetTypes, alternateForm)) {
@@ -3168,7 +3172,7 @@ export class Relater {
             }
             if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
                 ===
-                    (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation) {
+                    ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation) {
                 return Relater.$go$private$checker$someTypeRelatedToType(r, source, target, reportErrors && (((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsPrimitive$constant()) >>> 0 === 0, intersectionState);
             }
             return Relater.$go$private$checker$eachTypeRelatedToType(r, source, target, reportErrors && (((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsPrimitive$constant()) >>> 0 === 0, intersectionState);
@@ -3181,7 +3185,7 @@ export class Relater {
         }
         if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.relation
             ===
-                (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.comparableRelation
+                ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparableRelation
             && !((((target ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsPrimitive$constant()) >>> 0 === 0)) {
             let constraints = SameMap$PointerTo_Named_checker$Type(Type.Types(source), (t: tsonicTypeScriptRuntime.Location<Type> | undefined): tsonicTypeScriptRuntime.Location<Type> | undefined => {
                 if (!((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.flags & TypeFlagsInstantiable$constant()) >>> 0 === 0)) {
@@ -3189,7 +3193,7 @@ export class Relater {
                     if (!(constraint === undefined)) {
                         return constraint;
                     }
-                    return (((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.unknownType;
+                    return ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.unknownType;
                 }
                 return t;
             });

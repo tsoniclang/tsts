@@ -3,12 +3,12 @@ import { EscapeCodes, keyEscape$uint8, pasteIndicatorError } from "../../../../.
 import { $state } from "./state.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function $initialize(): void {
-    $state.ErrPasteIndicator = pasteIndicatorError.$storageOf(pasteIndicatorError.$zero());
+    $state.ErrPasteIndicator = pasteIndicatorError.$zeroStorage();
     $state.crlf = RuntimeSlice.nil<uint8>();
     $state.pasteEnd = RuntimeSlice.nil<uint8>();
     $state.pasteStart = RuntimeSlice.nil<uint8>();
     $state.space = RuntimeSlice.nil<int32>();
-    $state.vt100EscapeCodes = EscapeCodes.$storageOf(EscapeCodes.$zero());
+    $state.vt100EscapeCodes = EscapeCodes.$zeroStorage();
     {
         $state.vt100EscapeCodes =
             (void EscapeCodes.$storageOf, (void EscapeCodes.$fromStorage,

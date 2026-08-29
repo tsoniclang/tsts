@@ -699,7 +699,7 @@ export function combineReferences(results: iter__from_gostdlib.Seq<LocationsOrNu
     });
 }
 export function combineVSReferences(results: iter__from_gostdlib.Seq<VSReferenceItemsOrNull__from_lsproto>): VSReferenceItemsOrNull__from_lsproto {
-    let combined = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>();
+    let combined = RuntimeSlice.nil<VSReferenceItem__from_lsproto | undefined>();
     const combined$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => combined, combined$next2 => combined = combined$next2);
     let nextId = 0;
     const __gotots_range_6 = named_iter.IterSeqValueOperations.$project(results);
@@ -728,26 +728,23 @@ export function combineVSReferences(results: iter__from_gostdlib.Seq<VSReference
             return true;
         }
         let idMap: GoMapValue<int32, int32> = GoMap__from_gotots_runtime.make<int32, int32>(0, 0, []);
-        const __gotots_range_7 = ((VSReferenceItemsOrNull__from_lsproto.$storageOf(resp).VSReferenceItems ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined>>).value;
+        const __gotots_range_7 = ((VSReferenceItemsOrNull__from_lsproto.$storageOf(resp).VSReferenceItems ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RuntimeSlice<VSReferenceItem__from_lsproto | undefined>>).value;
         for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_7.length; __gotots_range_index_4++) {
             const __gotots_range_value_7 = __gotots_range_7.get(__gotots_range_index_4);
-            let item: tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto> | undefined = __gotots_range_value_7;
-            let oldId = ((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto>).value.VSId;
+            let item: VSReferenceItem__from_lsproto | undefined = __gotots_range_value_7;
+            let oldId = (item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).VSId;
             let newId = nextId;
             idMap.store(oldId, newId);
             nextId++;
-            let newItem = VSReferenceItem__from_lsproto.$copy(VSReferenceItem__from_lsproto.$copy(((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto>).value));
-            const newItem$location = tsonicTypeScriptRuntime.boundLocation({}, () => newItem, newItem$next => newItem = newItem$next);
+            let newItem = VSReferenceItem__from_lsproto.$copy(VSReferenceItem__from_lsproto.$copy((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))));
             newItem.VSId = newId;
-            if (!(((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto>).value.VSDefinitionId === undefined)) {
-                let newDefId = idMap.lookup(((((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VSReferenceItem__from_lsproto>).value.VSDefinitionId ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<int32>).value);
+            if (!((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).VSDefinitionId === undefined)) {
+                let newDefId = idMap.lookup((((item ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).VSDefinitionId ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<int32>).value);
                 const newDefId$location = tsonicTypeScriptRuntime.boundLocation({}, () => newDefId, newDefId$next => newDefId = newDefId$next);
                 newItem.VSDefinitionId =
                     newDefId$location;
             }
-            combined = combined.append(void 0, [
-                newItem$location,
-            ]);
+            combined = combined.append(void 0, [newItem,]);
         }
         __gotots_range_state_2 = 1;
         return true;
@@ -884,7 +881,7 @@ export function combineRenameResponse(results: iter__from_gostdlib.Seq<Workspace
                                 }
                                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(change)));
                                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
+                                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zeroStorage());
                                 }
                             }
                             documentChanges = __gotots_slice_build_1;
@@ -905,7 +902,7 @@ export function combineRenameResponse(results: iter__from_gostdlib.Seq<Workspace
                             }
                             __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$copy(change)));
                             for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$storageOf(TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zero()));
+                                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile__from_lsproto.$zeroStorage());
                             }
                         }
                         documentChanges = __gotots_slice_build_5;

@@ -95,6 +95,14 @@ export class JsxElementLinks implements GoContainerStoredValue<JsxElementLinks$S
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.jsxImplicitImportContainer));
         return $hash;
     }
+    static $zeroStorage(): JsxElementLinks$Storage {
+        return {
+            jsxFlags: 0,
+            resolvedJsxElementAttributesType: void 0,
+            jsxNamespace: void 0,
+            jsxImplicitImportContainer: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export class JsxElaborationElement {

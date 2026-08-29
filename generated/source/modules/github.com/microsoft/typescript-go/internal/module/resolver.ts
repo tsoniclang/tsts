@@ -149,7 +149,7 @@ export class tracer {
                         Args: args
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DiagAndArgs.$storageOf(DiagAndArgs.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, DiagAndArgs.$zeroStorage());
                 }
             }
             (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).traces = __gotots_slice_build_1;
@@ -188,17 +188,17 @@ export class DiagAndArgs {
     public set Args($value: RuntimeSlice<GoInterface | undefined>) {
         this.$storage.Args = $value;
     }
-    static $zero(): DiagAndArgs {
-        return new DiagAndArgs({
-            Message: void 0,
-            Args: RuntimeSlice.nil<GoInterface | undefined>()
-        });
-    }
     static $copy($source: DiagAndArgs): DiagAndArgs {
         return new DiagAndArgs({
             Message: $source.$storage.Message,
             Args: $source.$storage.Args
         });
+    }
+    static $zeroStorage(): DiagAndArgs$Storage {
+        return {
+            Message: void 0,
+            Args: RuntimeSlice.nil<GoInterface | undefined>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -2980,7 +2980,7 @@ export function TryParsePatterns(pathMappings: tsonicTypeScriptRuntime.Location<
     if (numPatterns !== 0) {
         const __gotots_slice_build_4 = goSliceAllocate<Pattern__from_core$Storage>(0, numPatterns);
         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_4.capacity; __gotots_slice_build_5++) {
-            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, Pattern__from_core.$storageOf(Pattern__from_core.$zero()));
+            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, Pattern__from_core.$zeroStorage());
         }
         patterns = __gotots_slice_build_4;
     }
@@ -3029,7 +3029,7 @@ export function TryParsePatterns(pathMappings: tsonicTypeScriptRuntime.Location<
                         }
                         __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, Pattern__from_core.$storageOf(Pattern__from_core.$copy(pattern)));
                         for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-                            __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Pattern__from_core.$storageOf(Pattern__from_core.$zero()));
+                            __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Pattern__from_core.$zeroStorage());
                         }
                     }
                     patterns = __gotots_slice_build_7;

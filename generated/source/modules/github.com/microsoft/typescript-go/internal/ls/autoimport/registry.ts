@@ -139,17 +139,17 @@ export class bucketBuildPreferences {
     public set autoImportEntrypointDirectorySearch($value: Tristate__from_core) {
         this.$storage.autoImportEntrypointDirectorySearch = $value;
     }
-    static $zero(): bucketBuildPreferences {
-        return new bucketBuildPreferences({
-            fileExcludePatterns: RuntimeSlice.nil<gostring>(),
-            autoImportEntrypointDirectorySearch: 0
-        });
-    }
     static $copy($source: bucketBuildPreferences): bucketBuildPreferences {
         return new bucketBuildPreferences({
             fileExcludePatterns: $source.$storage.fileExcludePatterns,
             autoImportEntrypointDirectorySearch: $source.$storage.autoImportEntrypointDirectorySearch
         });
+    }
+    static $zeroStorage(): bucketBuildPreferences$Storage {
+        return {
+            fileExcludePatterns: RuntimeSlice.nil<gostring>(),
+            autoImportEntrypointDirectorySearch: 0
+        };
     }
     declare private readonly then?: never;
     Clone(): bucketBuildPreferences {
@@ -228,7 +228,7 @@ export class BucketState {
             multipleFilesDirty: false,
             newProgramStructure: ((void newProgramStructure,
                 0) as int),
-            buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferences.$zero()),
+            buildPreferences: bucketBuildPreferences.$zeroStorage(),
             dirtyPackages: void 0,
             recursiveSearchPackages: void 0
         });
@@ -244,6 +244,18 @@ export class BucketState {
             dirtyPackages: $source.$storage.dirtyPackages,
             recursiveSearchPackages: $source.$storage.recursiveSearchPackages
         });
+    }
+    static $zeroStorage(): BucketState$Storage {
+        return {
+            dirtyFile: ((void Path__from_tspath,
+                "") as string),
+            multipleFilesDirty: false,
+            newProgramStructure: ((void newProgramStructure,
+                0) as int),
+            buildPreferences: bucketBuildPreferences.$zeroStorage(),
+            dirtyPackages: void 0,
+            recursiveSearchPackages: void 0
+        };
     }
     declare private readonly then?: never;
     Clone(): BucketState {
@@ -336,7 +348,7 @@ export function newRegistryBucket(): RegistryBucket | undefined {
         newProgramStructure: newProgramStructureDifferentFileNames$constant().$value,
         dirtyFile: ((void Path__from_tspath,
             "") as string),
-        buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferences.$zero()),
+        buildPreferences: bucketBuildPreferences.$zeroStorage(),
         dirtyPackages: void 0,
         recursiveSearchPackages: void 0
     }), $goMap$MapOf_Named_tspath$Path_To_string.nil(), $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.nil(), void 0, void 0, $goMap$MapOf_string_To_SliceOf_string.nil(), void 0);
@@ -445,7 +457,7 @@ export class Registry {
                         PackageNames: void 0
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, BucketStats.$storageOf(BucketStats.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, BucketStats.$zeroStorage());
                 }
             }
             (stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProjectBuckets = __gotots_slice_build_1;
@@ -514,7 +526,7 @@ export class Registry {
                         PackageNames: packageNames
                     })));
                 for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, BucketStats.$storageOf(BucketStats.$zero()));
+                    __gotots_slice_build_5.$initialize(__gotots_slice_build_7, BucketStats.$zeroStorage());
                 }
             }
             (stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeModulesBuckets = __gotots_slice_build_5;
@@ -647,17 +659,6 @@ export class BucketStats implements GoContainerStoredValue<BucketStats$Storage> 
         this.$storage.PackageNames = $value;
     }
     declare readonly [$goContainerStorageType]: BucketStats$Storage;
-    static $zero(): BucketStats {
-        return new BucketStats({
-            Path: ((void Path__from_tspath,
-                "") as string),
-            ExportCount: 0,
-            FileCount: 0,
-            State: BucketState.$storageOf(BucketState.$zero()),
-            DependencyNames: void 0,
-            PackageNames: void 0
-        });
-    }
     static $copy($source: BucketStats): BucketStats {
         return new BucketStats({
             Path: ((void Path__from_tspath,
@@ -668,6 +669,17 @@ export class BucketStats implements GoContainerStoredValue<BucketStats$Storage> 
             DependencyNames: $source.$storage.DependencyNames,
             PackageNames: $source.$storage.PackageNames
         });
+    }
+    static $zeroStorage(): BucketStats$Storage {
+        return {
+            Path: ((void Path__from_tspath,
+                "") as string),
+            ExportCount: 0,
+            FileCount: 0,
+            State: BucketState.$zeroStorage(),
+            DependencyNames: void 0,
+            PackageNames: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -918,7 +930,9 @@ export class registryBuilder {
                     let symlinkCache: tsonicTypeScriptRuntime.Location<KnownSymlinks__from_symlinks> | undefined = Program__from_compiler.GetSymlinkCache(program);
                     const __gotots_results_39 = createCheckerPool(new $goInterfaceAdapter$PointerTo_Named_compiler$Program(program));
                     let getChecker: (() => [
-                        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+                        {
+                            value: Checker__from_checker;
+                        } | undefined,
                         (() => void) | undefined
                     ]) | undefined = __gotots_results_39[0];
                     let closePool: (() => void) | undefined = __gotots_results_39[1];
@@ -961,7 +975,9 @@ export class registryBuilder {
                                         if (goInterfaceNonNil<GoInterface>(__gotots_receiver_60).Err() === undefined) {
                                             const __gotots_callee_24 = getChecker;
                                             const __gotots_results_40 = (__gotots_callee_24 ?? GoPanic.raiseRuntime("call of nil function"))();
-                                            let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_40[0];
+                                            let checker__shadow_1: {
+                                                value: Checker__from_checker;
+                                            } | undefined = __gotots_results_40[0];
                                             let done: (() => void) | undefined = __gotots_results_40[1];
                                             const __gotots_callee_25: (() => void) | undefined = done;
                                             const __gotots_deferred_4 = $goDeferred$void_to_void.resolve(__gotots_callee_25);
@@ -1318,7 +1334,9 @@ export class registryBuilder {
             }
         });
         const __gotots_results_30 = NewChecker__from_checker(new $goInterfaceAdapter$PointerTo_Named_autoimport$aliasResolver(aliasResolver__shadow_1), void 0);
-        let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_30[0];
+        let ch: {
+            value: Checker__from_checker;
+        } | undefined = __gotots_results_30[0];
         let extractor: exportExtractor | undefined = registryBuilder.$go$private$autoimport$newExportExtractor(b, packageName, ch, resolver, toRealpath);
         let nonModuleFiles = Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
             return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
@@ -1569,7 +1587,9 @@ export class registryBuilder {
         const __gotots_argument_22 = Set$Keys$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "Changed"));
         (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_22);
     }
-    static $go$private$autoimport$newExportExtractor(b: registryBuilder | undefined, packageName: gostring, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, moduleResolver: {
+    static $go$private$autoimport$newExportExtractor(b: registryBuilder | undefined, packageName: gostring, checker__shadow_1: {
+        value: Checker__from_checker;
+    } | undefined, moduleResolver: {
         value: Resolver__from___go_module;
     } | undefined, realpath: (($0: gostring) => gostring) | undefined): exportExtractor | undefined {
         return new exportExtractor(newSymbolExtractor(packageName, checker__shadow_1, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath, realpath), moduleResolver);
@@ -2240,7 +2260,9 @@ export class registryBuilder {
                 } | undefined = newAliasResolver(Collect$PointerTo_Named_ast$SourceFile(Values$MapOf_string_To_PointerTo_Named_ast$SourceFile$string$PointerTo_Named_ast$SourceFile(rootFiles)), $goMap$MapOf_Named_tspath$Path_To_Named_autoimport$pathAndFileName.nil(), (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host, moduleResolver, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath, ($0: HasFileName__from_ast | undefined, $1: gostring): void => {
                 });
                 const __gotots_results_22 = NewChecker__from_checker(new $goInterfaceAdapter$PointerTo_Named_autoimport$aliasResolver(aliasResolver__shadow_1), void 0);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_22[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_22[0];
                 SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources, (path: Path__from_tspath, source: {
                     value: failedAmbientModuleLookupSource;
                 } | undefined): bool => {

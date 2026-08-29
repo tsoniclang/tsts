@@ -47,17 +47,17 @@ export class tokenRange {
     public set isSpecific($value: bool) {
         this.$storage.isSpecific = $value;
     }
-    static $zero(): tokenRange {
-        return new tokenRange({
-            tokens: RuntimeSlice.nil<Kind__from_ast>(),
-            isSpecific: false
-        });
-    }
     static $copy($source: tokenRange): tokenRange {
         return new tokenRange({
             tokens: $source.$storage.tokens,
             isSpecific: $source.$storage.isSpecific
         });
+    }
+    static $zeroStorage(): tokenRange$Storage {
+        return {
+            tokens: RuntimeSlice.nil<Kind__from_ast>(),
+            isSpecific: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -94,19 +94,19 @@ export class ruleSpec {
     public set rule($value: ruleImpl | undefined) {
         this.$storage.rule = $value;
     }
-    static $zero(): ruleSpec {
-        return new ruleSpec({
-            leftTokenRange: tokenRange.$storageOf(tokenRange.$zero()),
-            rightTokenRange: tokenRange.$storageOf(tokenRange.$zero()),
-            rule: void 0
-        });
-    }
     static $copy($source: ruleSpec): ruleSpec {
         return new ruleSpec({
             leftTokenRange: tokenRange.$storageOf(tokenRange.$copy(tokenRange.$fromStorage($source.$storage.leftTokenRange))),
             rightTokenRange: tokenRange.$storageOf(tokenRange.$copy(tokenRange.$fromStorage($source.$storage.rightTokenRange))),
             rule: $source.$storage.rule
         });
+    }
+    static $zeroStorage(): ruleSpec$Storage {
+        return {
+            leftTokenRange: tokenRange.$zeroStorage(),
+            rightTokenRange: tokenRange.$zeroStorage(),
+            rule: void 0
+        };
     }
     declare private readonly then?: never;
 }

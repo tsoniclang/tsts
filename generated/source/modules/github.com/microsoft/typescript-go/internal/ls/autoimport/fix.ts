@@ -975,7 +975,7 @@ export function promoteFromTypeOnly(changes: Tracker__from_change | undefined, a
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     StatementBase__from_ast.$storageOf((importEqDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
             const __gotots_argument_37 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
-            let scan: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(__gotots_argument_36, __gotots_argument_37);
+            let scan: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(__gotots_argument_36, __gotots_argument_37);
             Scanner__from_scanner.Scan(scan);
             deleteTypeKeyword(changes, sourceFile, Scanner__from_scanner.TokenStart(scan));
             return aliasDeclaration;
@@ -1056,7 +1056,7 @@ export function promoteImportClause(changes: Tracker__from_change | undefined, i
     }
 }
 export function deleteTypeKeyword(changes: Tracker__from_change | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, startPos: int): void {
-    let scan: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, startPos);
+    let scan: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, startPos);
     if (!(Scanner__from_scanner.Token(scan) === KindTypeKeyword$constant__from_ast())) {
         return;
     }

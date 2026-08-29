@@ -33,17 +33,17 @@ export class tableIndex {
     public set valuesOffset($value: uint32) {
         this.$storage.valuesOffset = $value;
     }
-    static $zero(): tableIndex {
-        return new tableIndex({
-            lookupOffset: 0,
-            valuesOffset: 0
-        });
-    }
     static $copy($source: tableIndex): tableIndex {
         return new tableIndex({
             lookupOffset: $source.$storage.lookupOffset,
             valuesOffset: $source.$storage.valuesOffset
         });
+    }
+    static $zeroStorage(): tableIndex$Storage {
+        return {
+            lookupOffset: 0,
+            valuesOffset: 0
+        };
     }
     declare private readonly then?: never;
 }

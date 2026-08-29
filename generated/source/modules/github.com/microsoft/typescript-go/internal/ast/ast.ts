@@ -180,7 +180,7 @@ export class NodeList implements GoContainerStoredValue<NodeList$Storage> {
     declare readonly [$goContainerStorageType]: NodeList$Storage;
     static $zero(): NodeList {
         return new NodeList({
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            Loc: TextRange__from_core.$zeroStorage(),
             Nodes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node> | undefined>()
         });
     }
@@ -189,6 +189,12 @@ export class NodeList implements GoContainerStoredValue<NodeList$Storage> {
             Loc: TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage($source.$storage.Loc))),
             Nodes: $source.$storage.Nodes
         });
+    }
+    static $zeroStorage(): NodeList$Storage {
+        return {
+            Loc: TextRange__from_core.$zeroStorage(),
+            Nodes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node> | undefined>()
+        };
     }
     declare private readonly then?: never;
     static Clone(list: tsonicTypeScriptRuntime.Location<NodeList> | undefined, f: NodeFactoryCoercible | undefined): tsonicTypeScriptRuntime.Location<NodeList> | undefined {
@@ -240,7 +246,7 @@ export class ModifierList implements GoContainerStoredValue<ModifierList$Storage
     declare readonly [$goContainerStorageType]: ModifierList$Storage;
     static $zero(): ModifierList {
         return new ModifierList({
-            NodeList: NodeList.$storageOf(NodeList.$zero()),
+            NodeList: NodeList.$zeroStorage(),
             ModifierFlags: 0
         });
     }
@@ -249,6 +255,12 @@ export class ModifierList implements GoContainerStoredValue<ModifierList$Storage
             NodeList: NodeList.$storageOf(NodeList.$copy(NodeList.$fromStorage($source.$storage.NodeList))),
             ModifierFlags: $source.$storage.ModifierFlags
         });
+    }
+    static $zeroStorage(): ModifierList$Storage {
+        return {
+            NodeList: NodeList.$zeroStorage(),
+            ModifierFlags: 0
+        };
     }
     declare private readonly then?: never;
     static Clone(list: tsonicTypeScriptRuntime.Location<ModifierList> | undefined, f: tsonicTypeScriptRuntime.Location<NodeFactory> | undefined): tsonicTypeScriptRuntime.Location<ModifierList> | undefined {
@@ -318,16 +330,6 @@ export class Node {
     public set data($value: nodeData | undefined) {
         this.$storage.data = $value;
     }
-    static $zero(): Node {
-        return new Node({
-            Kind: 0,
-            Flags: 0,
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
-            id: named_sync_atomic.SyncAtomicUint64Operations.$zero(),
-            Parent: void 0,
-            data: void 0
-        });
-    }
     static $copy($source: Node): Node {
         return new Node({
             Kind: $source.$storage.Kind,
@@ -351,6 +353,16 @@ export class Node {
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.Parent));
         $hash = GoMapHash.mix($hash, $source.$storage.data === undefined ? 0 : $source.$storage.data.$go$hash());
         return $hash;
+    }
+    static $zeroStorage(): Node$Storage {
+        return {
+            Kind: 0,
+            Flags: 0,
+            Loc: TextRange__from_core.$zeroStorage(),
+            id: named_sync_atomic.SyncAtomicUint64Operations.$zero(),
+            Parent: void 0,
+            data: void 0
+        };
     }
     declare private readonly then?: never;
     static GetResolutionModeOverride(node: tsonicTypeScriptRuntime.Location<Node> | undefined): [
@@ -4317,11 +4329,6 @@ export class NodeDefault {
     public set Node($value: Node) {
         this.$storage.Node = Node.$storageOf($value);
     }
-    static $zero(): NodeDefault {
-        return new NodeDefault({
-            Node: Node.$storageOf(Node.$zero())
-        });
-    }
     static $copy($source: NodeDefault): NodeDefault {
         return new NodeDefault({
             Node: Node.$storageOf(Node.$copy(Node.$fromStorage($source.$storage.Node)))
@@ -4334,6 +4341,11 @@ export class NodeDefault {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, Node.$hash(Node.$fromStorage($source.$storage.Node)));
         return $hash;
+    }
+    static $zeroStorage(): NodeDefault$Storage {
+        return {
+            Node: Node.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
     static AsNode(node: tsonicTypeScriptRuntime.Location<NodeDefault> | undefined): tsonicTypeScriptRuntime.Location<Node> | undefined {
@@ -4448,7 +4460,7 @@ export class NodeBase {
     }
     static $zero(): NodeBase {
         return new NodeBase({
-            NodeDefault: NodeDefault.$storageOf(NodeDefault.$zero())
+            NodeDefault: NodeDefault.$zeroStorage()
         });
     }
     static $copy($source: NodeBase): NodeBase {
@@ -4463,6 +4475,11 @@ export class NodeBase {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, NodeDefault.$hash(NodeDefault.$fromStorage($source.$storage.NodeDefault)));
         return $hash;
+    }
+    static $zeroStorage(): NodeBase$Storage {
+        return {
+            NodeDefault: NodeDefault.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -4872,7 +4889,7 @@ export class CommentDirective {
     }
     static $zero(): CommentDirective {
         return new CommentDirective({
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            Loc: TextRange__from_core.$zeroStorage(),
             Kind: 0
         });
     }
@@ -4890,6 +4907,12 @@ export class CommentDirective {
         $hash = GoMapHash.mix($hash, TextRange__from_core.$hash(TextRange__from_core.$fromStorage($source.$storage.Loc)));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Kind));
         return $hash;
+    }
+    static $zeroStorage(): CommentDirective$Storage {
+        return {
+            Loc: TextRange__from_core.$zeroStorage(),
+            Kind: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -5799,7 +5822,7 @@ export class CommentRange implements GoContainerStoredValue<CommentRange$Storage
     declare readonly [$goContainerStorageType]: CommentRange$Storage;
     static $zero(): CommentRange {
         return new CommentRange({
-            TextRange: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            TextRange: TextRange__from_core.$zeroStorage(),
             Kind: 0,
             HasTrailingNewLine: false
         });
@@ -5820,6 +5843,13 @@ export class CommentRange implements GoContainerStoredValue<CommentRange$Storage
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.Kind));
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.HasTrailingNewLine));
         return $hash;
+    }
+    static $zeroStorage(): CommentRange$Storage {
+        return {
+            TextRange: TextRange__from_core.$zeroStorage(),
+            Kind: 0,
+            HasTrailingNewLine: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -5898,19 +5928,19 @@ export class Pragma {
     public set Args($value: GoMapValue<gostring, PragmaArgument>) {
         this.$storage.Args = $value;
     }
-    static $zero(): Pragma {
-        return new Pragma({
-            CommentRange: CommentRange.$storageOf(CommentRange.$zero()),
-            Name: "",
-            Args: $goMap$MapOf_string_To_Named_ast$PragmaArgument.nil()
-        });
-    }
     static $copy($source: Pragma): Pragma {
         return new Pragma({
             CommentRange: CommentRange.$storageOf(CommentRange.$copy(CommentRange.$fromStorage($source.$storage.CommentRange))),
             Name: $source.$storage.Name,
             Args: $source.$storage.Args
         });
+    }
+    static $zeroStorage(): Pragma$Storage {
+        return {
+            CommentRange: CommentRange.$zeroStorage(),
+            Name: "",
+            Args: $goMap$MapOf_string_To_Named_ast$PragmaArgument.nil()
+        };
     }
     declare private readonly then?: never;
 }

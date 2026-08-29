@@ -51,28 +51,30 @@ export function typePrintModeWidened$constant(): typePrintMode {
     return new typePrintMode(2);
 }
 export function getIsolatedDeclarationsCodeActions(ctx: GoInterface | undefined, fixContext: CodeFixContext | undefined): [
-    RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+    RuntimeSlice<CodeAction | undefined>,
     $goInterface$Interface_Method_Error_void_to_string | undefined
 ] {
     let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
     let __gotots_panic_0: GoPanic | undefined = undefined;
     let __gotots_return_0: [
-        RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+        RuntimeSlice<CodeAction | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
-    ] = [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), void 0];
+    ] = [RuntimeSlice.nil<CodeAction | undefined>(), void 0];
     try {
         try {
             __gotots_return_block_0: {
                 const __gotots_results_0 = Program__from_compiler.GetTypeCheckerForFile((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_0[0];
                 let done: (() => void) | undefined = __gotots_results_0[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
                 __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                     __gotots_deferred_1 === undefined ? (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                 };
-                let fixes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>();
-                let addFix: (($0: tsonicTypeScriptRuntime.Location<CodeAction> | undefined) => void) | undefined = (action: tsonicTypeScriptRuntime.Location<CodeAction> | undefined): void => {
+                let fixes = RuntimeSlice.nil<CodeAction | undefined>();
+                let addFix: (($0: CodeAction | undefined) => void) | undefined = (action: CodeAction | undefined): void => {
                     if (action === undefined) {
                         return;
                     }
@@ -154,7 +156,9 @@ export function getAllIsolatedDeclarationsCodeActions(ctx: GoInterface | undefin
         try {
             __gotots_return_block_0: {
                 const __gotots_results_1 = Program__from_compiler.GetTypeCheckerForFile((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_1[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_1[0];
                 let done: (() => void) | undefined = __gotots_results_1[1];
                 const __gotots_callee_3: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_3);
@@ -220,7 +224,9 @@ export function getAllIsolatedDeclarationsCodeActions(ctx: GoInterface | undefin
     }
     return __gotots_return_0;
 }
-export function tryCodeAction(ctx: GoInterface | undefined, fixContext: CodeFixContext | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, fn: (($0: isolatedDeclarationsFixer | undefined) => gostring) | undefined): tsonicTypeScriptRuntime.Location<CodeAction> | undefined {
+export function tryCodeAction(ctx: GoInterface | undefined, fixContext: CodeFixContext | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined, fn: (($0: isolatedDeclarationsFixer | undefined) => gostring) | undefined): CodeAction | undefined {
     let changeTracker: Tracker__from_change | undefined = NewTracker__from_change(ctx, Program__from_compiler.Options((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program), LanguageService.FormatOptions((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS), ((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters);
     let importAdder: ImportAdder__from_autoimport | undefined = void 0;
     let fixer: isolatedDeclarationsFixer | undefined = new isolatedDeclarationsFixer((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ch, changeTracker, importAdder, FromContext__from_locale(ctx), GoMap.make(0, []), new typePrintMode(0), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>(), false);
@@ -256,13 +262,15 @@ export function tryCodeAction(ctx: GoInterface | undefined, fixContext: CodeFixC
     if (fileChanges.length === 0) {
         return void 0;
     }
-    return tsonicTypeScriptRuntime.location<CodeAction>(new CodeAction(description, fileChanges, fixMissingTypeAnnotationOnExportsFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Add_all_missing_type_annotations, FromContext__from_locale(ctx), RuntimeSlice.nil<$goInterface$Interface_void | undefined>())));
+    return new CodeAction(description, fileChanges, fixMissingTypeAnnotationOnExportsFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Add_all_missing_type_annotations, FromContext__from_locale(ctx), RuntimeSlice.nil<$goInterface$Interface_void | undefined>()));
 }
 export class isolatedDeclarationsFixer {
     declare private readonly $goType: void;
     public constructor(public sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, public program: {
         value: Program__from_compiler;
-    } | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public changeTracker: Tracker__from_change | undefined, public importAdder: ImportAdder__from_autoimport | undefined, public locale: Locale__from_locale, public fixedNodes: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, bool>, public typePrintMode: typePrintMode, public symbolsToImport: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public mutatedTarget: bool) {
+    } | undefined, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public changeTracker: Tracker__from_change | undefined, public importAdder: ImportAdder__from_autoimport | undefined, public locale: Locale__from_locale, public fixedNodes: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, bool>, public typePrintMode: typePrintMode, public symbolsToImport: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public mutatedTarget: bool) {
     }
     declare private readonly then?: never;
     static $go$private$ls$addInlineAssertion(f: isolatedDeclarationsFixer | undefined, span: TextRange__from_core): gostring {
@@ -1170,7 +1178,9 @@ export function createAsExpression(factory: tsonicTypeScriptRuntime.Location<Nod
 export function isExpandoPropertyDeclarationForFix(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     return !(node === undefined) && (IsPropertyAccessExpression__from_ast(node) || IsElementAccessExpression__from_ast(node) || IsBinaryExpression__from_ast(node));
 }
-export function findExpandoFunction(ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function findExpandoFunction(ch: {
+    value: Checker__from_checker;
+} | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let expandoDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestorOrQuit__from_ast(node, (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): FindAncestorResult__from_ast => {
         if (IsStatement__from_ast(n)) {
             return FindAncestorQuit$constant__from_ast();
@@ -1240,7 +1250,9 @@ export function isConstAssertion(node: tsonicTypeScriptRuntime.Location<Node__fr
     }
     return false;
 }
-export function endOfRequiredTypeParameters(ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined): int {
+export function endOfRequiredTypeParameters(ch: {
+    value: Checker__from_checker;
+} | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined): int {
     let typeArgs = Checker__from_checker.GetTypeArguments(ch, t);
     if (typeArgs.length === 0) {
         return 0;

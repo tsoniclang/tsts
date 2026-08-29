@@ -117,6 +117,12 @@ export class JSONValue implements GoContainerStoredValue<JSONValue$Storage> {
         $hash = GoMapHash.mix($hash, $source.$storage.Value === undefined ? 0 : $source.$storage.Value.$go$hash());
         return $hash;
     }
+    static $zeroStorage(): JSONValue$Storage {
+        return {
+            Type: 0,
+            Value: void 0
+        };
+    }
     declare private readonly then?: never;
     static IsFalsy(v: tsonicTypeScriptRuntime.Location<JSONValue> | undefined): bool {
         switch (JSONValue.$storageOf(((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSONValue>).value).Type) {

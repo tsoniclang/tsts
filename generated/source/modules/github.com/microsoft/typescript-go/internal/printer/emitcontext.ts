@@ -43,7 +43,7 @@ export class EmitContext {
     declare private readonly $goType: void;
     public constructor(public Factory: {
         value: NodeFactory;
-    } | undefined, public autoGenerate: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined>, public textSource: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public original: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public emitNodes: LinkStore__from_core<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, emitNode>, public assignedName: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public classThis: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public varScopeStack: Stack__from_core<{
+    } | undefined, public autoGenerate: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, AutoGenerateInfo | undefined>, public textSource: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public original: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public emitNodes: LinkStore__from_core<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, emitNode>, public assignedName: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public classThis: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public varScopeStack: Stack__from_core<{
         value: varScope;
     } | undefined>, public letScopeStack: Stack__from_core<{
         value: varScope;
@@ -155,7 +155,7 @@ export class EmitContext {
             __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, (void SynthesizedComment.$storageOf,
                 __gotots_argument_1));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, SynthesizedComment.$storageOf(SynthesizedComment.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, SynthesizedComment.$zeroStorage());
             }
         }
         emitNode.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_printer$emitNode(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "emitNodes"), node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<emitNode>).value).leadingComments = __gotots_slice_build_1;
@@ -191,7 +191,7 @@ export class EmitContext {
             __gotots_slice_build_5.set(__gotots_slice_build_4.length + 0, (void SynthesizedComment.$storageOf,
                 __gotots_argument_7));
             for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, SynthesizedComment.$storageOf(SynthesizedComment.$zero()));
+                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, SynthesizedComment.$zeroStorage());
             }
         }
         emitNode.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_printer$emitNode(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "emitNodes"), node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<emitNode>).value).trailingComments = __gotots_slice_build_5;
@@ -352,7 +352,7 @@ export class EmitContext {
     }
     static GetAutoGenerateInfo(c: {
         value: EmitContext;
-    } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined {
+    } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): AutoGenerateInfo | undefined {
         if (name === undefined) {
             return void 0;
         }
@@ -396,9 +396,9 @@ export class EmitContext {
         value: EmitContext;
     } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         {
-            let autoGenerate: tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(name);
-            if (!(autoGenerate === undefined) && ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Flags.IsNode()) {
-                return EmitContext.$go$private$printer$getNodeForGeneratedNameWorker(c, ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Node, ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Id);
+            let autoGenerate: AutoGenerateInfo | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(name);
+            if (!(autoGenerate === undefined) && (autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsNode()) {
+                return EmitContext.$go$private$printer$getNodeForGeneratedNameWorker(c, (autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Node, (autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Id);
             }
         }
         return name;
@@ -1079,12 +1079,12 @@ export class EmitContext {
         for (; !(original === undefined);) {
             node = original;
             if (IsMemberName__from_ast(node)) {
-                let autoGenerate: tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(node);
-                if (autoGenerate === undefined || ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Flags.IsNode() && !(((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Id === autoGenerateId)) {
+                let autoGenerate: AutoGenerateInfo | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(node);
+                if (autoGenerate === undefined || (autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsNode() && !((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Id === autoGenerateId)) {
                     break;
                 }
-                if (((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Flags.IsNode()) {
-                    original = ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value.Node;
+                if ((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Flags.IsNode()) {
+                    original = (autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Node;
                     continue;
                 }
             }
@@ -1195,11 +1195,10 @@ export class EmitContext {
         EmitContext.SetOriginal(c, updated, original);
         if (IsIdentifier__from_ast(updated) || IsPrivateIdentifier__from_ast(updated)) {
             {
-                let autoGenerate: tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(original);
+                let autoGenerate: AutoGenerateInfo | undefined = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.lookup(original);
                 if (!(autoGenerate === undefined)) {
-                    let autoGenerateCopy = AutoGenerateInfo.$copy(AutoGenerateInfo.$copy(((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AutoGenerateInfo>).value));
-                    const autoGenerateCopy$location = tsonicTypeScriptRuntime.boundLocation({}, () => autoGenerateCopy, autoGenerateCopy$next => autoGenerateCopy = autoGenerateCopy$next);
-                    (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.store(updated, autoGenerateCopy$location);
+                    let autoGenerateCopy = AutoGenerateInfo.$copy(AutoGenerateInfo.$copy((autoGenerate ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))));
+                    (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.store(updated, autoGenerateCopy);
                 }
             }
         }
@@ -1356,15 +1355,6 @@ export class SynthesizedComment implements GoContainerStoredValue<SynthesizedCom
         this.$storage.Text = $value;
     }
     declare readonly [$goContainerStorageType]: SynthesizedComment$Storage;
-    static $zero(): SynthesizedComment {
-        return new SynthesizedComment({
-            Kind: 0,
-            Loc: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
-            HasLeadingNewLine: false,
-            HasTrailingNewLine: false,
-            Text: ""
-        });
-    }
     static $copy($source: SynthesizedComment): SynthesizedComment {
         return new SynthesizedComment({
             Kind: $source.$storage.Kind,
@@ -1385,6 +1375,15 @@ export class SynthesizedComment implements GoContainerStoredValue<SynthesizedCom
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.HasTrailingNewLine));
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.Text));
         return $hash;
+    }
+    static $zeroStorage(): SynthesizedComment$Storage {
+        return {
+            Kind: 0,
+            Loc: TextRange__from_core.$zeroStorage(),
+            HasLeadingNewLine: false,
+            HasTrailingNewLine: false,
+            Text: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -1481,8 +1480,8 @@ export class emitNode implements GoContainerStoredValue<emitNode$Storage> {
         return new emitNode({
             flags: 0,
             emitFlags: 0,
-            commentRange: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
-            sourceMapRange: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
+            commentRange: TextRange__from_core.$zeroStorage(),
+            sourceMapRange: TextRange__from_core.$zeroStorage(),
             tokenSourceMapRanges: $goMap$MapOf_Named_ast$Kind_To_Named_core$TextRange.nil(),
             helpers: RuntimeSlice.nil<{
                 value: EmitHelper;
@@ -1506,6 +1505,22 @@ export class emitNode implements GoContainerStoredValue<emitNode$Storage> {
             trailingComments: $source.$storage.trailingComments,
             typeNode: $source.$storage.typeNode
         });
+    }
+    static $zeroStorage(): emitNode$Storage {
+        return {
+            flags: 0,
+            emitFlags: 0,
+            commentRange: TextRange__from_core.$zeroStorage(),
+            sourceMapRange: TextRange__from_core.$zeroStorage(),
+            tokenSourceMapRanges: $goMap$MapOf_Named_ast$Kind_To_Named_core$TextRange.nil(),
+            helpers: RuntimeSlice.nil<{
+                value: EmitHelper;
+            } | undefined>(),
+            externalHelpersModuleName: void 0,
+            leadingComments: RuntimeSlice.nil<SynthesizedComment$Storage>(),
+            trailingComments: RuntimeSlice.nil<SynthesizedComment$Storage>(),
+            typeNode: void 0
+        };
     }
     declare private readonly then?: never;
     static $go$private$printer$copyFrom(e: tsonicTypeScriptRuntime.Location<emitNode> | undefined, source: tsonicTypeScriptRuntime.Location<emitNode> | undefined): void {

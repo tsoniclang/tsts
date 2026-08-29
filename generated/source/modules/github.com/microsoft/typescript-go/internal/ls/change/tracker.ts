@@ -126,7 +126,7 @@ export class Tracker {
         value: Converters__from_lsconv;
     } | undefined, public ctx: GoInterface | undefined, public EmitContext: {
         value: EmitContext__from_printer;
-    } | undefined, public NodeFactory: tsonicTypeScriptRuntime.Location<NodeFactory__from_ast> | undefined, public changes: tsonicTypeScriptRuntime.Location<MultiMap__from_collections<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined>> | undefined, public deletedNodes: RuntimeSlice<deletedNode$Storage>, public nodesWithInsertionsAtStart: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, nodesInsertedAtStartState | undefined>, public writer: {
+    } | undefined, public NodeFactory: tsonicTypeScriptRuntime.Location<NodeFactory__from_ast> | undefined, public changes: MultiMap__from_collections<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined> | undefined, public deletedNodes: RuntimeSlice<deletedNode$Storage>, public nodesWithInsertionsAtStart: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, nodesInsertedAtStartState | undefined>, public writer: {
         value: ChangeTrackerWriter__from_printer;
     } | undefined) {
     }
@@ -154,7 +154,7 @@ export class Tracker {
                     node: node
                 })));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, deletedNode.$storageOf(deletedNode.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, deletedNode.$zeroStorage());
             }
         }
         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deletedNodes = __gotots_slice_build_1;
@@ -937,7 +937,7 @@ export class Tracker {
         let sourceFileLike: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewSourceFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeFactory"), SourceFileParseOptions__from_ast.$fromStorage({
             FileName: SourceFile__from_ast.FileName(sourceFile),
             Path: SourceFile__from_ast.Path(sourceFile).$value,
-            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
         }), text, nodeList, eofToken);
         Node__from_ast.ForEachChild(sourceFileLike, new Visitor__from_ast((child: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {
             Node__from_ast.$storageOf(((child ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent = sourceFileLike;
@@ -985,7 +985,7 @@ export class Tracker {
         let changes: GoMapValue<gostring, RuntimeSlice<{
             value: TextEdit__from_lsproto;
         } | undefined>> = $goMap$MapOf_string_To_SliceOf_PointerTo_Named_lsproto$TextEdit.make(0, []);
-        const __gotots_range_4 = MultiMap__from_collections.$storageOf((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MultiMap__from_collections<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined>>).value).M;
+        const __gotots_range_4 = MultiMap__from_collections.$storageOf(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).M;
         const __gotots_range_keys_2 = __gotots_range_4.keys();
         for (const __gotots_range_value_8 of __gotots_range_keys_2) {
             const __gotots_range_value_9 = __gotots_range_4.lookupOk(__gotots_range_value_8);
@@ -1115,17 +1115,17 @@ export class deletedNode {
     public set node($value: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) {
         this.$storage.node = $value;
     }
-    static $zero(): deletedNode {
-        return new deletedNode({
-            sourceFile: void 0,
-            node: void 0
-        });
-    }
     static $copy($source: deletedNode): deletedNode {
         return new deletedNode({
             sourceFile: $source.$storage.sourceFile,
             node: $source.$storage.node
         });
+    }
+    static $zeroStorage(): deletedNode$Storage {
+        return {
+            sourceFile: void 0,
+            node: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1142,9 +1142,9 @@ export function NewTracker(ctx: GoInterface | undefined, compilerOptions: {
     const __gotots_field_0 = emitContext;
     const __gotots_store_0 = ((emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
     const __gotots_field_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeFactory");
-    return new Tracker(FormatCodeSettings__from_lsutil.$copy(formatOptions), newLine, converters, ctx, __gotots_field_0, __gotots_field_1, tsonicTypeScriptRuntime.location<MultiMap__from_collections<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined>>(MultiMap__from_collections.$fromStorage<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined>({
+    return new Tracker(FormatCodeSettings__from_lsutil.$copy(formatOptions), newLine, converters, ctx, __gotots_field_0, __gotots_field_1, MultiMap__from_collections.$fromStorage<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, trackerEdit | undefined>({
         M: GoMap.nil()
-    })), RuntimeSlice.nil<deletedNode$Storage>(), $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_change$nodesInsertedAtStartState.make(0, []), void 0);
+    }), RuntimeSlice.nil<deletedNode$Storage>(), $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_change$nodesInsertedAtStartState.make(0, []), void 0);
 }
 export function getMembersOrProperties(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<NodeList__from_ast> | undefined {
     if (IsObjectLiteralExpression__from_ast(node)) {

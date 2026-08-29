@@ -27,7 +27,7 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export class projectReferenceFileMapper {
     declare private readonly $goType: void;
-    public constructor(public opts: ProgramOptions, public host: ResolutionHost__from___go_module | undefined, public loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined, public configToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>, public referencesInConfigFile: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public sourceToProjectReference: GoMapValue<Path__from_tspath, {
+    public constructor(public opts: ProgramOptions, public host: ResolutionHost__from___go_module | undefined, public loader: fileLoader | undefined, public configToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>, public referencesInConfigFile: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public sourceToProjectReference: GoMapValue<Path__from_tspath, {
         value: SourceOutputAndProjectReference__from_tsoptions;
     } | undefined>, public outputDtsToProjectReference: GoMapValue<Path__from_tspath, {
         value: SourceOutputAndProjectReference__from_tsoptions;

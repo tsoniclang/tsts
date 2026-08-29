@@ -1,62 +1,62 @@
 {
   "schemaVersion": 3,
-  "canonicalSemanticDigest": "2cd7e24b0c6632891d30abefad6e201cadb5ea31606aaa3aac38139b9d0c0275",
-  "targetProfileDigest": "5e7dc3d38340d9d30083da2fe0a596b80f70aee65adc04b694533a82e4537133",
-  "toolchainDigest": "22d0f267d7f4737a17f61b24c09cd682a7c527df7bb15d771ee2b195bf30eed0",
+  "canonicalSemanticDigest": "94ef87fc403124800d3ac2fa540e9253c830c0eda245e55047388d3e17f8e2cd",
+  "targetProfileDigest": "8de740e33201a974cdc786927ba367f65c905a82346481821f030b3a6dd2f247",
+  "toolchainDigest": "151426d1c1938430364885ed7d372b47c3a27b430922565904ccb20b0edf18fc",
   "members": [
     {
       "path": "implementations/tsts/checker-hotpaths.ts",
       "type": "file",
-      "size": 3656,
-      "digest": "f87b7752fee6799e9796fe61359a4f41994e74c6ec856295493ca8d6b4d772c5"
+      "size": 3602,
+      "digest": "04a6cdcf07eb8095f56692be45a26b8c15b223e60ce4846a195d6d492d4671ca"
     },
     {
       "path": "implementations/tsts/core-hotpaths.ts",
       "type": "file",
-      "size": 3792,
-      "digest": "f21d6e8de8616bb394e92ef19408254283a044f878236dda0cd3f69d86cb6c69"
+      "size": 3441,
+      "digest": "50b899da163f36009c1727b0b678a6ebf299b450b142cdb6e9e75e35d43d4e45"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
       "type": "file",
-      "size": 54105,
-      "digest": "5345df9db34c4562a595337d685583b52ab5dfea665db4bf63fd81c9bf4682b2"
+      "size": 54222,
+      "digest": "beafc39a9726a5a36a7d92c9bd568bc21a68a115c13146af3bce061592881d6e"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_any.ts",
       "type": "file",
-      "size": 44464,
-      "digest": "9e74c75c9b252cab9a123d42181c2b5dbd4b21cbbf72d6b261a5fa9e4fff8e9e"
+      "size": 44410,
+      "digest": "083d4edbe820df7abafd03376574442339dac61f61db0c6fec56c1123fca21a2"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
       "type": "file",
-      "size": 314068,
-      "digest": "42c3068098459c93a0be5f27d6c93182f5f5c52b30ad95ed167ed2402541e297"
+      "size": 310625,
+      "digest": "4ff12982fec48a65125c1e5ca862a949c1bdbf69ba05353169c33b98d7700dfc"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
       "type": "file",
-      "size": 12289,
-      "digest": "aea9a3f9210d78585ac07e25e121ab455443582029294b25f04e3d561a63712b"
+      "size": 12278,
+      "digest": "5a50a4397fb485b11016bfdf97684295c86c6686eb2466386cb843f56b200f90"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
       "type": "file",
-      "size": 40102,
-      "digest": "fe384de45cf1327f190b25f0664b11e5b782385b0d117eae229640b21d1dd98e"
+      "size": 39994,
+      "digest": "371aa78466437520b1820bfc901e875169bee409d6b2eec8fa6ed15cccacd093"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_methods.ts",
       "type": "file",
-      "size": 50304,
-      "digest": "a2e53f1f736a17258058487bc38c52e91d9cb1fcb2037aaa0c594f92366bbaed"
+      "size": 49156,
+      "digest": "95be91ec97b6236006c57f6add176e837bb8598ca45375b2393d56d5b6675331"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_time.ts",
       "type": "file",
-      "size": 87335,
-      "digest": "9537b3e0615ab2fff3529f93860b2a6ba479b19d78623fcd08f53c66e12a93b7"
+      "size": 86835,
+      "digest": "3b9f708d762332c1333225c458e788aa8d13b9f71e00bb8373c2f916c040a517"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/doc.ts",
@@ -73,8 +73,8 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
       "type": "file",
-      "size": 96595,
-      "digest": "b0df74e16a3919ca670432f8d59874ab7df28296ff47161d2f28453f83daac80"
+      "size": 96766,
+      "digest": "ee33f8fe0a3f23f013b0c826fec91feca4939055f65639b6b87504683af77bb4"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fold.ts",
@@ -103,20 +103,20 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/internal.ts",
       "type": "file",
-      "size": 585,
-      "digest": "f994bc10415644af4bef2f871d84fd17e2f05d95bfb03a5dbcabd6dafe80f315"
+      "size": 579,
+      "digest": "d7ee446c8b0a11960d020d2054c2b355e65b2a138b28647885e39b742a79d89f"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonflags/flags.ts",
       "type": "file",
-      "size": 9168,
-      "digest": "32348e6894a74cb291c852ac11c993eddc56030fd38b110c7447c6b8f22e4807"
+      "size": 9172,
+      "digest": "4dabeb873de94bd1e3db1b4c04e5b1ea784b7af8e96546d00e01a729f661d384"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
       "type": "file",
-      "size": 29901,
-      "digest": "5f954b367a64eec018102a591efac842ef77b8e39a9df3fff644d0f7b0a8b736"
+      "size": 30076,
+      "digest": "066d84a95c3643bc0cad4916372040f3b284664e967095f413b7e0ef520b9912"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/decode.ts",
@@ -139,8 +139,8 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/decode.ts",
       "type": "file",
-      "size": 147580,
-      "digest": "46fbb3028de11cd6246a783b19e5ba0ba0466190a0b1a2859855ae75a2aed2cf"
+      "size": 147488,
+      "digest": "3ef854e70715928a5a87e304999bbe7387930b96389ebd62d15552682cdf3aef"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/doc.ts",
@@ -151,8 +151,8 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/encode.ts",
       "type": "file",
-      "size": 101636,
-      "digest": "6c454ccea74d2539b9f0f5393029d90e3a3e1847a7f0000380c0339ab5e02e34"
+      "size": 101544,
+      "digest": "2f432933f13896be7e796e429d926c3ab7c3d9eff98deb5ddaa33a1ded3aec21"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/errors.ts",
@@ -163,8 +163,8 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/export.ts",
       "type": "file",
-      "size": 6264,
-      "digest": "70ab84482e00438b07bd2ea90dc61c2f214112677ff26b5e9ee448957eb09cbe"
+      "size": 6263,
+      "digest": "e9629787577e7b2e2c0b73daed38c9f15f23d670f23de6dd98140ea9bb19cdc6"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/options.ts",
@@ -187,26 +187,26 @@
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
       "type": "file",
-      "size": 65819,
-      "digest": "1afdfcfe2037a6be6b09b87c9290cf26b8a1aebaea11ca9c2a54352a66099d94"
+      "size": 65792,
+      "digest": "4301077375cba72b11692377ff68970603cf74234b1191f56f6cbffcdd3854b6"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/token.ts",
       "type": "file",
-      "size": 19226,
-      "digest": "f672c95472f8300554f7d138ef4d15aa006a3ed2e82833f3de8d26cca604d9cf"
+      "size": 19230,
+      "digest": "4cad0fca0c33fd53c19c726f82d508a939bd3ccfe1e591e87cd957ec8a68f01f"
     },
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/value.ts",
       "type": "file",
-      "size": 27372,
-      "digest": "3582780598fdce569d03197ecead5d4e0f1935814bc30c0aa6b96a7d879169e3"
+      "size": 27511,
+      "digest": "92f4a893d96fc5a834dd8aec4d8af5963723cf8a4fd51110fa575f854a89a3de"
     },
     {
       "path": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
       "type": "file",
-      "size": 32040,
-      "digest": "79102fb9fd539beeba38a00769789adc419b3d96a0adbc866e3e3dff6d92f06a"
+      "size": 31982,
+      "digest": "aa23baa9cd727a569f14172e541c58dfa04385e7fa124d92778c39c16225e4f7"
     },
     {
       "path": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/detect_ref.ts",
@@ -259,8 +259,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/callbackfs.ts",
       "type": "file",
-      "size": 25369,
-      "digest": "7d5dc8a9d1e321327d83516913537698f3c7637f249814cc024d80e1b9b71855"
+      "size": 25221,
+      "digest": "311474d67f81de9d8a029e2b92a91b036f085a836e5af4bb4ccae8799e0b1ccb"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/conn.ts",
@@ -307,8 +307,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
       "type": "file",
-      "size": 119246,
-      "digest": "3a7c0b8ffb9f73edf44c7680e75945ff90c323c1d8e14aa96917d790e8ad3813"
+      "size": 119519,
+      "digest": "7e86a0a3c0168bcd98e69c0fed2abc45ed30d19cdf0aabf84e2ec25312700a0b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/protocol.ts",
@@ -337,8 +337,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/session.ts",
       "type": "file",
-      "size": 419974,
-      "digest": "2e4e3b0ce9af6789f7edb679a1acf00fc40ce6982cfd62d3342cabd08b27f0a6"
+      "size": 419644,
+      "digest": "f9eedfe7a9ab2a8b03f453cfe42c5826fbd8124484237f556d1035b1bc459204"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/api/stringer_generated.ts",
@@ -361,14 +361,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/ast.ts",
       "type": "file",
-      "size": 428693,
-      "digest": "8125b209405ca717adb9a1c3e6bbbfd1406adf5b8a6b66784f4b715dcefd7710"
+      "size": 429417,
+      "digest": "92fb2427dad8accb249dfc7c12c0f2c9774c812e0f956a790f7408e31726e96d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/ast_generated.ts",
       "type": "file",
-      "size": 1931041,
-      "digest": "df5437a9d22017c0264fb457a6c168a75f222ac9d479771131ddb23b8f488285"
+      "size": 1945897,
+      "digest": "eec2ddb2dc193f008ae0af9b10f37e75930cc63801c47b270c45104484b6912b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/checkflags.ts",
@@ -391,8 +391,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/flow.ts",
       "type": "file",
-      "size": 11530,
-      "digest": "79bde0f1c00ab54d59110e09ee8bc412d84a6ffb6016189eba415d93b37bcf9f"
+      "size": 11853,
+      "digest": "71312eb233eafbcc4fe24196204ba6a223fd7faf4bfd34d8e1af71bb10388509"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/functionflags.ts",
@@ -433,14 +433,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/parseoptions.ts",
       "type": "file",
-      "size": 17565,
-      "digest": "d6a48c5897ad96a9ae037befd14104e766451fb4c21c423ed6d2978fb73f5959"
+      "size": 17794,
+      "digest": "000dc20751f5e510a9857fa0d63eee0c4d178458490bbe2aedc0923f5a541136"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/positionmap.ts",
       "type": "file",
-      "size": 8588,
-      "digest": "07925db74d7b090899179bce0311daecfdd07059e34456c6ea1cba6ac3af4157"
+      "size": 8559,
+      "digest": "a3276417f49bdfeeb8d016a3de48aabbaf4311da1c2a418c3ac36a5dd0a1ba47"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/precedence.ts",
@@ -457,8 +457,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/symbol.ts",
       "type": "file",
-      "size": 10316,
-      "digest": "0d08c4891766e8578336afa85fb719adba84f57e7a92aa4cfae3ec215e59747b"
+      "size": 10848,
+      "digest": "c53644d6a5e4874d14362983519a598e374245b4dc0588f8bba5344c17a978b8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ast/symbolflags.ts",
@@ -487,14 +487,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/astnav/tokens.ts",
       "type": "file",
-      "size": 58260,
-      "digest": "d88dbef668cd94a1dca8bc2bff7c8fc9f7b28b036df2b0dc52fbe85069bd8993"
+      "size": 58056,
+      "digest": "dcc87cabca955efaf607a1364f97d42acd9299c7309542618bad819ff5ed77e2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/binder/binder.ts",
       "type": "file",
-      "size": 361753,
-      "digest": "7753748a0e917b3ce23619486df46253d0fc3fe81a5ec4a3d644479fdb6000b2"
+      "size": 361714,
+      "digest": "d77a005f2a65264d0ac56a340b15972a5b81e0baa4f445146e41d867f58bb118"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/binder/nameresolver.ts",
@@ -523,14 +523,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
       "type": "file",
-      "size": 5698952,
-      "digest": "f68d58966a4082022fe9715628e7e59b24a10ed96f3d2b48552c549074e9cf3c"
+      "size": 5552506,
+      "digest": "5403c4cb4793b64f560c11beaef469bf22d9a98668b56e45ca69c2d000e76308"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/emitresolver.ts",
       "type": "file",
-      "size": 279040,
-      "digest": "12c6d68707bfe506b31a682901651decc3c9280780eab285525e028f69a9e2dc"
+      "size": 278156,
+      "digest": "4761f51963045a252baf8cdb9e4b6aa8fab2a83a7dc2a66f8e663940a07e4e94"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/exports.ts",
@@ -541,8 +541,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/flow.ts",
       "type": "file",
-      "size": 10991,
-      "digest": "a3438f060b8a83babbd585a501942a9a3d658a3d3912dbfc2ef5ba0974d1d738"
+      "size": 11109,
+      "digest": "2ab3e3de5136c68c0f087b8d62fc144b94b30cc5dcc922b43e0e07fbb363de1b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/grammarchecks.ts",
@@ -565,20 +565,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/jsx.ts",
       "type": "file",
-      "size": 6496,
-      "digest": "70bc5abf70a168c8520b30a043758602520c3dad30b3c5c4b5d7aa1fb1a4ff54"
+      "size": 6743,
+      "digest": "0afc0203dbaaf677e1f037603ccef32d4f8ff2e0b95060ba149104c56ed8b12e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/mapper.ts",
       "type": "file",
-      "size": 29213,
-      "digest": "d773f9ac23b7a218235a89284cc926b3579b66648f8321a9c2d0fc54ed6f5261"
+      "size": 29413,
+      "digest": "ac529e2762aa07f5106cc33ef05e71f73b8b78a1da2a7e7f94b2d4e565bc91ec"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilder.ts",
       "type": "file",
-      "size": 46389,
-      "digest": "c8377ea4088f181943b1240c0a084c65c214bd6d433de1c8a888b1db9c30448e"
+      "size": 42341,
+      "digest": "74091ec7604ba3cb5022b22389d1a7dcfab0d5cd9caef49d50468018eb2623df"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilder_hover.ts",
@@ -589,20 +589,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
       "type": "file",
-      "size": 808226,
-      "digest": "d10361046bda9cc95c4e4a610e6296fba0a0a1301180a73de57d4d29f53c2ab4"
+      "size": 801473,
+      "digest": "d0db9152ad5037021af59f0174feaa3498751bbf4a651b453ab6584ef15c0697"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderscopes.ts",
       "type": "file",
-      "size": 4148,
-      "digest": "ca1bf099a4029a069c85081a6257a4a10a1e0586109173de1d57e0fe79957f8b"
+      "size": 4145,
+      "digest": "5c966c7d656e59bafa7634e4897de4ea5a2204254db46f34730fee580a7ebe56"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/nodecopy.ts",
       "type": "file",
-      "size": 96877,
-      "digest": "ac1ce991f99343ead04b4d111bb2563b4405d38bfe9471e0fa6e3e049484b4d2"
+      "size": 96736,
+      "digest": "bb823b7b3e14b8529aecdcaa7c5543fc9b93b77c0c0fb7f9a1956eaf091c1dd7"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/printer.ts",
@@ -613,20 +613,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/pseudotypenodebuilder.ts",
       "type": "file",
-      "size": 2059,
-      "digest": "10f871ee34f7746556f328518f79e34eeb9bc2738db6b57bfe66032549c32cb5"
+      "size": 1873,
+      "digest": "521c10d084df1c21a40554eaab3006894024e4b35fe321b5513c4e2051dbfc2b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/relater.ts",
       "type": "file",
-      "size": 352013,
-      "digest": "7857baf1bdfd41a308b07097ab8a08a387d22adb0e38e8ac3b3b00cc9af23470"
+      "size": 347588,
+      "digest": "1555eb5c72fcce48d697ed5912f2c3a7c64f0a7fc6df8b2d61737411956e338a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/services.ts",
       "type": "file",
-      "size": 23751,
-      "digest": "5c7b0099d00a77d7225867be53ec1d8e9cbea94bc7eada3f4ce6354e3293e3a9"
+      "size": 23405,
+      "digest": "f02742a30d914e7652beb7b3d6cb1da07778c5a4507df9f716276f552877510e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/symbolaccessibility.ts",
@@ -643,44 +643,44 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/tracer.ts",
       "type": "file",
-      "size": 38563,
-      "digest": "d2f18ff175c49b59fac6ddff614b509b40e6e60c9b2c96ad620ec24719fa4630"
+      "size": 38633,
+      "digest": "f41f30f3a4a14c3035634ce8e35a819910142cf51e740c1b66a733e591ce092b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/types.ts",
       "type": "file",
-      "size": 194265,
-      "digest": "6abc6309082bda98b8fd66e74565cd2e170eb6892d245441c077ce267d93e54d"
+      "size": 201210,
+      "digest": "3e078a1b0d9df59216c1ee91247698a141666e71247e712a23a7383fc54491b2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/checker/utilities.ts",
       "type": "file",
-      "size": 154791,
-      "digest": "6d54a17d7451911c268407c72dc417c3f308877fe6cb778a6ffb4cf7e60e3d4e"
+      "size": 154601,
+      "digest": "d29f2f6545dbf0b9641d65e66f6cf60a5833fe354531c19f02d1fbc7a2f20bfd"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/cow.ts",
       "type": "file",
-      "size": 9388,
-      "digest": "330c89ae3254831fec4835bec5ea3df6c59d87fb97753856dc812594b4c22bef"
+      "size": 9578,
+      "digest": "11eb5d88fbb68c88652d0359c1eda2fefd8275245794a5f5799752a6ba9f526a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/multimap.ts",
       "type": "file",
-      "size": 8317,
-      "digest": "17a81389d35f86659753844b3faf80f902ad27f9823ae55a82b5a3518bce769f"
+      "size": 7488,
+      "digest": "fce7895df0b94bfdc2a583dcfe52fbd830c828382976e951faac5e9fa7c77ccd"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
       "type": "file",
-      "size": 43936,
-      "digest": "ae57d1b4478f20c9462c0da2ba1c5468246c772a6f21a804a01e7b075995a33a"
+      "size": 44261,
+      "digest": "f41601a8b35c20deaf6d92c65e514eab272f21c73389e89f16d37adc0f6e1581"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_set.ts",
       "type": "file",
-      "size": 5418,
-      "digest": "806cd712edd0f4d5b778b65bc5dc204020012315e83bc77227bd1ee3946426e1"
+      "size": 5647,
+      "digest": "c0be4a524bdec7b771031716c7fd54bbf61b5e76f5dba6c04be6dabb5372d96b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/set.ts",
@@ -691,32 +691,32 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/syncmap.ts",
       "type": "file",
-      "size": 9424,
-      "digest": "aecde085f2df8641cd7b1a593110e68f60ee5d432e47663e0ae1dc3d963250ec"
+      "size": 9701,
+      "digest": "048791d767dbb3e9fa61d906b50fff5dd92bcad7ccbfe34abc7a75d0ce9d23e0"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/collections/syncset.ts",
       "type": "file",
-      "size": 17386,
-      "digest": "5391cdc3e8cf2d0b4ae7b55934dc85c83e47da83ce7da3c5ea560ffa6c7dd3b7"
+      "size": 17355,
+      "digest": "5050477edf7ec25782dc0702739def52fb4346ace8c1991ba63a807f923040c2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/checkerpool.ts",
       "type": "file",
-      "size": 24656,
-      "digest": "22723d8140df78b3d3cbcd9b7b22ca01cd2bc077228466611d2b2aea183bf122"
+      "size": 24712,
+      "digest": "15df2f9b80c4451d2450642758b0b1698d48e9fee7dd8f3cd6d65a8742884055"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/emitHost.ts",
       "type": "file",
-      "size": 21101,
-      "digest": "33b8b71fce159c2aecef4ebc975ad03673628cb8550efd130eeafcd5f5dd4dac"
+      "size": 21091,
+      "digest": "4dc30508759fe7042d6a6571e82daf9993ba82556c421fecc8bf3441ca3e3f14"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/emitter.ts",
       "type": "file",
-      "size": 72992,
-      "digest": "7f61b0e920a2469460c1e8c36b82e541e0b4864d8c66335313ac4348e21f3d40"
+      "size": 72732,
+      "digest": "de75a0c2e46c727c26629b7da15efbcb9c7a71030fea90ff695a2e0ad987006a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/fileInclude.ts",
@@ -727,14 +727,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/fileloader.ts",
       "type": "file",
-      "size": 134306,
-      "digest": "731778e636d94caec67d7742089ae49ca749ab21524281293aad705737c585ac"
+      "size": 130528,
+      "digest": "61d959e425fc6bd628435debb2faa23cdac8f3c0a9ea3367d5a10b0135158a7d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/filesparser.ts",
       "type": "file",
-      "size": 83390,
-      "digest": "9c373ff57ad5ea283d00b8cad45b2135768b922ad63a330dc3a0f225f6d34d21"
+      "size": 81550,
+      "digest": "41557a2c72edf7781ca6ff8fb1cca99526fe25117edb63e15cd29eb47bc91e3d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/host.ts",
@@ -757,32 +757,32 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/program.ts",
       "type": "file",
-      "size": 322741,
-      "digest": "16ab069645b19da42ca2e8acc5f236f1f5b3c5dbcaf44c6554a063c9e03d5734"
+      "size": 322188,
+      "digest": "9d1710cc7ac74e43170c997ebed08243d08ef28b16a302fa0a0a1e4db30d2339"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferencedtsfakinghost.ts",
       "type": "file",
-      "size": 26740,
-      "digest": "4dc9c94802b3f3347903628ecec1bb2ac837722d5e7a445537d7687235d9a0a0"
+      "size": 26538,
+      "digest": "6ce8c345f3caae5200eeddbdada98c2a6d19c7741a244232a1225063356d15cc"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferencefilemapper.ts",
       "type": "file",
-      "size": 25362,
-      "digest": "04d27f0afcc2a8555934e50d8b0daa13e67dca4447677e61303e54d27c2b8f5b"
+      "size": 25328,
+      "digest": "0ad263efa87bd364d11158db6cd2c62f0ebd4c283dbd82756a19a9153024db18"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferenceparser.ts",
       "type": "file",
-      "size": 25247,
-      "digest": "f0449c95fcf101464ad4d175e00e3cb175a471a9e4ae6a1dd3bbba13ad99479e"
+      "size": 24115,
+      "digest": "fcc2e65f615770dbf1abd9827965f90cdff3c735b7a436085a75805b3d7ed02b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/arena.ts",
       "type": "file",
-      "size": 9135,
-      "digest": "fc4bd7fc66cec9bb90b7513f78ba716cf887e09b4fe047ce6e66da44654d2b64"
+      "size": 9278,
+      "digest": "08832b25a1346cc54966a7a107994b00bf760872a9cffd6246ce05998484d532"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/bfs.ts",
@@ -835,8 +835,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/linkstore.ts",
       "type": "file",
-      "size": 3958,
-      "digest": "641141298082e5f7f99cf7be0663abf17b59ccd603eb4c0e160ede842e3e31a8"
+      "size": 3944,
+      "digest": "d11672f7f7657f5573d06331097fa6529b07574028b2b4ecf69e45940e4c53e6"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/modulekind_stringer_generated.ts",
@@ -853,20 +853,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/parsedoptions.ts",
       "type": "file",
-      "size": 1174,
-      "digest": "2f0150d80e12571c870ca6aefd6754360b75c8fd8b6a8cbeff2bab9a6ec8da8a"
+      "size": 1381,
+      "digest": "709c83275f5829431167ca3e1647f62fa96f1647eacfba46dea03c9db9578be2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/pattern.ts",
       "type": "file",
-      "size": 6551,
-      "digest": "ec3fcee312f2843b324cab74b6042490c1ac8c6287c0c228ea575878fbdf2767"
+      "size": 6677,
+      "digest": "af957b80908007ceaffc5d02a1fa207e9a6c2bb64f028625dcf7c0c442be8707"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/projectreference.ts",
       "type": "file",
-      "size": 2214,
-      "digest": "b5918a333f01be00c740566c41d327b860fc764c22e40ab57ca8ee913590aead"
+      "size": 2224,
+      "digest": "5af094fda2244aa7c10593322f1b7942f12940e5cc920e0d91829f1d1eb51c70"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/scriptkind.ts",
@@ -901,14 +901,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/text.ts",
       "type": "file",
-      "size": 3599,
-      "digest": "835bef72ee61d86cc7bd07366202a48bb1a9a15de669a0e6db6460c6a1de22ac"
+      "size": 3719,
+      "digest": "2251bd60a113c561bcd04e259899a0ba7e46503a3d92710461b24c9b9a9b9242"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/textchange.ts",
       "type": "file",
-      "size": 4131,
-      "digest": "e3963657e9c4a55d04f991784c11969fbd705c47e4084a98503c217ed08a289d"
+      "size": 4115,
+      "digest": "0aaa73f9475afbc93d986c6e96d2c4e2796f6c33f2fa485661628f429fde2090"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/tristate.ts",
@@ -985,14 +985,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/evaluator/evaluator.ts",
       "type": "file",
-      "size": 31325,
-      "digest": "397d754881110853df4fd710403603e4bd20d4deeac209e56fa5998940ac790e"
+      "size": 31552,
+      "digest": "43f1e91e48f2d49b4cf7a5aed3bb1eee3efb39881e9b6caea95d05d143e63710"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/buildtask.ts",
       "type": "file",
-      "size": 143339,
-      "digest": "4279102267e21d274d5c7030dc56f89c62befabb8c08ba775beaa06d4dcbb45f"
+      "size": 142297,
+      "digest": "1f35f057572c207fd86a8a5ee40dfbc97573442b680f9571ee77b6c666217ff4"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/compilerHost.ts",
@@ -1003,20 +1003,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/host.ts",
       "type": "file",
-      "size": 20922,
-      "digest": "c10168440d80ddaf4d49ef7c28f755507d0ce33677be290e01031004f5a83bbc"
+      "size": 20854,
+      "digest": "939da9f0c8877385a30214ef789bbbe84bf5f6945b0402a2f750dd2510d3d1cc"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/orchestrator.ts",
       "type": "file",
-      "size": 58480,
-      "digest": "53859ad44e58b8566226f8d55008e6647e69fdfb3e89dc9878a19b59eaceebdd"
+      "size": 58407,
+      "digest": "be9cc72a6bfbb0e73ddb06703e02744590da95d2a9453df2eb1771242e62066e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/parseCache.ts",
       "type": "file",
-      "size": 14345,
-      "digest": "357bb4d84a34d1527ad795d579e04fb0eab8a99c21d149b7510dadc5150f23d7"
+      "size": 14239,
+      "digest": "db9ead8b9b0b156a59379e418962466c71d1bf5ab7c26f4e9240d1e7be6ce175"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/build/uptodatestatus.ts",
@@ -1027,20 +1027,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/affectedfileshandler.ts",
       "type": "file",
-      "size": 60373,
-      "digest": "5c5dc8042f18511ba8f5d99b6240e7368134b3efda277f7d66eca4d5ba576842"
+      "size": 60371,
+      "digest": "33506a90af09200ca9b490f932ee6f6513860bd298c789f91a613f5fd7b5c7f0"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/buildInfo.ts",
       "type": "file",
-      "size": 80979,
-      "digest": "da8f74d70c636b3c8ab4b13c36d2c23f449edd75d8c6d2b7f7301b2485592ece"
+      "size": 80393,
+      "digest": "acb725106ce23151d0c9a6821ee12af8ffcbee647583463640373f6978955845"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/buildinfotosnapshot.ts",
       "type": "file",
-      "size": 30790,
-      "digest": "24681bbb57554b6a670a2e9918b25d24fad0ae4a4a19cc66b356dd380133f89d"
+      "size": 29503,
+      "digest": "d1bcb86fa6486ffd6da39d9baa4326edb82756596a650d929eabff02cb9d3f1d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/emitfileshandler.ts",
@@ -1057,20 +1057,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/incremental.ts",
       "type": "file",
-      "size": 5791,
-      "digest": "0423676fc6bf1cc6aa9e773783bfadede6b17655132cba72284114f078d001c8"
+      "size": 5535,
+      "digest": "2a91deefb90ad450744b454fda0f13f515dd2fd003b76dc5e682804da8450c4c"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/program.ts",
       "type": "file",
-      "size": 53556,
-      "digest": "513d8910c8c8c92cac376afa870e2c7087fc29c867f3a3b295070c05bab1db66"
+      "size": 53522,
+      "digest": "9b86596909056f96677e2c99750ca1334d5ec2238bcea1be3c1cddeb1abc2e6b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/programtosnapshot.ts",
       "type": "file",
-      "size": 63386,
-      "digest": "6ad11abb6a261b137b11fe18bc8a829d5df4379221078fa2f046905d3974373f"
+      "size": 63382,
+      "digest": "f100a68d3bee473caaafed7755f1d7119a0e6b473bb5cdfd7bdb9e90a8fd18ef"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/referencemap.ts",
@@ -1087,8 +1087,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/snapshottobuildinfo.ts",
       "type": "file",
-      "size": 57831,
-      "digest": "68b0fe898b3a8b0dfe29f66de116dc778cc38a4f7941fd693cff3966d6ac6c14"
+      "size": 55114,
+      "digest": "63c81b992d670cfd061d2009c67c8a5699196d1fbad8cc95600d223c2b579787"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/tsc.ts",
@@ -1135,8 +1135,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/tsc/statistics.ts",
       "type": "file",
-      "size": 36622,
-      "digest": "b405e33e6cedff5b7cdbbf39d6a46c4c46061ef607e5b42a4ac21cc7108eadc4"
+      "size": 36609,
+      "digest": "6d681f55e3a84aec33e96312374f59dd3e11dfa67e345ce56f332ad416d3052d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/execute/watcher.ts",
@@ -1159,14 +1159,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/indent.ts",
       "type": "file",
-      "size": 69857,
-      "digest": "0ed90bae3182b487f11c391798df9cdc0456dda9c54afbd9df05df3b75dec8e7"
+      "size": 69823,
+      "digest": "bd72988a8de4bdc35027815766bfd816b41dabbf97fb594c30da860531a0505e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/rule.ts",
       "type": "file",
-      "size": 8261,
-      "digest": "c38258d0a09add23fa6ab1ecf348b7099277b155a89df488c90482b79a102991"
+      "size": 8229,
+      "digest": "e55aa8c4e8134485ba44dbc5684c36b30babb1577680209c11f5f084e3866d26"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/rulecontext.ts",
@@ -1177,8 +1177,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/rules.ts",
       "type": "file",
-      "size": 94229,
-      "digest": "4cdf25c13f5369d94fe54565e7c3f489dc945413e66aa9c5e419afef85869d99"
+      "size": 94173,
+      "digest": "7fb50ca28674f4b7cef4d2c38642c3d28a1f3287186639e27885143d7081370c"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/rulesmap.ts",
@@ -1189,14 +1189,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/scanner.ts",
       "type": "file",
-      "size": 35336,
-      "digest": "948805cc61fa9f342072c8a4ee43475fd7a545df1f439ab9e4ab8a507342024b"
+      "size": 35359,
+      "digest": "c561ad70bde556d173c7348fe094d43b22bb144cfebdfe9e80c747a32b6c850f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/span.ts",
       "type": "file",
-      "size": 120928,
-      "digest": "03ab826c51762ec3d5f720f2750016d6a8d7d7e86d192521ff84468b0bc6c922"
+      "size": 120769,
+      "digest": "b64eb34cf2d7bf42fc13577b7328aa81e43d2bb1dc1368e7a1466900d803fcab"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/format/util.ts",
@@ -1249,8 +1249,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/locale/locale.ts",
       "type": "file",
-      "size": 5653,
-      "digest": "a307c6b68e470c4b025fe61e22016ee72048a01d8f35043aadf677692a83b5a2"
+      "size": 5804,
+      "digest": "40135446669ce8a9c948b04cef8a725df88b425874ad4e60932d5442b2b8b746"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/aliasresolver.ts",
@@ -1261,8 +1261,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/export.ts",
       "type": "file",
-      "size": 15417,
-      "digest": "8c071cf8c4b0e08e39cd3acfcafeb3e8df195d25237308dab5fb642ade2a06a2"
+      "size": 15363,
+      "digest": "bb5a437ccc29fe81f864923bde6ae31140d24df8a775655ac5cb85408634cd09"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/export_stringer_generated.ts",
@@ -1273,20 +1273,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/extract.ts",
       "type": "file",
-      "size": 60763,
-      "digest": "748c5d1c80d640cac028f6175af3aa9b6e239a2874243a0a959911cff4258230"
+      "size": 60725,
+      "digest": "058be63957bb0f9a68f52897aca44b45f114f08fc1c76db0dfd28b6345bd70e2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/fix.ts",
       "type": "file",
-      "size": 129138,
-      "digest": "fd3e2b0de07621fd15cd238dfb1639d01dc0bfde1d623919341f4cda5486c181"
+      "size": 129070,
+      "digest": "6c1fd6c860c571253b2a21efaeeec80004aea848bf8caee16274b5a6e96726a2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/import_adder.ts",
       "type": "file",
-      "size": 50684,
-      "digest": "b4aa14bef60f51f3d3eb93df645580e1178b0dfbc3b4dfbfaa1cac0db4a20bb5"
+      "size": 50638,
+      "digest": "f34be1a04e4cf03f72b9653d04e5a228e4b01b87146dcf6075d5c73419a70c9b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/index.ts",
@@ -1297,20 +1297,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/registry.ts",
       "type": "file",
-      "size": 248304,
-      "digest": "1903047428baa4b621842292162f58f3b05384d1847ddf3f71f7b8df4b2816a6"
+      "size": 248724,
+      "digest": "9b8f906ed99b71e2401b2ae52a90fa269cf26009f7698ad43b137c77d9d9b480"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/util.ts",
       "type": "file",
-      "size": 35371,
-      "digest": "005fadce3425d241caeedc78d447ff8e157072a34e18b3973d5ff05fa9a1ef05"
+      "size": 35431,
+      "digest": "7a666e6f2fe1dbc3cb2f90a83e5c8624b4b4c70ae019517689c3928636c96bc0"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/view.ts",
       "type": "file",
-      "size": 90030,
-      "digest": "b3b02af552ee28a9741afac93ed1d3dc1ae7823a59dea0032d2e76171aa6f1a3"
+      "size": 89848,
+      "digest": "7d7c24299f112c673dd14de0b8e67cf9547c135615a3f7a3be8f8abbaeb98a55"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/autoinsert.ts",
@@ -1321,8 +1321,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/callhierarchy.ts",
       "type": "file",
-      "size": 85608,
-      "digest": "e7d302bb235fb3de4a82ed356c53deda73b4fe92326d7553c6295b98d1704b60"
+      "size": 85557,
+      "digest": "f0f57022ec07baa24fe7095c1017172f3ee5c827e90a5eaf92bb5f258870c924"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/change/delete.ts",
@@ -1333,8 +1333,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/change/tracker.ts",
       "type": "file",
-      "size": 113120,
-      "digest": "5530f04a4097a490d55d5957f35709f97e0db59e671a5ba292f5635ac653153a"
+      "size": 112701,
+      "digest": "420d11828f225bbb6676ae8bb1abaad4c476e7c4560e7ce8c3f74a5f2a794904"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/change/trackerimpl.ts",
@@ -1345,32 +1345,32 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codeactions.ts",
       "type": "file",
-      "size": 13692,
-      "digest": "3a2b6f894d6168def23240f6c5b401390fed50f977ffdd4693d44ae24ab7d9bf"
+      "size": 13108,
+      "digest": "1a2daa60ea8c1a4bfdf4ab7fd5a9e4e39309e6a16d3b416eab6a0d6e31ccfad6"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_fixclassincorrectlyimplementsinterface.ts",
       "type": "file",
-      "size": 32374,
-      "digest": "f15cdc89587943b166361515bed1a20fa8d1250ebd7c08ec9e86dc93131b774a"
+      "size": 32034,
+      "digest": "5b06c9dc8e3e9936a1b74ad130dea3db1851eb4917e697a5407234474de1caaa"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_fixmissingtypeannotation.ts",
       "type": "file",
-      "size": 159021,
-      "digest": "17c4f6625012bb2427953e75822db8745a40f30e2a19391b05c2b36db1d5a323"
+      "size": 158701,
+      "digest": "a39908b06719ea1d4d7dcf277b48c159578cbc1bc1aed388dd35cb6e38a5d573"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_importfixes.ts",
       "type": "file",
-      "size": 56440,
-      "digest": "faa2c0ade2f9a80e9cb1c4a9fe5a12a841c72e78cd422037c1d4f21b5ee0488e"
+      "size": 56195,
+      "digest": "2e2e4f50407e013674a6dfac1acb391aaa1a7377aa6f0c34e0387b77d68bc5ae"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_missingmemberfixer.ts",
       "type": "file",
-      "size": 70836,
-      "digest": "b200b6e9e5c0371a3f622086eaea933289e8c997e0bc06f5f31b9bbeb646d541"
+      "size": 70484,
+      "digest": "ca4cd019e6efdae7c91e01de91080da13c5deeb3b3149082f378c5a1c148442e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/codelens.ts",
@@ -1381,20 +1381,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/completions.ts",
       "type": "file",
-      "size": 287568,
-      "digest": "2e516b99b670fd074de6a4b7c12297cefb5cba93f2efcfe823172bcb1701a6a4"
+      "size": 286938,
+      "digest": "390e9a7efa71816b3493c22422152e5201d651ed57ba8308a646ecd7fe125c7a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/crossproject.ts",
       "type": "file",
-      "size": 85153,
-      "digest": "d15ec8124a3d22d14fc4a98bcdd6d86715dc0b83eba877922db846eba5b0bbd8"
+      "size": 84433,
+      "digest": "99b93b29dcbcd6044495a8a2560ac4e0306895e1e08e871f7f7000841c35cb82"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/definition.ts",
       "type": "file",
-      "size": 30784,
-      "digest": "6b82e92d80ea4a4e943bc3f340b96fa6a7954d3e7da8725b34a0bb3328f0f363"
+      "size": 30694,
+      "digest": "5b53e40e5ddc568954b803029bf16c3cf84994803eb518341d4fdc4ca222a9a3"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/diagnostics.ts",
@@ -1423,8 +1423,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/findallreferences.ts",
       "type": "file",
-      "size": 202950,
-      "digest": "a37fadb27e04d4a979932471824bbd89eefaf360cf4eb112b87d30576a2b7df9"
+      "size": 202827,
+      "digest": "76d32b92c6ae6f1aece82f2133ce0e28991c01fd205f447e9e854871f95af8a9"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/folding.ts",
@@ -1447,26 +1447,26 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/hover.ts",
       "type": "file",
-      "size": 115886,
-      "digest": "82eeea9855a52ed67dd07dace3b00b8923bb81116758b7af91a2fb1bc180c835"
+      "size": 115692,
+      "digest": "5ff24de2971c85344f3367d255c0fbff26818b404ff34a259c6e8d83bbb8e8dc"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/importTracker.ts",
       "type": "file",
-      "size": 99312,
-      "digest": "a0d929b2f11772b1018b5c0e958a90c0ed3cb95d9efcd36d0585ad658115dfc1"
+      "size": 98993,
+      "digest": "17c5764a14198365f5f7194aa249d8e9776adc8894192fbe7e7529f7755fc7be"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/inlay_hints.ts",
       "type": "file",
-      "size": 118627,
-      "digest": "fbae44b293f500cc47f25be0c3e81ce872c17745075a9ca28500359d233cf438"
+      "size": 118617,
+      "digest": "c36da19065f2a11e7186c0dd2e6ef63348ed8cae1ffabf5d8374d7cdacfbfee5"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/languageservice.ts",
       "type": "file",
-      "size": 1013450,
-      "digest": "d605c6437e55a9b46a001460b0860e0d6f82f38f1e0fbf3ee7e0ee99c517fc49"
+      "size": 1011518,
+      "digest": "be5b9b33a9af2cf2f9cb71d0c1b4a426a5f3bf931296307d9bc0a67401e1c92f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsconv/converters.ts",
@@ -1489,14 +1489,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/children.ts",
       "type": "file",
-      "size": 10245,
-      "digest": "dc12ef2bcd7bca56b3f08b5a4c5de8110d4d1f3b4cc89e717240d72e7334d148"
+      "size": 10177,
+      "digest": "2022b83be2190dfbc94faa327354116a88a9afbd193a69c4f5937ff9d63f668b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/completednode.ts",
       "type": "file",
-      "size": 33953,
-      "digest": "edb27f69328f9d39f02d2d38e1d1c7500651aa97c13954c424c5e68c278246a3"
+      "size": 33919,
+      "digest": "880f4359a30eca9dff02652ffbe4d4216216bc8d2915973d1c7457c6011f2736"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/formatcodeoptions.ts",
@@ -1507,20 +1507,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/organizeimports.ts",
       "type": "file",
-      "size": 66474,
-      "digest": "f478c24ff2a8ea3b32aec89e9a6097eec8b7e2a1de17b344712a9e26935f208d"
+      "size": 66292,
+      "digest": "a42facafc08fc77e6b585c06a9b05d36f3096132385dc3a86f5aeaa092c4ba20"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/symbol_display.ts",
       "type": "file",
-      "size": 30755,
-      "digest": "115974c20cc6d816d0ba37f3d237bb3de06561e1bd279604fa24cdc92f905603"
+      "size": 30647,
+      "digest": "abecdbb3e3ba731fb6690eaa5fb56c03af9416766e36b29ba6798b1b35e62e7b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/userpreferences.ts",
       "type": "file",
-      "size": 54770,
-      "digest": "2500d4b023003151a3b797e17adcb8dc179dcdd09d4a003d83f1d3f3a618978a"
+      "size": 54740,
+      "digest": "62263ab9df5f816538b2fc2ffa3ab66c1fc93b36b4ede7c64b4354b0ed5711b6"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/utilities.ts",
@@ -1531,14 +1531,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/organizeimports.ts",
       "type": "file",
-      "size": 92581,
-      "digest": "2ef7b37a2debb5058117eea66fc960f0ab3b1accb928bcec9d0dc9116a88f50c"
+      "size": 92499,
+      "digest": "e61c0156094cfe7a031ae96aff12b1d74c836cccdcf338d9612d779c80fd0022"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/rename.ts",
       "type": "file",
-      "size": 12352,
-      "digest": "316e99d4d65e455a3659ee4fea73b65eef7b2a3cacd935cf3db79671c91a5800"
+      "size": 12334,
+      "digest": "89a0288f6e3830972ff6443d9a8327c4b9fec43162efdccae3529e7198e1a610"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/selectionranges.ts",
@@ -1549,14 +1549,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/semantictokens.ts",
       "type": "file",
-      "size": 33204,
-      "digest": "c7d9919e7374a1df6108569f1af83208eeb3ec4a31477a01f7dca2ddde3523f6"
+      "size": 33182,
+      "digest": "b0e995ca00e881a530f7d438141e7840eb9e99b8f7d81a586c6491a8c9fc41f8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/signaturehelp.ts",
       "type": "file",
-      "size": 89623,
-      "digest": "17bce032c075cd7b9afc78b835073582677cc3b96e24391e227923c5b528a461"
+      "size": 89249,
+      "digest": "d299b695ed05ecfabb98a68372a6f847c3320062dc282a4c160bdf96eb449ce7"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/source_map.ts",
@@ -1567,26 +1567,26 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/sourcedefinition.ts",
       "type": "file",
-      "size": 69828,
-      "digest": "d3ab32522e45b937a3bed2467f5bac324f4fd247ee2691c332612ec2970f0b42"
+      "size": 69781,
+      "digest": "46746b3b70701333f84540ac78f026f6d07306fb5d67fbcef4bcf0818cb6414d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/string_completions.ts",
       "type": "file",
-      "size": 73913,
-      "digest": "5b9ca616ff944f62dd103b36768595702726404c1ece96b39285d23b06179a9c"
+      "size": 73940,
+      "digest": "d2a9c21f9b3120bc1d01dbf6a27d2911321f897649a6ad1abc623499a1202b9f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/symbols.ts",
       "type": "file",
-      "size": 45556,
-      "digest": "eb670a8a6b73771057774eba0f64ad708a82630ca918eb1db40793c8d4019afd"
+      "size": 45299,
+      "digest": "be43cea8cbc5668d5f0f1f8ea75784771b325d76167185bf71a150a041fd79c1"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/ls/utilities.ts",
       "type": "file",
-      "size": 161307,
-      "digest": "673ed3f3e3c35e008c199001f14e12e85aa3b785261bfaea6708fa185953d1d5"
+      "size": 161041,
+      "digest": "399cd0283a3e23c3b30e0b491c4ddfcebf8a7875d227c93bff1a4939bf3a3cbe"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/dynamic_queue.ts",
@@ -1609,20 +1609,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/jsonrpc.ts",
       "type": "file",
-      "size": 16804,
-      "digest": "099b52ae0f6db859b603d572d171cb1b7125cb897069b8454820066ad64d101f"
+      "size": 16560,
+      "digest": "01dc6cc302d23ce3f058332012f76162835e0bc28e45f385dc461f1a6f00736f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/lsp.ts",
       "type": "file",
-      "size": 36005,
-      "digest": "dbecc35560b8f798c2e0683721a2a2e8111b382df09460844afd2041d3f53089"
+      "size": 35974,
+      "digest": "f601b63892281259bbc87756eddeb12cf00bd8abc8e59d421b7b3025de5299d8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/lsp_generated.ts",
       "type": "file",
-      "size": 3874447,
-      "digest": "e6577a318ff8825b7ee619f76a104cd4fe161c515e687c133260906a9ebb8e08"
+      "size": 3870255,
+      "digest": "4ab3e43a7b7ff8fdabced8293ffde19669959df7f4513bab4beebf1756a952a4"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/util.ts",
@@ -1645,8 +1645,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/server.ts",
       "type": "file",
-      "size": 304700,
-      "digest": "89b784ce1be5141841dbd4e329cf2fd60f3636305421a0f44cb4c7a5716254b7"
+      "size": 304157,
+      "digest": "76dbb602d468ec84631ebf9ee1e9ca5d614cdde1415d55dc24cdad32a17b40c9"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/lsp/stack_sanitizer.ts",
@@ -1663,14 +1663,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/module/resolver.ts",
       "type": "file",
-      "size": 286973,
-      "digest": "73fdab93ee9a443f40b0b0e010f0183111dec7e389840a386b10f6b4c4c22e1c"
+      "size": 286906,
+      "digest": "a29b277e0783a8f1a3fbc600bcd707c94d98931ed2fccbb93a9c4f0bec2fd3a3"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/module/types.ts",
       "type": "file",
-      "size": 14555,
-      "digest": "36902becbb0a092b060a7801bc5e31b4134e6bc27c5637323524a03bc77043a5"
+      "size": 14747,
+      "digest": "92a7b22a48aa6c3f0e89bc57b468c0f4a66faf138ad2cb3400bd8a8a287ef8bd"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/module/util.ts",
@@ -1693,14 +1693,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/specifiers.ts",
       "type": "file",
-      "size": 122145,
-      "digest": "353ae70618a5a3464707b44090025e0b1f4338d9e1caadc52e8149fe21827bc7"
+      "size": 121990,
+      "digest": "03cdfa73e084736e71be54023f193079da844a70e9eb7d2425446d466361b335"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/types.ts",
       "type": "file",
-      "size": 13971,
-      "digest": "3d8b110caf5b65e5dcdb70e0166091096c2d81a972af9094ddc905a3a51864ec"
+      "size": 14145,
+      "digest": "a47be80238b5d671ffb6656e9f48f598b5d3ba6313250ec14ccfa20e6c729a33"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/util.ts",
@@ -1729,8 +1729,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/packagejson/cache.ts",
       "type": "file",
-      "size": 38785,
-      "digest": "13774343184065c160680cd99b826bf09d79c5700d4e2d1727e0c0943500364d"
+      "size": 38639,
+      "digest": "a20c8ef26702583d14f59e0cc299871775b65043882f8aca952d4a462a69bf68"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/packagejson/expected.ts",
@@ -1741,14 +1741,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/packagejson/exportsorimports.ts",
       "type": "file",
-      "size": 13393,
-      "digest": "90b52dbd8b12b71ccc2c5c2225737d4a4cf84f3a3e852ed8840ebc57e007d8b6"
+      "size": 13541,
+      "digest": "a9154dd096f93d7af9a7f0b24b468f04fdbc77703dcb4c8f8f74e64ebe8c73e5"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/packagejson/jsonvalue.ts",
       "type": "file",
-      "size": 20717,
-      "digest": "a2cdff4c4bc85170a5fdb3cc94dac30fee1c13d60ccd115fa7bb9c1cde7c1611"
+      "size": 20845,
+      "digest": "e2a1e963a4d369ce9b7e2ae9d30a222ca3fa7d929dbbb17454e2c86dffa364d9"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/packagejson/packagejson.ts",
@@ -1771,8 +1771,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/parser/parser.ts",
       "type": "file",
-      "size": 1032623,
-      "digest": "f55871f555c2295cac125aaa6034e2eba2a5dc35d48acb5da753a26b8b8054ab"
+      "size": 1032413,
+      "digest": "b45e7ad04dc61083b6261b54cd7b744ca7783d8064798f637fd1a3b84dbad646"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/parser/references.ts",
@@ -1795,8 +1795,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/parser/utilities.ts",
       "type": "file",
-      "size": 15715,
-      "digest": "ebd921d5965bed61df3505197ece26b474c78917a7d8840803b6aaa711858745"
+      "size": 15631,
+      "digest": "7b6a8c06a2a7923332a3960171ca8d4c10ce52977df3a8568d39ed2a93dd5fc9"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/pprof/pprof.ts",
@@ -1813,8 +1813,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/emitcontext.ts",
       "type": "file",
-      "size": 137618,
-      "digest": "d603dd371312b721ca40339288ae798dc20f27f0603913f4d74c36519649735d"
+      "size": 137305,
+      "digest": "eff798d8fb13037bbbb3891c86a884c3df48f8526505f14718804c803d0bebea"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/emitflags.ts",
@@ -1843,8 +1843,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/factory.ts",
       "type": "file",
-      "size": 182015,
-      "digest": "dc235279fd88ba6133b55cacbf1bc004316574523273125dd090939a928f9d3f"
+      "size": 181843,
+      "digest": "c6fa3e2a2d22da81cdc601043e0f3fba9ebb65f05f801936681264dafac78a9f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/generatedidentifierflags.ts",
@@ -1861,14 +1861,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/namegenerator.ts",
       "type": "file",
-      "size": 46773,
-      "digest": "1050ead0077d16720648ea4b8eac696145026bf70b4e0bc8d58838a70b6e1002"
+      "size": 42742,
+      "digest": "0cba2b3fa52531c444566ed2aa53be4e070009eb297b153b36f105715c8d5dc0"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/printer.ts",
       "type": "file",
-      "size": 1305584,
-      "digest": "427cce1011dd46f63f21f66bf3a1cfd4311c0bd088e3508abb1ffb1c6d2e722a"
+      "size": 1305118,
+      "digest": "bcd8a5f80dc639385a1e4e383027316dee515ed4150329f55f74118ae571f061"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/printer/singlelinestringwriter.ts",
@@ -1909,8 +1909,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/autoimport.ts",
       "type": "file",
-      "size": 21964,
-      "digest": "27000f8e8a4f4ea12ad5765641bd457c16e43730eb59372ac454d3ad42a84662"
+      "size": 21899,
+      "digest": "4c0e712073ac9f5b65ac05dbba831bd760b0d01b7cc93c923f79dde5090092da"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/background/queue.ts",
@@ -1921,8 +1921,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/checkerpool.ts",
       "type": "file",
-      "size": 59438,
-      "digest": "955f6468f0da7315096b9d08e5c0e8c3531d36b4a2855bd805f24fe0516a4625"
+      "size": 59659,
+      "digest": "ede6279781d8e732c596ed41c90c09f821c3d7576536b80af58d34276d03c9f2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/client.ts",
@@ -1993,14 +1993,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/extendedconfigcache.ts",
       "type": "file",
-      "size": 6272,
-      "digest": "dd9e18a5d01c1be864d80d0146d775ab5614a39954e2f50b1ba2f0f67e9ca98a"
+      "size": 6238,
+      "digest": "930ec92f18dea4f6e39047a53a30a35d0fad6997521ee6c8153d628d4732d8ff"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/filechange.ts",
       "type": "file",
-      "size": 14829,
-      "digest": "c43de7945d5e734dccb7d46cf68856d189c192f3859a64eccebabac7f77c9c23"
+      "size": 14828,
+      "digest": "4a415d678aabd444317ee52d68ece4f3fc138ed3d54f909d3760f40f9cf33147"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/logging/logger.ts",
@@ -2023,14 +2023,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/ownercache.ts",
       "type": "file",
-      "size": 24749,
-      "digest": "3d7e9a1f1a71898907dce315fda00fedeec0fc771d25c1b0a84538c14a3c661f"
+      "size": 24643,
+      "digest": "426f83876adc7591cb50bdf03c8537d68ca1cb4fcdd238d0954f142f128819bd"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/parsecache.ts",
       "type": "file",
-      "size": 6747,
-      "digest": "495b2f7ba7c31aa7d7a9ed250db0be2f074886473060a7221e5eb12f8467d7c4"
+      "size": 6934,
+      "digest": "d8152157c6716de93989a939a6516cc838347d03d758a298f6153caf1860f626"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/programcounter.ts",
@@ -2065,14 +2065,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/refcountcache.ts",
       "type": "file",
-      "size": 29086,
-      "digest": "b1f9d86d17841707529a6a651f345c30a27191ed72c0dd4e0810bbf8e3120e4d"
+      "size": 28977,
+      "digest": "b630b8a2a2755247be4bd49d251cb7e6516f157ac7bc89b0b06a0cd557266773"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/session.ts",
       "type": "file",
-      "size": 319117,
-      "digest": "341096be53281955be7a43d1e370b364d8a55a245ee8592d8f8f6d464b596761"
+      "size": 318845,
+      "digest": "84a3e810a2c74b7add0592e4f10044210efdcae72e7db2c96d5703438cb711f2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/project/snapshot.ts",
@@ -2095,32 +2095,32 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/pseudochecker/checker.ts",
       "type": "file",
-      "size": 91000,
-      "digest": "6cfe0dd7a93120c2c7b36327fd6c76f86f3eff16a9bcaeca48ca04f5c23820ec"
+      "size": 89576,
+      "digest": "4c023d615e679ad28c4e931ded1db1824d6a70d1194bb1d06dc825c0d9aec7fa"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/pseudochecker/lookup.ts",
       "type": "file",
-      "size": 13961,
-      "digest": "c86285834f6da6aa5a22d93fd5097fcfb32d15cd09ae06caf9602fe3b008843d"
+      "size": 13399,
+      "digest": "a7c0a761b3d3f9592c1f43ea0265b6ac9b542116de8fb558755a65b98eb0a41e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/pseudochecker/type.ts",
       "type": "file",
-      "size": 30882,
-      "digest": "67627618ceb83c2e5863de38b404211a3d9704a372f1480d1d717f332cecbba3"
+      "size": 27538,
+      "digest": "64f0c112a1afbcb0ad63364e4c8ee7bcebe301216e7388e31083d505465f91f3"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/scanner/regexp.ts",
       "type": "file",
-      "size": 103704,
-      "digest": "5e1be901337e6a1b17d8ce8e43a498695458a8d432c209e9394369877aed168c"
+      "size": 102650,
+      "digest": "8526b0da39356f027228db4bfb8b4574310b884d7efe76a8473da35b1c8dbdf0"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/scanner/scanner.ts",
       "type": "file",
-      "size": 356014,
-      "digest": "1f4d75f38b79f7af7101bc9f5e18ee3dc3ff907b63c791f6b35b025d220473ab"
+      "size": 312524,
+      "digest": "c0680a20a4f778ed65346e7497767b79be8577391520103e4ae1e6af94f3c311"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/scanner/utilities.ts",
@@ -2131,14 +2131,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/semver/version.ts",
       "type": "file",
-      "size": 19005,
-      "digest": "657ebc0f47c29180eec056c0df601b69838587c93cce1fab73c602e4050dbbe5"
+      "size": 19252,
+      "digest": "b87b43e29d78d2437ed483bbfc3da22dde885d99f8fcdc4c9a49ac67b7545eaa"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/semver/version_range.ts",
       "type": "file",
-      "size": 34997,
-      "digest": "3dc62ca07411b55f2e2f69c4a39f20d243c889091449656a00c994286091c403"
+      "size": 34884,
+      "digest": "a50e5a18087cec1290ef9dad0d580d27d249aef884462bc88053131e42dfb5c9"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/sourcemap/decoder.ts",
@@ -2215,14 +2215,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tracing/tracing.ts",
       "type": "file",
-      "size": 84257,
-      "digest": "d75945a4a6caee662b2d185892aa5a30878b0d10836bb521d9b90e3b21f3e409"
+      "size": 84204,
+      "digest": "d7c5b62f0945d74224a3c6e523a956ecccb2572eda242cfcca706f03f103ee09"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/chain.ts",
       "type": "file",
-      "size": 7023,
-      "digest": "6e80b5ea767bb9e0ac64144e8cddf4ac0596f190992a81676ec1fa32624806e4"
+      "size": 6706,
+      "digest": "84a40fe506c21b38cdfa1e87b6fd30be880cf79b272af147e23292c5b40f3a63"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/diagnostics.ts",
@@ -2239,8 +2239,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/transform.ts",
       "type": "file",
-      "size": 574510,
-      "digest": "0b2681f3be292c54b4380c9d466aaa56953b094e4630089fd8093dea98c79c4c"
+      "size": 560613,
+      "digest": "6980bd3e26a34ab1514cfaece8fcdfc1ad39277c524e27fc995fcaf532d60d5d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/util.ts",
@@ -2251,20 +2251,20 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/destructuring.ts",
       "type": "file",
-      "size": 76647,
-      "digest": "02ab290da394b387ba18abb8ae1a96b7180555dfa5a97c7accce9618ac519307"
+      "size": 76441,
+      "digest": "d681087be9da9dfd2119bd582421cac3ef396c536535f8f355dc3cd66359a0fc"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/async.ts",
       "type": "file",
-      "size": 171614,
-      "digest": "1478109b4baddc27ffefcd62cc1be1a6575607f69c2b0930e9665aa0f6e4a38b"
+      "size": 165381,
+      "digest": "9b2ecafb7fe1b48b61d36daa56c2d9e36b8833bc4d6442669089423ac38910f8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/classfields.ts",
       "type": "file",
-      "size": 626899,
-      "digest": "99ebe81d5f9202548611c776e9f1fa42484fd7064337d79f435983140eab603e"
+      "size": 603926,
+      "digest": "580109179569bbaddf449eeb4eaeeef9200b55f77de152f4e6ff632b530e970d"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/classthis.ts",
@@ -2275,32 +2275,32 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/definitions.ts",
       "type": "file",
-      "size": 4505,
-      "digest": "e2b728f344a2c1585814774f3d943dce4b7fdd6b9804ec46c4cbd35eb31a1a5e"
+      "size": 4395,
+      "digest": "56d4657fba5fc97a51cdc993f00ebf29901a0a7a8425c45be86b0154a9d9be2a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/esdecorator.ts",
       "type": "file",
-      "size": 409433,
-      "digest": "82d8cd80bfdcbb04b775de1a463fd58540dec9c7242e8988109db6a641f303b0"
+      "size": 400725,
+      "digest": "0cc6829b76378b56102a3a70e842a96dc5d63f928d5bf315fbc7df1ef4ae6bc8"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/exponentiation.ts",
       "type": "file",
-      "size": 23059,
-      "digest": "844be99b55a1071cd6cbcb0cda3e7a1f40576ef85a8e0f53452f6c9f2cbf9e53"
+      "size": 21990,
+      "digest": "4182719111e5fc8597ad791e75eb55c41874fb232c773cb2469dcdaf956ec490"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/forawait.ts",
       "type": "file",
-      "size": 154382,
-      "digest": "a258445fb391fe6f0e67e455b270cba611de13faf6f66f23bc6bdb8b547627dd"
+      "size": 149139,
+      "digest": "acb91ccdd419b6753945269d773581975018ef9e71cbb0ed3a17c348f121bb8f"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/logicalassignment.ts",
       "type": "file",
-      "size": 17280,
-      "digest": "8a3b65d05795c775b679e46b48ada72d895aa29791009628167f67e3016c319d"
+      "size": 16391,
+      "digest": "c0377f7014c655052b43ba513c2b4af7427e62158bda3c8b46ae38964c933ab5"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/namedevaluation.ts",
@@ -2311,134 +2311,134 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/nullishcoalescing.ts",
       "type": "file",
-      "size": 10920,
-      "digest": "1d75dcb8cf491bb0c29c79e461c26722f9944490d39ce4dd5883f41adb26d742"
+      "size": 10346,
+      "digest": "1343a0d34834b43b629593045871ad2285ed34fb0cc5fb1c4c68947c8d717951"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/objectrestspread.ts",
       "type": "file",
-      "size": 163747,
-      "digest": "8136830df9fefcd2d27a2c96915ea324469f964fcd466f1c8aee27ca034a3095"
+      "size": 158178,
+      "digest": "4bdd564e8797672cb5b78f07edbfceb3b8acf6b78865543282cca6ad4ef58356"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/optionalcatch.ts",
       "type": "file",
-      "size": 7383,
-      "digest": "f137193c93a943e016eca5062cbc97d5073f37ed6cde9b0f37118002ba1231be"
+      "size": 7034,
+      "digest": "a654dc2e2bee25da2775093a010e9a85b1927157d3c5c046cfb648a6515af935"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/optionalchain.ts",
       "type": "file",
-      "size": 63204,
-      "digest": "676378556b94e70edbe7acd33685c129940c4e0feccaace61772874323f3ec91"
+      "size": 60605,
+      "digest": "fcd38ef49ba74e9b3349b7f0013d0561b97949767db6be53392507f4c3a49d2e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/taggedtemplate.ts",
       "type": "file",
-      "size": 31103,
-      "digest": "7e61c6f361533eeb24c76970f10182180481356385e387537a922afca1e3a660"
+      "size": 30439,
+      "digest": "19fbe5ccc50ca905e9317856fdb1fa400fe75972ee692edaca1d1e36ac56dd24"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/usestrict.ts",
       "type": "file",
-      "size": 9509,
-      "digest": "d7463836f017754b1b31d941beba96e3a8036488d467ad8ee9104701bf2be9a5"
+      "size": 9295,
+      "digest": "502ac645d9b55ffd38d4c59579e0fa02cb901dab096e60f2eb1228f552ee42c3"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/using.ts",
       "type": "file",
-      "size": 146334,
-      "digest": "762523589b459a7b38e14b0c4b21fe0f483fd03748db43b5e18c31d24aca2e1f"
+      "size": 139325,
+      "digest": "d31fef43e1682d574ab5710ad1ef1863f2204795a6b71af6b848a0eb6bfe5cb6"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/utilities.ts",
       "type": "file",
-      "size": 55274,
-      "digest": "3b292b798f71821d2111cf718951b7c8f71f4ae0794a46c105693767a3538dae"
+      "size": 52990,
+      "digest": "f2cb32510a8c2d5977b9799518859a3e9d475b34aca4c90fa8d6b6f8280c6a8a"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/inliners/constenum.ts",
       "type": "file",
-      "size": 19901,
-      "digest": "71eb91b26ff321a787e84a727b42a94151d612fdb5cd929c9b26654359f56422"
+      "size": 19012,
+      "digest": "3453673001abbcca896243527fcc77a91fd0262751634f662a3f249ebdf42687"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/jsxtransforms/jsx.ts",
       "type": "file",
-      "size": 174833,
-      "digest": "a89afd40423c23df3c9572fc353ee1fd63ad915ed87bafc0655a64a5b502ace3"
+      "size": 169804,
+      "digest": "2d5715b2a35fb4f4b8cc8c72a7edfca1fd3496fed9cdc6b9d430308d1b629c6e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/modifiervisitor.ts",
       "type": "file",
-      "size": 2807,
-      "digest": "a39003f8c4c82e63dab90ac433e86ead9c4f9bfc64ba1d1f63ba323d841097f0"
+      "size": 2767,
+      "digest": "001963c39037844d434b4b84358547ad7a76ea83754a11871f122566ea742a72"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/commonjsmodule.ts",
       "type": "file",
-      "size": 456590,
-      "digest": "80e31d09112d621ff96f1a36b07f79e8d7c1d67d3d9a44462aa278f887e16563"
+      "size": 438311,
+      "digest": "c7b85cb08fd8fc71affbee1cc00c7a45ce11e197b8678ae767b40a87e093be4c"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/esmodule.ts",
       "type": "file",
-      "size": 97527,
-      "digest": "cceead7320182005e4c0333698001d2baa5c9eb62847a35c6653511a078e19ad"
+      "size": 93308,
+      "digest": "f8e5c8f0f405561688557926170e67e125b2a3ed59e5700ccb57cb31b92e9316"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/externalmoduleinfo.ts",
       "type": "file",
-      "size": 56379,
-      "digest": "9a2705284c8b913d683979a0b252f61cfda35270db961b4b87ca9d10b872b849"
+      "size": 56289,
+      "digest": "414c5de81259565a3f3d6fd928df678b589c599f34a670e93b65eefbd2994c77"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/impliedmodule.ts",
       "type": "file",
-      "size": 7429,
-      "digest": "f071cf49f1f5c0d03bbffa906d4ce3ed84d18e1b7525e761055972d39ebcb47a"
+      "size": 7248,
+      "digest": "6636dd6343dd23d7bca2f029ff80b5d7fd3285d824c9217d1e3de437fae86c95"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/utilities.ts",
       "type": "file",
-      "size": 11700,
-      "digest": "a98e2df44449aa5f46f8c20ce3ad0c729a73762810ecd536f4e6344e9ba1e69a"
+      "size": 11438,
+      "digest": "75b13444142f69ade1e42483c106f34550bd8fab497549b5811b39f8c7fc6b97"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/transformer.ts",
       "type": "file",
-      "size": 4428,
-      "digest": "e0ac20d63af4b18870d0c14a6e387fb5d3df2685b7f37a157ef8fc18d83f098c"
+      "size": 3768,
+      "digest": "2ee82a7afb705e0f73710301b85ed99715c7e99c8347a04eac8466eaef751775"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/importelision.ts",
       "type": "file",
-      "size": 26577,
-      "digest": "908d1d0648e53ccc4b5a10f0d2ce1b5855ac66a4ba7af1a4e7a2ab99383be885"
+      "size": 25553,
+      "digest": "499f565c0531250ce101f3808cd38ecea11e07299c913030bda367edf4ed634b"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/legacydecorators.ts",
       "type": "file",
-      "size": 160638,
-      "digest": "f73935aac681a24f0cd5b2ac0ccd9668fc6a4c0fa3cd14489b238d7018b3f9cb"
+      "size": 155350,
+      "digest": "df8b8f438a33ddbc3842793b9cf56b05a5b65d7ca072f8817cde8fe3acd7c0c3"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/metadata.ts",
       "type": "file",
-      "size": 104163,
-      "digest": "513783b1030c406da808adb8ffc32b91e7278672c7ee1340d5867bdf202e08f4"
+      "size": 100214,
+      "digest": "293d718b0bb3175943933b45b22c2dee866afe7d790c2ffa9d678050b77836b4"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/runtimesyntax.ts",
       "type": "file",
-      "size": 231598,
-      "digest": "5f9e2a03d4d9226c76b0c6399a7c0a91efbf61b9c4db53e7c62ab57aaa1d2054"
+      "size": 222654,
+      "digest": "68cdd9e4a3f6f06c52b5cc761789a550edf8dc88777e7e303055e6c7e8f8aa16"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/typeeraser.ts",
       "type": "file",
-      "size": 123425,
-      "digest": "0ea127bed1a546656ebafcadd1c1e0169b936be12c94fd7a336bd0b677018319"
+      "size": 118441,
+      "digest": "620aa917dea43b1072e2bdc90f9b3ef3a526df0c387af53a2a6a4faf8bb3c9cb"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/typeserializer.ts",
@@ -2461,14 +2461,14 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/commandlineoption.ts",
       "type": "file",
-      "size": 14403,
-      "digest": "b5305976e795ea12ba669574eb8eda5a2172fb7a680421d612d9a0f56b4c241f"
+      "size": 14395,
+      "digest": "98ac371069ce68db9545995215a5d4d4e37449d68cc844cf0a457afafc33886e"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/commandlineparser.ts",
       "type": "file",
-      "size": 54267,
-      "digest": "22ef0217b794062e42457a08e2677eec8617ae4e854e65539d0492d44b65a6aa"
+      "size": 54197,
+      "digest": "79c7d0b6cf47a1411d3793db396a357c8a82d9cbcb415bc7e85b2def550f2379"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/declscompiler.ts",
@@ -2509,26 +2509,26 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/parsedcommandline.ts",
       "type": "file",
-      "size": 50719,
-      "digest": "3c25f4984183a011d39b12918c603cc641cd897749adecbe9971d3ebcb249250"
+      "size": 49055,
+      "digest": "27a42c140c59cc5d607275d2c5aaeb4737033feb67172b9e08b998d0dbc007da"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/parsinghelpers.ts",
       "type": "file",
-      "size": 75662,
-      "digest": "72942cda8898b928f7e2338882fe3b1f26cd1ff123c7e9bb8431dd8832021fbf"
+      "size": 75410,
+      "digest": "4cd3480087281e98505e95aa2566bc65ee3db2d0b1029459456a96d361651aa2"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/showconfig.ts",
       "type": "file",
-      "size": 36677,
-      "digest": "89f842f02518dec90a231c51c74ebb21c3a0038a04dd2f8fddaa9e8c4f4e7975"
+      "size": 36341,
+      "digest": "6fad86f9fd9b6d2c186086b94b8c504f6170ae0ae4dc0ef9fd7b61247ad2c625"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/tsconfigparsing.ts",
       "type": "file",
-      "size": 210012,
-      "digest": "f1be25e50d26ca5fef52f50afcf25d6773d236c8c7e86f7b3d3a75063517adb6"
+      "size": 209182,
+      "digest": "cb08081cb5486df1875384bedaa4b82fe26226a02a9305109652b8bc182a65cf"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/tsoptions/wildcarddirectories.ts",
@@ -2599,8 +2599,8 @@
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/vfs/vfsmatch/vfsmatch.ts",
       "type": "file",
-      "size": 64241,
-      "digest": "6d9cc0f9fd7ccbdde586f050fdc638b6d980d0b2dcdd77480cab3da9641589ae"
+      "size": 64044,
+      "digest": "a384a6fe3fff8a66b8aa8546d66b05a740171b4e6693fa20ab2837c936842b65"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/vfs/wrapvfs/wrapvfs.ts",
@@ -2635,26 +2635,26 @@
     {
       "path": "modules/golang.org/x/term@v0.44.0/_root/terminal.ts",
       "type": "file",
-      "size": 3687,
-      "digest": "c9fa5bbfcbb9d7f1e65c87357460a5ab52f0d5b7d4308afcd189723199196a05"
+      "size": 3675,
+      "digest": "586443e5b6353f8e96ecb0b83144aec85d20ec9227205acbad6878fd33b6310b"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/collate/collate.ts",
       "type": "file",
-      "size": 26912,
-      "digest": "47ec324270d103c801f231eede3720d965a6aaf99d6a6199c80c10ea72e24ade"
+      "size": 26423,
+      "digest": "df1b9ba25022e35efe2bcad3236907665a68abb5d9aa1d78b57052e90689320a"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/collate/index.ts",
       "type": "file",
-      "size": 2434,
-      "digest": "3311bc83bde7c8fdee881e45bcb22d40bf2f31c700c91aeb8f7c23e1329610a2"
+      "size": 2433,
+      "digest": "fdff345b9f4e87752fbb0f18fed94b5a9f4934702b9788d888eac0a8b2ab457f"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/collate/option.ts",
       "type": "file",
-      "size": 12916,
-      "digest": "e7f6f378db16a4f9885bc76be46d963e5fdee023398f1b675b37e3ffc5141572"
+      "size": 11293,
+      "digest": "7cd0b0f9df669e1e76b849c1647e35a1d0e848834f0c142324300f31f5ae4ca5"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/collate/sort.ts",
@@ -2689,8 +2689,8 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/colltab/iter.ts",
       "type": "file",
-      "size": 16017,
-      "digest": "a498314633e92e3f4d1af6690f6a4216d51218bbdc8ea53ee9f21bcd9ec7bfed"
+      "size": 16022,
+      "digest": "af3de74f079ee55fdbd835768270b2e060f3c0b6f427617bdfc868f902e244d1"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/colltab/numeric.ts",
@@ -2701,14 +2701,14 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/colltab/table.ts",
       "type": "file",
-      "size": 19916,
-      "digest": "67a9801eef507c8eaa2ed89e7f98434af0e5dad57d846a11a065992bdc8dd6bf"
+      "size": 19710,
+      "digest": "d07a27076564d6c9116592639f3f0decf3746f0c1488462235523aa3eb7f2285"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/colltab/trie.ts",
       "type": "file",
-      "size": 7711,
-      "digest": "f6cab9abf2d0c9e8c8139a8644a9aa5c3e0fd8f81d320659308e4fddfc7e17f0"
+      "size": 6783,
+      "digest": "05670056a5f7f539df18f53adc68c03ce472c6912ad5e4f3b9093fbc64b1ceec"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/colltab/weighter.ts",
@@ -2731,14 +2731,14 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/compact/compact.ts",
       "type": "file",
-      "size": 3140,
-      "digest": "3899ca1c66cda119e3284cd101cda4339166f6a1ae86d1be841b03d4bdc0cbea"
+      "size": 3116,
+      "digest": "8884a1123c94284f92b8f8d89e623a59b62a60270525cd1dd8142ef6c65a911e"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/compact/language.ts",
       "type": "file",
-      "size": 11949,
-      "digest": "6e54dea79fc62da1795cf6696781b3dab30d458908635ce53ccf277301ca40e6"
+      "size": 12097,
+      "digest": "e1e4421e5f7087ec4b4d882083a56aea28b2b7c3044f0f21a754c7936f92f76c"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/compact/tables.ts",
@@ -2761,8 +2761,8 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/language.ts",
       "type": "file",
-      "size": 37231,
-      "digest": "b2bb2fc649bf417c7e95fc8457ea2d7388bef64e6157123b7e71bb5bce5773e4"
+      "size": 37445,
+      "digest": "72459aad3d73d4061bc9643e56cdf804728968da62b770375844a1f153db3c56"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/lookup.ts",
@@ -2785,8 +2785,8 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/tables.ts",
       "type": "file",
-      "size": 19290,
-      "digest": "2214ff34302fd7d3900ff920137d65b145ad73c0e697f09c9a9c9adcd50f472d"
+      "size": 19270,
+      "digest": "1d8e1b76c45090ac0c5296ed8872f4e631b054d73aa9ac93abf2c6c4bcfd068d"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/internal/language/tags.ts",
@@ -2803,14 +2803,14 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/language/coverage.ts",
       "type": "file",
-      "size": 5613,
-      "digest": "096832f69f9e3ca11bb142072214c50841da74fb0cad47b26846c744d712f101"
+      "size": 5579,
+      "digest": "94cb2a16168c5ec80a9dfc5de75ab6a8f703480b3fa0b53abcc94baeb0feca1f"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/language/language.ts",
       "type": "file",
-      "size": 36451,
-      "digest": "22bad45ef2dabbfa69350ca022cd507687bc005b8aa6a25991b2061e517f6b65"
+      "size": 36886,
+      "digest": "9b17c9c0ce0ebb1f3a0422359b2e04906e73b0a0dc7a8f5627324fe4b964fbb6"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/language/match.ts",
@@ -2827,8 +2827,8 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/language/tables.ts",
       "type": "file",
-      "size": 6264,
-      "digest": "e445e2ac5ca597315cc5e29d66566df5747cc0576fc7255be25b20fb0007d2ba"
+      "size": 6228,
+      "digest": "2250f334c0cdfc5b19352595bbd28e3c69c54f7ecb6ab12162dee02952056d54"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/language/tags.ts",
@@ -2845,32 +2845,32 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/composition.ts",
       "type": "file",
-      "size": 28477,
-      "digest": "31818d18f49cc41d44eec25fe3d2f919455afd28c2a6cccc9d25eedd2cd3e8bc"
+      "size": 24616,
+      "digest": "f65e01063081984f86240c8aecfd12ff5f6aa751dded6a146ff39d9f27f69809"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/forminfo.ts",
       "type": "file",
-      "size": 12669,
-      "digest": "fd09084151bdde105a20f07133cd22702bdf3d8d9bc39e3642630371d0971af7"
+      "size": 12756,
+      "digest": "055b50b96654f2c28e4ebfdae4a8fe4a9c684b8f7a201d121e4abdc97fb8bcaa"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/input.ts",
       "type": "file",
-      "size": 9577,
-      "digest": "1c91cd7b91ae5e9796efa1af84cbc02ac860818294d9883f77395e948869a685"
+      "size": 8226,
+      "digest": "52a02717d3e9b9b78ba1e8cab625e3d6434ffd0de3604fb4f4f2127e592bd051"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/iter.ts",
       "type": "file",
-      "size": 53977,
-      "digest": "d5a974d362f3e67b29a135d4323c3bc3231f240d9bf6f7a5fe13d03f6a311f38"
+      "size": 52897,
+      "digest": "31109d8634854c83909f18537ad0f3afc313e2c41a5f38ca521a7aee04da4397"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/normalize.ts",
       "type": "file",
-      "size": 25670,
-      "digest": "d055f61d3ef2e8b96a3ed43bcfe48a7b7c4324e3b643a47069cb14c2e3756409"
+      "size": 21135,
+      "digest": "055d08e15b49f63059a0368f8fb1cd9341d91687a8a023453be73b46826b4358"
     },
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/tables15.0.0.ts",
@@ -2881,8 +2881,8 @@
     {
       "path": "modules/golang.org/x/text@v0.38.0/unicode/norm/trie.ts",
       "type": "file",
-      "size": 4207,
-      "digest": "186ed82644885b23601a811c7d59517bddc6be24ff8b96285bfb1c0cb2b58a9e"
+      "size": 4203,
+      "digest": "1369caa4bd12bc51cbb768b778fadaa2ed3d6bf44579055cf6bb1c30fd39cdb4"
     },
     {
       "path": "node_modules/@gotots/externals/README.md",
@@ -2894,7 +2894,7 @@
       "path": "node_modules/@gotots/externals/contract/manifest.json",
       "type": "file",
       "size": 7078,
-      "digest": "90e298c999854fea5181dbd74139fec19a76c8293a3cde9964040488f5310fea"
+      "digest": "8cdcb95cc94f3c32f21d33d75c61be9ee88cd43711243718566a9de8403abe9a"
     },
     {
       "path": "node_modules/@gotots/externals/dist/src/golang.org/x/sys/unix.d.ts",
@@ -2935,8 +2935,8 @@
     {
       "path": "node_modules/@gotots/gostdlib/contract/manifest.json",
       "type": "file",
-      "size": 1386346,
-      "digest": "cdd8184658ea436d76ef81a35126ae3e21498211576bdacaa634a14bfd2cc986"
+      "size": 1387203,
+      "digest": "6a94b0f26a447b4dbf405a28f9fb51530eba9bf754ceb1677f9ddc979bb4d9a4"
     },
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/bufio.d.ts",
@@ -3301,14 +3301,14 @@
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/facets/named-reflect.d.ts",
       "type": "file",
-      "size": 2331,
-      "digest": "1ffa726ab6a3a744d9d3a533323282b3bc0d275e52247b8ecfdeed42aaccc338"
+      "size": 2408,
+      "digest": "1d793ef175c8a05a0bb952090a8f2aa5e07d52f678da9c4ad483c5b13753a8ad"
     },
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/facets/named-reflect.js",
       "type": "file",
-      "size": 2697,
-      "digest": "8485ae2c2ff6d586c9967cfebfe25bd512192e2363d4c351d6fef7b166be8278"
+      "size": 2721,
+      "digest": "0b8064aff2e47b725271ee469460f719fb1514736003fb3f5e720e12ff294b04"
     },
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/facets/named-runtime-metrics.d.ts",
@@ -4355,16 +4355,28 @@
       "digest": "885d593ca161d68e08faaa36440291999ae6b852ecfb347fb91e7c5b7d3dddd3"
     },
     {
+      "path": "node_modules/@gotots/gostdlib/dist/src/internal/portable/reflect/runtime-value-members.d.ts",
+      "type": "file",
+      "size": 2894,
+      "digest": "3f61d6fbf574b0682b6b88eddda87719d484aad0a882cebd93b136b05b243bed"
+    },
+    {
+      "path": "node_modules/@gotots/gostdlib/dist/src/internal/portable/reflect/runtime-value-members.js",
+      "type": "file",
+      "size": 2447,
+      "digest": "626b5c3215eb1d38489cfc36b80a454735568566a7cee0daf3d6980e47add026"
+    },
+    {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/portable/reflect/runtime-value.d.ts",
       "type": "file",
-      "size": 5422,
-      "digest": "b45f54c015e03083526cc899343e4ffd0d5f7aa34f08b4d9ddde5cd31e9374db"
+      "size": 4849,
+      "digest": "6436f8d15d58100a116d5655e5e775dc826344436308c0c0a9051c47ddf31be7"
     },
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/portable/reflect/runtime-value.js",
       "type": "file",
-      "size": 7069,
-      "digest": "33b6b2ebd6fe25cf9b9cd100f6dfd0a8d954cc4f091c828f206c2a1b62e31216"
+      "size": 7035,
+      "digest": "9327d08996ddf0587d79bbb073f7446aa843055ef7d53ac41e9fcd8b4209e596"
     },
     {
       "path": "node_modules/@gotots/gostdlib/dist/src/internal/portable/reflect/struct-tag.d.ts",
@@ -5737,8 +5749,8 @@
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/package.ts",
       "type": "file",
-      "size": 27327,
-      "digest": "34759439129cdcafb924459dc938ce0d489cd9c84a320f311180596bec695bc7"
+      "size": 27295,
+      "digest": "f1a45901137cdc7e0cbef0648608331a81c10ec85c8d4fef6112ce2bfcf83727"
     },
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/state.ts",
@@ -5755,8 +5767,8 @@
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/package.ts",
       "type": "file",
-      "size": 3611,
-      "digest": "9397013ff9c2abbff762cacffcb5666e143afb35af0de0a15d7677dd1680936b"
+      "size": 3517,
+      "digest": "147d56593c043f4b2d4d601a80d7dc816855c20d39b675897e15aa4e644fee8a"
     },
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/state.ts",
@@ -5779,8 +5791,8 @@
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/package.ts",
       "type": "file",
-      "size": 1633,
-      "digest": "9a5b90f065cd59b3d887b7afc774e49033f40aa9b833afc3934c7e03f0307cf0"
+      "size": 1612,
+      "digest": "5a706d80e7a4412cc6c3ac8527cd9f0884e9c66e122c9eecf36120bb4f24955e"
     },
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/state.ts",
@@ -5791,8 +5803,8 @@
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/package.ts",
       "type": "file",
-      "size": 9576,
-      "digest": "903d59cd86224cadbdd3a55e49dbdaf18793a1aca6b9faf14583568847e9df68"
+      "size": 9430,
+      "digest": "e0e9805898588a5b1b723ea3e4dcbe35d8522cb9554435c3783b9fd7f709c86c"
     },
     {
       "path": "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
@@ -5803,8 +5815,8 @@
     {
       "path": "packages/github.com/klauspost/cpuid/v2@v2.2.10/_root/package.ts",
       "type": "file",
-      "size": 13013,
-      "digest": "c074902dd2e7eb026db48bef9ab09566ece05b081038e58147de642959afc870"
+      "size": 13000,
+      "digest": "689d2d9d8495bb4900bd1e390848ebf5cace2aff69b8f0e109f21720801a821a"
     },
     {
       "path": "packages/github.com/klauspost/cpuid/v2@v2.2.10/_root/state.ts",
@@ -5887,8 +5899,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/checker/package.ts",
       "type": "file",
-      "size": 183145,
-      "digest": "eb68b55bea38f0eb432e0ead3b736222071f1b61bcd1fbbfedd4bc125667c115"
+      "size": 183000,
+      "digest": "2d59a0b1693792c5e73aa6c192c6b498c93b0dc561de24672205219b22663220"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/checker/state.ts",
@@ -6031,8 +6043,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/json/package.ts",
       "type": "file",
-      "size": 2460,
-      "digest": "abb86f38157ff6c565fbf493c1302f76b4848afbdaeb0de7d2f76f2cb4b7bebb"
+      "size": 2330,
+      "digest": "30039e331faab8d8044bed9539f8500e0842a9b0458bd91f5f092b9e29e6f1bb"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/json/state.ts",
@@ -6055,8 +6067,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/locale/package.ts",
       "type": "file",
-      "size": 426,
-      "digest": "981f71b6783a9f7ee05787fb4b3f475b0ddd65cd871033f64e4638715abcbfb9"
+      "size": 414,
+      "digest": "167306bc92b3e3917953f2e7c2486ea1ab1bbaf5961b6a8097889f74d05a71c2"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/locale/state.ts",
@@ -6109,8 +6121,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/ls/package.ts",
       "type": "file",
-      "size": 39510,
-      "digest": "d8726b0cab144dee5a703713c7f3379d18e55c484e05bae4fdd8c0c15d6e6478"
+      "size": 39363,
+      "digest": "88cbc3bb787412f4f6f0b1919ea53791fa93dc3bf746a0f1b5fc650b4ede27a3"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/ls/state.ts",
@@ -6121,8 +6133,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/lsp/lsproto/package.ts",
       "type": "file",
-      "size": 188515,
-      "digest": "bef94f633b9a01ecbe53bd8da6c82f4967acd84bf05cbd3d18b9920ad65e9f2f"
+      "size": 177569,
+      "digest": "0c3c0f765423099473293edf042310880a208252c7dffed8241aa88cfb683278"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/lsp/lsproto/state.ts",
@@ -6151,8 +6163,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/module/package.ts",
       "type": "file",
-      "size": 5422,
-      "digest": "60306478c8ca509aaf651a952bb6753bc763b2fd3998f97701e81af69f20abec"
+      "size": 5396,
+      "digest": "c2b0798c896fb3f08a1e825190f39b37f02b9515b1a3d548b5638c5fe4ad176a"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/module/state.ts",
@@ -6187,8 +6199,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/packagejson/package.ts",
       "type": "file",
-      "size": 3068,
-      "digest": "968bd99b688a4296556af117bc00e20b8e07efcabfdba34f11182f4f1ea0078e"
+      "size": 3042,
+      "digest": "29eae11f892baf601ff69d718fd64044fbf0dfb5e89985460ca09f2fea61a274"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/packagejson/state.ts",
@@ -6283,8 +6295,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/pseudochecker/state.ts",
       "type": "file",
-      "size": 1108,
-      "digest": "91f5abcc2ed4375a302b4fd75286049bb81b7c296f78bedf92f4baafbccee578"
+      "size": 726,
+      "digest": "10e8102a8ddb14a8d20d5eefdf895e4fdcbd633b79dbfc23867296864ebf4a0d"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/scanner/package.ts",
@@ -6301,8 +6313,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/semver/package.ts",
       "type": "file",
-      "size": 8485,
-      "digest": "02b76ce4474b5fff666964d4615c438038ccf7e834f9f379a8025394abb23446"
+      "size": 8472,
+      "digest": "391b143128b57de966da8631d6068d6df6a3432ad899b9272805fec8c6e768aa"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/semver/state.ts",
@@ -6355,14 +6367,14 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/transformers/estransforms/package.ts",
       "type": "file",
-      "size": 6497,
-      "digest": "47e022bfcc538c466ae5a6dc9d47bffdf569f10ebf8a94d608a5dbb6ab7a8e25"
+      "size": 6225,
+      "digest": "ca3dccd190477ddd100c73d3de051e85bfe6c438735078e33aa73d96a788cb64"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/transformers/estransforms/state.ts",
       "type": "file",
-      "size": 1989,
-      "digest": "373b59bb466e2b982a7e2813803f6757ac5e1efe2ac3212b7272313cfe51f4cd"
+      "size": 1717,
+      "digest": "521de1e342c8d1546b4314accd0f4f03c766b95a2bdc10370fc7af5f3ed27ffb"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/transformers/inliners/package.ts",
@@ -6403,8 +6415,8 @@
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
       "type": "file",
-      "size": 322075,
-      "digest": "60acccad627975d595100d5068944dfc9cdb6fb4c4ed0db8a3db7fd95942f303"
+      "size": 322052,
+      "digest": "ba4f688dcc68a74db57f74ce327935230a8af87be0e8b74057969129bec112df"
     },
     {
       "path": "packages/github.com/microsoft/typescript-go/internal/tsoptions/state.ts",
@@ -6487,8 +6499,8 @@
     {
       "path": "packages/github.com/zeebo/xxh3@v1.1.0/_root/package.ts",
       "type": "file",
-      "size": 10775,
-      "digest": "3e451cbb157801e1fb0677e66f2f8bd27d63377c09bc61ff3660e88f9084ff86"
+      "size": 10535,
+      "digest": "fde5652cef0dcd9f813a7a7728c06a0e0080b38a5c7c1962cbea89d0c3f4939c"
     },
     {
       "path": "packages/golang.org/x/sync@v0.21.0/errgroup/package.ts",
@@ -6505,8 +6517,8 @@
     {
       "path": "packages/golang.org/x/term@v0.44.0/_root/package.ts",
       "type": "file",
-      "size": 2431,
-      "digest": "68ef97dafd2e966b5b0ed7f7f09ace682394ac782cd189979258ab2358179355"
+      "size": 2389,
+      "digest": "058f9c093ea615a8b0fbaef54fe11b954c3555d78ce04e8694ba1570aa04cb01"
     },
     {
       "path": "packages/golang.org/x/term@v0.44.0/_root/state.ts",
@@ -6517,8 +6529,8 @@
     {
       "path": "packages/golang.org/x/text@v0.38.0/collate/package.ts",
       "type": "file",
-      "size": 3955086,
-      "digest": "13211bcf63aa24250e7b63629ebd346581fdf6f6626fe2599da9e8ebfb650f1c"
+      "size": 3954910,
+      "digest": "84b41e1d5493ace5837d6a40e3985be3fca75a0e98ae27f556c3494030d06124"
     },
     {
       "path": "packages/golang.org/x/text@v0.38.0/collate/state.ts",
@@ -6535,8 +6547,8 @@
     {
       "path": "packages/golang.org/x/text@v0.38.0/internal/language/compact/package.ts",
       "type": "file",
-      "size": 40954,
-      "digest": "40ad9e8c4db0f9e2e0c68258ce8c3f5624bad0d0b55bd5153cd7b94ab3c90fbf"
+      "size": 40201,
+      "digest": "f53ac9429ca2e2ba4ccc5e3d23e94f6e0461f2f364ace1c9c30c2c42338bda4f"
     },
     {
       "path": "packages/golang.org/x/text@v0.38.0/internal/language/compact/state.ts",
@@ -6547,8 +6559,8 @@
     {
       "path": "packages/golang.org/x/text@v0.38.0/internal/language/package.ts",
       "type": "file",
-      "size": 535531,
-      "digest": "9b6b169a99be3315517378a2c76ad1f786696df846bb1659573f161b071c1594"
+      "size": 535186,
+      "digest": "be0ffc11bf74ec50a187f8034b04e4846c4fd8626869043625e3331a93d6e317"
     },
     {
       "path": "packages/golang.org/x/text@v0.38.0/internal/language/state.ts",
@@ -6565,8 +6577,8 @@
     {
       "path": "packages/golang.org/x/text@v0.38.0/language/package.ts",
       "type": "file",
-      "size": 74787,
-      "digest": "e9f76d1774d7543ad237501bcee9cb75e826457272b87576e502b0b7332c98ba"
+      "size": 73953,
+      "digest": "5cccde52abc449300113b64dee5ca2986299f79528c2c96cdbf49e067aec8572"
     },
     {
       "path": "packages/golang.org/x/text@v0.38.0/language/state.ts",
@@ -6589,14 +6601,14 @@
     {
       "path": "packages/golang.org/x/text@v0.38.0/unicode/norm/package.ts",
       "type": "file",
-      "size": 564386,
-      "digest": "4abf388760c4ea587feb2b673c34932be0d4d525df9d10038d6e09a4fc57ec5b"
+      "size": 563949,
+      "digest": "fa7d0addc0d0b81aa0c836cfdb492f9e1d1438e594be4d52cbaa19db95704009"
     },
     {
       "path": "packages/golang.org/x/text@v0.38.0/unicode/norm/state.ts",
       "type": "file",
-      "size": 2066,
-      "digest": "071c7c2f99d8f71a8f159ef074cee2538c184cef0f82fd1a63dcf22bdcc9c55a"
+      "size": 1956,
+      "digest": "2232c2154e8e6c243f50f20e86f272b284e0e0ffe774756e4eca9924e414d255"
     },
     {
       "path": "program.ts",
@@ -6727,8 +6739,8 @@
     {
       "path": "support/anonymous-structs.ts",
       "type": "file",
-      "size": 36247,
-      "digest": "665f2cca0d5275f397cc21fb93b0fd79768fbbbcc50d6596d882304b6cf5afdf"
+      "size": 37591,
+      "digest": "85d01b43703e58b0df4d51f6ad9158077ff6b0aaa4834da367f73c1233c09a40"
     },
     {
       "path": "support/constant-projections/e198f9173c5331b90e99bf65378418357500552220caa240d191aede8854dde4/math/index.ts",
@@ -6847,20 +6859,20 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/hashWrite32.ts",
       "type": "file",
-      "size": 1811,
-      "digest": "5d63e16355412c3f5524d3c74a05328a62ffc13cf3fbf1bf820312c42a481a15"
+      "size": 1633,
+      "digest": "9cc642b2287ccbf70183d7892aa1129041acf83c47d61a5dfabb632dbe31d674"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/hashWrite64.ts",
       "type": "file",
-      "size": 1586,
-      "digest": "904278e442db72a6b69b088ee5b6d2dd0c6651503f5c79daf9cc7395884d429b"
+      "size": 1408,
+      "digest": "4e94f2b47ec6314770eefe2034521376c0f68228d29b0adb1049bd457d3b5464"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/instantiateList.ts",
       "type": "file",
-      "size": 8993,
-      "digest": "9eff199c5bfefe5870f73a8c15156774436126e8a936817c0c5f510b82347c15"
+      "size": 8849,
+      "digest": "e43adba9d5fbdcbfc29726105885f58cb2f45a0d4a5f912923b81bfcef85db3d"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/minAndMax.ts",
@@ -6883,14 +6895,14 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/runWithInferenceBlockedFromSourceNode.ts",
       "type": "file",
-      "size": 2372,
-      "digest": "04b1fb46712e8121c4ca21b4c9c19a5aea32bfae24ade653827e03df3b9dfc47"
+      "size": 2336,
+      "digest": "61816280b22156e98f6b4f0501ae88ad5aab89c221fac4309549ccc4812b2013"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/runWithoutResolvedSignatureCaching.ts",
       "type": "file",
-      "size": 1586,
-      "digest": "b6761c1a16bd37c0ccca56ec041150d5d64f100107430152d9330edc7a4ed05e"
+      "size": 1568,
+      "digest": "fcbfdb1558bad32270ddea34d8fe27fe204d54fc71bd1f23373368ab569a96ab"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/CopyOnWriteMap$Get.ts",
@@ -6925,26 +6937,26 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/GroupBy.ts",
       "type": "file",
-      "size": 2297,
-      "digest": "5ce662a4a42de1cfba2b11a4e157d966febcf87cb51b442685c341d9b81c4e11"
+      "size": 2263,
+      "digest": "6616fb2d2da9128bc104f54a83db4cfab9d46ee49b70257b0c92ab880c7152ec"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/MultiMap$Add.ts",
       "type": "file",
-      "size": 8243,
-      "digest": "3225122bbad8ec862bfc52060aedd837fd2579bc9120f0e03015107d337df5cf"
+      "size": 8073,
+      "digest": "91129785a7ee618692f16f4c48a892047a6039ad32b5f9622b60515c4e29d6fc"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/MultiMap$Len.ts",
       "type": "file",
-      "size": 1117,
-      "digest": "0a43fceda94281c3b5ad901dd3df978b03fe0f1de8d60f18840f0a3138b14956"
+      "size": 1007,
+      "digest": "b9c0a2d521a8ac0fc258c0fa5f898b428248f4d574babe340d5e66c081f9a207"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewMultiMapWithSizeHint.ts",
       "type": "file",
-      "size": 1705,
-      "digest": "c9a08109e103596590c8f0e9c0eb823435eea37222a8d969045ad528967650cf"
+      "size": 1595,
+      "digest": "f9d067eb6aeff51df0a1a506bf4b6fa1b4e3a470ae44dfe9cc0a0a973bab3ac6"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewOrderedMapFromList.ts",
@@ -7423,8 +7435,8 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstResult.ts",
       "type": "file",
-      "size": 6619,
-      "digest": "cec031e379d3da30aa10f78c475704a5fb0efab43b5039bf77b6396ef0d9c333"
+      "size": 6573,
+      "digest": "5c8dd32f591bc1b7b1af43a837264c1e376dd4d3fb8364c334908fcf5153e024"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FlatMap.ts",
@@ -7477,8 +7489,8 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Map.ts",
       "type": "file",
-      "size": 78589,
-      "digest": "1f1ecdd389e2116a9fbb0272ddd1e60f33b2833dddafc44556fffdc45947ad87"
+      "size": 78045,
+      "digest": "eb42157d8a240ec87a31f1993bf93690a748871ea721f63bd4fd50861fff93b8"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/MapFiltered.ts",
@@ -7555,8 +7567,8 @@
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Some.ts",
       "type": "file",
-      "size": 15800,
-      "digest": "71098804a450e458c2b0d732e673f0f42365729241d26f939ff9cf3ab0a9058f"
+      "size": 15562,
+      "digest": "3d79f41913a54a3aaf371ab307cc454321dcef5669e7dd9023b5c4ec22143f9b"
     },
     {
       "path": "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Splice.ts",
@@ -8257,8 +8269,8 @@
     {
       "path": "support/generics/concretizations/slices/BinarySearchFunc.ts",
       "type": "file",
-      "size": 9911,
-      "digest": "95eccd50ad603fa44b27db651bfefdc41d198c806f06e4d5ae3b59a27d953a59"
+      "size": 9435,
+      "digest": "f4b2f238f9d7ca1264a39cffd2594c333ffc998623c35a059771768a6f884ccd"
     },
     {
       "path": "support/generics/concretizations/slices/Clip.ts",
@@ -8353,8 +8365,8 @@
     {
       "path": "support/generics/concretizations/slices/Index.ts",
       "type": "file",
-      "size": 9937,
-      "digest": "932355bae3d37f17179437571984fd227fbd8cfd1e4aa356a5f646cb5a2f1ec7"
+      "size": 9784,
+      "digest": "d30d4850ffca95253bfee07f57a81052732f85b3cd4def00eecc972a97d18250"
     },
     {
       "path": "support/generics/concretizations/slices/IndexFunc.ts",
@@ -8365,8 +8377,8 @@
     {
       "path": "support/generics/concretizations/slices/Insert.ts",
       "type": "file",
-      "size": 9405,
-      "digest": "ec5cd08157d5119f28b32fad89bc660654a144d2a37598c3c54ebd50c55a92bc"
+      "size": 8827,
+      "digest": "9eaddf0deabada004f84c579a53f96413c043bab62c3248143d005a85665e361"
     },
     {
       "path": "support/generics/concretizations/slices/Repeat.ts",
@@ -8425,8 +8437,8 @@
     {
       "path": "support/interface-adapters.ts",
       "type": "file",
-      "size": 12760368,
-      "digest": "7dec58574f5917e921dff0b283af3279e6ab2e929c53983aeffa6f2e391327ba"
+      "size": 12741376,
+      "digest": "fb2677198c2476c0cce38276042b69805ee96cfd15bd60e7c1286644c366a05d"
     },
     {
       "path": "support/interface-contracts.ts",
@@ -8449,8 +8461,8 @@
     {
       "path": "support/maps.ts",
       "type": "file",
-      "size": 2078150,
-      "digest": "d857f803fd7479a68e11ccfdff5fba1162c5856a8efa9f23f10420d2f3f18b4f"
+      "size": 2076690,
+      "digest": "c93e45bae17a1df4bfc14dfd63b3d92f853040318927db863a18cbdde1c1f14f"
     },
     {
       "path": "support/provider-interface-bridges.ts",
@@ -8467,8 +8479,8 @@
     {
       "path": "support/reflection-types.ts",
       "type": "file",
-      "size": 14559274,
-      "digest": "274ada6f2eb0a6d8dcc724bd8da0b87ef028890984a54d28edd5968c67a6e3ef"
+      "size": 13016620,
+      "digest": "df52d645028d001ab5765b8b5cb3768a3f423c8cf4c509a53ef344350e437458"
     },
     {
       "path": "tsconfig.emit.json",
@@ -8485,8 +8497,8 @@
     {
       "path": "tsonic-typescript-optimization.json",
       "type": "file",
-      "size": 164424,
-      "digest": "aaf54d31468f0f51a7c60fda478f2f51de60683c472df2211f4e4c4da6bb6aab"
+      "size": 336674,
+      "digest": "62ab5fceb686daac4dc011895e53351715bff1b886d563f85decfbe22542ec07"
     }
   ]
 }

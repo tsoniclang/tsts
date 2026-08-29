@@ -84,17 +84,17 @@ export class LocationAndSymbol {
     public set importSymbol($value: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) {
         this.$storage.importSymbol = $value;
     }
-    static $zero(): LocationAndSymbol {
-        return new LocationAndSymbol({
-            importLocation: void 0,
-            importSymbol: void 0
-        });
-    }
     static $copy($source: LocationAndSymbol): LocationAndSymbol {
         return new LocationAndSymbol({
             importLocation: $source.$storage.importLocation,
             importSymbol: $source.$storage.importSymbol
         });
+    }
+    static $zeroStorage(): LocationAndSymbol$Storage {
+        return {
+            importLocation: void 0,
+            importSymbol: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -167,14 +167,6 @@ export class ModuleReference implements GoContainerStoredValue<ModuleReference$S
         this.$storage.ref = $value;
     }
     declare readonly [$goContainerStorageType]: ModuleReference$Storage;
-    static $zero(): ModuleReference {
-        return new ModuleReference({
-            kind: 0,
-            literal: void 0,
-            referencingFile: void 0,
-            ref: void 0
-        });
-    }
     static $copy($source: ModuleReference): ModuleReference {
         return new ModuleReference({
             kind: $source.$storage.kind,
@@ -183,11 +175,21 @@ export class ModuleReference implements GoContainerStoredValue<ModuleReference$S
             ref: $source.$storage.ref
         });
     }
+    static $zeroStorage(): ModuleReference$Storage {
+        return {
+            kind: 0,
+            literal: void 0,
+            referencingFile: void 0,
+            ref: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export function createImportTracker(ctx: GoInterface | undefined, program: {
     value: Program__from_compiler;
-} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): ImportTracker {
+} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): ImportTracker {
     let allDirectImports: GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>> = getDirectImportsMap(ctx, program, sourceFiles, checker__shadow_1);
     return new ImportTracker((exportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportInfo: ExportInfo | undefined, isForRename: bool): ImportsResult | undefined => {
         const __gotots_results_1 = getImportersForExport(sourceFiles, sourceFilesSet, allDirectImports, exportInfo, checker__shadow_1);
@@ -201,7 +203,9 @@ export function createImportTracker(ctx: GoInterface | undefined, program: {
 }
 export function getDirectImportsMap(ctx: GoInterface | undefined, program: {
     value: Program__from_compiler;
-} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>> {
+} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>> {
     let result: GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>> = GoMap.make(0, []);
     const __gotots_range_6 = sourceFiles;
     for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
@@ -329,7 +333,9 @@ export function getStatementsOfSourceFileLike(node: tsonicTypeScriptRuntime.Loca
     }
     return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
 }
-export function getImportersForExport(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, allDirectImports: GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>, exportInfo: ExportInfo | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): [
+export function getImportersForExport(sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, allDirectImports: GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>, exportInfo: ExportInfo | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): [
     RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>,
     RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>
 ] {
@@ -553,10 +559,14 @@ export function getImportersForExport(sourceFiles: RuntimeSlice<tsonicTypeScript
     const __gotots_results_4 = (__gotots_callee_23 ?? GoPanic.raiseRuntime("call of nil function"))();
     return [__gotots_results_3, __gotots_results_4];
 }
-export function getContainingModuleSymbol(importer: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getContainingModuleSymbol(importer: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     return Checker__from_checker.GetMergedSymbol(checker__shadow_1, Node__from_ast.Symbol(getSourceFileLikeForImportDeclaration(importer)));
 }
-export function findNamespaceReExports(sourceFileLike: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): bool {
+export function findNamespaceReExports(sourceFileLike: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): bool {
     let namespaceImportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetSymbolAtLocation(checker__shadow_1, name);
     return forEachPossibleImportOrExportStatement(sourceFileLike, (statement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {
         if (!IsExportDeclaration__from_ast(statement)) {
@@ -569,7 +579,9 @@ export function findNamespaceReExports(sourceFileLike: tsonicTypeScriptRuntime.L
         });
     });
 }
-export function getSearchesFromDirectImports(directImports: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, exportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportKind: ExportKind, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, isForRename: bool): [
+export function getSearchesFromDirectImports(directImports: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, exportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportKind: ExportKind, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, isForRename: bool): [
     RuntimeSlice<LocationAndSymbol$Storage>,
     RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>
 ] {
@@ -598,7 +610,7 @@ export function getSearchesFromDirectImports(directImports: RuntimeSlice<tsonicT
                     importSymbol: __go_symbol
                 })));
             for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, LocationAndSymbol.$storageOf(LocationAndSymbol.$zero()));
+                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, LocationAndSymbol.$zeroStorage());
             }
         }
         importSearches = __gotots_slice_build_17;
@@ -754,7 +766,9 @@ export function getSearchesFromDirectImports(directImports: RuntimeSlice<tsonicT
     }
     return [importSearches, singleReferences];
 }
-export function getImportOrExportSymbol(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, comingFromExport: bool): ImportExportSymbol | undefined {
+export function getImportOrExportSymbol(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, comingFromExport: bool): ImportExportSymbol | undefined {
     let exportInfo: (($0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, $1: ExportKind) => ImportExportSymbol | undefined) | undefined = (__go_symbol__shadow_1: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, kind: ExportKind): ImportExportSymbol | undefined => {
         {
             let exportInfo__shadow_1: ExportInfo | undefined = getExportInfo(__go_symbol__shadow_1, kind, checker__shadow_1);
@@ -920,7 +934,9 @@ export function getImportOrExportSymbol(node: tsonicTypeScriptRuntime.Location<N
     }
     return result;
 }
-export function getExportInfo(exportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportKind: ExportKind, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): ExportInfo | undefined {
+export function getExportInfo(exportSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportKind: ExportKind, c: {
+    value: Checker__from_checker;
+} | undefined): ExportInfo | undefined {
     if (!(Symbol__from_ast.$storageOf(((exportSymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent === undefined)) {
         let exportingModuleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetMergedSymbol(c, Symbol__from_ast.$storageOf(((exportSymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent);
         if (IsExternalModuleSymbol__from_checker(exportingModuleSymbol)) {
@@ -977,7 +993,9 @@ export function isExternalModuleImportEquals(node: tsonicTypeScriptRuntime.Locat
     let moduleReference: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (Node__from_ast.AsImportEqualsDeclaration(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleReference;
     return IsExternalModuleReference__from_ast(moduleReference) && Node__from_ast.$storageOf(((Node__from_ast.Expression(moduleReference) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindStringLiteral$constant__from_ast();
 }
-export function skipExportSpecifierSymbol(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function skipExportSpecifierSymbol(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     const __gotots_range_13 = Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Declarations;
     for (let __gotots_range_index_13 = 0; __gotots_range_index_13 < __gotots_range_13.length; __gotots_range_index_13++) {
         const __gotots_range_value_13 = __gotots_range_13.get(__gotots_range_index_13);
@@ -996,7 +1014,9 @@ export function skipExportSpecifierSymbol(__go_symbol: tsonicTypeScriptRuntime.L
     }
     return __go_symbol;
 }
-export function getExportEqualsLocalSymbol(importedSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getExportEqualsLocalSymbol(importedSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (!((Symbol__from_ast.$storageOf(((importedSymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Flags & SymbolFlagsAlias$constant__from_ast()) >>> 0 === 0)) {
         return Checker__from_checker.GetImmediateAliasedSymbol(checker__shadow_1, importedSymbol);
     }
@@ -1032,7 +1052,9 @@ export function symbolNameNoDefault(__go_symbol: tsonicTypeScriptRuntime.Locatio
 }
 export function findModuleReferences(program: {
     value: Program__from_compiler;
-} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, searchModuleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<ModuleReference$Storage> {
+} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, searchModuleSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<ModuleReference$Storage> {
     let refs = RuntimeSlice.literal<ModuleReference$Storage>([]);
     const __gotots_range_0 = sourceFiles;
     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
@@ -1073,7 +1095,7 @@ export function findModuleReferences(program: {
                                 literal: void 0
                             })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ModuleReference.$storageOf(ModuleReference.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, ModuleReference.$zeroStorage());
                         }
                     }
                     refs = __gotots_slice_build_1;
@@ -1113,7 +1135,7 @@ export function findModuleReferences(program: {
                                 literal: void 0
                             })));
                         for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, ModuleReference.$storageOf(ModuleReference.$zero()));
+                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, ModuleReference.$zeroStorage());
                         }
                     }
                     refs = __gotots_slice_build_5;
@@ -1150,7 +1172,7 @@ export function findModuleReferences(program: {
                                 ref: void 0
                             })));
                         for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                            __gotots_slice_build_9.$initialize(__gotots_slice_build_11, ModuleReference.$storageOf(ModuleReference.$zero()));
+                            __gotots_slice_build_9.$initialize(__gotots_slice_build_11, ModuleReference.$zeroStorage());
                         }
                     }
                     refs = __gotots_slice_build_9;
@@ -1182,7 +1204,7 @@ export function findModuleReferences(program: {
                                 ref: void 0
                             })));
                         for (let __gotots_slice_build_15 = __gotots_slice_build_14; __gotots_slice_build_15 < __gotots_slice_build_13.capacity; __gotots_slice_build_15++) {
-                            __gotots_slice_build_13.$initialize(__gotots_slice_build_15, ModuleReference.$storageOf(ModuleReference.$zero()));
+                            __gotots_slice_build_13.$initialize(__gotots_slice_build_15, ModuleReference.$zeroStorage());
                         }
                     }
                     refs = __gotots_slice_build_13;

@@ -99,7 +99,7 @@ export class parseTask {
     }
     static $go$private$compiler$load(t: {
         value: parseTask;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined): void {
+    } | undefined, loader: fileLoader | undefined): void {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
@@ -110,14 +110,14 @@ export class parseTask {
                         parseTask.$go$private$compiler$loadAutomaticTypeDirectives(t, loader);
                         break __gotots_return_block_0;
                     }
-                    if (!(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Tracing === undefined)) {
-                        const __gotots_callee_2: (() => void) | undefined = Tracing__from_tracing.Push(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Tracing, PhaseProgram$constant__from_tracing(), "findSourceFile", $goMap$MapOf_string_To_Interface_void.make(1, [["fileName", new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath)]]), false);
+                    if (!((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
+                        const __gotots_callee_2: (() => void) | undefined = Tracing__from_tracing.Push((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "findSourceFile", $goMap$MapOf_string_To_Interface_void.make(1, [["fileName", new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath)]]), false);
                         const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_2);
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             __gotots_deferred_1 === undefined ? (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                         });
                     }
-                    let redirect = projectReferenceFileMapper.$go$private$compiler$getParseFileRedirect(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.projectReferenceFileMapper, new $goInterfaceAdapter$PointerTo_Named_compiler$parseTask(t));
+                    let redirect = projectReferenceFileMapper.$go$private$compiler$getParseFileRedirect((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper, new $goInterfaceAdapter$PointerTo_Named_compiler$parseTask(t));
                     if (redirect !== "") {
                         parseTask.$go$private$compiler$redirect(t, loader, redirect);
                         break __gotots_return_block_0;
@@ -125,11 +125,11 @@ export class parseTask {
                     if (HasExtension__from_tspath((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath)) {
                         let compilerOptions__shadow_1: {
                             value: CompilerOptions__from_core;
-                        } | undefined = ParsedCommandLine__from_tsoptions.CompilerOptions(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Config);
+                        } | undefined = ParsedCommandLine__from_tsoptions.CompilerOptions((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config);
                         let allowNonTsExtensions = Tristate_IsTrue__from_core((compilerOptions__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AllowNonTsExtensions);
                         if (!allowNonTsExtensions) {
                             const __gotots_argument_12: parseTask["normalizedFilePath"] = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath;
-                            const __gotots_receiver_5 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
+                            const __gotots_receiver_5 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
                             const __gotots_receiver_6 = goInterfaceNonNil<CompilerHost>(__gotots_receiver_5).FS();
                             const __gotots_argument_13 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_6).UseCaseSensitiveFileNames();
                             let canonicalFileName = GetCanonicalFileName__from_tspath(__gotots_argument_12, __gotots_argument_13);
@@ -141,16 +141,16 @@ export class parseTask {
                                 }
                                 else {
                                     (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics.append(void 0, [
-                                        { value: new processingDiagnostic(processingDiagnosticKindExplainingFileInclude$constant(), new $goInterfaceAdapter$PointerTo_Named_compiler$includeExplainingDiagnostic({ value: new includeExplainingDiagnostic(new Path__from_tspath(""), (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.includeReason, $state__diagnostics.File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath), new $goInterfaceAdapter$string("'" + strings__from_gostdlib.Join(Flatten$string(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.supportedExtensions), "', '") + "'")])) })) },
+                                        { value: new processingDiagnostic(processingDiagnosticKindExplainingFileInclude$constant(), new $goInterfaceAdapter$PointerTo_Named_compiler$includeExplainingDiagnostic({ value: new includeExplainingDiagnostic(new Path__from_tspath(""), (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.includeReason, $state__diagnostics.File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath), new $goInterfaceAdapter$string("'" + strings__from_gostdlib.Join(Flatten$string((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).supportedExtensions), "', '") + "'")])) })) },
                                     ]);
                                 }
                                 break __gotots_return_block_0;
                             }
                         }
                     }
-                    atomic__from_gostdlib.Int32.Add(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.totalFileCount, 1);
+                    atomic__from_gostdlib.Int32.Add((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).totalFileCount, 1);
                     if (!((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.libFile === undefined)) {
-                        atomic__from_gostdlib.Int32.Add(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.libFileCount, 1);
+                        atomic__from_gostdlib.Int32.Add((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).libFileCount, 1);
                         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.metadata = new SourceFileMetaData__from_ast("", "", ResolutionModeCommonJS$constant__from_core());
                     }
                     else {
@@ -166,7 +166,7 @@ export class parseTask {
                     } | undefined>(0, ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ReferencedFiles.length + SourceFile__from_ast.Imports(file).length + ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ModuleAugmentations.length, void 0);
                     let compilerOptions: {
                         value: CompilerOptions__from_core;
-                    } | undefined = ParsedCommandLine__from_tsoptions.CompilerOptions(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Config);
+                    } | undefined = ParsedCommandLine__from_tsoptions.CompilerOptions((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config);
                     if (!Tristate_IsTrue__from_core((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoResolve)) {
                         const __gotots_range_8 = ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ReferencedFiles;
                         for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_8.length; __gotots_range_index_6++) {
@@ -214,7 +214,7 @@ export class parseTask {
                                         includeReason: includeReason,
                                         increaseDepth: false,
                                         elideOnDepth: false,
-                                        packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$zero())
+                                        packageId: PackageId__from___go_module.$zeroStorage()
                                     }), libFile);
                                 }
                                 else {
@@ -259,14 +259,14 @@ export class parseTask {
     }
     static $go$private$compiler$loadAutomaticTypeDirectives(t: {
         value: parseTask;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined): void {
+    } | undefined, loader: fileLoader | undefined): void {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
             try {
                 __gotots_return_block_0: {
-                    if (!(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Tracing === undefined)) {
-                        const __gotots_callee_2: (() => void) | undefined = Tracing__from_tracing.Push(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Tracing, PhaseProgram$constant__from_tracing(), "processTypeReferences", $goMap$MapOf_string_To_Interface_void.nil(), false);
+                    if (!((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
+                        const __gotots_callee_2: (() => void) | undefined = Tracing__from_tracing.Push((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "processTypeReferences", $goMap$MapOf_string_To_Interface_void.nil(), false);
                         const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_2);
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             __gotots_deferred_1 === undefined ? (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
@@ -321,7 +321,7 @@ export class parseTask {
     }
     static $go$private$compiler$redirect(t: {
         value: parseTask;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined, fileName: gostring): void {
+    } | undefined, loader: fileLoader | undefined, fileName: gostring): void {
         (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.redirectedParseTask =
             { value: new parseTask(NormalizePath__from_tspath(fileName), new Path__from_tspath(""), void 0, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.libFile, void 0, RuntimeSlice.nil<{
                     value: parseTask;
@@ -388,15 +388,6 @@ export class resolvedRef {
     public set packageId($value: PackageId__from___go_module) {
         this.$storage.packageId = PackageId__from___go_module.$storageOf($value);
     }
-    static $zero(): resolvedRef {
-        return new resolvedRef({
-            fileName: "",
-            increaseDepth: false,
-            elideOnDepth: false,
-            includeReason: void 0,
-            packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$zero())
-        });
-    }
     static $copy($source: resolvedRef): resolvedRef {
         return new resolvedRef({
             fileName: $source.$storage.fileName,
@@ -405,6 +396,15 @@ export class resolvedRef {
             includeReason: $source.$storage.includeReason,
             packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy(PackageId__from___go_module.$fromStorage($source.$storage.packageId)))
         });
+    }
+    static $zeroStorage(): resolvedRef$Storage {
+        return {
+            fileName: "",
+            increaseDepth: false,
+            elideOnDepth: false,
+            includeReason: void 0,
+            packageId: PackageId__from___go_module.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -450,9 +450,9 @@ export class filesParser {
     }
     static $go$private$compiler$getProcessedFiles(w: {
         value: filesParser;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined): processedFiles {
-        let totalFileCount = atomic__from_gostdlib.Int32.Load(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.totalFileCount);
-        let libFileCount = atomic__from_gostdlib.Int32.Load(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.libFileCount);
+    } | undefined, loader: fileLoader | undefined): processedFiles {
+        let totalFileCount = atomic__from_gostdlib.Int32.Load((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).totalFileCount);
+        let libFileCount = atomic__from_gostdlib.Int32.Load((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).libFileCount);
         let missingFiles = RuntimeSlice.nil<gostring>();
         let duplicateSourceFiles = RuntimeSlice.nil<{
             value: DuplicateSourceFile;
@@ -463,7 +463,7 @@ export class filesParser {
         let tasksSeenByNameIgnoreCase: GoMapValue<gostring, {
             value: parseTask;
         } | undefined> = $goMap$MapOf_string_To_PointerTo_Named_compiler$parseTask.nil();
-        if (((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.comparePathsOptions.UseCaseSensitiveFileNames) {
+        if ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).comparePathsOptions.UseCaseSensitiveFileNames) {
             tasksSeenByNameIgnoreCase = $goMap$MapOf_string_To_PointerTo_Named_compiler$parseTask.make(totalFileCount, []);
         }
         let includeProcessor__shadow_1: {
@@ -478,7 +478,7 @@ export class filesParser {
                 value: FileIncludeReason;
             } | undefined, tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), SyncMap__from_collections.$zero<Path__from_tspath, RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>>(), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) };
         let outputFileToProjectReferenceSource: GoMapValue<Path__from_tspath, gostring> = $goMap$MapOf_Named_tspath$Path_To_string.nil();
-        const __gotots_store_0 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value;
+        const __gotots_store_0 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         if (!ProgramOptions.$go$private$compiler$canUseProjectReferenceSource(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "opts"))) {
             outputFileToProjectReferenceSource = $goMap$MapOf_Named_tspath$Path_To_string.make(totalFileCount, []);
         }
@@ -499,7 +499,7 @@ export class filesParser {
         let redirectTargetsMap: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>> = $goMap$MapOf_Named_tspath$Path_To_SliceOf_string.nil();
         let redirectFilesByPath: GoMapValue<Path__from_tspath, redirectsFile | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_compiler$redirectsFile.nil();
         let packageIdToSourceFile: GoMapValue<PackageId__from___go_module, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined> = $goMap$MapOf_Named___go_module$PackageId_To_PointerTo_Named_ast$SourceFile.nil();
-        if (!Tristate_IsFalse__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeduplicatePackages)) {
+        if (!Tristate_IsFalse__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DeduplicatePackages)) {
             redirectTargetsMap = $goMap$MapOf_Named_tspath$Path_To_SliceOf_string.make(0, []);
             packageIdToSourceFile = $goMap$MapOf_Named___go_module$PackageId_To_PointerTo_Named_ast$SourceFile.make(0, []);
         }
@@ -546,9 +546,9 @@ export class filesParser {
                                 { value: new DuplicateSourceFile(SourceFile__from_ast.ParseOptions((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file), Uint128__from_xxh3.$copy((((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Hash), (((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind) },
                             ]);
                         }
-                        if (!Tristate_IsFalse__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ForceConsistentCasingInFileNames)) {
-                            let checkedAbsolutePath = GetNormalizedAbsolutePathWithoutRoot__from_tspath(checkedName, ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.comparePathsOptions.CurrentDirectory);
-                            let inputAbsolutePath = GetNormalizedAbsolutePathWithoutRoot__from_tspath((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath, ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.comparePathsOptions.CurrentDirectory);
+                        if (!Tristate_IsFalse__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ForceConsistentCasingInFileNames)) {
+                            let checkedAbsolutePath = GetNormalizedAbsolutePathWithoutRoot__from_tspath(checkedName, (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).comparePathsOptions.CurrentDirectory);
+                            let inputAbsolutePath = GetNormalizedAbsolutePathWithoutRoot__from_tspath((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath, (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).comparePathsOptions.CurrentDirectory);
                             if (checkedAbsolutePath !== inputAbsolutePath) {
                                 includeProcessor.$go$private$compiler$addProcessingDiagnosticsForFileCasing(includeProcessor__shadow_1, (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, checkedName, (task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath, includeReason);
                             }
@@ -579,7 +579,7 @@ export class filesParser {
                 for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                     const __gotots_range_value_1 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_1.get(__gotots_range_index_1)));
                     let trace = __gotots_range_value_1;
-                    const __gotots_receiver_1 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
+                    const __gotots_receiver_1 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
                     const __gotots_argument_0 = DiagAndArgs__from___go_module.$storageOf(trace).Message;
                     const __gotots_argument_1 = DiagAndArgs__from___go_module.$storageOf(trace).Args;
                     goInterfaceNonNil<CompilerHost>(__gotots_receiver_1).Trace(__gotots_argument_0, __gotots_argument_1);
@@ -588,7 +588,7 @@ export class filesParser {
                 for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
                     const __gotots_range_value_2 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_2.get(__gotots_range_index_2)));
                     let trace = __gotots_range_value_2;
-                    const __gotots_receiver_2 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
+                    const __gotots_receiver_2 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
                     const __gotots_argument_2 = DiagAndArgs__from___go_module.$storageOf(trace).Message;
                     const __gotots_argument_3 = DiagAndArgs__from___go_module.$storageOf(trace).Args;
                     goInterfaceNonNil<CompilerHost>(__gotots_receiver_2).Trace(__gotots_argument_2, __gotots_argument_3);
@@ -631,7 +631,7 @@ export class filesParser {
                     }
                 }
                 if (!((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.redirectedParseTask === undefined)) {
-                    const __gotots_store_2 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value;
+                    const __gotots_store_2 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                     if (!ProgramOptions.$go$private$compiler$canUseProjectReferenceSource(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "opts"))) {
                         outputFileToProjectReferenceSource.store(((task ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.redirectedParseTask ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, parseTask.FileName(task));
                     }
@@ -685,7 +685,7 @@ export class filesParser {
             }
         };
         const __gotots_callee_1 = collectFiles;
-        const __gotots_argument_6 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.rootTasks;
+        const __gotots_argument_6 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks;
         const __gotots_argument_7 = $goMap$MapOf_PointerTo_Named_compiler$parseTaskData_To_string.make(totalFileCount, []);
         (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_6, __gotots_argument_7);
         fileLoader.$go$private$compiler$sortLibs(loader, libFiles);
@@ -702,7 +702,7 @@ export class filesParser {
             const __gotots_store_3 = (redirectFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             __gotots_store_3.index = __gotots_store_3.index + libFiles.length;
         }
-        const __gotots_store_4 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value;
+        const __gotots_store_4 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         const __gotots_argument_8 = SyncMap$Keys$Named_tspath$Path$PointerTo_Named_compiler$libResolution(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "pathForLibFileResolutions"));
         let keys = Collect$Named_tspath$Path(__gotots_argument_8);
         Sort$SliceOf_Named_tspath$Path$Named_tspath$Path(keys);
@@ -710,7 +710,7 @@ export class filesParser {
         for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_4.length; __gotots_range_index_3++) {
             const __gotots_range_value_6 = new Path__from_tspath(__gotots_range_4.get(__gotots_range_index_3));
             let key = __gotots_range_value_6;
-            const __gotots_store_5 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value;
+            const __gotots_store_5 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             const __gotots_results_4 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_compiler$libResolution(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "pathForLibFileResolutions"), key);
             let value: {
                 value: libResolution;
@@ -723,17 +723,17 @@ export class filesParser {
             for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_5.length; __gotots_range_index_4++) {
                 const __gotots_range_value_7 = DiagAndArgs__from___go_module.$copy(DiagAndArgs__from___go_module.$fromStorage(__gotots_range_5.get(__gotots_range_index_4)));
                 let trace = __gotots_range_value_7;
-                const __gotots_receiver_3 = ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.opts.Host;
+                const __gotots_receiver_3 = (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
                 const __gotots_argument_9 = DiagAndArgs__from___go_module.$storageOf(trace).Message;
                 const __gotots_argument_10 = DiagAndArgs__from___go_module.$storageOf(trace).Args;
                 goInterfaceNonNil<CompilerHost>(__gotots_receiver_3).Trace(__gotots_argument_9, __gotots_argument_10);
             }
         }
-        return new processedFiles(((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.resolver, allFiles, duplicateSourceFiles, filesByPath, ((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileLoader>).value.projectReferenceFileMapper, missingFiles, resolvedModules, typeResolutionsInFile, sourceFileMetaDatas, jsxRuntimeImportSpecifiers, importHelpersImportSpecifiers, libFilesMap, Set__from_collections.$copy<Path__from_tspath>(sourceFilesFoundSearchingNodeModules), includeProcessor__shadow_1, outputFileToProjectReferenceSource, redirectTargetsMap, redirectFilesByPath, true);
+        return new processedFiles((loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver, allFiles, duplicateSourceFiles, filesByPath, (loader ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper, missingFiles, resolvedModules, typeResolutionsInFile, sourceFileMetaDatas, jsxRuntimeImportSpecifiers, importHelpersImportSpecifiers, libFilesMap, Set__from_collections.$copy<Path__from_tspath>(sourceFilesFoundSearchingNodeModules), includeProcessor__shadow_1, outputFileToProjectReferenceSource, redirectTargetsMap, redirectFilesByPath, true);
     }
     static $go$private$compiler$parse(w: {
         value: filesParser;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined, tasks: RuntimeSlice<{
+    } | undefined, loader: fileLoader | undefined, tasks: RuntimeSlice<{
         value: parseTask;
     } | undefined>): void {
         filesParser.$go$private$compiler$start(w, loader, tasks, 0);
@@ -742,7 +742,7 @@ export class filesParser {
     }
     static $go$private$compiler$start(w: {
         value: filesParser;
-    } | undefined, loader: tsonicTypeScriptRuntime.Location<fileLoader> | undefined, tasks: RuntimeSlice<{
+    } | undefined, loader: fileLoader | undefined, tasks: RuntimeSlice<{
         value: parseTask;
     } | undefined>, depth: int): void {
         const __gotots_range_6 = tasks;

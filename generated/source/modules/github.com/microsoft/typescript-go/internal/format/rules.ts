@@ -161,7 +161,7 @@ export function getAllRules(): RuntimeSlice<ruleSpec__from_format$Storage> {
     let lowPriorityCommonRules = RuntimeSlice.literal<ruleSpec__from_format$Storage>([__gotots_slice_element_72, __gotots_slice_element_73, __gotots_slice_element_74, __gotots_slice_element_75, __gotots_slice_element_76, __gotots_slice_element_77, __gotots_slice_element_78, __gotots_slice_element_79, __gotots_slice_element_80, __gotots_slice_element_81, __gotots_slice_element_82, __gotots_slice_element_83]);
     const __gotots_slice_build_0 = goSliceAllocate<ruleSpec__from_format$Storage>(0, highPriorityCommonRules.length + userConfigurableRules.length + lowPriorityCommonRules.length);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, ruleSpec.$storageOf(ruleSpec.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, ruleSpec.$zeroStorage());
     }
     let result = __gotots_slice_build_0;
     const __gotots_slice_build_2 = result;
@@ -190,7 +190,7 @@ export function getAllRules(): RuntimeSlice<ruleSpec__from_format$Storage> {
             __gotots_slice_build_5.set(__gotots_slice_build_2.length + __gotots_slice_build_7, __gotots_slice_build_4.get(__gotots_slice_build_7));
         }
         for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, ruleSpec.$storageOf(ruleSpec.$zero()));
+            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, ruleSpec.$zeroStorage());
         }
     }
     result = __gotots_slice_build_5;
@@ -220,7 +220,7 @@ export function getAllRules(): RuntimeSlice<ruleSpec__from_format$Storage> {
             __gotots_slice_build_11.set(__gotots_slice_build_8.length + __gotots_slice_build_13, __gotots_slice_build_10.get(__gotots_slice_build_13));
         }
         for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
-            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, ruleSpec.$storageOf(ruleSpec.$zero()));
+            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, ruleSpec.$zeroStorage());
         }
     }
     result = __gotots_slice_build_11;
@@ -250,7 +250,7 @@ export function getAllRules(): RuntimeSlice<ruleSpec__from_format$Storage> {
             __gotots_slice_build_17.set(__gotots_slice_build_14.length + __gotots_slice_build_19, __gotots_slice_build_16.get(__gotots_slice_build_19));
         }
         for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-            __gotots_slice_build_17.$initialize(__gotots_slice_build_19, ruleSpec.$storageOf(ruleSpec.$zero()));
+            __gotots_slice_build_17.$initialize(__gotots_slice_build_19, ruleSpec.$zeroStorage());
         }
     }
     result = __gotots_slice_build_17;

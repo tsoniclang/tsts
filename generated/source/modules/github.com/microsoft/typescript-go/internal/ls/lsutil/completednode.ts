@@ -472,7 +472,7 @@ export function nodeEndsWith(n: tsonicTypeScriptRuntime.Location<Node__from_ast>
     else {
         tokenStartPos = Node__from_ast.Pos(n);
     }
-    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, tokenStartPos);
+    let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, tokenStartPos);
     for (let startPos = tokenStartPos; startPos < Node__from_ast.End(n);) {
         let tokenKind = Scanner__from_scanner.Token(scanner__shadow_1);
         let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_1);

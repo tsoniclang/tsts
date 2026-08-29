@@ -499,7 +499,7 @@ export class emitter {
                         const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
                         let transformer: DeclarationTransformer__from_declarations | undefined = __gotots_range_value_2;
                         const __gotots_store_6 = (transformer ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        sourceFile = Transformer__from_transformers.TransformSourceFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "Transformer"), sourceFile);
+                        sourceFile = Transformer__from_transformers.TransformSourceFile(__gotots_store_6.Transformer, sourceFile);
                         diags = goSliceAppendSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(diags, DeclarationTransformer__from_declarations.GetDiagnostics(transformer), void 0);
                     }
                     __gotots_return_0 = [sourceFile, diags];
@@ -555,7 +555,7 @@ export class emitter {
                     const __gotots_range_1 = getScriptTransformers(emitContext, (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host, sourceFile);
                     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                         const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
-                        let transformer: tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined = __gotots_range_value_1;
+                        let transformer: Transformer__from_transformers | undefined = __gotots_range_value_1;
                         sourceFile = Transformer__from_transformers.TransformSourceFile(transformer, sourceFile);
                     }
                     __gotots_return_0 = sourceFile;
@@ -606,7 +606,7 @@ export class emitter {
         return goInterfaceNonNil<EmitHost>(__gotots_receiver_48).WriteFile(__gotots_argument_66, __gotots_argument_67);
     }
 }
-export function getModuleTransformer(opts: TransformOptions__from_transformers | undefined): tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined {
+export function getModuleTransformer(opts: TransformOptions__from_transformers | undefined): Transformer__from_transformers | undefined {
     switch (CompilerOptions__from_core.GetEmitModuleKind((opts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).CompilerOptions)) {
         case ModuleKindPreserve$constant__from_core(): {
             return NewESModuleTransformer__from_moduletransforms(opts);
@@ -632,8 +632,8 @@ export function getModuleTransformer(opts: TransformOptions__from_transformers |
 }
 export function getScriptTransformers(emitContext: {
     value: EmitContext__from_printer;
-} | undefined, host: EmitHost__from_printer | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined> {
-    let tx = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined>();
+} | undefined, host: EmitHost__from_printer | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<Transformer__from_transformers | undefined> {
+    let tx = RuntimeSlice.nil<Transformer__from_transformers | undefined>();
     const __gotots_receiver_32 = host;
     let options: {
         value: CompilerOptions__from_core;
@@ -685,7 +685,7 @@ export function getScriptTransformers(emitContext: {
     if (jsxTransformEnabled) {
         tx = tx.append(void 0, [NewJSXTransformer__from_jsxtransforms(opts)]);
     }
-    let downleveler: tsonicTypeScriptRuntime.Location<Transformer__from_transformers> | undefined = GetESTransformer__from_estransforms(opts);
+    let downleveler: Transformer__from_transformers | undefined = GetESTransformer__from_estransforms(opts);
     if (!(downleveler === undefined)) {
         tx = tx.append(void 0, [downleveler]);
     }
@@ -822,6 +822,6 @@ export function getDeclarationDiagnostics(host: EmitHost | undefined, file: tson
     } | undefined = goInterfaceNonNil<EmitHost>(__gotots_receiver_31).Options();
     let transform: DeclarationTransformer__from_declarations | undefined = NewDeclarationTransformer__from_declarations(host, void 0, options, "", "");
     const __gotots_store_7 = (transform ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-    Transformer__from_transformers.TransformSourceFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Transformer"), file);
+    Transformer__from_transformers.TransformSourceFile(__gotots_store_7.Transformer, file);
     return DeclarationTransformer__from_declarations.GetDiagnostics(transform);
 }

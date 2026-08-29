@@ -546,7 +546,9 @@ export class Program {
     }
     static ForEachCheckerParallel(p: {
         value: Program;
-    } | undefined, cb: (($0: int, $1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) => void) | undefined): void {
+    } | undefined, cb: (($0: int, $1: {
+        value: Checker__from_checker;
+    } | undefined) => void) | undefined): void {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
             checkerPool.$go$private$compiler$forEachCheckerParallel((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool, cb);
         }
@@ -927,7 +929,9 @@ export class Program {
         const __gotots_argument_384 = ctx;
         const __gotots_argument_385 = sourceFile;
         const __gotots_receiver_63 = p;
-        const __gotots_argument_386 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
+        const __gotots_argument_386 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: {
+            value: Checker__from_checker;
+        } | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
             return Program.$go$private$compiler$getSemanticDiagnosticsWithChecker(__gotots_receiver_63, $argument0, $argument1, $argument2);
         };
         return Program.$go$private$compiler$collectCheckerDiagnostics(__gotots_receiver_64, __gotots_argument_384, __gotots_argument_385, __gotots_argument_386);
@@ -939,7 +943,9 @@ export class Program {
         const __gotots_argument_348 = ctx;
         const __gotots_argument_349 = sourceFiles;
         const __gotots_receiver_44 = p;
-        const __gotots_argument_350 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
+        const __gotots_argument_350 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: {
+            value: Checker__from_checker;
+        } | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
             return Program.$go$private$compiler$getBindAndCheckDiagnosticsWithChecker(__gotots_receiver_44, $argument0, $argument1, $argument2);
         };
         let allDiags = Program.$go$private$compiler$collectCheckerDiagnosticsFromFiles(__gotots_receiver_45, __gotots_argument_348, __gotots_argument_349, __gotots_argument_350);
@@ -1056,7 +1062,9 @@ export class Program {
         const __gotots_argument_341 = ctx;
         const __gotots_argument_342 = sourceFile;
         const __gotots_receiver_34 = p;
-        const __gotots_argument_343 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
+        const __gotots_argument_343 = ($argument0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $argument1: {
+            value: Checker__from_checker;
+        } | undefined, $argument2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> => {
             return Program.$go$private$compiler$getSuggestionDiagnosticsWithChecker(__gotots_receiver_34, $argument0, $argument1, $argument2);
         };
         return Program.$go$private$compiler$collectCheckerDiagnostics(__gotots_receiver_35, __gotots_argument_341, __gotots_argument_342, __gotots_argument_343);
@@ -1149,7 +1157,9 @@ export class Program {
     static GetTypeChecker(p: {
         value: Program;
     } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
@@ -1163,7 +1173,9 @@ export class Program {
     static GetTypeCheckerForFile(p: {
         value: Program;
     } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
@@ -1177,7 +1189,9 @@ export class Program {
     static GetTypeCheckerForFileExclusive(p: {
         value: Program;
     } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
@@ -1247,8 +1261,10 @@ export class Program {
         value: Program;
     } | undefined): int {
         let val = named_sync_atomic.SyncAtomicUint32Operations.$zero();
-        Program.ForEachCheckerParallel(p, ($0: int, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): void => {
-            atomic__from_gostdlib.Uint32.Add(val, ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker__from_checker>).value.TotalInstantiationCount);
+        Program.ForEachCheckerParallel(p, ($0: int, c: {
+            value: Checker__from_checker;
+        } | undefined): void => {
+            atomic__from_gostdlib.Uint32.Add(val, (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TotalInstantiationCount);
         });
         return atomic__from_gostdlib.Uint32.Load(val);
     }
@@ -1364,8 +1380,10 @@ export class Program {
         }
         let val = named_sync_atomic.SyncAtomicUint32Operations.$zero();
         atomic__from_gostdlib.Uint32.Store(val, count >>> 0);
-        Program.ForEachCheckerParallel(p, ($0: int, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): void => {
-            atomic__from_gostdlib.Uint32.Add(val, ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker__from_checker>).value.SymbolCount);
+        Program.ForEachCheckerParallel(p, ($0: int, c: {
+            value: Checker__from_checker;
+        } | undefined): void => {
+            atomic__from_gostdlib.Uint32.Add(val, (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SymbolCount);
         });
         return atomic__from_gostdlib.Uint32.Load(val);
     }
@@ -1380,8 +1398,10 @@ export class Program {
         value: Program;
     } | undefined): int {
         let val = named_sync_atomic.SyncAtomicUint32Operations.$zero();
-        Program.ForEachCheckerParallel(p, ($0: int, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): void => {
-            atomic__from_gostdlib.Uint32.Add(val, ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker__from_checker>).value.TypeCount);
+        Program.ForEachCheckerParallel(p, ($0: int, c: {
+            value: Checker__from_checker;
+        } | undefined): void => {
+            atomic__from_gostdlib.Uint32.Add(val, (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeCount);
         });
         return atomic__from_gostdlib.Uint32.Load(val);
     }
@@ -1510,13 +1530,17 @@ export class Program {
     }
     static $go$private$compiler$collectCheckerDiagnostics(p: {
         value: Program;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, collect: (($0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, collect: (($0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $1: {
+        value: Checker__from_checker;
+    } | undefined, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
         if (!(sourceFile === undefined)) {
             if (Program.SkipTypeChecking(p, sourceFile, false)) {
                 return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
             }
             const __gotots_results_9 = Program.GetTypeCheckerForFileExclusive(p, ctx, sourceFile);
-            let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_9[0];
+            let c: {
+                value: Checker__from_checker;
+            } | undefined = __gotots_results_9[0];
             let done: (() => void) | undefined = __gotots_results_9[1];
             const __gotots_callee_98 = collect;
             const __gotots_argument_351 = ctx;
@@ -1531,10 +1555,14 @@ export class Program {
     }
     static $go$private$compiler$collectCheckerDiagnosticsFromFiles(p: {
         value: Program;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, collect: (($0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>) | undefined): RuntimeSlice<RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>> {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, collect: (($0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, $1: {
+        value: Checker__from_checker;
+    } | undefined, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>) | undefined): RuntimeSlice<RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>> {
         let diagnostics__shadow_1 = RuntimeSlice.make<RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>>(sourceFiles.length, null, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>());
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool === undefined)) {
-            checkerPool.$go$private$compiler$forEachCheckerGroupDo((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool, ctx, sourceFiles, Program.SingleThreaded(p), (c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, fileIndex: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void => {
+            checkerPool.$go$private$compiler$forEachCheckerGroupDo((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerCheckerPool, ctx, sourceFiles, Program.SingleThreaded(p), (c: {
+                value: Checker__from_checker;
+            } | undefined, fileIndex: int, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void => {
                 const __gotots_store_7 = diagnostics__shadow_1;
                 const __gotots_store_8 = fileIndex;
                 const __gotots_callee_101 = collect;
@@ -1561,7 +1589,9 @@ export class Program {
                     const __gotots_argument_364 = ctx;
                     const __gotots_argument_365 = file;
                     const __gotots_results_11 = goInterfaceNonNil<CheckerPool>(__gotots_receiver_50).GetChecker(__gotots_argument_364, __gotots_argument_365);
-                    let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_11[0];
+                    let c: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_11[0];
                     let done: (() => void) | undefined = __gotots_results_11[1];
                     const __gotots_store_9 = diagnostics__shadow_1;
                     const __gotots_store_10 = i;
@@ -1763,7 +1793,9 @@ export class Program {
     }
     static $go$private$compiler$getBindAndCheckDiagnosticsWithChecker(p: {
         value: Program;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, fileChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, fileChecker: {
+        value: Checker__from_checker;
+    } | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
         let compilerOptions: {
             value: CompilerOptions__from_core;
         } | undefined = Program.Options(p);
@@ -1929,7 +1961,9 @@ export class Program {
     }
     static $go$private$compiler$getSemanticDiagnosticsWithChecker(p: {
         value: Program;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, c: {
+        value: Checker__from_checker;
+    } | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
         return Concatenate$PointerTo_Named_ast$Diagnostic(FilterNoEmitSemanticDiagnostics(Program.$go$private$compiler$getBindAndCheckDiagnosticsWithChecker(p, ctx, c, sourceFile), Program.Options(p)), Program.GetIncludeProcessorDiagnostics(p, sourceFile));
     }
     static $go$private$compiler$getSourceFilesToEmit(p: {
@@ -1945,7 +1979,9 @@ export class Program {
     }
     static $go$private$compiler$getSuggestionDiagnosticsWithChecker(p: {
         value: Program;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, fileChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, fileChecker: {
+        value: Checker__from_checker;
+    } | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
         if (Program.SkipTypeChecking(p, sourceFile, false)) {
             return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>();
         }
@@ -2881,13 +2917,13 @@ export class Program {
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programDiagnostics = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programDiagnostics.append(void 0, [diag]);
         };
         Program.RangeResolvedProjectReference(p, (path: Path__from_tspath, config: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined, parent: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined, index: int): bool => {
-            let ref: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined = ParsedCommandLine__from_tsoptions.ProjectReferences(parent).get(index);
+            let ref: ProjectReference__from_core | undefined = ParsedCommandLine__from_tsoptions.ProjectReferences(parent).get(index);
             if (config === undefined) {
                 const __gotots_callee_83 = createDiagnosticForReference;
                 const __gotots_argument_265 = parent;
                 const __gotots_argument_266 = index;
                 const __gotots_argument_267 = $state__diagnostics.File_0_not_found;
-                const __gotots_argument_268 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path)]);
+                const __gotots_argument_268 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path)]);
                 (__gotots_callee_83 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_265, __gotots_argument_266, __gotots_argument_267, __gotots_argument_268);
                 return true;
             }
@@ -2901,7 +2937,7 @@ export class Program {
                         const __gotots_argument_269 = parent;
                         const __gotots_argument_270 = index;
                         const __gotots_argument_271 = $state__diagnostics.Referenced_project_0_must_have_setting_composite_Colon_true;
-                        const __gotots_argument_272 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path)]);
+                        const __gotots_argument_272 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path)]);
                         (__gotots_callee_84 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_269, __gotots_argument_270, __gotots_argument_271, __gotots_argument_272);
                     }
                     if (Tristate_IsTrue__from_core((refOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoEmit)) {
@@ -2909,7 +2945,7 @@ export class Program {
                         const __gotots_argument_273 = parent;
                         const __gotots_argument_274 = index;
                         const __gotots_argument_275 = $state__diagnostics.Referenced_project_0_may_not_disable_emit;
-                        const __gotots_argument_276 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path)]);
+                        const __gotots_argument_276 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path)]);
                         (__gotots_callee_85 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_273, __gotots_argument_274, __gotots_argument_275, __gotots_argument_276);
                     }
                 }
@@ -2919,7 +2955,7 @@ export class Program {
                 const __gotots_argument_277 = parent;
                 const __gotots_argument_278 = index;
                 const __gotots_argument_279 = $state__diagnostics.Cannot_write_file_0_because_it_will_overwrite_tsbuildinfo_file_generated_by_referenced_project_1;
-                const __gotots_argument_280 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(buildInfoFileName), new GoInterfaceAdapter(((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path)]);
+                const __gotots_argument_280 = RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(buildInfoFileName), new GoInterfaceAdapter((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path)]);
                 (__gotots_callee_86 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_277, __gotots_argument_278, __gotots_argument_279, __gotots_argument_280);
                 const __gotots_store_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                 Set$Add$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "hasEmitBlockingDiagnostics"), Program.$go$private$compiler$toPath(p, buildInfoFileName));

@@ -61,7 +61,7 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
     declare readonly [$goContainerStorageType]: ExportsOrImports$Storage;
     static $zero(): ExportsOrImports {
         return new ExportsOrImports({
-            JSONValue: JSONValue.$storageOf(JSONValue.$zero()),
+            JSONValue: JSONValue.$zeroStorage(),
             objectKind: 0
         });
     }
@@ -79,6 +79,12 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
         $hash = GoMapHash.mix($hash, JSONValue.$hash(JSONValue.$fromStorage($source.$storage.JSONValue)));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.objectKind));
         return $hash;
+    }
+    static $zeroStorage(): ExportsOrImports$Storage {
+        return {
+            JSONValue: JSONValue.$zeroStorage(),
+            objectKind: 0
+        };
     }
     declare private readonly then?: never;
     static UnmarshalJSONFrom(e: tsonicTypeScriptRuntime.Location<ExportsOrImports> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {

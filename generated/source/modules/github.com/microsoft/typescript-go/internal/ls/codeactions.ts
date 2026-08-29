@@ -21,7 +21,7 @@ import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export class CodeFixProvider {
     declare private readonly $goType: void;
     public constructor(public ErrorCodes: RuntimeSlice<int32>, public GetCodeActions: (($0: GoInterface | undefined, $1: CodeFixContext | undefined) => [
-        RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+        RuntimeSlice<CodeAction | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ]) | undefined, public FixIds: RuntimeSlice<gostring>, public GetAllCodeActions: (($0: GoInterface | undefined, $1: CodeFixContext | undefined) => [
         CombinedCodeActions | undefined,
@@ -47,20 +47,20 @@ export class CodeAction {
     } | undefined>, public FixID: gostring, public FixAllDescription: gostring) {
     }
     declare private readonly then?: never;
-    static Compare(a: tsonicTypeScriptRuntime.Location<CodeAction> | undefined, b: tsonicTypeScriptRuntime.Location<CodeAction> | undefined): int {
+    static Compare(a: CodeAction | undefined, b: CodeAction | undefined): int {
         {
-            let c = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Compare(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Description, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Description)));
+            let c = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Compare((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description)));
             if (c !== 0) {
                 return c;
             }
         }
         {
-            let c = Compare$int(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Changes.length, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Changes.length);
+            let c = Compare$int((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Changes.length, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Changes.length);
             if (c !== 0) {
                 return c;
             }
         }
-        const __gotots_range_2 = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Changes;
+        const __gotots_range_2 = (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Changes;
         for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
             const __gotots_range_value_2 = __gotots_range_index_2;
             const __gotots_range_value_3 = __gotots_range_2.get(__gotots_range_index_2);
@@ -69,7 +69,7 @@ export class CodeAction {
                 value: TextEdit__from_lsproto;
             } | undefined = __gotots_range_value_3;
             {
-                let c = TextEdit__from_lsproto.Compare(edit, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Changes.get(i));
+                let c = TextEdit__from_lsproto.Compare(edit, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Changes.get(i));
                 if (c !== 0) {
                     return c;
                 }
@@ -163,21 +163,21 @@ export function getOrganizeImportsActionsForKind(requestedKind: CodeActionKind__
 export function containsErrorCode(codes: RuntimeSlice<int32>, code: int32): bool {
     return Contains$SliceOf_int32$int32(codes, code);
 }
-export function convertToLSPCodeAction(action: tsonicTypeScriptRuntime.Location<CodeAction> | undefined, diag: {
+export function convertToLSPCodeAction(action: CodeAction | undefined, diag: {
     value: Diagnostic__from_lsproto;
 } | undefined, uri: DocumentUri__from_lsproto): CommandOrCodeAction__from_lsproto {
     let kind = CodeActionKindQuickFix$constant__from_lsproto();
     const kind$location = tsonicTypeScriptRuntime.boundLocation({}, () => kind, kind$next => kind = kind$next);
     let changes: GoMapValue<DocumentUri__from_lsproto, RuntimeSlice<{
         value: TextEdit__from_lsproto;
-    } | undefined>> = GoMap.make(1, [[uri, ((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Changes]]);
+    } | undefined>> = GoMap.make(1, [[uri, (action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Changes]]);
     const changes$location = tsonicTypeScriptRuntime.boundLocation({}, () => changes, changes$next => changes = changes$next);
     let diagnostics__shadow_1 = RuntimeSlice.literal<{
         value: Diagnostic__from_lsproto;
     } | undefined>([diag]);
     const diagnostics__shadow_1$location = tsonicTypeScriptRuntime.boundLocation({}, () => diagnostics__shadow_1, diagnostics__shadow_1$next => diagnostics__shadow_1 = diagnostics__shadow_1$next);
     return CommandOrCodeAction__from_lsproto.$fromStorage({
-        CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto(((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CodeAction>).value.Description, kind$location, diagnostics__shadow_1$location, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
+        CodeAction: tsonicTypeScriptRuntime.location<CodeAction__from_lsproto>(new CodeAction__from_lsproto((action ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Description, kind$location, diagnostics__shadow_1$location, void 0, void 0, { value: new WorkspaceEdit__from_lsproto(changes$location, void 0, void 0) }, void 0, void 0, void 0)),
         Command: void 0
     });
 }

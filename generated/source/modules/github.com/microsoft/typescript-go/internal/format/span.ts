@@ -444,7 +444,7 @@ export class formatSpanWorker {
         }
         const __gotots_slice_build_4 = goSliceAllocate<TextRange__from_core$Storage>(0, globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Count(goStringSlice(SourceFile__from_ast.Text((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceFile), commentRange.Pos(), commentRange.End()), "\n"))));
         for (let __gotots_slice_build_5 = 0; __gotots_slice_build_5 < __gotots_slice_build_4.capacity; __gotots_slice_build_5++) {
-            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, TextRange__from_core.$storageOf(TextRange__from_core.$zero()));
+            __gotots_slice_build_4.$initialize(__gotots_slice_build_5, TextRange__from_core.$zeroStorage());
         }
         let parts = __gotots_slice_build_4;
         let startPos = commentRange.Pos();
@@ -464,7 +464,7 @@ export class formatSpanWorker {
                 }
                 __gotots_slice_build_7.set(__gotots_slice_build_6.length + 0, TextRange__from_core.$storageOf(NewTextRange__from_core(startPos, endOfLine)));
                 for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-                    __gotots_slice_build_7.$initialize(__gotots_slice_build_9, TextRange__from_core.$storageOf(TextRange__from_core.$zero()));
+                    __gotots_slice_build_7.$initialize(__gotots_slice_build_9, TextRange__from_core.$zeroStorage());
                 }
             }
             parts = __gotots_slice_build_7;
@@ -485,7 +485,7 @@ export class formatSpanWorker {
                 }
                 __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, TextRange__from_core.$storageOf(NewTextRange__from_core(startPos, commentRange.End())));
                 for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
-                    __gotots_slice_build_11.$initialize(__gotots_slice_build_13, TextRange__from_core.$storageOf(TextRange__from_core.$zero()));
+                    __gotots_slice_build_11.$initialize(__gotots_slice_build_13, TextRange__from_core.$zeroStorage());
                 }
             }
             parts = __gotots_slice_build_11;
@@ -822,7 +822,7 @@ export class formatSpanWorker {
                 }
                 __gotots_slice_build_15.set(__gotots_slice_build_14.length + 0, TextChange__from_core.$storageOf(createTextChangeFromStartLength(start, length, "")));
                 for (let __gotots_slice_build_17 = __gotots_slice_build_16; __gotots_slice_build_17 < __gotots_slice_build_15.capacity; __gotots_slice_build_17++) {
-                    __gotots_slice_build_15.$initialize(__gotots_slice_build_17, TextChange__from_core.$storageOf(TextChange__from_core.$zero()));
+                    __gotots_slice_build_15.$initialize(__gotots_slice_build_17, TextChange__from_core.$zeroStorage());
                 }
             }
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).edits = __gotots_slice_build_15;
@@ -844,7 +844,7 @@ export class formatSpanWorker {
                 }
                 __gotots_slice_build_19.set(__gotots_slice_build_18.length + 0, TextChange__from_core.$storageOf(createTextChangeFromStartLength(start, 0, text)));
                 for (let __gotots_slice_build_21 = __gotots_slice_build_20; __gotots_slice_build_21 < __gotots_slice_build_19.capacity; __gotots_slice_build_21++) {
-                    __gotots_slice_build_19.$initialize(__gotots_slice_build_21, TextChange__from_core.$storageOf(TextChange__from_core.$zero()));
+                    __gotots_slice_build_19.$initialize(__gotots_slice_build_21, TextChange__from_core.$zeroStorage());
                 }
             }
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).edits = __gotots_slice_build_19;
@@ -866,7 +866,7 @@ export class formatSpanWorker {
                 }
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, TextChange__from_core.$storageOf(createTextChangeFromStartLength(start, length, newText)));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextChange__from_core.$storageOf(TextChange__from_core.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, TextChange__from_core.$zeroStorage());
                 }
             }
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).edits = __gotots_slice_build_1;

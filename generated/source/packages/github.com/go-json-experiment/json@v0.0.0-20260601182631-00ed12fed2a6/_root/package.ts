@@ -62,7 +62,7 @@ export function $initialize(): void {
     $state.errRawInlinedNotObject = void 0;
     $state.errUnsupportedMutation = void 0;
     $state.errorModalVerb = void 0;
-    $state.__go_export = __go_export__from_jsontext.$storageOf(__go_export__from_jsontext.$zero());
+    $state.__go_export = __go_export__from_jsontext.$zeroStorage();
     $state.float64Type = void 0;
     $state.isZeroerType = void 0;
     $state.jsonMarshalerToType = void 0;

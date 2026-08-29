@@ -72,6 +72,13 @@ export class Locale {
         $hash = GoMapHash.mix($hash, $source.$storage.full === undefined ? 0 : $source.$storage.full.$go$hash());
         return $hash;
     }
+    static $zeroStorage(): Locale$Storage {
+        return {
+            language: 0,
+            locale: 0,
+            full: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export function WithLocale(ctx: GoInterface | undefined, locale: Locale): GoInterface | undefined {

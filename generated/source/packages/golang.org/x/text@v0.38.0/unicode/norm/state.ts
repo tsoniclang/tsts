@@ -1,4 +1,3 @@
-import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { formInfo } from "../../../../../../modules/golang.org/x/text@v0.38.0/unicode/norm/forminfo.js";
 import type { nfcTrie, nfkcTrie } from "../../../../../../modules/golang.org/x/text@v0.38.0/unicode/norm/tables15.0.0.js";
 import type { sparseBlocks$Storage as sparseBlocks__from_norm$Storage, valueRange$Storage as valueRange__from_norm$Storage } from "../../../../../../modules/golang.org/x/text@v0.38.0/unicode/norm/trie.js";
@@ -12,7 +11,7 @@ export class $PackageState {
     declare ccc: GoArray<uint8, 56>;
     declare decomps: GoArray<uint8, 19426>;
     declare errs: RuntimeSlice<GoInterface | undefined>;
-    declare formTable: RuntimeSlice<tsonicTypeScriptRuntime.Location<formInfo> | undefined>;
+    declare formTable: RuntimeSlice<formInfo | undefined>;
     declare nfcData: nfcTrie | undefined;
     declare nfcIndex: GoArray<uint8, 1408>;
     declare nfcSparse: sparseBlocks__from_norm$Storage;

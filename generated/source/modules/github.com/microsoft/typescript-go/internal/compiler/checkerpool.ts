@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Diagnostic as Diagnostic__from_ast, SourceFile as SourceFile__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { Tracer as Tracer__from_checker } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/checker/package.js";
 import type { CompilerOptions as CompilerOptions__from_core, WorkGroup as WorkGroup__from_core } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/core/package.js";
@@ -24,7 +24,9 @@ import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export interface CheckerPool extends GoInterfaceValue {
     GetChecker($argument0: GoInterface | undefined, $argument1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ];
 }
@@ -38,7 +40,11 @@ export class checkerPool {
         value: Program;
     } | undefined, public tracing: {
         value: Tracing__from_tracing;
-    } | undefined, public createCheckersOnce: sync__from_gostdlib.Once, public checkers: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, public locks: RuntimeSlice<tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex> | undefined>, public fileAssociations: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>) {
+    } | undefined, public createCheckersOnce: sync__from_gostdlib.Once, public checkers: RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined>, public locks: RuntimeSlice<tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex> | undefined>, public fileAssociations: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
+        value: Checker__from_checker;
+    } | undefined>) {
     }
     static $copy($source: checkerPool): checkerPool {
         return new checkerPool($source.program, $source.tracing, named_sync.SyncOnceOperations.$copy($source.createCheckersOnce), $source.checkers, $source.locks, $source.fileAssociations);
@@ -47,14 +53,18 @@ export class checkerPool {
     static GetChecker(p: {
         value: checkerPool;
     } | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         if (!(file === undefined)) {
             return checkerPool.$go$private$compiler$getCheckerForFileExclusive(p, ctx, file);
         }
         checkerPool.$go$private$compiler$createCheckers(p);
-        let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(0);
+        let c: {
+            value: Checker__from_checker;
+        } | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(0);
         const __gotots_receiver_12 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.locks.get(0);
         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_12 === void 0 ? void 0 :
             (__gotots_receiver_12 as tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex>).value);
@@ -69,7 +79,9 @@ export class checkerPool {
     } | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined> {
         checkerPool.$go$private$compiler$createCheckers(p);
         let globalDiagnostics = RuntimeSlice.make<RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>>((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.length, null, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>());
-        checkerPool.$go$private$compiler$forEachCheckerParallel(p, (idx: int, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): void => {
+        checkerPool.$go$private$compiler$forEachCheckerParallel(p, (idx: int, checker__shadow_1: {
+            value: Checker__from_checker;
+        } | undefined): void => {
             globalDiagnostics.set(idx, Checker__from_checker.GetGlobalDiagnostics(checker__shadow_1));
         });
         return SortAndDeduplicateDiagnostics(Concat$SliceOf_PointerTo_Named_ast$Diagnostic$PointerTo_Named_ast$Diagnostic(globalDiagnostics));
@@ -117,7 +129,9 @@ export class checkerPool {
     }
     static $go$private$compiler$forEachCheckerGroupDo(p: {
         value: checkerPool;
-    } | undefined, ctx: GoInterface | undefined, files: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, singleThreaded: bool, cb: (($0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $1: int, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => void) | undefined): void {
+    } | undefined, ctx: GoInterface | undefined, files: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, singleThreaded: bool, cb: (($0: {
+        value: Checker__from_checker;
+    } | undefined, $1: int, $2: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => void) | undefined): void {
         checkerPool.$go$private$compiler$createCheckers(p);
         let checkerCount = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.length;
         let wg: WorkGroup__from_core | undefined = NewWorkGroup__from_core(singleThreaded);
@@ -148,8 +162,12 @@ export class checkerPool {
                                 let i = __gotots_range_value_6;
                                 let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_range_value_7;
                                 {
-                                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(checkerIdx);
-                                    if (tsonicTypeScriptRuntime.sameLocation(checker__shadow_1, (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations.lookup(file))) {
+                                    let checker__shadow_1: {
+                                        value: Checker__from_checker;
+                                    } | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers.get(checkerIdx);
+                                    if (checker__shadow_1
+                                        ===
+                                            (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations.lookup(file)) {
                                         const __gotots_callee_4 = cb;
                                         const __gotots_argument_4 = checker__shadow_1;
                                         const __gotots_argument_5 = i;
@@ -195,7 +213,9 @@ export class checkerPool {
     }
     static $go$private$compiler$forEachCheckerParallel(p: {
         value: checkerPool;
-    } | undefined, cb: (($0: int, $1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) => void) | undefined): void {
+    } | undefined, cb: (($0: int, $1: {
+        value: Checker__from_checker;
+    } | undefined) => void) | undefined): void {
         checkerPool.$go$private$compiler$createCheckers(p);
         let wg: WorkGroup__from_core | undefined = NewWorkGroup__from_core(Program.SingleThreaded((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program));
         const __gotots_range_0: checkerPool["checkers"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers;
@@ -203,7 +223,9 @@ export class checkerPool {
             const __gotots_range_value_0 = __gotots_range_index_0;
             const __gotots_range_value_1 = __gotots_range_0.get(__gotots_range_index_0);
             let idx = __gotots_range_value_0;
-            let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_range_value_1;
+            let checker__shadow_1: {
+                value: Checker__from_checker;
+            } | undefined = __gotots_range_value_1;
             const __gotots_receiver_3 = wg;
             const __gotots_argument_2 = (): void => {
                 let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
@@ -262,11 +284,15 @@ export class checkerPool {
     static $go$private$compiler$getCheckerForFileExclusive(p: {
         value: checkerPool;
     } | undefined, ctx: GoInterface | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         checkerPool.$go$private$compiler$createCheckers(p);
-        let c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations.lookup(file);
+        let c: {
+            value: Checker__from_checker;
+        } | undefined = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileAssociations.lookup(file);
         let idx = Index$SliceOf_PointerTo_Named_checker$Checker$PointerTo_Named_checker$Checker((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkers, c);
         const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.locks.get(idx);
         sync__from_gostdlib.Mutex.Lock(__gotots_receiver_3 === void 0 ? void 0 :
@@ -280,7 +306,9 @@ export class checkerPool {
     static $go$private$compiler$getCheckerForFileNonExclusive(p: {
         value: checkerPool;
     } | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         checkerPool.$go$private$compiler$createCheckers(p);
@@ -289,7 +317,9 @@ export class checkerPool {
     static $go$private$compiler$getCheckerNonExclusive(p: {
         value: checkerPool;
     } | undefined): [
-        tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined,
+        {
+            value: Checker__from_checker;
+        } | undefined,
         (() => void) | undefined
     ] {
         checkerPool.$go$private$compiler$createCheckers(p);
@@ -317,7 +347,9 @@ export function newCheckerPoolWithTracing(program: {
     checkerCount = globalThis.Math.max(globalThis.Math.min(checkerCount, (program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles.files.length, 256), 1);
     let pool: {
         value: checkerPool;
-    } | undefined = { value: new checkerPool(program, tr, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.make<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>(checkerCount, null, void 0), RuntimeSlice.make<tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex> | undefined>(checkerCount, null, void 0), GoMap.nil()) };
+    } | undefined = { value: new checkerPool(program, tr, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.make<{
+            value: Checker__from_checker;
+        } | undefined>(checkerCount, null, void 0), RuntimeSlice.make<tsonicTypeScriptRuntime.Location<sync__from_gostdlib.Mutex> | undefined>(checkerCount, null, void 0), GoMap.nil()) };
     return pool;
 }
 export function noop(): void {

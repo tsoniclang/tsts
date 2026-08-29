@@ -18,14 +18,14 @@ export function $initialize(): void {
     Macro = Macro$constant();
     const __gotots_array_build_18 = goArrayAllocate<FromTo__from_language$Storage, 193>(193);
     for (let __gotots_array_build_19 = 0; __gotots_array_build_19 < 193; __gotots_array_build_19++) {
-        __gotots_array_build_18.set(__gotots_array_build_19, FromTo.$storageOf(FromTo.$zero()));
+        __gotots_array_build_18.set(__gotots_array_build_19, FromTo.$zeroStorage());
     }
     $state.AliasMap = __gotots_array_build_18;
     $state.AliasTypes = GoArray.zero<AliasType, 193>(193, 0);
     $state.ErrDuplicateKey = void 0;
     $state.ErrMissingLikelyTagsData = void 0;
     $state.ErrSyntax = void 0;
-    $state.Und = Tag.$storageOf(Tag.$zero());
+    $state.Und = Tag.$zeroStorage();
     $state.altLangIndex = GoArray.zero<uint16, 6>(6, 0);
     $state.altRegionIDs = GoArray.zero<uint16, 11>(11, 0);
     $state.altTagIndex = GoArray.zero<uint8, 8>(8, 0);
@@ -38,39 +38,39 @@ export function $initialize(): void {
     $state.langNoIndex = GoArray.zero<uint8, 2197>(2197, 0);
     const __gotots_array_build_24 = goArrayAllocate<likelyScriptRegion__from_language$Storage, 1330>(1330);
     for (let __gotots_array_build_25 = 0; __gotots_array_build_25 < 1330; __gotots_array_build_25++) {
-        __gotots_array_build_24.set(__gotots_array_build_25, likelyScriptRegion.$storageOf(likelyScriptRegion.$zero()));
+        __gotots_array_build_24.set(__gotots_array_build_25, likelyScriptRegion.$zeroStorage());
     }
     $state.likelyLang = __gotots_array_build_24;
     const __gotots_array_build_26 = goArrayAllocate<likelyScriptRegion__from_language$Storage, 97>(97);
     for (let __gotots_array_build_27 = 0; __gotots_array_build_27 < 97; __gotots_array_build_27++) {
-        __gotots_array_build_26.set(__gotots_array_build_27, likelyScriptRegion.$storageOf(likelyScriptRegion.$zero()));
+        __gotots_array_build_26.set(__gotots_array_build_27, likelyScriptRegion.$zeroStorage());
     }
     $state.likelyLangList = __gotots_array_build_26;
     const __gotots_array_build_28 = goArrayAllocate<likelyLangScript__from_language$Storage, 359>(359);
     for (let __gotots_array_build_29 = 0; __gotots_array_build_29 < 359; __gotots_array_build_29++) {
-        __gotots_array_build_28.set(__gotots_array_build_29, likelyLangScript.$storageOf(likelyLangScript.$zero()));
+        __gotots_array_build_28.set(__gotots_array_build_29, likelyLangScript.$zeroStorage());
     }
     $state.likelyRegion = __gotots_array_build_28;
     const __gotots_array_build_32 = goArrayAllocate<likelyTag__from_language$Storage, 33>(33);
     for (let __gotots_array_build_33 = 0; __gotots_array_build_33 < 33; __gotots_array_build_33++) {
-        __gotots_array_build_32.set(__gotots_array_build_33, likelyTag.$storageOf(likelyTag.$zero()));
+        __gotots_array_build_32.set(__gotots_array_build_33, likelyTag.$zeroStorage());
     }
     $state.likelyRegionGroup = __gotots_array_build_32;
     const __gotots_array_build_30 = goArrayAllocate<likelyLangScript__from_language$Storage, 93>(93);
     for (let __gotots_array_build_31 = 0; __gotots_array_build_31 < 93; __gotots_array_build_31++) {
-        __gotots_array_build_30.set(__gotots_array_build_31, likelyLangScript.$storageOf(likelyLangScript.$zero()));
+        __gotots_array_build_30.set(__gotots_array_build_31, likelyLangScript.$zeroStorage());
     }
     $state.likelyRegionList = __gotots_array_build_30;
     const __gotots_array_build_22 = goArrayAllocate<likelyLangRegion__from_language$Storage, 263>(263);
     for (let __gotots_array_build_23 = 0; __gotots_array_build_23 < 263; __gotots_array_build_23++) {
-        __gotots_array_build_22.set(__gotots_array_build_23, likelyLangRegion.$storageOf(likelyLangRegion.$zero()));
+        __gotots_array_build_22.set(__gotots_array_build_23, likelyLangRegion.$zeroStorage());
     }
     $state.likelyScript = __gotots_array_build_22;
     $state.m49 = GoArray.zero<int16, 359>(359, 0);
     $state.m49Index = GoArray.zero<int16, 9>(9, 0);
     const __gotots_array_build_34 = goArrayAllocate<parentRel__from_language$Storage, 5>(5);
     for (let __gotots_array_build_35 = 0; __gotots_array_build_35 < 5; __gotots_array_build_35++) {
-        __gotots_array_build_34.set(__gotots_array_build_35, parentRel.$storageOf(parentRel.$zero()));
+        __gotots_array_build_34.set(__gotots_array_build_35, parentRel.$zeroStorage());
     }
     $state.parents = __gotots_array_build_34;
     $state.regionContainment = GoArray.zero<uint64, 33>(33, 0n);
@@ -79,7 +79,7 @@ export function $initialize(): void {
     $state.regionInclusionNext = GoArray.zero<uint8, 73>(73, 0);
     const __gotots_array_build_20 = goArrayAllocate<FromTo__from_language$Storage, 20>(20);
     for (let __gotots_array_build_21 = 0; __gotots_array_build_21 < 20; __gotots_array_build_21++) {
-        __gotots_array_build_20.set(__gotots_array_build_21, FromTo.$storageOf(FromTo.$zero()));
+        __gotots_array_build_20.set(__gotots_array_build_21, FromTo.$zeroStorage());
     }
     $state.regionOldMap = __gotots_array_build_20;
     $state.regionTypes = GoArray.zero<uint8, 359>(359, 0);
@@ -125,7 +125,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_36 = goArrayAllocate<FromTo__from_language$Storage, 193>(193);
         for (let __gotots_array_build_37 = 0; __gotots_array_build_37 < 193; __gotots_array_build_37++) {
-            __gotots_array_build_36.set(__gotots_array_build_37, FromTo.$storageOf(FromTo.$zero()));
+            __gotots_array_build_36.set(__gotots_array_build_37, FromTo.$zeroStorage());
         }
         __gotots_array_build_36.set(0, (void FromTo.$storageOf, (void FromTo.$fromStorage,
             {
@@ -1109,7 +1109,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_38 = goArrayAllocate<FromTo__from_language$Storage, 20>(20);
         for (let __gotots_array_build_39 = 0; __gotots_array_build_39 < 20; __gotots_array_build_39++) {
-            __gotots_array_build_38.set(__gotots_array_build_39, FromTo.$storageOf(FromTo.$zero()));
+            __gotots_array_build_38.set(__gotots_array_build_39, FromTo.$zeroStorage());
         }
         __gotots_array_build_38.set(0, (void FromTo.$storageOf, (void FromTo.$fromStorage,
             {
@@ -1228,7 +1228,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_40 = goArrayAllocate<likelyLangRegion__from_language$Storage, 263>(263);
         for (let __gotots_array_build_41 = 0; __gotots_array_build_41 < 263; __gotots_array_build_41++) {
-            __gotots_array_build_40.set(__gotots_array_build_41, likelyLangRegion.$storageOf(likelyLangRegion.$zero()));
+            __gotots_array_build_40.set(__gotots_array_build_41, likelyLangRegion.$zeroStorage());
         }
         __gotots_array_build_40.set(1, (void likelyLangRegion.$storageOf, (void likelyLangRegion.$fromStorage,
             {
@@ -1950,7 +1950,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_42 = goArrayAllocate<likelyScriptRegion__from_language$Storage, 1330>(1330);
         for (let __gotots_array_build_43 = 0; __gotots_array_build_43 < 1330; __gotots_array_build_43++) {
-            __gotots_array_build_42.set(__gotots_array_build_43, likelyScriptRegion.$storageOf(likelyScriptRegion.$zero()));
+            __gotots_array_build_42.set(__gotots_array_build_43, likelyScriptRegion.$zeroStorage());
         }
         __gotots_array_build_42.set(0, (void likelyScriptRegion.$storageOf, (void likelyScriptRegion.$fromStorage,
             {
@@ -9847,7 +9847,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_44 = goArrayAllocate<likelyScriptRegion__from_language$Storage, 97>(97);
         for (let __gotots_array_build_45 = 0; __gotots_array_build_45 < 97; __gotots_array_build_45++) {
-            __gotots_array_build_44.set(__gotots_array_build_45, likelyScriptRegion.$storageOf(likelyScriptRegion.$zero()));
+            __gotots_array_build_44.set(__gotots_array_build_45, likelyScriptRegion.$zeroStorage());
         }
         __gotots_array_build_44.set(0, (void likelyScriptRegion.$storageOf, (void likelyScriptRegion.$fromStorage,
             {
@@ -10436,7 +10436,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_46 = goArrayAllocate<likelyLangScript__from_language$Storage, 359>(359);
         for (let __gotots_array_build_47 = 0; __gotots_array_build_47 < 359; __gotots_array_build_47++) {
-            __gotots_array_build_46.set(__gotots_array_build_47, likelyLangScript.$storageOf(likelyLangScript.$zero()));
+            __gotots_array_build_46.set(__gotots_array_build_47, likelyLangScript.$zeroStorage());
         }
         __gotots_array_build_46.set(34, (void likelyLangScript.$storageOf, (void likelyLangScript.$fromStorage,
             {
@@ -11649,7 +11649,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_48 = goArrayAllocate<likelyLangScript__from_language$Storage, 93>(93);
         for (let __gotots_array_build_49 = 0; __gotots_array_build_49 < 93; __gotots_array_build_49++) {
-            __gotots_array_build_48.set(__gotots_array_build_49, likelyLangScript.$storageOf(likelyLangScript.$zero()));
+            __gotots_array_build_48.set(__gotots_array_build_49, likelyLangScript.$zeroStorage());
         }
         __gotots_array_build_48.set(0, (void likelyLangScript.$storageOf, (void likelyLangScript.$fromStorage,
             {
@@ -12214,7 +12214,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_50 = goArrayAllocate<likelyTag__from_language$Storage, 33>(33);
         for (let __gotots_array_build_51 = 0; __gotots_array_build_51 < 33; __gotots_array_build_51++) {
-            __gotots_array_build_50.set(__gotots_array_build_51, likelyTag.$storageOf(likelyTag.$zero()));
+            __gotots_array_build_50.set(__gotots_array_build_51, likelyTag.$zeroStorage());
         }
         __gotots_array_build_50.set(1, (void likelyTag.$storageOf, (void likelyTag.$fromStorage,
             {
@@ -12425,7 +12425,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_52 = goArrayAllocate<parentRel__from_language$Storage, 5>(5);
         for (let __gotots_array_build_53 = 0; __gotots_array_build_53 < 5; __gotots_array_build_53++) {
-            __gotots_array_build_52.set(__gotots_array_build_53, parentRel.$storageOf(parentRel.$zero()));
+            __gotots_array_build_52.set(__gotots_array_build_53, parentRel.$zeroStorage());
         }
         __gotots_array_build_52.set(0, (void parentRel.$storageOf, (void parentRel.$fromStorage,
             {

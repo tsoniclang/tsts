@@ -38,19 +38,19 @@ export class fixInfo {
     declare private readonly then?: never;
 }
 export function getImportCodeActions(ctx: GoInterface | undefined, fixContext: CodeFixContext | undefined): [
-    RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+    RuntimeSlice<CodeAction | undefined>,
     $goInterface$Interface_Method_Error_void_to_string | undefined
 ] {
     const __gotots_results_0 = getFixInfos(ctx, fixContext, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ErrorCode, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Span.Pos());
     let info = __gotots_results_0[0];
     let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_0[1];
     if (!(err === undefined)) {
-        return [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), err];
+        return [RuntimeSlice.nil<CodeAction | undefined>(), err];
     }
     if (info.length === 0) {
-        return [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), void 0];
+        return [RuntimeSlice.nil<CodeAction | undefined>(), void 0];
     }
-    let actions = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>();
+    let actions = RuntimeSlice.nil<CodeAction | undefined>();
     const __gotots_range_0 = info;
     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
         const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
@@ -58,9 +58,7 @@ export function getImportCodeActions(ctx: GoInterface | undefined, fixContext: C
         const __gotots_results_1 = Fix__from_autoimport.Edits((fixInfo__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fix, ctx, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile, Program__from_compiler.Options((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program), LanguageService.FormatOptions((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS), ((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).converters, LanguageService.UserPreferences((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS));
         let edits = __gotots_results_1[0];
         let description = __gotots_results_1[1];
-        actions = actions.append(void 0, [
-            tsonicTypeScriptRuntime.location<CodeAction>(new CodeAction(description, edits, importFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Add_all_missing_imports, FromContext__from_locale(ctx), RuntimeSlice.nil<$goInterface$Interface_void | undefined>()))),
-        ]);
+        actions = actions.append(void 0, [new CodeAction(description, edits, importFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Add_all_missing_imports, FromContext__from_locale(ctx), RuntimeSlice.nil<$goInterface$Interface_void | undefined>())),]);
     }
     return [actions, void 0];
 }
@@ -106,7 +104,9 @@ export function getAllImportCodeActions(ctx: GoInterface | undefined, fixContext
                     view = LanguageService.$go$private$ls$getCurrentAutoImportView((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile);
                 }
                 const __gotots_results_3 = Program__from_compiler.GetTypeChecker((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_3[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_3[0];
                 let done: (() => void) | undefined = __gotots_results_3[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -214,7 +214,9 @@ export function getFixInfos(ctx: GoInterface | undefined, fixContext: CodeFixCon
                 }
                 else if (errorCode === Message__from_diagnostics.Code($state__diagnostics.X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type)) {
                     const __gotots_results_6 = Program__from_compiler.GetTypeChecker((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx);
-                    let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_6[0];
+                    let ch: {
+                        value: Checker__from_checker;
+                    } | undefined = __gotots_results_6[0];
                     let done: (() => void) | undefined = __gotots_results_6[1];
                     const __gotots_callee_0: (() => void) | undefined = done;
                     const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -318,7 +320,9 @@ export function getFixesInfoForUMDImport(ctx: GoInterface | undefined, fixContex
         try {
             __gotots_return_block_0: {
                 const __gotots_results_9 = Program__from_compiler.GetTypeChecker((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_9[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_9[0];
                 let done: (() => void) | undefined = __gotots_results_9[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -380,7 +384,9 @@ export function getFixesInfoForUMDImport(ctx: GoInterface | undefined, fixContex
     }
     return __gotots_return_0;
 }
-export function getUmdSymbol(token: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getUmdSymbol(token: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     let umdSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = void 0;
     if (IsIdentifier__from_ast(token)) {
         umdSymbol = Checker__from_checker.GetResolvedSymbol(ch, token);
@@ -417,7 +423,9 @@ export function getFixesInfoForNonUMDImport(ctx: GoInterface | undefined, fixCon
         try {
             __gotots_return_block_0: {
                 const __gotots_results_11 = Program__from_compiler.GetTypeChecker((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, ctx);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_11[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_11[0];
                 let done: (() => void) | undefined = __gotots_results_11[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -516,7 +524,9 @@ export function getTypeOnlyPromotionFix(ctx: GoInterface | undefined, sourceFile
         try {
             __gotots_return_block_0: {
                 const __gotots_results_10 = Program__from_compiler.GetTypeChecker(program, ctx);
-                let ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_10[0];
+                let ch: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_10[0];
                 let done: (() => void) | undefined = __gotots_results_10[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -593,21 +603,23 @@ export class symbolNameInfo {
     public set isTypeOnly($value: bool) {
         this.$storage.isTypeOnly = $value;
     }
-    static $zero(): symbolNameInfo {
-        return new symbolNameInfo({
-            name: "",
-            isTypeOnly: false
-        });
-    }
     static $copy($source: symbolNameInfo): symbolNameInfo {
         return new symbolNameInfo({
             name: $source.$storage.name,
             isTypeOnly: $source.$storage.isTypeOnly
         });
     }
+    static $zeroStorage(): symbolNameInfo$Storage {
+        return {
+            name: "",
+            isTypeOnly: false
+        };
+    }
     declare private readonly then?: never;
 }
-export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, symbolToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, compilerOptions: {
+export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined, symbolToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, compilerOptions: {
     value: CompilerOptions__from_core;
 } | undefined): RuntimeSlice<symbolNameInfo$Storage> {
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = Node__from_ast.$storageOf(((symbolToken ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
@@ -644,7 +656,7 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
                                 isTypeOnly: false
                             })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, symbolNameInfo.$storageOf(symbolNameInfo.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, symbolNameInfo.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_1;
@@ -672,7 +684,7 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
                                 isTypeOnly: true
                             })));
                         for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, symbolNameInfo.$storageOf(symbolNameInfo.$zero()));
+                            __gotots_slice_build_5.$initialize(__gotots_slice_build_7, symbolNameInfo.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_5;
@@ -707,7 +719,7 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
                         isTypeOnly: nsIsTypeOnly
                     })));
                 for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, symbolNameInfo.$storageOf(symbolNameInfo.$zero()));
+                    __gotots_slice_build_9.$initialize(__gotots_slice_build_11, symbolNameInfo.$zeroStorage());
                 }
             }
             result = __gotots_slice_build_9;
@@ -729,7 +741,9 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
             })),
     ]);
 }
-export function needsJsxNamespaceFix(jsxNamespace: gostring, symbolToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): bool {
+export function needsJsxNamespaceFix(jsxNamespace: gostring, symbolToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined): bool {
     if (IsIntrinsicJsxName__from_scanner(Node__from_ast.Text(symbolToken))) {
         return true;
     }

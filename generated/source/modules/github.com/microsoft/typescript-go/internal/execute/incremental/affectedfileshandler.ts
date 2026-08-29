@@ -250,7 +250,9 @@ export class affectedFilesHandler {
             });
         }
         let invalidateJsFiles = false;
-        let typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = void 0;
+        let typeChecker: {
+            value: Checker__from_checker;
+        } | undefined = void 0;
         let done: (() => void) | undefined;
         if (!(DeclarationBase__from_ast.$storageOf(((affectedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.DeclarationBase).Symbol === undefined)) {
             const __gotots_range_1 = new SymbolTable__from_ast(Symbol__from_ast.$storageOf(((DeclarationBase__from_ast.$storageOf(((affectedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.DeclarationBase).Symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Exports).$value;

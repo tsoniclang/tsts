@@ -1130,9 +1130,9 @@ export class encoderState {
             }
         }
         let opts2 = Struct__from_jsonopts.$fromStorage({
-            Flags: Flags__from_jsonflags.$storageOf(Flags__from_jsonflags.$zero()),
-            CoderValues: CoderValues__from_jsonopts.$storageOf(CoderValues__from_jsonopts.$zero()),
-            ArshalValues: ArshalValues__from_jsonopts.$storageOf(ArshalValues__from_jsonopts.$zero())
+            Flags: Flags__from_jsonflags.$zeroStorage(),
+            CoderValues: CoderValues__from_jsonopts.$zeroStorage(),
+            ArshalValues: ArshalValues__from_jsonopts.$zeroStorage()
         });
         const opts2$location = tsonicTypeScriptRuntime.boundLocation({}, () => opts2, opts2$next => opts2 = opts2$next);
         Struct__from_jsonopts.Join(opts2$location, opts);

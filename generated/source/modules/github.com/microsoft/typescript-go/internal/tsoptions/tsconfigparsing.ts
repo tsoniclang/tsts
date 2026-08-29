@@ -83,28 +83,28 @@ export class configFileSpecs {
         return new configFileSpecs($source.filesSpecs, $source.includeSpecs, $source.excludeSpecs, $source.validatedFilesSpec, $source.validatedIncludeSpecs, $source.validatedExcludeSpecs, $source.validatedFilesSpecBeforeSubstitution, $source.validatedIncludeSpecsBeforeSubstitution, $source.isDefaultIncludeSpec);
     }
     declare private readonly then?: never;
-    static $go$private$tsoptions$getMatchedFileSpec(c: tsonicTypeScriptRuntime.Location<configFileSpecs> | undefined, fileName: gostring, comparePathsOptions: ComparePathsOptions__from_tspath): gostring {
-        if (((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedFilesSpec.length === 0) {
+    static $go$private$tsoptions$getMatchedFileSpec(c: configFileSpecs | undefined, fileName: gostring, comparePathsOptions: ComparePathsOptions__from_tspath): gostring {
+        if ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedFilesSpec.length === 0) {
             return "";
         }
         let filePath = ToPath__from_tspath(fileName, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames);
-        const __gotots_range_25 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedFilesSpec;
+        const __gotots_range_25 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedFilesSpec;
         for (let __gotots_range_index_18 = 0; __gotots_range_index_18 < __gotots_range_25.length; __gotots_range_index_18++) {
             const __gotots_range_value_32 = __gotots_range_index_18;
             const __gotots_range_value_33 = __gotots_range_25.get(__gotots_range_index_18);
             let index = __gotots_range_value_32;
             let spec = __gotots_range_value_33;
             if (ToPath__from_tspath(spec, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames).$value === filePath.$value) {
-                return ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedFilesSpecBeforeSubstitution.get(index);
+                return (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedFilesSpecBeforeSubstitution.get(index);
             }
         }
         return "";
     }
-    static $go$private$tsoptions$getMatchedIncludeSpec(c: tsonicTypeScriptRuntime.Location<configFileSpecs> | undefined, fileName: gostring, comparePathsOptions: ComparePathsOptions__from_tspath): gostring {
-        if (((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedIncludeSpecs.length === 0) {
+    static $go$private$tsoptions$getMatchedIncludeSpec(c: configFileSpecs | undefined, fileName: gostring, comparePathsOptions: ComparePathsOptions__from_tspath): gostring {
+        if ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedIncludeSpecs.length === 0) {
             return "";
         }
-        const __gotots_range_26 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedIncludeSpecs;
+        const __gotots_range_26 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedIncludeSpecs;
         for (let __gotots_range_index_19 = 0; __gotots_range_index_19 < __gotots_range_26.length; __gotots_range_index_19++) {
             const __gotots_range_value_34 = __gotots_range_index_19;
             const __gotots_range_value_35 = __gotots_range_26.get(__gotots_range_index_19);
@@ -112,10 +112,21 @@ export class configFileSpecs {
             let spec = __gotots_range_value_35;
             let includeMatcher: SpecMatcher__from_vfsmatch | undefined = NewSpecMatcher__from_vfsmatch(RuntimeSlice.literal<gostring>([spec]), comparePathsOptions.CurrentDirectory, UsageFiles$constant__from_vfsmatch(), comparePathsOptions.UseCaseSensitiveFileNames);
             if (!(includeMatcher === undefined) && SpecMatcher__from_vfsmatch.MatchString(includeMatcher, fileName)) {
-                return ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileSpecs>).value.validatedIncludeSpecsBeforeSubstitution.get(index);
+                return (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).validatedIncludeSpecsBeforeSubstitution.get(index);
             }
         }
         return "";
+    }
+    $tsonicReplace($value: configFileSpecs): void {
+        this.filesSpecs = $value.filesSpecs;
+        this.includeSpecs = $value.includeSpecs;
+        this.excludeSpecs = $value.excludeSpecs;
+        this.validatedFilesSpec = $value.validatedFilesSpec;
+        this.validatedIncludeSpecs = $value.validatedIncludeSpecs;
+        this.validatedExcludeSpecs = $value.validatedExcludeSpecs;
+        this.validatedFilesSpecBeforeSubstitution = $value.validatedFilesSpecBeforeSubstitution;
+        this.validatedIncludeSpecsBeforeSubstitution = $value.validatedIncludeSpecsBeforeSubstitution;
+        this.isDefaultIncludeSpec = $value.isDefaultIncludeSpec;
     }
 }
 export type FileExtensionInfo$Storage = {
@@ -151,13 +162,6 @@ export class FileExtensionInfo {
     public set ScriptKind($value: ScriptKind__from_core) {
         this.$storage.ScriptKind = $value;
     }
-    static $zero(): FileExtensionInfo {
-        return new FileExtensionInfo({
-            Extension: "",
-            IsMixedContent: false,
-            ScriptKind: 0
-        });
-    }
     static $copy($source: FileExtensionInfo): FileExtensionInfo {
         return new FileExtensionInfo({
             Extension: $source.$storage.Extension,
@@ -174,6 +178,13 @@ export class FileExtensionInfo {
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.IsMixedContent));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.ScriptKind));
         return $hash;
+    }
+    static $zeroStorage(): FileExtensionInfo$Storage {
+        return {
+            Extension: "",
+            IsMixedContent: false,
+            ScriptKind: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -327,7 +338,7 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: tsonicTypeScriptRunti
 }
 export class TsConfigSourceFile {
     declare private readonly $goType: void;
-    public constructor(public ExtendedSourceFiles: RuntimeSlice<gostring>, public configFileSpecs: tsonicTypeScriptRuntime.Location<configFileSpecs> | undefined, public SourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) {
+    public constructor(public ExtendedSourceFiles: RuntimeSlice<gostring>, public configFileSpecs: configFileSpecs | undefined, public SourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) {
     }
     static $copy($source: TsConfigSourceFile): TsConfigSourceFile {
         return new TsConfigSourceFile($source.ExtendedSourceFiles, $source.configFileSpecs, $source.SourceFile);
@@ -348,7 +359,7 @@ export function NewTsconfigSourceFileFromFilePath(configFileName: gostring, conf
     let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = ParseSourceFile__from_parser(SourceFileParseOptions__from_ast.$fromStorage({
         FileName: configFileName,
         Path: configPath.$value,
-        ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+        ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
     }), configSourceText, ScriptKindJSON$constant__from_core());
     return { value: new TsConfigSourceFile(RuntimeSlice.nil<gostring>(), void 0, sourceFile) };
 }
@@ -1282,7 +1293,7 @@ export function readJsonConfigFile(fileName: gostring, path: Path__from_tspath, 
             { value: new TsConfigSourceFile(RuntimeSlice.nil<gostring>(), void 0, ParseSourceFile__from_parser(SourceFileParseOptions__from_ast.$fromStorage({
                     FileName: fileName,
                     Path: path.$value,
-                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+                    ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
                 }), text, ScriptKindJSON$constant__from_core())) }, diagnostic];
     }
     else {
@@ -1291,7 +1302,7 @@ export function readJsonConfigFile(fileName: gostring, path: Path__from_tspath, 
         const __gotots_argument_17 = SourceFileParseOptions__from_ast.$fromStorage({
             FileName: fileName,
             Path: path.$value,
-            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(ExternalModuleIndicatorOptions__from_ast.$zero())
+            ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$zeroStorage()
         });
         const __gotots_argument_18 = "";
         const __gotots_argument_19 = void 0;
@@ -1915,10 +1926,8 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
         }
     }
     let configFileSpecs__shadow_1 = new configFileSpecs(new $goInterfaceAdapter$SliceOf_Interface_void(fileSpecs.sliceValue), new $goInterfaceAdapter$SliceOf_Interface_void(includeSpecs.sliceValue), new $goInterfaceAdapter$SliceOf_Interface_void(excludeSpecs.sliceValue), validatedFilesSpec, validatedIncludeSpecs, validatedExcludeSpecs, validatedFilesSpecBeforeSubstitution, validatedIncludeSpecsBeforeSubstitution, isDefaultIncludeSpec);
-    const configFileSpecs__shadow_1$location = tsonicTypeScriptRuntime.boundLocation({}, () => configFileSpecs__shadow_1, configFileSpecs__shadow_1$next => configFileSpecs__shadow_1 = configFileSpecs__shadow_1$next);
     if (!(sourceFile === undefined)) {
-        (sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileSpecs =
-            configFileSpecs__shadow_1$location;
+        (sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFileSpecs = configFileSpecs__shadow_1;
     }
     let getFileNames: (($0: gostring) => [
         RuntimeSlice<gostring>,
@@ -1961,8 +1970,8 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
         }
         return [fileNames__shadow_1, literalFileNamesLen__shadow_1];
     };
-    let getProjectReferences: (($0: gostring) => RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>) | undefined = (basePath__shadow_1: gostring): RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined> => {
-        let projectReferences = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>();
+    let getProjectReferences: (($0: gostring) => RuntimeSlice<ProjectReference__from_core | undefined>) | undefined = (basePath__shadow_1: gostring): RuntimeSlice<ProjectReference__from_core | undefined> => {
+        let projectReferences = RuntimeSlice.nil<ProjectReference__from_core | undefined>();
         const __gotots_callee_9 = getPropFromRaw;
         const __gotots_argument_55 = "references";
         const __gotots_argument_56 = (element: GoInterface | undefined): bool => {
@@ -1971,7 +1980,7 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
         const __gotots_argument_57 = "object";
         let newReferencesOfRaw = (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_55, __gotots_argument_56, __gotots_argument_57);
         if (!newReferencesOfRaw.sliceValue.isNil()) {
-            projectReferences = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>([]);
+            projectReferences = RuntimeSlice.literal<ProjectReference__from_core | undefined>([]);
             const __gotots_range_4 = newReferencesOfRaw.sliceValue;
             for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_4.length; __gotots_range_index_2++) {
                 const __gotots_range_value_7 = __gotots_range_4.get(__gotots_range_index_2);
@@ -1979,16 +1988,14 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
                 const __gotots_range_5 = parseProjectReference(reference);
                 for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_5.length; __gotots_range_index_3++) {
                     const __gotots_range_value_8 = __gotots_range_5.get(__gotots_range_index_3);
-                    let ref: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined = __gotots_range_value_8;
-                    if (((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path === "") {
+                    let ref: ProjectReference__from_core | undefined = __gotots_range_value_8;
+                    if ((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path === "") {
                         if (sourceFile === undefined) {
                             errors = errors.append(void 0, [NewCompilerDiagnostic__from_ast($state__diagnostics.Compiler_option_0_requires_a_value_of_type_1, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string("reference.path"), new $goInterfaceAdapter$string("string")]))]);
                         }
                     }
                     else {
-                        projectReferences = projectReferences.append(void 0, [
-                            tsonicTypeScriptRuntime.location<ProjectReference__from_core>(new ProjectReference__from_core(GetNormalizedAbsolutePath__from_tspath(((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path, basePath__shadow_1), ((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Path, ((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProjectReference__from_core>).value.Circular)),
-                        ]);
+                        projectReferences = projectReferences.append(void 0, [new ProjectReference__from_core(GetNormalizedAbsolutePath__from_tspath((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path, basePath__shadow_1), (ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Path, (ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Circular),]);
                     }
                 }
             }
@@ -2006,7 +2013,7 @@ export function parseJsonConfigFileContentWorker(json: tsonicTypeScriptRuntime.L
     const __gotots_callee_11 = getProjectReferences;
     const __gotots_argument_59 = basePathForFileNames;
     const __gotots_field_6 = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_59);
-    const __gotots_field_8 = tsonicTypeScriptRuntime.location<ParsedOptions__from_core>(new ParsedOptions__from_core(__gotots_field_3, void 0, __gotots_field_4, __gotots_field_5, __gotots_field_6));
+    const __gotots_field_8 = new ParsedOptions__from_core(__gotots_field_3, void 0, __gotots_field_4, __gotots_field_5, __gotots_field_6);
     const __gotots_field_9 = sourceFile;
     const __gotots_field_10: parsedTsconfig["raw"] = (parsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.raw;
     const __gotots_field_11 = errors;

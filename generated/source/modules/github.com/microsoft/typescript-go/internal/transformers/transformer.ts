@@ -20,37 +20,37 @@ export class Transformer {
         return new Transformer(void 0, void 0, void 0);
     }
     declare private readonly then?: never;
-    static EmitContext(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined): {
+    static EmitContext(tx: Transformer | undefined): {
         value: EmitContext__from_printer;
     } | undefined {
-        return ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.emitContext;
+        return (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext;
     }
-    static Factory(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined): {
+    static Factory(tx: Transformer | undefined): {
         value: NodeFactory__from_printer;
     } | undefined {
-        return ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.factory;
+        return (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory;
     }
-    static NewTransformer(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, visit: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, emitContext: {
+    static NewTransformer(tx: Transformer | undefined, visit: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, emitContext: {
         value: EmitContext__from_printer;
-    } | undefined): tsonicTypeScriptRuntime.Location<Transformer> | undefined {
-        if (!(((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.emitContext === undefined)) {
+    } | undefined): Transformer | undefined {
+        if (!((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext === undefined)) {
             const __gotots_argument_0 = new GoInterfaceAdapter("Transformer already initialized");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }
         if (emitContext === undefined) {
             emitContext = NewEmitContext__from_printer();
         }
-        ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.emitContext = emitContext;
-        ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.factory = (emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory;
-        ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.visitor = EmitContext__from_printer.NewNodeVisitor(emitContext, visit);
+        (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext = emitContext;
+        (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory = (emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Factory;
+        (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).visitor = EmitContext__from_printer.NewNodeVisitor(emitContext, visit);
         return tx;
     }
-    static TransformSourceFile(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
-        return NodeVisitor__from_ast.VisitSourceFile(((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.visitor, file);
+    static TransformSourceFile(tx: Transformer | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
+        return NodeVisitor__from_ast.VisitSourceFile((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).visitor, file);
     }
-    static Visitor(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined): {
+    static Visitor(tx: Transformer | undefined): {
         value: NodeVisitor__from_ast;
     } | undefined {
-        return ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Transformer>).value.visitor;
+        return (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).visitor;
     }
 }

@@ -13,10 +13,10 @@ import * as fmt__from_gostdlib from "@gotots/gostdlib/fmt.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
-export function shouldRescanLessThanLessThanToken(s: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, containingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, token: Kind__from_ast): bool {
+export function shouldRescanLessThanLessThanToken(s: Scanner__from_scanner | undefined, containingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, token: Kind__from_ast): bool {
     return token === KindLessThanLessThanToken$constant__from_ast() && IsJsxChild__from_ast(containingNode);
 }
-export function scanNavigationToken(s: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined, containingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): Kind__from_ast {
+export function scanNavigationToken(s: Scanner__from_scanner | undefined, containingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): Kind__from_ast {
     let token = Scanner__from_scanner.Token(s);
     if (shouldRescanLessThanLessThanToken(s, containingNode, token)) {
         return Scanner__from_scanner.ReScanJsxToken(s, true);
@@ -189,7 +189,7 @@ export function getTokenAtPosition(sourceFile: tsonicTypeScriptRuntime.Location<
             if (IsTokenKind__from_ast(Node__from_ast.$storageOf(((current ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) || shouldSkipChild(current)) {
                 return current;
             }
-            let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, left);
+            let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, left);
             let end = Node__from_ast.End(current);
             if (!(nodeAfterLeft === undefined)) {
                 end = Node__from_ast.Pos(nodeAfterLeft);
@@ -490,7 +490,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: tsonicTypeScrip
             else {
                 startPos = Node__from_ast.Pos(n);
             }
-            let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, startPos);
+            let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, startPos);
             let tokens = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
             const __gotots_range_2 = rightmostVisitedNodes;
             for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
@@ -604,7 +604,7 @@ export function FindNextToken(previousToken: tsonicTypeScriptRuntime.Location<No
         }
         let startPos = Node__from_ast.End(previousToken);
         if (startPos >= Node__from_ast.Pos(n) && startPos < Node__from_ast.End(n)) {
-            let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(file, startPos);
+            let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(file, startPos);
             let token = Scanner__from_scanner.Token(scanner__shadow_1);
             let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_1);
             let tokenEnd = Scanner__from_scanner.TokenEnd(scanner__shadow_1);
@@ -680,7 +680,7 @@ export function shouldSkipChild(node: tsonicTypeScriptRuntime.Location<Node__fro
 }
 export function FindChildOfKind(containingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, kind: Kind__from_ast, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let lastNodePos = Node__from_ast.Pos(containingNode);
-    let scan: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, lastNodePos);
+    let scan: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, lastNodePos);
     let foundChild: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = void 0;
     let visitNode: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => bool) | undefined = (node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {
         if (node === undefined || !((Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsReparsed$constant__from_ast()) >>> 0 === 0)) {

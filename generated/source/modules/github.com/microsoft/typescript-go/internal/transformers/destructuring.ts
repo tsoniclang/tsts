@@ -32,7 +32,7 @@ export class CreateAssignmentCallback {
     }
     declare private readonly then?: never;
 }
-export function FlattenDestructuringAssignment(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, needsValue: bool, level: FlattenLevel, createAssignmentCallback: CreateAssignmentCallback): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function FlattenDestructuringAssignment(tx: Transformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, needsValue: bool, level: FlattenLevel, createAssignmentCallback: CreateAssignmentCallback): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let f: flattener | undefined = newFlattener(tx, level);
     (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).createAssignmentCallback = createAssignmentCallback;
     (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hoistTempVariables = true;
@@ -97,15 +97,6 @@ export class pendingDecl {
     public set original($value: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) {
         this.$storage.original = $value;
     }
-    static $zero(): pendingDecl {
-        return new pendingDecl({
-            pendingExpressions: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(),
-            name: void 0,
-            value: void 0,
-            location: TextRange__from_core.$storageOf(TextRange__from_core.$zero()),
-            original: void 0
-        });
-    }
     static $copy($source: pendingDecl): pendingDecl {
         return new pendingDecl({
             pendingExpressions: $source.$storage.pendingExpressions,
@@ -115,9 +106,18 @@ export class pendingDecl {
             original: $source.$storage.original
         });
     }
+    static $zeroStorage(): pendingDecl$Storage {
+        return {
+            pendingExpressions: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(),
+            name: void 0,
+            value: void 0,
+            location: TextRange__from_core.$zeroStorage(),
+            original: void 0
+        };
+    }
     declare private readonly then?: never;
 }
-export function FlattenDestructuringBinding(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, rval: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, level: FlattenLevel, hoistTempVariables: bool, skipInitializer: bool): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
+export function FlattenDestructuringBinding(tx: Transformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, rval: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, level: FlattenLevel, hoistTempVariables: bool, skipInitializer: bool): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let f: flattener | undefined = newFlattener(tx, level);
     (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hoistTempVariables = hoistTempVariables;
     (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitBindingOrAssignment = ($argument0: flattener | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $argument2: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $argument3: TextRange__from_core, $argument4: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
@@ -136,7 +136,7 @@ export function FlattenDestructuringBinding(tx: tsonicTypeScriptRuntime.Location
 }
 export class flattener {
     declare private readonly $goType: void;
-    public constructor(public tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, public level: FlattenLevel, public createAssignmentCallback: CreateAssignmentCallback, public expressions: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public declarations: RuntimeSlice<pendingDecl$Storage>, public hasTransformedPriorElement: bool, public hoistTempVariables: bool, public emitBindingOrAssignment: (($0: flattener | undefined, $1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $2: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $3: TextRange__from_core, $4: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => void) | undefined, public createArrayBindingOrAssignmentPattern: (($0: flattener | undefined, $1: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, public createObjectBindingOrAssignmentPattern: (($0: flattener | undefined, $1: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, public createArrayBindingOrAssignmentElement: (($0: flattener | undefined, $1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined) {
+    public constructor(public tx: Transformer | undefined, public level: FlattenLevel, public createAssignmentCallback: CreateAssignmentCallback, public expressions: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public declarations: RuntimeSlice<pendingDecl$Storage>, public hasTransformedPriorElement: bool, public hoistTempVariables: bool, public emitBindingOrAssignment: (($0: flattener | undefined, $1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $2: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, $3: TextRange__from_core, $4: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => void) | undefined, public createArrayBindingOrAssignmentPattern: (($0: flattener | undefined, $1: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, public createObjectBindingOrAssignmentPattern: (($0: flattener | undefined, $1: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined, public createArrayBindingOrAssignmentElement: (($0: flattener | undefined, $1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined) {
     }
     declare private readonly then?: never;
     static $go$private$transformers$createArrayAssignmentElement(f: flattener | undefined, expr: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -259,7 +259,7 @@ export class flattener {
                     pendingExpressions: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>()
                 })));
             for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
-                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, pendingDecl.$storageOf(pendingDecl.$zero()));
+                __gotots_slice_build_5.$initialize(__gotots_slice_build_7, pendingDecl.$zeroStorage());
             }
         }
         (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).declarations = __gotots_slice_build_5;
@@ -333,7 +333,7 @@ export class flattener {
                                 element: element
                             })));
                         for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, restIdElemPair.$storageOf(restIdElemPair.$zero()));
+                            __gotots_slice_build_1.$initialize(__gotots_slice_build_3, restIdElemPair.$zeroStorage());
                         }
                     }
                     restContainingElements = __gotots_slice_build_1;
@@ -599,7 +599,7 @@ export class flattener {
         }
     }
 }
-export function newFlattener(tx: tsonicTypeScriptRuntime.Location<Transformer> | undefined, level: FlattenLevel): flattener | undefined {
+export function newFlattener(tx: Transformer | undefined, level: FlattenLevel): flattener | undefined {
     return new flattener(tx, level, new CreateAssignmentCallback(void 0), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(), RuntimeSlice.nil<pendingDecl$Storage>(), false, false, void 0, void 0, void 0, void 0);
 }
 export type restIdElemPair$Storage = {
@@ -628,17 +628,17 @@ export class restIdElemPair {
     public set element($value: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) {
         this.$storage.element = $value;
     }
-    static $zero(): restIdElemPair {
-        return new restIdElemPair({
-            id: void 0,
-            element: void 0
-        });
-    }
     static $copy($source: restIdElemPair): restIdElemPair {
         return new restIdElemPair({
             id: $source.$storage.id,
             element: $source.$storage.element
         });
+    }
+    static $zeroStorage(): restIdElemPair$Storage {
+        return {
+            id: void 0,
+            element: void 0
+        };
     }
     declare private readonly then?: never;
 }

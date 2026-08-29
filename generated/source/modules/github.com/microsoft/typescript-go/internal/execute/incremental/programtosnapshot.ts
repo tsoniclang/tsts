@@ -331,7 +331,9 @@ export function addReferencedFilesFromSymbol(file: tsonicTypeScriptRuntime.Locat
         }
     }
 }
-export function addReferencedFilesFromImportLiteral(file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, referencedFiles: tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, importName: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
+export function addReferencedFilesFromImportLiteral(file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, referencedFiles: tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, importName: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
     let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetSymbolAtLocation(checker__shadow_1, importName);
     addReferencedFilesFromSymbol(file, referencedFiles, __go_symbol);
 }
@@ -362,7 +364,9 @@ export function getReferencedFiles(program: {
                 });
                 const referencedFiles$location = tsonicTypeScriptRuntime.boundLocation({}, () => referencedFiles, referencedFiles$next => referencedFiles = referencedFiles$next);
                 const __gotots_results_7 = Program__from_compiler.GetTypeCheckerForFileExclusive(program, GoProviderInterfaceBridge.$from(context__from_gostdlib.TODO()), file);
-                let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_7[0];
+                let checker__shadow_1: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_7[0];
                 let done: (() => void) | undefined = __gotots_results_7[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);

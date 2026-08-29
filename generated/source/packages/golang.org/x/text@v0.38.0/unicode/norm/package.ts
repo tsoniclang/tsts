@@ -1,4 +1,3 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { valueRange$Storage as valueRange__from_norm$Storage } from "../../../../../../modules/golang.org/x/text@v0.38.0/unicode/norm/trie.js";
 import type { $goInterface$Interface_Method_Error_void_to_string as GoInterface } from "../../../../../../support/interface-contracts.js";
 import type { int32, uint16, uint32, uint8 } from "@gotots/runtime/scalars.js";
@@ -21,24 +20,24 @@ export function $initialize(): void {
     $state.ccc = GoArray.zero<uint8, 56>(56, 0);
     $state.decomps = GoArray.zero<uint8, 19426>(19426, 0);
     $state.errs = RuntimeSlice.nil<GoInterface | undefined>();
-    $state.formTable = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<formInfo> | undefined>();
+    $state.formTable = RuntimeSlice.nil<formInfo | undefined>();
     $state.nfcData = void 0;
     $state.nfcIndex = GoArray.zero<uint8, 1408>(1408, 0);
-    $state.nfcSparse = sparseBlocks.$storageOf(sparseBlocks.$zero());
+    $state.nfcSparse = sparseBlocks.$zeroStorage();
     $state.nfcSparseOffset = RuntimeSlice.nil<uint16>();
     const __gotots_array_build_4 = goArrayAllocate<valueRange__from_norm$Storage, 730>(730);
     for (let __gotots_array_build_5 = 0; __gotots_array_build_5 < 730; __gotots_array_build_5++) {
-        __gotots_array_build_4.set(__gotots_array_build_5, valueRange.$storageOf(valueRange.$zero()));
+        __gotots_array_build_4.set(__gotots_array_build_5, valueRange.$zeroStorage());
     }
     $state.nfcSparseValues = __gotots_array_build_4;
     $state.nfcValues = GoArray.zero<uint16, 3072>(3072, 0);
     $state.nfkcData = void 0;
     $state.nfkcIndex = GoArray.zero<uint16, 1408>(1408, 0);
-    $state.nfkcSparse = sparseBlocks.$storageOf(sparseBlocks.$zero());
+    $state.nfkcSparse = sparseBlocks.$zeroStorage();
     $state.nfkcSparseOffset = RuntimeSlice.nil<uint16>();
     const __gotots_array_build_6 = goArrayAllocate<valueRange__from_norm$Storage, 919>(919);
     for (let __gotots_array_build_7 = 0; __gotots_array_build_7 < 919; __gotots_array_build_7++) {
-        __gotots_array_build_6.set(__gotots_array_build_7, valueRange.$storageOf(valueRange.$zero()));
+        __gotots_array_build_6.set(__gotots_array_build_7, valueRange.$zeroStorage());
     }
     $state.nfkcSparseValues = __gotots_array_build_6;
     $state.nfkcValues = GoArray.zero<uint16, 6208>(6208, 0);
@@ -62,7 +61,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_8 = goArrayAllocate<valueRange__from_norm$Storage, 730>(730);
         for (let __gotots_array_build_9 = 0; __gotots_array_build_9 < 730; __gotots_array_build_9++) {
-            __gotots_array_build_8.set(__gotots_array_build_9, valueRange.$storageOf(valueRange.$zero()));
+            __gotots_array_build_8.set(__gotots_array_build_9, valueRange.$zeroStorage());
         }
         __gotots_array_build_8.set(0, (void valueRange.$storageOf, (void valueRange.$fromStorage,
             {
@@ -4458,7 +4457,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_10 = goArrayAllocate<valueRange__from_norm$Storage, 919>(919);
         for (let __gotots_array_build_11 = 0; __gotots_array_build_11 < 919; __gotots_array_build_11++) {
-            __gotots_array_build_10.set(__gotots_array_build_11, valueRange.$storageOf(valueRange.$zero()));
+            __gotots_array_build_10.set(__gotots_array_build_11, valueRange.$zeroStorage());
         }
         __gotots_array_build_10.set(0, (void valueRange.$storageOf, (void valueRange.$fromStorage,
             {
@@ -10002,9 +10001,7 @@ export function $initialize(): void {
         $state.nfkcData = newNfkcTrie(0);
     }
     {
-        $state.formTable = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<formInfo> | undefined>([
-            tsonicTypeScriptRuntime.location<formInfo>(new formInfo(NFC$constant(), true, false, new lookupFunc(lookupInfoNFC), new iterFunc(nextComposed))), tsonicTypeScriptRuntime.location<formInfo>(new formInfo(NFD$constant(), false, false, new lookupFunc(lookupInfoNFC), new iterFunc(nextDecomposed))), tsonicTypeScriptRuntime.location<formInfo>(new formInfo(NFKC$constant(), true, true, new lookupFunc(lookupInfoNFKC), new iterFunc(nextComposed))), tsonicTypeScriptRuntime.location<formInfo>(new formInfo(NFKD$constant(), false, true, new lookupFunc(lookupInfoNFKC), new iterFunc(nextDecomposed))),
-        ]);
+        $state.formTable = RuntimeSlice.literal<formInfo | undefined>([new formInfo(NFC$constant(), true, false, new lookupFunc(lookupInfoNFC), new iterFunc(nextComposed)), new formInfo(NFD$constant(), false, false, new lookupFunc(lookupInfoNFC), new iterFunc(nextDecomposed)), new formInfo(NFKC$constant(), true, true, new lookupFunc(lookupInfoNFKC), new iterFunc(nextComposed)), new formInfo(NFKD$constant(), false, true, new lookupFunc(lookupInfoNFKC), new iterFunc(nextDecomposed)),]);
     }
 }
 export { GraphemeJoiner$string } from "../../../../../../modules/golang.org/x/text@v0.38.0/unicode/norm/composition.js";

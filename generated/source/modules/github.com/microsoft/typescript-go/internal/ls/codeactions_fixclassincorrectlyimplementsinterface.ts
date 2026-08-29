@@ -32,34 +32,36 @@ import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 export const fixClassIncorrectlyImplementsInterfaceFixID$string: gostring = "fixClassIncorrectlyImplementsInterface";
 export function getCodeActionsToFixClassIncorrectlyImplementsInterface(context__shadow_1: GoInterface | undefined, fixContext: CodeFixContext | undefined): [
-    RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+    RuntimeSlice<CodeAction | undefined>,
     $goInterface$Interface_Method_Error_void_to_string | undefined
 ] {
     let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
     let __gotots_panic_0: GoPanic | undefined = undefined;
     let __gotots_return_0: [
-        RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>,
+        RuntimeSlice<CodeAction | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
-    ] = [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), void 0];
+    ] = [RuntimeSlice.nil<CodeAction | undefined>(), void 0];
     try {
         try {
             __gotots_return_block_0: {
                 let classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getClass((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile, TextRange__from_core.$copy((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Span));
                 if (classDeclaration === undefined) {
-                    __gotots_return_0 = [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), void 0];
+                    __gotots_return_0 = [RuntimeSlice.nil<CodeAction | undefined>(), void 0];
                     break __gotots_return_block_0;
                 }
                 let implementsTypes = GetImplementsTypeNodes__from_ast(classDeclaration);
                 let locale__shadow_1 = FromContext__from_locale(context__shadow_1);
                 const __gotots_results_0 = Program__from_compiler.GetTypeCheckerForFile((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, context__shadow_1, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile);
-                let typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_0[0];
+                let typeChecker: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_0[0];
                 let done: (() => void) | undefined = __gotots_results_0[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
                 __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                     __gotots_deferred_1 === undefined ? (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                 };
-                let actions = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>();
+                let actions = RuntimeSlice.nil<CodeAction | undefined>();
                 const __gotots_range_0 = implementsTypes;
                 for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                     const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
@@ -69,7 +71,7 @@ export function getCodeActionsToFixClassIncorrectlyImplementsInterface(context__
                     let importAdder: ImportAdder__from_autoimport | undefined = __gotots_results_1[0];
                     let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_1[1];
                     if (!(err === undefined)) {
-                        __gotots_return_0 = [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeAction> | undefined>(), err];
+                        __gotots_return_0 = [RuntimeSlice.nil<CodeAction | undefined>(), err];
                         break __gotots_return_block_0;
                     }
                     addChanges(context__shadow_1, fixContext, changeTracker, importAdder, typeChecker, classDeclaration, implementedTypeNode);
@@ -77,9 +79,7 @@ export function getCodeActionsToFixClassIncorrectlyImplementsInterface(context__
                     if (changes.length === 0) {
                         continue;
                     }
-                    actions = actions.append(void 0, [
-                        tsonicTypeScriptRuntime.location<CodeAction>(new CodeAction(Message__from_diagnostics.Localize($state__diagnostics.Implement_interface_0, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(GetTextOfNode__from_scanner(implementedTypeNode))])), changes, fixClassIncorrectlyImplementsInterfaceFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Implement_all_unimplemented_interfaces, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.nil<$goInterface$Interface_void | undefined>()))),
-                    ]);
+                    actions = actions.append(void 0, [new CodeAction(Message__from_diagnostics.Localize($state__diagnostics.Implement_interface_0, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(GetTextOfNode__from_scanner(implementedTypeNode))])), changes, fixClassIncorrectlyImplementsInterfaceFixID$string, Message__from_diagnostics.Localize($state__diagnostics.Implement_all_unimplemented_interfaces, Locale__from_locale.$copy(locale__shadow_1), RuntimeSlice.nil<$goInterface$Interface_void | undefined>())),]);
                 }
                 __gotots_return_0 = [actions, void 0];
                 break __gotots_return_block_0;
@@ -128,7 +128,9 @@ export function getAllCodeActionsToFixClassIncorrectlyImplementsInterface(contex
         try {
             __gotots_return_block_0: {
                 const __gotots_results_2 = Program__from_compiler.GetTypeCheckerForFile((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, context__shadow_1, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile);
-                let typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = __gotots_results_2[0];
+                let typeChecker: {
+                    value: Checker__from_checker;
+                } | undefined = __gotots_results_2[0];
                 let done: (() => void) | undefined = __gotots_results_2[1];
                 const __gotots_callee_0: (() => void) | undefined = done;
                 const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
@@ -205,7 +207,9 @@ export function getAllCodeActionsToFixClassIncorrectlyImplementsInterface(contex
     }
     return __gotots_return_0;
 }
-export function addChanges(context__shadow_1: GoInterface | undefined, fixContext: CodeFixContext | undefined, changeTracker: Tracker__from_change | undefined, importAdder: ImportAdder__from_autoimport | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, implementedTypeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
+export function addChanges(context__shadow_1: GoInterface | undefined, fixContext: CodeFixContext | undefined, changeTracker: Tracker__from_change | undefined, importAdder: ImportAdder__from_autoimport | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, implementedTypeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
     let missingMemberFixer__shadow_1: missingMemberFixer | undefined = newMissingMemberFixer(changeTracker, (fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Program, typeChecker, LanguageService.UserPreferences((fixContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LS), importAdder, FromContext__from_locale(context__shadow_1));
     let __go_constructor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = getConstructor(classDeclaration);
     let implementedType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(typeChecker, implementedTypeNode);
@@ -284,7 +288,9 @@ export function getConstructor(classDeclaration: tsonicTypeScriptRuntime.Locatio
     }
     return void 0;
 }
-export function getMissingMembers(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, implementedTypes: RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> {
+export function getMissingMembers(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, implementedTypes: RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> {
     let inheritedMembers: SymbolTable__from_ast = getInheritedMembers(typeChecker, classDeclaration);
     let seenMembers: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> = $goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.make(0, []);
     let classMembers: SymbolTable__from_ast = new SymbolTable__from_ast($goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.nil());
@@ -318,7 +324,9 @@ export function getMissingMembers(typeChecker: tsonicTypeScriptRuntime.Location<
     }
     return missingMembers;
 }
-export function getInheritedMembers(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): SymbolTable__from_ast {
+export function getInheritedMembers(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, classDeclaration: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): SymbolTable__from_ast {
     let typeNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = GetClassExtendsHeritageElement__from_ast(classDeclaration);
     if (typeNode === undefined) {
         return new SymbolTable__from_ast($goMap$MapOf_string_To_PointerTo_Named_ast$Symbol.make(0, []));
@@ -343,7 +351,9 @@ export function getInheritedMembers(typeChecker: tsonicTypeScriptRuntime.Locatio
     }
     return inheritedMembers;
 }
-export function createImportAdder(context__shadow_1: GoInterface | undefined, fixContext: CodeFixContext | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): [
+export function createImportAdder(context__shadow_1: GoInterface | undefined, fixContext: CodeFixContext | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): [
     ImportAdder__from_autoimport | undefined,
     $goInterface$Interface_Method_Error_void_to_string | undefined
 ] {

@@ -79,7 +79,9 @@ export function getNonModuleSymbolOfMergedModuleSymbol(__go_symbol: tsonicTypeSc
 }
 export function getLocalSymbolForExportSpecifier(referenceLocation: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, referenceSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, exportSpecifier: {
     value: ExportSpecifier__from_ast;
-} | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+} | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (isExportSpecifierAlias(referenceLocation, exportSpecifier)) {
         {
             const __gotots_receiver_0 = ch;
@@ -908,7 +910,9 @@ export function getAllSuperTypeNodes(node: tsonicTypeScriptRuntime.Location<Node
     }
     return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
 }
-export function getParentSymbolsOfPropertyAccess(location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> {
+export function getParentSymbolsOfPropertyAccess(location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, ch: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined> {
     if (!isRightSideOfPropertyAccess(location)) {
         return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
     }
@@ -930,7 +934,9 @@ export function getParentSymbolsOfPropertyAccess(location: tsonicTypeScriptRunti
         return void 0;
     });
 }
-export function getPropertySymbolsFromBaseTypes(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, propertyName: gostring, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, cb: (($0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getPropertySymbolsFromBaseTypes(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, propertyName: gostring, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, cb: (($0: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     let seen = Set__from_collections.$zero<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, GoEmptyStruct> => {
         return $goMap$MapOf_PointerTo_Named_ast$Symbol_To_Struct_void.nil();
     });
@@ -987,7 +993,9 @@ export function getPropertySymbolsFromBaseTypes(__go_symbol: tsonicTypeScriptRun
     const __gotots_argument_8 = __go_symbol;
     return (__gotots_callee_6 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_8);
 }
-export function getPropertySymbolFromBindingElement(checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, bindingElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getPropertySymbolFromBindingElement(checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, bindingElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     {
         let typeOfPattern: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(checker__shadow_1, Node__from_ast.$storageOf(((bindingElement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
         if (!(typeOfPattern === undefined)) {
@@ -996,7 +1004,9 @@ export function getPropertySymbolFromBindingElement(checker__shadow_1: tsonicTyp
     }
     return void 0;
 }
-export function getPropertySymbolOfObjectBindingPatternWithoutPropertyName(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getPropertySymbolOfObjectBindingPatternWithoutPropertyName(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     let bindingElement: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = GetDeclarationOfKind__from_ast(__go_symbol, KindBindingElement$constant__from_ast());
     if (!(bindingElement === undefined) && isObjectBindingElementWithoutPropertyName(bindingElement)) {
         return getPropertySymbolFromBindingElement(checker__shadow_1, bindingElement);
@@ -1012,7 +1022,9 @@ export function getTargetLabel(referenceNode: tsonicTypeScriptRuntime.Location<N
     }
     return void 0;
 }
-export function skipConstraint(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
+export function skipConstraint(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
     if (Type__from_checker.IsTypeParameter(t)) {
         let c: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetBaseConstraintOfType(typeChecker, t);
         if (!(c === undefined)) {
@@ -1087,7 +1099,9 @@ export const caseClauseTracker$contract: readonly object[] = globalThis.Object.f
 export function caseClauseTracker$is(value: GoInterfaceValue | undefined): value is caseClauseTracker {
     return value !== undefined && value.$go$implements(caseClauseTracker$contract);
 }
-export function newCaseClauseTracker(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, clauses: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>): caseClauseTracker | undefined {
+export function newCaseClauseTracker(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, clauses: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>): caseClauseTracker | undefined {
     let c: caseClauseTrackerState | undefined = new caseClauseTrackerState(Set__from_collections.$fromStorage<gostring>({
         M: GoMap.nil()
     }), Set__from_collections.$fromStorage<Number__from_jsnum>({
@@ -1140,7 +1154,9 @@ export function RangeContainsRange(r1: TextRange__from_core, r2: TextRange__from
 export function startEndContainsRange(start: int, end: int, textRange: TextRange__from_core): bool {
     return start <= textRange.Pos() && end >= textRange.End();
 }
-export function getPossibleGenericSignatures(called: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeArgumentCount: int, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined> {
+export function getPossibleGenericSignatures(called: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeArgumentCount: int, c: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined> {
     let typeAtLocation: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetTypeAtLocation(c, called);
     if (IsOptionalChain__from_ast(Node__from_ast.$storageOf(((called ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent)) {
         typeAtLocation = removeOptionality(typeAtLocation, IsOptionalChainRoot__from_ast(Node__from_ast.$storageOf(((called ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent), true, c);
@@ -1156,7 +1172,9 @@ export function getPossibleGenericSignatures(called: tsonicTypeScriptRuntime.Loc
         return !Signature__from_checker.TypeParameters(s).isNil() && Signature__from_checker.TypeParameters(s).length >= typeArgumentCount;
     });
 }
-export function removeOptionality(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, isOptionalExpression: bool, isOptionalChain: bool, c: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
+export function removeOptionality(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, isOptionalExpression: bool, isOptionalChain: bool, c: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
     if (isOptionalExpression) {
         return Checker__from_checker.GetNonNullableType(c, t);
     }
@@ -1263,7 +1281,7 @@ export function getChildrenFromNonJSDocNode(node: tsonicTypeScriptRuntime.Locati
     for (let __gotots_range_index_5 = 0; __gotots_range_index_5 < __gotots_range_5.length; __gotots_range_index_5++) {
         const __gotots_range_value_5 = __gotots_range_5.get(__gotots_range_index_5);
         let child: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = __gotots_range_value_5;
-        let scanner__shadow_2: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, pos);
+        let scanner__shadow_2: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, pos);
         for (; pos < Node__from_ast.Pos(child);) {
             let token = Scanner__from_scanner.Token(scanner__shadow_2);
             let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_2);
@@ -1275,7 +1293,7 @@ export function getChildrenFromNonJSDocNode(node: tsonicTypeScriptRuntime.Locati
         children = children.append(void 0, [child]);
         pos = Node__from_ast.End(child);
     }
-    let scanner__shadow_1: tsonicTypeScriptRuntime.Location<Scanner__from_scanner> | undefined = GetScannerForSourceFile__from_scanner(sourceFile, pos);
+    let scanner__shadow_1: Scanner__from_scanner | undefined = GetScannerForSourceFile__from_scanner(sourceFile, pos);
     for (; pos < Node__from_ast.End(node);) {
         let token = Scanner__from_scanner.Token(scanner__shadow_1);
         let tokenFullStart = Scanner__from_scanner.TokenFullStart(scanner__shadow_1);
@@ -1435,7 +1453,9 @@ export function getReferenceAtPosition(sourceFile: tsonicTypeScriptRuntime.Locat
     }
     return void 0;
 }
-export function getContextualTypeFromParent(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, contextFlags: ContextFlags__from_checker): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
+export function getContextualTypeFromParent(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined, contextFlags: ContextFlags__from_checker): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
     let parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = WalkUpParenthesizedExpressions__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
     switch (Node__from_ast.$storageOf(((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindNewExpression$constant__from_ast(): {
@@ -1459,7 +1479,9 @@ export function getContextualTypeFromParent(node: tsonicTypeScriptRuntime.Locati
         }
     }
 }
-export function getContextualTypeFromParentOrAncestorTypeNode(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
+export function getContextualTypeFromParentOrAncestorTypeNode(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined {
     if (!((Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsJSDoc$constant__from_ast()) >>> 0 === 0) && (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsJavaScriptFile$constant__from_ast()) >>> 0 === 0) {
         return void 0;
     }

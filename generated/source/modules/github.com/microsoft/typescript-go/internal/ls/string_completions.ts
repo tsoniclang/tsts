@@ -66,7 +66,9 @@ export class stringLiteralCompletions {
     }
     declare private readonly then?: never;
 }
-export function fromContextualType(contextFlags: ContextFlags__from_checker, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): completionsFromTypes | undefined {
+export function fromContextualType(contextFlags: ContextFlags__from_checker, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): completionsFromTypes | undefined {
     return toCompletionsFromTypes(getStringLiteralTypes(getContextualTypeFromParent(node, typeChecker, contextFlags), void 0, typeChecker));
 }
 export function toCompletionsFromTypes(types: RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>): completionsFromTypes | undefined {
@@ -82,7 +84,9 @@ export function toStringLiteralCompletionsFromTypes(types: RuntimeSlice<tsonicTy
     }
     return new stringLiteralCompletions(result, void 0, RuntimeSlice.nil<pathCompletion | undefined>());
 }
-export function fromUnionableLiteralType(grandparent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): stringLiteralCompletions | undefined {
+export function fromUnionableLiteralType(grandparent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, parent: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, position__shadow_1: int, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): stringLiteralCompletions | undefined {
     switch (Node__from_ast.$storageOf(((grandparent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindCallExpression$constant__from_ast():
         case KindExpressionWithTypeArguments$constant__from_ast():
@@ -151,7 +155,9 @@ export function fromUnionableLiteralType(grandparent: tsonicTypeScriptRuntime.Lo
         }
     }
 }
-export function stringLiteralCompletionsForObjectLiteral(typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, objectLiteralExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): completionsFromProperties | undefined {
+export function stringLiteralCompletionsForObjectLiteral(typeChecker: {
+    value: Checker__from_checker;
+} | undefined, objectLiteralExpression: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): completionsFromProperties | undefined {
     let contextualType: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = Checker__from_checker.GetContextualType(typeChecker, objectLiteralExpression, ContextFlagsNone$constant__from_checker());
     if (contextualType === undefined) {
         return void 0;
@@ -160,7 +166,9 @@ export function stringLiteralCompletionsForObjectLiteral(typeChecker: tsonicType
     let symbols = getPropertiesForObjectExpression(contextualType, completionsType, objectLiteralExpression, typeChecker);
     return new completionsFromProperties(symbols, hasIndexSignature(contextualType, typeChecker));
 }
-export function stringLiteralCompletionsFromProperties(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): completionsFromProperties | undefined {
+export function stringLiteralCompletionsFromProperties(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): completionsFromProperties | undefined {
     return new completionsFromProperties(Filter$PointerTo_Named_ast$Symbol(Checker__from_checker.GetApparentProperties(typeChecker, t), (s: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): bool => {
         return !(!(Symbol__from_ast.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration === undefined) && IsPrivateIdentifierClassElementDeclaration__from_ast(Symbol__from_ast.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration));
     }), hasIndexSignature(t, typeChecker));
@@ -267,7 +275,9 @@ export function getPatternFromFirstMatchingCondition(target: ExportsOrImports__f
     }
     return "";
 }
-export function getAmbientModuleCompletions(fragment: gostring, fragmentDirectory: gostring, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<gostring> {
+export function getAmbientModuleCompletions(fragment: gostring, fragmentDirectory: gostring, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<gostring> {
     let ambientModules = Checker__from_checker.GetAmbientModules(typeChecker);
     let nonRelativeModuleNames = RuntimeSlice.nil<gostring>();
     const __gotots_range_5 = ambientModules;
@@ -307,7 +317,9 @@ export function tryRemoveDirectoryPrefix(path: gostring, prefix: gostring, useCa
 }
 export function getSupportedExtensionsForModuleResolution(options: {
     value: CompilerOptions__from_core;
-} | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<gostring> {
+} | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<gostring> {
     let extensions = RuntimeSlice.nil<gostring>();
     if (!(checker__shadow_1 === undefined)) {
         let ambientModules = Checker__from_checker.GetAmbientModules(checker__shadow_1);
@@ -626,7 +638,7 @@ export function deduplicateModuleCompletions(completions: RuntimeSlice<moduleCom
                 }
                 __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$copy(c)));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, moduleCompletionNameAndKind.$storageOf(moduleCompletionNameAndKind.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, moduleCompletionNameAndKind.$zeroStorage());
                 }
             }
             result = __gotots_slice_build_1;
@@ -698,6 +710,14 @@ export class moduleCompletionNameAndKind implements GoContainerStoredValue<modul
                 $source.$storage.kind) as int),
             extension: $source.$storage.extension
         });
+    }
+    static $zeroStorage(): moduleCompletionNameAndKind$Storage {
+        return {
+            name: "",
+            kind: ((void moduleCompletionKind,
+                0) as int),
+            extension: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -821,7 +841,9 @@ export function walkUpParentheses(node: tsonicTypeScriptRuntime.Location<Node__f
         }
     }
 }
-export function getStringLiteralTypes(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, uniques: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined> {
+export function getStringLiteralTypes(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, uniques: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined> {
     if (t === undefined) {
         return RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>();
     }
@@ -869,7 +891,9 @@ export function getAlreadyUsedTypesInStringLiteralUnion(union: tsonicTypeScriptR
     }
     return values;
 }
-export function hasIndexSignature(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): bool {
+export function hasIndexSignature(t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): bool {
     return !(Checker__from_checker.GetStringIndexType(typeChecker, t) === undefined) || !(Checker__from_checker.GetNumberIndexType(typeChecker, t) === undefined);
 }
 export function isRequireCallArgument(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
@@ -937,7 +961,9 @@ export function kindModifiersFromExtension(extension: gostring): ScriptElementKi
         }
     }
 }
-export function getStringLiteralCompletionsFromSignature(call: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, arg: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, argumentInfo: argumentInfoForCompletions | undefined, typeChecker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): completionsFromTypes | undefined {
+export function getStringLiteralCompletionsFromSignature(call: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, arg: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, argumentInfo: argumentInfoForCompletions | undefined, typeChecker: {
+    value: Checker__from_checker;
+} | undefined): completionsFromTypes | undefined {
     let isNewIdentifier = false;
     let uniques = Set__from_collections.$fromStorage<gostring>({
         M: GoMap.nil()

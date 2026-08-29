@@ -24,7 +24,7 @@ export class LinkStore<K, V> {
     static $zero<K, V>($go$zero$void_to_MapOf_T0_To_PointerTo_T1: () => GoMapValue<K, tsonicTypeScriptRuntime.Location<V> | undefined>): LinkStore<K, V> {
         return new LinkStore<K, V>({
             entries: $go$zero$void_to_MapOf_T0_To_PointerTo_T1(),
-            arena: Arena.$storageOf<V>(Arena.$zero<V>())
+            arena: Arena.$zeroStorage<V>()
         });
     }
     static $copy<K, V>($source: LinkStore<K, V>): LinkStore<K, V> {

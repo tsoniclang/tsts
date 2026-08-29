@@ -15,16 +15,16 @@ import * as named_sync from "@gotots/gostdlib/internal/facets/named-sync.js";
 import { GoArray } from "@gotots/runtime/array.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function $initialize(): void {
-    $state.BeginArray = Token.$storageOf(Token.$zero());
-    $state.BeginObject = Token.$storageOf(Token.$zero());
-    $state.EndArray = Token.$storageOf(Token.$zero());
-    $state.EndObject = Token.$storageOf(Token.$zero());
+    $state.BeginArray = Token.$zeroStorage();
+    $state.BeginObject = Token.$zeroStorage();
+    $state.EndArray = Token.$zeroStorage();
+    $state.EndObject = Token.$zeroStorage();
     $state.ErrDuplicateName = void 0;
     $state.ErrNonStringName = void 0;
-    $state.False = Token.$storageOf(Token.$zero());
-    $state.Internal = exporter.$storageOf(exporter.$zero());
-    $state.Null = Token.$storageOf(Token.$zero());
-    $state.True = Token.$storageOf(Token.$zero());
+    $state.False = Token.$zeroStorage();
+    $state.Internal = exporter.$zeroStorage();
+    $state.Null = Token.$zeroStorage();
+    $state.True = Token.$zeroStorage();
     $state.bufferedDecoderPool = void 0;
     $state.bufferedEncoderPool = void 0;
     $state.bytesBufferDecoderPool = void 0;
@@ -35,15 +35,15 @@ export function $initialize(): void {
     $state.errMaxDepth = void 0;
     $state.errMismatchDelim = void 0;
     $state.errMissingValue = void 0;
-    $state.nanString = Token.$storageOf(Token.$zero());
-    $state.ninfString = Token.$storageOf(Token.$zero());
+    $state.nanString = Token.$zeroStorage();
+    $state.ninfString = Token.$zeroStorage();
     $state.normKind = GoArray.zero<Kind, 256>(256, 0);
     $state.objectMemberPool = named_sync.SyncPoolOperations.$zero();
-    $state.pinfString = Token.$storageOf(Token.$zero());
+    $state.pinfString = Token.$zeroStorage();
     $state.streamingDecoderPool = void 0;
     $state.streamingEncoderPool = void 0;
-    $state.zeroNumber = Token.$storageOf(Token.$zero());
-    $state.zeroString = Token.$storageOf(Token.$zero());
+    $state.zeroNumber = Token.$zeroStorage();
+    $state.zeroString = Token.$zeroStorage();
     {
         $state.errBufferWriteAfterNext = GoProviderInterfaceBridge.$from(errors__from_gostdlib.New("invalid bytes.Buffer.Write call after calling bytes.Buffer.Next"));
     }

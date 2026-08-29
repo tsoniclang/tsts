@@ -51,14 +51,42 @@ export function Index$SliceOf_PointerTo_Named_ast$Symbol$PointerTo_Named_ast$Sym
         return $argument0;
     }, $argument0, $argument1)));
 }
-export function Index$SliceOf_PointerTo_Named_checker$Checker$PointerTo_Named_checker$Checker($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, $argument1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): int {
-    return globalThis.Number(BigInt.asIntN(64, generic_slices_kernel.SlicesIndexKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined> => {
+export function Index$SliceOf_PointerTo_Named_checker$Checker$PointerTo_Named_checker$Checker($argument0: RuntimeSlice<{
+    value: Checker__from_checker;
+} | undefined>, $argument1: {
+    value: Checker__from_checker;
+} | undefined): int {
+    return globalThis.Number(BigInt.asIntN(64, generic_slices_kernel.SlicesIndexKernel<RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined>, {
+        value: Checker__from_checker;
+    } | undefined, {
+        value: Checker__from_checker;
+    } | undefined>(($argument0: RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined>): RuntimeSlice<{
+        value: Checker__from_checker;
+    } | undefined> => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined => {
+    }, ($argument0: {
+        value: Checker__from_checker;
+    } | undefined): {
+        value: Checker__from_checker;
+    } | undefined => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): bool => {
-        return tsonicTypeScriptRuntime.sameLocation($argument0, $argument1);
-    }, ($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined => {
+    }, ($argument0: {
+        value: Checker__from_checker;
+    } | undefined, $argument1: {
+        value: Checker__from_checker;
+    } | undefined): bool => {
+        return $argument0
+            ===
+                $argument1;
+    }, ($argument0: {
+        value: Checker__from_checker;
+    } | undefined): {
+        value: Checker__from_checker;
+    } | undefined => {
         return $argument0;
     }, $argument0, $argument1)));
 }

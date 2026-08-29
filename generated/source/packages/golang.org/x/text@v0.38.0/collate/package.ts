@@ -11,23 +11,23 @@ import { $state } from "./state.js";
 import { GoArray, goArrayAllocate, goArrayPacked } from "@gotots/runtime/array.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function $initialize(): void {
-    $state.Force = Option.$storageOf(Option.$zero());
-    $state.IgnoreCase = Option.$storageOf(Option.$zero());
-    $state.IgnoreDiacritics = Option.$storageOf(Option.$zero());
-    $state.IgnoreWidth = Option.$storageOf(Option.$zero());
-    $state.Loose = Option.$storageOf(Option.$zero());
-    $state.Numeric = Option.$storageOf(Option.$zero());
+    $state.Force = Option.$zeroStorage();
+    $state.IgnoreCase = Option.$zeroStorage();
+    $state.IgnoreDiacritics = Option.$zeroStorage();
+    $state.IgnoreWidth = Option.$zeroStorage();
+    $state.Loose = Option.$zeroStorage();
+    $state.Numeric = Option.$zeroStorage();
     $state.availableLocales = "";
-    $state.force = Option.$storageOf(Option.$zero());
-    $state.ignoreCase = Option.$storageOf(Option.$zero());
-    $state.ignoreDiacritics = Option.$storageOf(Option.$zero());
-    $state.ignoreWidth = Option.$storageOf(Option.$zero());
+    $state.force = Option.$zeroStorage();
+    $state.ignoreCase = Option.$zeroStorage();
+    $state.ignoreDiacritics = Option.$zeroStorage();
+    $state.ignoreWidth = Option.$zeroStorage();
     const __gotots_array_build_4 = goArrayAllocate<tableIndex__from_collate$Storage, 95>(95);
     for (let __gotots_array_build_5 = 0; __gotots_array_build_5 < 95; __gotots_array_build_5++) {
-        __gotots_array_build_4.set(__gotots_array_build_5, tableIndex.$storageOf(tableIndex.$zero()));
+        __gotots_array_build_4.set(__gotots_array_build_5, tableIndex.$zeroStorage());
     }
     $state.locales = __gotots_array_build_4;
-    $state.loose = Option.$storageOf(Option.$zero());
+    $state.loose = Option.$zeroStorage();
     const __gotots_array_build_6 = goArrayAllocate<$goStruct$Struct_Field_L_uint8_Tag__empty__Field_H_uint8_Tag__empty__Field_N_uint8_Tag__empty__Field_I_uint8_Tag__empty_$Storage, 2529>(2529);
     for (let __gotots_array_build_7 = 0; __gotots_array_build_7 < 2529; __gotots_array_build_7++) {
         __gotots_array_build_6.set(__gotots_array_build_7, $goStruct$Struct_Field_L_uint8_Tag__empty__Field_H_uint8_Tag__empty__Field_N_uint8_Tag__empty__Field_I_uint8_Tag__empty_.$storageOf($goStruct$Struct_Field_L_uint8_Tag__empty__Field_H_uint8_Tag__empty__Field_N_uint8_Tag__empty__Field_I_uint8_Tag__empty_.$zero()));
@@ -37,7 +37,7 @@ export function $initialize(): void {
     $state.mainExpandElem = GoArray.zero<uint32, 46864>(46864, 0);
     $state.mainLookup = GoArray.zero<uint16, 16576>(16576, 0);
     $state.mainValues = GoArray.zero<uint32, 251456>(251456, 0);
-    $state.numeric = Option.$storageOf(Option.$zero());
+    $state.numeric = Option.$zeroStorage();
     $state.tags = RuntimeSlice.nil<Tag__from_language__package_1$Storage>();
     {
         $state.ignoreCase =
@@ -111,7 +111,7 @@ export function $initialize(): void {
     {
         const __gotots_array_build_8 = goArrayAllocate<tableIndex__from_collate$Storage, 95>(95);
         for (let __gotots_array_build_9 = 0; __gotots_array_build_9 < 95; __gotots_array_build_9++) {
-            __gotots_array_build_8.set(__gotots_array_build_9, tableIndex.$storageOf(tableIndex.$zero()));
+            __gotots_array_build_8.set(__gotots_array_build_9, tableIndex.$zeroStorage());
         }
         __gotots_array_build_8.set(0, (void tableIndex.$storageOf, (void tableIndex.$fromStorage,
             {

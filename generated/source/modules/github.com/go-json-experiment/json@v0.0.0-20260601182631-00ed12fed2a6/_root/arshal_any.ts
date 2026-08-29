@@ -80,7 +80,7 @@ export function marshalValueAny(enc: tsonicTypeScriptRuntime.Location<Encoder__f
     }
     let v = newAddressableValue(named_reflect.ReflectTypeMetadataOperations.$typeOf(val));
     addressableValue.$storageOf(v).Value.Set(reflect__from_gostdlib.ValueOf(val));
-    let marshal: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = ((lookupArshaler(addressableValue.$storageOf(v).Value.Type()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.marshal;
+    let marshal: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = (lookupArshaler(addressableValue.$storageOf(v).Value.Type()) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).marshal;
     if (!((void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
         Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Marshalers === undefined)) {
         const __gotots_results_0 = typedArshalers$lookup$Named_jsontext$Encoder((($value: GoInterface | undefined): tsonicTypeScriptRuntime.Location<typedArshalers<Encoder__from_jsontext>> | undefined => {

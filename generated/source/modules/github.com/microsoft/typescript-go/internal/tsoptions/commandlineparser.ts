@@ -368,7 +368,7 @@ export function ParseCommandLine(commandLine: RuntimeSlice<gostring>, host: Pars
     const __gotots_field_12 = goInterfaceNonNil<ParseConfigHost>(__gotots_receiver_10).GetCurrentDirectory();
     const __gotots_argument_17 = new ComparePathsOptions__from_tspath(__gotots_field_11, __gotots_field_12);
     let result: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined = NewParsedCommandLine(__gotots_argument_15, __gotots_argument_16, __gotots_argument_17);
-    ((((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ParsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedOptions__from_core>).value.WatchOptions = watchOptions;
+    (((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.ParsedConfig ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).WatchOptions = watchOptions;
     ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.Errors = (parser ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).errors;
     ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.Raw = new GoInterfaceAdapter((parser ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options);
     return result;

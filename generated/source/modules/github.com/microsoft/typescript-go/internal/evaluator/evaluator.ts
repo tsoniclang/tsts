@@ -79,6 +79,14 @@ export class Result {
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.HasExternalReferences));
         return $hash;
     }
+    static $zeroStorage(): Result$Storage {
+        return {
+            Value: void 0,
+            IsSyntacticallyString: false,
+            ResolvedOtherFiles: false,
+            HasExternalReferences: false
+        };
+    }
     declare private readonly then?: never;
 }
 export function NewResult(value: GoInterface | undefined, isSyntacticallyString: bool, resolvedOtherFiles: bool, hasExternalReferences: bool): Result {

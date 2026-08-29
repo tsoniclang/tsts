@@ -125,6 +125,20 @@ export class Symbol implements GoContainerStoredValue<Symbol$Storage> {
             ExportSymbol: $source.$storage.ExportSymbol
         });
     }
+    static $zeroStorage(): Symbol$Storage {
+        return {
+            Flags: 0,
+            CheckFlags: 0,
+            Name: "",
+            Declarations: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node> | undefined>(),
+            ValueDeclaration: void 0,
+            Members: new SymbolTable(GoMap.nil()).$value,
+            Exports: new SymbolTable(GoMap.nil()).$value,
+            id: named_sync_atomic.SyncAtomicUint64Operations.$zero(),
+            Parent: void 0,
+            ExportSymbol: void 0
+        };
+    }
     declare private readonly then?: never;
     static CombinedLocalAndExportSymbolFlags(s: tsonicTypeScriptRuntime.Location<Symbol> | undefined): SymbolFlags {
         if (!(Symbol.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol>).value).ExportSymbol === undefined)) {

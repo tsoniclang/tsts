@@ -1618,9 +1618,9 @@ export class NodeFactory {
         }
         const __gotots_store_0 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewIdentifier(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeFactory"), text);
-        let autoGenerate: tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined = tsonicTypeScriptRuntime.location<AutoGenerateInfo>(new AutoGenerateInfo(new GeneratedIdentifierFlags(kind.$value | (new GeneratedIdentifierFlags(options.Flags.$value &
+        let autoGenerate: AutoGenerateInfo | undefined = new AutoGenerateInfo(new GeneratedIdentifierFlags(kind.$value | (new GeneratedIdentifierFlags(options.Flags.$value &
             ((void GeneratedIdentifierFlags,
-                -8) as number))).$value), id, options.Prefix, options.Suffix, node));
+                -8) as number))).$value), id, options.Prefix, options.Suffix, node);
         if (((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.isNil()) {
             ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate = GoMap.make(0, []);
         }
@@ -1651,8 +1651,8 @@ export class NodeFactory {
         }
         const __gotots_store_193 = (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewPrivateIdentifier(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_193, "NodeFactory"), text);
-        let autoGenerate: tsonicTypeScriptRuntime.Location<AutoGenerateInfo> | undefined = tsonicTypeScriptRuntime.location<AutoGenerateInfo>(new AutoGenerateInfo(new GeneratedIdentifierFlags(kind.$value | (new GeneratedIdentifierFlags(options.Flags.$value & ~((void GeneratedIdentifierFlags,
-            GeneratedIdentifierFlagsKindMask$int) as number))).$value), id, options.Prefix, options.Suffix, node));
+        let autoGenerate: AutoGenerateInfo | undefined = new AutoGenerateInfo(new GeneratedIdentifierFlags(kind.$value | (new GeneratedIdentifierFlags(options.Flags.$value & ~((void GeneratedIdentifierFlags,
+            GeneratedIdentifierFlagsKindMask$int) as number))).$value), id, options.Prefix, options.Suffix, node);
         if (((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate.isNil()) {
             ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.emitContext ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.autoGenerate = GoMap.make(0, []);
         }

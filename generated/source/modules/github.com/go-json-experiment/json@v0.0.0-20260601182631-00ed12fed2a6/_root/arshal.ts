@@ -274,7 +274,7 @@ export function marshalEncode(__go_out: tsonicTypeScriptRuntime.Location<Encoder
         forcedAddr: forceAddr
     });
     let t: reflect__from_gostdlib.Type | undefined = addressableValue.$storageOf(va).Value.Type();
-    let marshal: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = ((lookupArshaler(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.marshal;
+    let marshal: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = (lookupArshaler(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).marshal;
     if (!((void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
         Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Marshalers === undefined)) {
         const __gotots_results_2 = typedArshalers$lookup$Named_jsontext$Encoder((($value: $goInterface$Interface_void | undefined): tsonicTypeScriptRuntime.Location<typedArshalers<Encoder__from_jsontext>> | undefined => {
@@ -526,7 +526,7 @@ export function unmarshalDecode(__go_in: tsonicTypeScriptRuntime.Location<Decode
             }
         }
     }
-    let unmarshal: (($0: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = ((lookupArshaler(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.unmarshal;
+    let unmarshal: (($0: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => $goInterface$Interface_Method_Error_void_to_string | undefined) | undefined = (lookupArshaler(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).unmarshal;
     if (!((void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
         Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Unmarshalers === undefined)) {
         const __gotots_results_7 = typedArshalers$lookup$Named_jsontext$Decoder((($value: $goInterface$Interface_void | undefined): tsonicTypeScriptRuntime.Location<typedArshalers<Decoder__from_jsontext>> | undefined => {
@@ -604,6 +604,12 @@ export class addressableValue {
             forcedAddr: $source.$storage.forcedAddr
         });
     }
+    static $zeroStorage(): addressableValue$Storage {
+        return {
+            Value: named_reflect.ReflectValueOperations.$zero(),
+            forcedAddr: false
+        };
+    }
     declare private readonly then?: never;
     $go$private$json$fieldByIndex(index: RuntimeSlice<int>, mayAlloc: bool): addressableValue {
         let va: addressableValue = addressableValue.$copy(this);
@@ -663,14 +669,19 @@ export class arshaler {
         return new arshaler($source.marshal, $source.unmarshal, $source.nonDefault);
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: arshaler): void {
+        this.marshal = $value.marshal;
+        this.unmarshal = $value.unmarshal;
+        this.nonDefault = $value.nonDefault;
+    }
 }
-export function lookupArshaler(t: reflect__from_gostdlib.Type | undefined): tsonicTypeScriptRuntime.Location<arshaler> | undefined {
+export function lookupArshaler(t: reflect__from_gostdlib.Type | undefined): arshaler | undefined {
     {
         const __gotots_results_4 = sync__from_gostdlib.Map.Load($state.lookupArshalerCache, t);
         let v__shadow_1: $goInterface$Interface_void | undefined = __gotots_results_4[0];
         let ok = __gotots_results_4[1];
         if (ok) {
-            return (($value: $goInterface$Interface_void | undefined): tsonicTypeScriptRuntime.Location<arshaler> | undefined => {
+            return (($value: $goInterface$Interface_void | undefined): arshaler | undefined => {
                 if (!$goInterfaceAdapter$PointerTo_Named_json$arshaler.$is($value)) {
                     return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                 }
@@ -678,12 +689,12 @@ export function lookupArshaler(t: reflect__from_gostdlib.Type | undefined): tson
             })(v__shadow_1);
         }
     }
-    let fncs: tsonicTypeScriptRuntime.Location<arshaler> | undefined = makeDefaultArshaler(t);
+    let fncs: arshaler | undefined = makeDefaultArshaler(t);
     fncs = makeMethodArshaler(fncs, t);
     fncs = makeTimeArshaler(fncs, t);
     const __gotots_results_6 = sync__from_gostdlib.Map.LoadOrStore($state.lookupArshalerCache, t, new $goInterfaceAdapter$PointerTo_Named_json$arshaler(fncs));
     let v: $goInterface$Interface_void | undefined = __gotots_results_6[0];
-    return (($value: $goInterface$Interface_void | undefined): tsonicTypeScriptRuntime.Location<arshaler> | undefined => {
+    return (($value: $goInterface$Interface_void | undefined): arshaler | undefined => {
         if (!$goInterfaceAdapter$PointerTo_Named_json$arshaler.$is($value)) {
             return GoPanic.raiseRuntime("runtime error: interface conversion failed");
         }

@@ -40,17 +40,24 @@ export class OrderedMap<K, V> {
     }
     static $zero<K, V>($go$zero$void_to_MapOf_T0_To_T1: () => GoMapValue<K, V>): OrderedMap<K, V> {
         return new OrderedMap<K, V>({
-            $blank0: noCopy.$storageOf(noCopy.$zero()),
+            $blank0: noCopy.$zeroStorage(),
             keys: RuntimeSlice.nil<GoContainerStorage<K>>(),
             mp: $go$zero$void_to_MapOf_T0_To_T1()
         });
     }
     static $copy<K, V>($source: OrderedMap<K, V>): OrderedMap<K, V> {
         return new OrderedMap<K, V>({
-            $blank0: noCopy.$storageOf(noCopy.$zero()),
+            $blank0: noCopy.$zeroStorage(),
             keys: $source.$storage.keys,
             mp: $source.$storage.mp
         });
+    }
+    static $zeroStorage<K, V>($go$zero$void_to_MapOf_T0_To_T1: () => GoMapValue<K, V>): OrderedMap$Storage<K, V> {
+        return {
+            $blank0: noCopy.$zeroStorage(),
+            keys: RuntimeSlice.nil<GoContainerStorage<K>>(),
+            mp: $go$zero$void_to_MapOf_T0_To_T1()
+        };
     }
     declare private readonly then?: never;
     static Clear$kernel<K, V>(m: tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined, $go$clear$MapOf_T0_To_T1_to_void: ($0: GoMapValue<K, V>) => void, $go$clear$SliceOf_T0_to_void: ($0: RuntimeSlice<GoContainerStorage<K>>) => void): void {
@@ -285,7 +292,7 @@ export class OrderedMap<K, V> {
         return OrderedMap.$fromStorage<K, V>({
             keys: generic_slices_kernel.SlicesCloneKernel<RuntimeSlice<GoContainerStorage<K>>, K, GoContainerStorage<K>>($go$convert$SliceOf_T0_to_SliceOf_T0, $go$convert$SliceOf_T0_to_SliceOf_T0, $go$copy$T0_to_T0, $go$from_container_storage$T0_to_T0, $go$to_container_storage$T0_to_T0, OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).keys),
             mp: generic_maps_kernel.MapsCloneKernel<GoMapValue<K, V>, K, V>($go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1, $go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1, $go$copy$T0_to_T0, $go$copy$T1_to_T1, $go$map_construct$T1_to_MapOf_T0_To_T1, $go$zero$void_to_T1, OrderedMap.$storageOf(((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<OrderedMap<K, V>>).value).mp),
-            $blank0: noCopy.$storageOf(noCopy.$zero())
+            $blank0: noCopy.$zeroStorage()
         });
     }
 }
@@ -313,6 +320,9 @@ export class noCopy {
         let $hash = 2166136261;
         return $hash;
     }
+    static $zeroStorage(): noCopy$Storage {
+        return {};
+    }
     declare private readonly then?: never;
 }
 export function NewOrderedMapWithSizeHint$kernel<K, V>($go$map_construct$T1_int_to_MapOf_T0_To_T1: ($0: V, $1: int) => GoMapValue<K, V>, $go$to_container_storage$T0_to_T0: ($0: K) => GoContainerStorage<K>, $go$zero$void_to_T1: () => V, $go$zero$void_to_T0: () => K, hint: int): tsonicTypeScriptRuntime.Location<OrderedMap<K, V>> | undefined {
@@ -329,7 +339,7 @@ export function newMapWithSizeHint$kernel<K, V>($go$map_construct$T1_int_to_MapO
     return OrderedMap.$fromStorage<K, V>({
         keys: __gotots_field_0,
         mp: $go$map_construct$T1_int_to_MapOf_T0_To_T1($go$zero$void_to_T1(), hint),
-        $blank0: noCopy.$storageOf(noCopy.$zero())
+        $blank0: noCopy.$zeroStorage()
     });
 }
 export type MapEntry$Storage<K, V> = {

@@ -599,7 +599,7 @@ export class objectNamespaceStack {
                         mapNames: GoMap.nil()
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, objectNamespace.$storageOf(objectNamespace.$zero()));
+                    __gotots_slice_build_1.$initialize(__gotots_slice_build_3, objectNamespace.$zeroStorage());
                 }
             }
             void (__gotots_store_5.value =
@@ -651,19 +651,19 @@ export class objectNamespace {
     public set mapNames($value: GoMapValue<gostring, GoEmptyStruct>) {
         this.$storage.mapNames = $value;
     }
-    static $zero(): objectNamespace {
-        return new objectNamespace({
-            endOffsets: RuntimeSlice.nil<uint>(),
-            allUnquotedNames: RuntimeSlice.nil<uint8>(),
-            mapNames: GoMap.nil()
-        });
-    }
     static $copy($source: objectNamespace): objectNamespace {
         return new objectNamespace({
             endOffsets: $source.$storage.endOffsets,
             allUnquotedNames: $source.$storage.allUnquotedNames,
             mapNames: $source.$storage.mapNames
         });
+    }
+    static $zeroStorage(): objectNamespace$Storage {
+        return {
+            endOffsets: RuntimeSlice.nil<uint>(),
+            allUnquotedNames: RuntimeSlice.nil<uint8>(),
+            mapNames: GoMap.nil()
+        };
     }
     declare private readonly then?: never;
     static InsertUnquoted(ns: tsonicTypeScriptRuntime.Location<objectNamespace> | undefined, name: RuntimeSlice<uint8>): bool {

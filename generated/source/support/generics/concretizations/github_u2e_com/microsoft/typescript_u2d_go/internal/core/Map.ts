@@ -109,18 +109,18 @@ export function Map$Named_tspath$Path$Named_incremental$BuildInfoFileId($argumen
         return new BuildInfoFileId__from_incremental(0);
     }, $argument0, $argument1);
 }
-export function Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile($argument0: RuntimeSlice<gostring>, $argument1: (($0: Path__from_tspath) => tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined> {
-    return Map$kernel__from_core<Path__from_tspath, tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined>(($argument0: Path__from_tspath): Path__from_tspath => {
+export function Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile($argument0: RuntimeSlice<gostring>, $argument1: (($0: Path__from_tspath) => BuildInfoDiagnosticsOfFile__from_incremental | undefined) | undefined): RuntimeSlice<BuildInfoDiagnosticsOfFile__from_incremental | undefined> {
+    return Map$kernel__from_core<Path__from_tspath, BuildInfoDiagnosticsOfFile__from_incremental | undefined>(($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined): tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined => {
+    }, ($argument0: BuildInfoDiagnosticsOfFile__from_incremental | undefined): BuildInfoDiagnosticsOfFile__from_incremental | undefined => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     }, ($argument0: RuntimeSlice<gostring>): int => {
         return $argument0.length;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined): tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined => {
+    }, ($argument0: BuildInfoDiagnosticsOfFile__from_incremental | undefined): BuildInfoDiagnosticsOfFile__from_incremental | undefined => {
         return $argument0;
-    }, (): tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile__from_incremental> | undefined => {
+    }, (): BuildInfoDiagnosticsOfFile__from_incremental | undefined => {
         return void 0;
     }, $argument0, $argument1);
 }
@@ -718,14 +718,14 @@ export function Map$PointerTo_Named_compiler$emitter$PointerTo_Named_compiler$Em
         return void 0;
     }, $argument0, $argument1);
 }
-export function Map$PointerTo_Named_core$ProjectReference$string($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined) => gostring) | undefined): RuntimeSlice<gostring> {
-    return Map$kernel__from_core<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined, gostring>(($argument0: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined): tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined => {
+export function Map$PointerTo_Named_core$ProjectReference$string($argument0: RuntimeSlice<ProjectReference__from_core | undefined>, $argument1: (($0: ProjectReference__from_core | undefined) => gostring) | undefined): RuntimeSlice<gostring> {
+    return Map$kernel__from_core<ProjectReference__from_core | undefined, gostring>(($argument0: ProjectReference__from_core | undefined): ProjectReference__from_core | undefined => {
         return $argument0;
     }, ($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined): tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined => {
+    }, ($argument0: ProjectReference__from_core | undefined): ProjectReference__from_core | undefined => {
         return $argument0;
-    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<ProjectReference__from_core> | undefined>): int => {
+    }, ($argument0: RuntimeSlice<ProjectReference__from_core | undefined>): int => {
         return $argument0.length;
     }, ($argument0: gostring): gostring => {
         return $argument0;

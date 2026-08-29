@@ -104,6 +104,16 @@ export class Tag {
         $hash = GoMapHash.mix($hash, GoMapHash.string($source.$storage.str));
         return $hash;
     }
+    static $zeroStorage(): Tag$Storage {
+        return {
+            LangID: 0,
+            RegionID: 0,
+            ScriptID: 0,
+            pVariant: 0,
+            pExt: 0,
+            str: ""
+        };
+    }
     declare private readonly then?: never;
     static RemakeString(t: tsonicTypeScriptRuntime.Location<Tag> | undefined): void {
         if (Tag.$storageOf(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Tag>).value).str === "") {

@@ -355,10 +355,8 @@ export function NewOwnerCache<K, V, LoadArgs>(parse: (($0: K, $1: LoadArgs) => V
     return { value: OwnerCache.$fromStorage<K, V, LoadArgs>({
             isExpired: isExpired,
             parse: parse,
-            entries: SyncMap__from_collections.$storageOf<K, {
+            entries: SyncMap__from_collections.$zeroStorage<K, {
                 value: ownerCacheEntry<V>;
-            } | undefined>(SyncMap__from_collections.$zero<K, {
-                value: ownerCacheEntry<V>;
-            } | undefined>())
+            } | undefined>()
         }) };
 }

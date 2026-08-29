@@ -29,8 +29,14 @@ export function FirstResult$Named_tspath$Path($argument0: Path__from_tspath, $ar
 export function FirstResult$PointerTo_Named_autoimport$directory($argument0: directory__from_autoimport | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): directory__from_autoimport | undefined {
     return FirstResult$kernel<directory__from_autoimport | undefined>($argument0, $argument1);
 }
-export function FirstResult$PointerTo_Named_checker$Checker($argument0: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
-    return FirstResult$kernel<tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined>($argument0, $argument1);
+export function FirstResult$PointerTo_Named_checker$Checker($argument0: {
+    value: Checker__from_checker;
+} | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): {
+    value: Checker__from_checker;
+} | undefined {
+    return FirstResult$kernel<{
+        value: Checker__from_checker;
+    } | undefined>($argument0, $argument1);
 }
 export function FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket($argument0: MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined {
     return FirstResult$kernel<MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined>($argument0, $argument1);

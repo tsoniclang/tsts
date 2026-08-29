@@ -31,7 +31,9 @@ export class symbolExtractor {
     declare private readonly $goType: void;
     public constructor(public packageName: gostring, public stats: extractorStats | undefined, public localNameResolver: {
         value: NameResolver__from_binder;
-    } | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public toPath: (($0: gostring) => Path__from_tspath) | undefined, public realpath: (($0: gostring) => gostring) | undefined) {
+    } | undefined, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public toPath: (($0: gostring) => Path__from_tspath) | undefined, public realpath: (($0: gostring) => gostring) | undefined) {
     }
     declare private readonly then?: never;
     static $go$private$autoimport$createExport(e: symbolExtractor | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, moduleID: ModuleID, moduleFileName: gostring, syntax: ExportSyntax, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, checkerLease__shadow_1: checkerLease | undefined): [
@@ -75,7 +77,9 @@ export class symbolExtractor {
                 }
                 let parent: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Symbol__from_ast.$storageOf(((targetSymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent;
                 {
-                    let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = checkerLease.TryChecker(checkerLease__shadow_1);
+                    let checker__shadow_1: {
+                        value: Checker__from_checker;
+                    } | undefined = checkerLease.TryChecker(checkerLease__shadow_1);
                     if (!(checker__shadow_1 === undefined)) {
                         (__go_export ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Flags = Checker__from_checker.GetSymbolFlags(checker__shadow_1, targetSymbol);
                         (__go_export ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly = !(Checker__from_checker.GetTypeOnlyAliasDeclaration(checker__shadow_1, __go_symbol) === undefined);
@@ -380,7 +384,9 @@ export class symbolExtractor {
                 return local;
             }
         }
-        let checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined = checkerLease.GetChecker(checkerLease__shadow_1);
+        let checker__shadow_1: {
+            value: Checker__from_checker;
+        } | undefined = checkerLease.GetChecker(checkerLease__shadow_1);
         {
             let resolved: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetAliasedSymbol(checker__shadow_1, __go_symbol);
             if (!Checker__from_checker.IsUnknownSymbol(checker__shadow_1, resolved)) {
@@ -534,21 +540,29 @@ export class extractorStats {
 }
 export class checkerLease {
     declare private readonly $goType: void;
-    public constructor(public used: bool, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined) {
+    public constructor(public used: bool, public checker: {
+        value: Checker__from_checker;
+    } | undefined) {
     }
     declare private readonly then?: never;
-    static GetChecker(l: checkerLease | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
+    static GetChecker(l: checkerLease | undefined): {
+        value: Checker__from_checker;
+    } | undefined {
         (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).used = true;
         return (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).checker;
     }
-    static TryChecker(l: checkerLease | undefined): tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined {
+    static TryChecker(l: checkerLease | undefined): {
+        value: Checker__from_checker;
+    } | undefined {
         if ((l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).used) {
             return (l ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).checker;
         }
         return void 0;
     }
 }
-export function newSymbolExtractor(packageName: gostring, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, toPath: (($0: gostring) => Path__from_tspath) | undefined, realpath: (($0: gostring) => gostring) | undefined): symbolExtractor | undefined {
+export function newSymbolExtractor(packageName: gostring, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, toPath: (($0: gostring) => Path__from_tspath) | undefined, realpath: (($0: gostring) => gostring) | undefined): symbolExtractor | undefined {
     return new symbolExtractor(packageName, new extractorStats(named_sync_atomic.SyncAtomicInt32Operations.$zero(), named_sync_atomic.SyncAtomicInt32Operations.$zero()), { value: new NameResolver__from_binder($state__core.EmptyCompilerOptions, void 0, void 0, new SymbolTable__from_ast(GoMap.nil()), void 0, void 0, void 0, void 0, void 0, void 0, void 0, void 0, void 0) }, checker__shadow_1, toPath, realpath);
 }
 export function shouldIgnoreSymbol(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): bool {

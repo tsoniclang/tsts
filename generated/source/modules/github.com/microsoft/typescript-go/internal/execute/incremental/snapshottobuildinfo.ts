@@ -39,8 +39,8 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export function snapshotToBuildInfo(snapshot__shadow_1: tsonicTypeScriptRuntime.Location<snapshot> | undefined, program: {
     value: Program__from_compiler;
-} | undefined, buildInfoFileName: gostring): tsonicTypeScriptRuntime.Location<BuildInfo> | undefined {
-    let buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo> | undefined = tsonicTypeScriptRuntime.location<BuildInfo>(new BuildInfo(Version__from_core(), false, false, RuntimeSlice.nil<{
+} | undefined, buildInfoFileName: gostring): BuildInfo | undefined {
+    let buildInfo: BuildInfo | undefined = new BuildInfo(Version__from_core(), false, false, RuntimeSlice.nil<{
         value: BuildInfoRoot;
     } | undefined>(), RuntimeSlice.nil<gostring>(), RuntimeSlice.nil<{
         value: BuildInfoFileInfo;
@@ -48,13 +48,13 @@ export function snapshotToBuildInfo(snapshot__shadow_1: tsonicTypeScriptRuntime.
         value: BuildInfoReferenceMapEntry;
     } | undefined>(), RuntimeSlice.nil<{
         value: BuildInfoSemanticDiagnostic;
-    } | undefined>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile> | undefined>(), RuntimeSlice.nil<int>(), RuntimeSlice.nil<{
+    } | undefined>(), RuntimeSlice.nil<BuildInfoDiagnosticsOfFile | undefined>(), RuntimeSlice.nil<int>(), RuntimeSlice.nil<{
         value: BuildInfoFilePendingEmit;
     } | undefined>(), "", RuntimeSlice.nil<{
         value: BuildInfoEmitSignature;
     } | undefined>(), RuntimeSlice.nil<{
         value: BuildInfoResolvedRoot;
-    } | undefined>(), false));
+    } | undefined>(), false);
     let to: toBuildInfo | undefined = new toBuildInfo(snapshot__shadow_1, program, buildInfo, GetDirectoryPath__from_tspath(buildInfoFileName), new ComparePathsOptions__from_tspath(Program__from_compiler.UseCaseSensitiveFileNames(program), Program__from_compiler.GetCurrentDirectory(program)), GoMap.make<gostring, BuildInfoFileId>(new BuildInfoFileId(0), 0, []), GoMap.make<gostring, BuildInfoFileIdListId>(new BuildInfoFileIdListId(0), 0, []), $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_Named_tspath$Path.make(0, []));
     if (CompilerOptions__from_core.IsIncremental(((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.options)) {
         toBuildInfo.$go$private$incremental$collectRootFiles(to);
@@ -67,22 +67,22 @@ export function snapshotToBuildInfo(snapshot__shadow_1: tsonicTypeScriptRuntime.
         toBuildInfo.$go$private$incremental$setEmitDiagnostics(to);
         toBuildInfo.$go$private$incremental$setAffectedFilesPendingEmit(to);
         if (((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.latestChangedDtsFile !== "") {
-            ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.LatestChangedDtsFile = toBuildInfo.$go$private$incremental$relativeToBuildInfo(to, ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.latestChangedDtsFile);
+            (buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).LatestChangedDtsFile = toBuildInfo.$go$private$incremental$relativeToBuildInfo(to, ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.latestChangedDtsFile);
         }
     }
     else {
         toBuildInfo.$go$private$incremental$setRootOfNonIncrementalProgram(to);
     }
-    ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Errors = Tristate_IsTrue__from_core(((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.hasErrors);
-    ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.SemanticErrors = ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.hasSemanticErrors;
-    ((buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.CheckPending = ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.checkPending;
+    (buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Errors = Tristate_IsTrue__from_core(((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.hasErrors);
+    (buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticErrors = ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.hasSemanticErrors;
+    (buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).CheckPending = ((snapshot__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.checkPending;
     return buildInfo;
 }
 export class toBuildInfo {
     declare private readonly $goType: void;
     public constructor(public snapshot: tsonicTypeScriptRuntime.Location<snapshot> | undefined, public program: {
         value: Program__from_compiler;
-    } | undefined, public buildInfo: tsonicTypeScriptRuntime.Location<BuildInfo> | undefined, public buildInfoDirectory: gostring, public comparePathsOptions: ComparePathsOptions__from_tspath, public fileNameToFileId: GoMapValue<gostring, BuildInfoFileId>, public fileNamesToFileIdListId: GoMapValue<gostring, BuildInfoFileIdListId>, public roots: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, Path__from_tspath>) {
+    } | undefined, public buildInfo: BuildInfo | undefined, public buildInfoDirectory: gostring, public comparePathsOptions: ComparePathsOptions__from_tspath, public fileNameToFileId: GoMapValue<gostring, BuildInfoFileId>, public fileNamesToFileIdListId: GoMapValue<gostring, BuildInfoFileIdListId>, public roots: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, Path__from_tspath>) {
     }
     declare private readonly then?: never;
     static $go$private$incremental$collectRootFiles(t: toBuildInfo | undefined): void {
@@ -125,7 +125,7 @@ export class toBuildInfo {
             const __gotots_store_10 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
             const __gotots_results_5 = SyncMap$Load$Named_tspath$Path$Named_incremental$FileEmitKind(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "affectedFilesPendingEmit"), filePath);
             let pendingEmit = __gotots_results_5[0];
-            (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.AffectedFilesPendingEmit = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.AffectedFilesPendingEmit.append(void 0, [
+            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AffectedFilesPendingEmit = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AffectedFilesPendingEmit.append(void 0, [
                 { value: new BuildInfoFilePendingEmit(toBuildInfo.$go$private$incremental$toFileId(t, filePath), IfElse$Named_incremental$FileEmitKind(pendingEmit === fullEmitKind, 0, pendingEmit)) },
             ]);
         }
@@ -140,7 +140,7 @@ export class toBuildInfo {
         const __gotots_argument_3 = ($argument0: Path__from_tspath): BuildInfoFileId => {
             return toBuildInfo.$go$private$incremental$toFileId(__gotots_receiver_0, $argument0);
         };
-        (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.ChangeFileSet = Map$Named_tspath$Path$Named_incremental$BuildInfoFileId(__gotots_argument_2, __gotots_argument_3);
+        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ChangeFileSet = Map$Named_tspath$Path$Named_incremental$BuildInfoFileId(__gotots_argument_2, __gotots_argument_3);
     }
     static $go$private$incremental$setCompilerOptions(t: toBuildInfo | undefined): void {
         ForEachCompilerOptionValue__from_tsoptions((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value.options, (option: tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions> | undefined): bool => {
@@ -149,14 +149,14 @@ export class toBuildInfo {
             if (value.IsZero()) {
                 return false;
             }
-            if ((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Options === undefined) {
+            if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options === undefined) {
                 const __gotots_struct_0 = OrderedMap__from_collections.$zero<gostring, GoInterface | undefined>((): GoMapValue<gostring, GoInterface | undefined> => {
                     return $goMap$MapOf_string_To_Interface_void.nil();
                 });
-                (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Options =
+                ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options =
                     tsonicTypeScriptRuntime.location<OrderedMap__from_collections<gostring, GoInterface | undefined>>(__gotots_struct_0);
             }
-            OrderedMap$Set$string$Interface_void((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Options, CommandLineOption__from_tsoptions.$storageOf(((option ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions>).value).Name, toBuildInfo.$go$private$incremental$toRelativeToBuildInfoCompilerOptionValue(t, option, value.Interface()));
+            OrderedMap$Set$string$Interface_void(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options, CommandLineOption__from_tsoptions.$storageOf(((option ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CommandLineOption__from_tsoptions>).value).Name, toBuildInfo.$go$private$incremental$toRelativeToBuildInfoCompilerOptionValue(t, option, value.Interface()));
             return false;
         });
     }
@@ -165,7 +165,7 @@ export class toBuildInfo {
         const __gotots_argument_4 = SyncMap$Keys$Named_tspath$Path$PointerTo_Named_incremental$DiagnosticsOrBuildInfoDiagnosticsWithFileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "emitDiagnosticsPerFile"));
         let files = Collect$Named_tspath$Path(__gotots_argument_4);
         Sort$SliceOf_Named_tspath$Path$Named_tspath$Path(files);
-        (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.EmitDiagnosticsPerFile = Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile(files, (filePath: Path__from_tspath): tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile> | undefined => {
+        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitDiagnosticsPerFile = Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoDiagnosticsOfFile(files, (filePath: Path__from_tspath): BuildInfoDiagnosticsOfFile | undefined => {
             const __gotots_store_8 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
             const __gotots_results_4 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_incremental$DiagnosticsOrBuildInfoDiagnosticsWithFileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "emitDiagnosticsPerFile"), filePath);
             let value: {
@@ -175,7 +175,7 @@ export class toBuildInfo {
         });
     }
     static $go$private$incremental$setFileInfoAndEmitSignatures(t: toBuildInfo | undefined): void {
-        (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileInfos = Map$PointerTo_Named_ast$SourceFile$PointerTo_Named_incremental$BuildInfoFileInfo(Program__from_compiler.GetSourceFiles((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program), (file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
+        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileInfos = Map$PointerTo_Named_ast$SourceFile$PointerTo_Named_incremental$BuildInfoFileInfo(Program__from_compiler.GetSourceFiles((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program), (file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
             value: BuildInfoFileInfo;
         } | undefined => {
             const __gotots_store_0 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
@@ -184,15 +184,15 @@ export class toBuildInfo {
                 value: FileInfo;
             } | undefined = __gotots_results_0[0];
             let fileId = toBuildInfo.$go$private$incremental$toFileId(t, SourceFile__from_ast.Path(file));
-            if ((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.get(((void BuildInfoFileId,
+            if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.get(((void BuildInfoFileId,
                 fileId.$value - 1) as number)) !== toBuildInfo.$go$private$incremental$relativeToBuildInfo(t, SourceFile__from_ast.Path(file).$value)) {
                 {
                     let libFile: {
                         value: LibFile__from_compiler;
                     } | undefined = Program__from_compiler.GetDefaultLibFile((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program, SourceFile__from_ast.Path(file));
-                    if (libFile === undefined || (libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Replaced || (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.get(((void BuildInfoFileId,
+                    if (libFile === undefined || (libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Replaced || ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.get(((void BuildInfoFileId,
                         fileId.$value - 1) as number)) !== (libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name) {
-                        const __gotots_argument_0 = new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("File name at index %d does not match expected relative path or libName: %s != %s", RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(new BuildInfoFileId(fileId.$value - 1)), new $goInterfaceAdapter$string((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.get(((void BuildInfoFileId,
+                        const __gotots_argument_0 = new $goInterfaceAdapter$string(fmt__from_gostdlib.Sprintf("File name at index %d does not match expected relative path or libName: %s != %s", RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(new BuildInfoFileId(fileId.$value - 1)), new $goInterfaceAdapter$string(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.get(((void BuildInfoFileId,
                                 fileId.$value - 1) as number))), new $goInterfaceAdapter$string(toBuildInfo.$go$private$incremental$relativeToBuildInfo(t, SourceFile__from_ast.Path(file).$value))])));
                         GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
                     }
@@ -208,7 +208,7 @@ export class toBuildInfo {
                         } | undefined = __gotots_results_1[0];
                         let loaded = __gotots_results_1[1];
                         if (!loaded) {
-                            (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.EmitSignatures = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.EmitSignatures.append(void 0, [
+                            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitSignatures = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitSignatures.append(void 0, [
                                 { value: new BuildInfoEmitSignature(fileId, "", false, false) },
                             ]);
                         }
@@ -226,7 +226,7 @@ export class toBuildInfo {
                                 (incrementalEmitSignature ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Signature = (emitSignature__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.signatureWithDifferentOptions.get(0);
                                 (incrementalEmitSignature ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DiffersInOptions = true;
                             }
-                            (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.EmitSignatures = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.EmitSignatures.append(void 0, [incrementalEmitSignature]);
+                            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitSignatures = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).EmitSignatures.append(void 0, [incrementalEmitSignature]);
                         }
                     }
                 }
@@ -238,7 +238,7 @@ export class toBuildInfo {
         const __gotots_store_2 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
         let keys = referenceMap.$go$private$incremental$getPathsWithReferences(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "referencedMap"));
         Sort$SliceOf_Named_tspath$Path$Named_tspath$Path(keys);
-        (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.ReferencedMap = Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoReferenceMapEntry(keys, (filePath: Path__from_tspath): {
+        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ReferencedMap = Map$Named_tspath$Path$PointerTo_Named_incremental$BuildInfoReferenceMapEntry(keys, (filePath: Path__from_tspath): {
             value: BuildInfoReferenceMapEntry;
         } | undefined => {
             const __gotots_store_3 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
@@ -258,15 +258,15 @@ export class toBuildInfo {
             let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_range_value_1;
             let root = toBuildInfo.$go$private$incremental$toFileId(t, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).roots.lookup(file));
             let resolved = toBuildInfo.$go$private$incremental$toFileId(t, SourceFile__from_ast.Path(file));
-            if ((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root.isNil()) {
-                (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root.append(void 0, [
+            if (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root.isNil()) {
+                ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root.append(void 0, [
                     { value: new BuildInfoRoot(resolved, new BuildInfoFileId(0), "") },
                 ]);
             }
             else {
                 let last: {
                     value: BuildInfoRoot;
-                } | undefined = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root.get((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root.length - 1);
+                } | undefined = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root.get(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root.length - 1);
                 if ((last ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.End.$value ===
                     ((void BuildInfoFileId,
                         resolved.$value - 1) as number)) {
@@ -280,20 +280,20 @@ export class toBuildInfo {
                     (last ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.End = resolved;
                 }
                 else {
-                    (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root.append(void 0, [
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root.append(void 0, [
                         { value: new BuildInfoRoot(resolved, new BuildInfoFileId(0), "") },
                     ]);
                 }
             }
             if (!(root.$value === resolved.$value)) {
-                (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.ResolvedRoot = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.ResolvedRoot.append(void 0, [
+                ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedRoot = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedRoot.append(void 0, [
                     { value: new BuildInfoResolvedRoot(resolved, root) },
                 ]);
             }
         }
     }
     static $go$private$incremental$setRootOfNonIncrementalProgram(t: toBuildInfo | undefined): void {
-        (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.Root = Map$string$PointerTo_Named_incremental$BuildInfoRoot(ParsedCommandLine__from_tsoptions.FileNames(Program__from_compiler.CommandLine((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program)), (fileName: gostring): {
+        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Root = Map$string$PointerTo_Named_incremental$BuildInfoRoot(ParsedCommandLine__from_tsoptions.FileNames(Program__from_compiler.CommandLine((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program)), (fileName: gostring): {
             value: BuildInfoRoot;
         } | undefined => {
             return { value: new BuildInfoRoot(new BuildInfoFileId(0), new BuildInfoFileId(0), toBuildInfo.$go$private$incremental$relativeToBuildInfo(t, ToPath__from_tspath(fileName, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).comparePathsOptions.CurrentDirectory, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).comparePathsOptions.UseCaseSensitiveFileNames).$value)) };
@@ -313,15 +313,15 @@ export class toBuildInfo {
             if (!ok) {
                 const __gotots_store_6 = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshot>).value;
                 if (!SyncSet$Has$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "changedFilesSet"), SourceFile__from_ast.Path(file))) {
-                    (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.SemanticDiagnosticsPerFile = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.SemanticDiagnosticsPerFile.append(void 0, [
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticDiagnosticsPerFile = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticDiagnosticsPerFile.append(void 0, [
                         { value: new BuildInfoSemanticDiagnostic(toBuildInfo.$go$private$incremental$toFileId(t, SourceFile__from_ast.Path(file)), void 0) },
                     ]);
                 }
             }
             else {
-                let diagnostics: tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile> | undefined = toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsOfFile(t, SourceFile__from_ast.Path(file), value);
+                let diagnostics: BuildInfoDiagnosticsOfFile | undefined = toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsOfFile(t, SourceFile__from_ast.Path(file), value);
                 if (!(diagnostics === undefined)) {
-                    (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.SemanticDiagnosticsPerFile = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.SemanticDiagnosticsPerFile.append(void 0, [
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticDiagnosticsPerFile = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SemanticDiagnosticsPerFile.append(void 0, [
                         { value: new BuildInfoSemanticDiagnostic(new BuildInfoFileId(0), diagnostics) },
                     ]);
                 }
@@ -366,12 +366,12 @@ export class toBuildInfo {
     }
     static $go$private$incremental$toBuildInfoDiagnosticsOfFile(t: toBuildInfo | undefined, filePath: Path__from_tspath, diags: {
         value: DiagnosticsOrBuildInfoDiagnosticsWithFileName;
-    } | undefined): tsonicTypeScriptRuntime.Location<BuildInfoDiagnosticsOfFile> | undefined {
+    } | undefined): BuildInfoDiagnosticsOfFile | undefined {
         if ((diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnostics.length > 0) {
-            return tsonicTypeScriptRuntime.location<BuildInfoDiagnosticsOfFile>(new BuildInfoDiagnosticsOfFile(toBuildInfo.$go$private$incremental$toFileId(t, filePath), toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsFromDiagnostics(t, filePath, (diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnostics)));
+            return new BuildInfoDiagnosticsOfFile(toBuildInfo.$go$private$incremental$toFileId(t, filePath), toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsFromDiagnostics(t, filePath, (diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diagnostics));
         }
         if ((diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoDiagnostics.length > 0) {
-            return tsonicTypeScriptRuntime.location<BuildInfoDiagnosticsOfFile>(new BuildInfoDiagnosticsOfFile(toBuildInfo.$go$private$incremental$toFileId(t, filePath), toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsFromFileNameDiagnostics(t, (diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoDiagnostics)));
+            return new BuildInfoDiagnosticsOfFile(toBuildInfo.$go$private$incremental$toFileId(t, filePath), toBuildInfo.$go$private$incremental$toBuildInfoDiagnosticsFromFileNameDiagnostics(t, (diags ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.buildInfoDiagnostics));
         }
         return void 0;
     }
@@ -385,13 +385,13 @@ export class toBuildInfo {
                     value: LibFile__from_compiler;
                 } | undefined = Program__from_compiler.GetDefaultLibFile((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).program, path);
                 if (!(libFile === undefined) && !(libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Replaced) {
-                    (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.append("", [(libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name]);
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.append("", [(libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Name]);
                 }
                 else {
-                    (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.append("", [toBuildInfo.$go$private$incremental$relativeToBuildInfo(t, path.$value)]);
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.append("", [toBuildInfo.$go$private$incremental$relativeToBuildInfo(t, path.$value)]);
                 }
             }
-            fileId = new BuildInfoFileId((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileNames.length);
+            fileId = new BuildInfoFileId(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileNames.length);
             (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fileNameToFileId.store(path.$value, fileId);
         }
         return fileId;
@@ -411,8 +411,8 @@ export class toBuildInfo {
         if (fileIdListId.$value ===
             ((void BuildInfoFileIdListId,
                 0) as number)) {
-            (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileIdsList = (((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileIdsList.append(RuntimeSlice.nil<int>(), [fileIds]);
-            fileIdListId = new BuildInfoFileIdListId((((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BuildInfo>).value.FileIdsList.length);
+            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileIdsList = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileIdsList.append(RuntimeSlice.nil<int>(), [fileIds]);
+            fileIdListId = new BuildInfoFileIdListId(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).buildInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileIdsList.length);
             (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fileNamesToFileIdListId.store(key, fileIdListId);
         }
         return fileIdListId;

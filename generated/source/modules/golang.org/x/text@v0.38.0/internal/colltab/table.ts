@@ -1,4 +1,3 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Form as Form__from_norm, Properties as Properties__from_norm } from "../../../../../../packages/golang.org/x/text@v0.38.0/unicode/norm/package.js";
 import type { Elem } from "./collelem.js";
 import type { ContractTrieSet } from "./contract.js";
@@ -88,7 +87,7 @@ export class Table {
                     let buf = GoArray.zero<uint8, 16>(16, 0);
                     for (let b = source.$go$private$colltab$nfd(src, goArraySlice(buf, 0, 0, null), hangulSize$int); b.length > 0; b = b.slice(sz, null, null)) {
                         const __gotots_store_0 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-                        const __gotots_results_2 = Trie.$go$private$colltab$lookup(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Index"), b);
+                        const __gotots_results_2 = Trie.$go$private$colltab$lookup(__gotots_store_0.Index, b);
                         ce = __gotots_results_2[0];
                         sz = __gotots_results_2[1];
                         w = w.append(0, [ce]);
@@ -313,10 +312,10 @@ export class source {
         let sz: int = 0;
         if ((src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bytes.isNil()) {
             const __gotots_store_1 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-            return Trie.$go$private$colltab$lookupString(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Index"), (src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).str);
+            return Trie.$go$private$colltab$lookupString(__gotots_store_1.Index, (src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).str);
         }
         const __gotots_store_2 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        return Trie.$go$private$colltab$lookup(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Index"), (src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bytes);
+        return Trie.$go$private$colltab$lookup(__gotots_store_2.Index, (src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bytes);
     }
     static $go$private$colltab$nfd(src: source | undefined, buf: RuntimeSlice<uint8>, end: int): RuntimeSlice<uint8> {
         if ((src ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bytes.isNil()) {

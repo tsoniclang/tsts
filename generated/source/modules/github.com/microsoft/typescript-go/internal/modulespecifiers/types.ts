@@ -96,6 +96,13 @@ export class ModulePath implements GoContainerStoredValue<ModulePath$Storage> {
             IsRedirect: $source.$storage.IsRedirect
         });
     }
+    static $zeroStorage(): ModulePath$Storage {
+        return {
+            FileName: "",
+            IsInNodeModules: false,
+            IsRedirect: false
+        };
+    }
     declare private readonly then?: never;
 }
 export interface ModuleSpecifierGenerationHost extends GoInterfaceValue {

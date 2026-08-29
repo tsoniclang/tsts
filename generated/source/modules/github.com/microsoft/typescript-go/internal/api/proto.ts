@@ -411,6 +411,13 @@ export class DocumentIdentifier {
             $source.$storage.URI) as string)));
         return $hash;
     }
+    static $zeroStorage(): DocumentIdentifier$Storage {
+        return {
+            FileName: "",
+            URI: ((void DocumentUri__from_lsproto,
+                "") as string)
+        };
+    }
     declare private readonly then?: never;
     static UnmarshalJSONFrom(d: tsonicTypeScriptRuntime.Location<DocumentIdentifier> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const __gotots_results_1 = Decoder__from_jsontext.ReadToken(dec);
@@ -546,7 +553,7 @@ export class ProjectFileChanges {
 }
 export class SnapshotChanges {
     declare private readonly $goType: void;
-    public constructor(public ChangedProjects: GoMapValue<ProjectID, tsonicTypeScriptRuntime.Location<ProjectFileChanges> | undefined>, public RemovedProjects: RuntimeSlice<gostring>) {
+    public constructor(public ChangedProjects: GoMapValue<ProjectID, ProjectFileChanges | undefined>, public RemovedProjects: RuntimeSlice<gostring>) {
     }
     static $zero(): SnapshotChanges {
         return new SnapshotChanges(GoMap.nil(), RuntimeSlice.nil<gostring>());
@@ -555,12 +562,16 @@ export class SnapshotChanges {
         return new SnapshotChanges($source.ChangedProjects, $source.RemovedProjects);
     }
     declare private readonly then?: never;
+    $tsonicReplace($value: SnapshotChanges): void {
+        this.ChangedProjects = $value.ChangedProjects;
+        this.RemovedProjects = $value.RemovedProjects;
+    }
 }
 export class UpdateSnapshotResponse {
     declare private readonly $goType: void;
     public constructor(public Snapshot: SnapshotID, public Projects: RuntimeSlice<{
         value: ProjectResponse;
-    } | undefined>, public Changes: tsonicTypeScriptRuntime.Location<SnapshotChanges> | undefined) {
+    } | undefined>, public Changes: SnapshotChanges | undefined) {
     }
     static $copy($source: UpdateSnapshotResponse): UpdateSnapshotResponse {
         return new UpdateSnapshotResponse($source.Snapshot, $source.Projects, $source.Changes);
@@ -1300,14 +1311,6 @@ export class ReferencedSymbolEntry {
     public set References($value: RuntimeSlice<gostring>) {
         this.$storage.References = $value;
     }
-    static $zero(): ReferencedSymbolEntry {
-        return new ReferencedSymbolEntry({
-            Definition: ((void NodeHandle,
-                "") as gostring),
-            Symbol: void 0,
-            References: RuntimeSlice.nil<gostring>()
-        });
-    }
     static $copy($source: ReferencedSymbolEntry): ReferencedSymbolEntry {
         return new ReferencedSymbolEntry({
             Definition: ((void NodeHandle,
@@ -1315,6 +1318,14 @@ export class ReferencedSymbolEntry {
             Symbol: $source.$storage.Symbol,
             References: $source.$storage.References
         });
+    }
+    static $zeroStorage(): ReferencedSymbolEntry$Storage {
+        return {
+            Definition: ((void NodeHandle,
+                "") as gostring),
+            Symbol: void 0,
+            References: RuntimeSlice.nil<gostring>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -1366,14 +1377,6 @@ export class SignatureUsageResponse {
     public set Call($value: NodeHandle) {
         this.$storage.Call = $value.$value;
     }
-    static $zero(): SignatureUsageResponse {
-        return new SignatureUsageResponse({
-            Name: ((void NodeHandle,
-                "") as gostring),
-            Call: ((void NodeHandle,
-                "") as gostring)
-        });
-    }
     static $copy($source: SignatureUsageResponse): SignatureUsageResponse {
         return new SignatureUsageResponse({
             Name: ((void NodeHandle,
@@ -1400,6 +1403,14 @@ export class SignatureUsageResponse {
         $hash = GoMapHash.mix($hash, GoMapHash.string(((void NodeHandle,
             $source.$storage.Call) as gostring)));
         return $hash;
+    }
+    static $zeroStorage(): SignatureUsageResponse$Storage {
+        return {
+            Name: ((void NodeHandle,
+                "") as gostring),
+            Call: ((void NodeHandle,
+                "") as gostring)
+        };
     }
     declare private readonly then?: never;
 }

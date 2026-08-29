@@ -150,7 +150,9 @@ export function NewTracer(tr: {
 }
 export class tracedTypeAdapter {
     declare private readonly $goType: void;
-    public constructor(public t: tsonicTypeScriptRuntime.Location<Type> | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker> | undefined) {
+    public constructor(public t: tsonicTypeScriptRuntime.Location<Type> | undefined, public checker: {
+        value: Checker;
+    } | undefined) {
     }
     static $copy($source: tracedTypeAdapter): tracedTypeAdapter {
         return new tracedTypeAdapter($source.t, $source.checker);
@@ -158,12 +160,14 @@ export class tracedTypeAdapter {
     static $equal($left: tracedTypeAdapter, $right: tracedTypeAdapter): bool {
         return tsonicTypeScriptRuntime.sameLocation($left.t, $right.t)
             &&
-                tsonicTypeScriptRuntime.sameLocation($left.checker, $right.checker);
+                $left.checker
+                    ===
+                        $right.checker;
     }
     static $hash($source: tracedTypeAdapter): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.t));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.checker));
+        $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.checker));
         return $hash;
     }
     declare private readonly then?: never;
@@ -408,7 +412,7 @@ export class tracedTypeAdapter {
         if ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker === undefined) {
             return void 0;
         }
-        return (((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Checker>).value.patternForType.lookup((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.t);
+        return ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.patternForType.lookup((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.t);
     }
     static RecursionIdentity(a: {
         value: tracedTypeAdapter;

@@ -84,7 +84,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
             }
             __gotots_slice_build_1.set(__gotots_slice_build_0.length + 0, Option__from_collate.$storageOf(Option__from_collate.$copy(Option__from_collate.$fromStorage($state__collate.Numeric))));
             for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
-                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+                __gotots_slice_build_1.$initialize(__gotots_slice_build_3, Option__from_collate.$zeroStorage());
             }
         }
         opts = __gotots_slice_build_1;
@@ -115,7 +115,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
             __gotots_slice_build_7.set(__gotots_slice_build_4.length + __gotots_slice_build_9, __gotots_slice_build_6.get(__gotots_slice_build_9));
         }
         for (let __gotots_slice_build_9 = __gotots_slice_build_8; __gotots_slice_build_9 < __gotots_slice_build_7.capacity; __gotots_slice_build_9++) {
-            __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+            __gotots_slice_build_7.$initialize(__gotots_slice_build_9, Option__from_collate.$zeroStorage());
         }
     }
     let looseOpts = __gotots_slice_build_7;
@@ -133,7 +133,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
         }
         __gotots_slice_build_11.set(__gotots_slice_build_10.length + 0, Option__from_collate.$storageOf(Option__from_collate.$copy(Option__from_collate.$fromStorage($state__collate.Loose))));
         for (let __gotots_slice_build_13 = __gotots_slice_build_12; __gotots_slice_build_13 < __gotots_slice_build_11.capacity; __gotots_slice_build_13++) {
-            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+            __gotots_slice_build_11.$initialize(__gotots_slice_build_13, Option__from_collate.$zeroStorage());
         }
     }
     looseOpts = __gotots_slice_build_11;
@@ -165,7 +165,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
                 __gotots_slice_build_17.set(__gotots_slice_build_14.length + __gotots_slice_build_19, __gotots_slice_build_16.get(__gotots_slice_build_19));
             }
             for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+                __gotots_slice_build_17.$initialize(__gotots_slice_build_19, Option__from_collate.$zeroStorage());
             }
         }
         let caseInsensitiveOpts = __gotots_slice_build_17;
@@ -183,7 +183,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
             }
             __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, Option__from_collate.$storageOf(Option__from_collate.$copy(Option__from_collate.$fromStorage($state__collate.IgnoreCase))));
             for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
-                __gotots_slice_build_21.$initialize(__gotots_slice_build_23, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+                __gotots_slice_build_21.$initialize(__gotots_slice_build_23, Option__from_collate.$zeroStorage());
             }
         }
         caseInsensitiveOpts = __gotots_slice_build_21;
@@ -275,7 +275,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
             }
             __gotots_slice_build_25.set(__gotots_slice_build_24.length + 0, Option__from_collate.$storageOf(Option__from_collate.$copy(Option__from_collate.$fromStorage($state__collate.IgnoreCase))));
             for (let __gotots_slice_build_27 = __gotots_slice_build_26; __gotots_slice_build_27 < __gotots_slice_build_25.capacity; __gotots_slice_build_27++) {
-                __gotots_slice_build_25.$initialize(__gotots_slice_build_27, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+                __gotots_slice_build_25.$initialize(__gotots_slice_build_27, Option__from_collate.$zeroStorage());
             }
         }
         opts = __gotots_slice_build_25;
@@ -294,7 +294,7 @@ export function getOrganizeImportsUnicodeStringComparer(ignoreCase: bool, prefer
                 }
                 __gotots_slice_build_29.set(__gotots_slice_build_28.length + 0, Option__from_collate.$storageOf(Option__from_collate.$copy(Option__from_collate.$fromStorage($state__collate.Loose))));
                 for (let __gotots_slice_build_31 = __gotots_slice_build_30; __gotots_slice_build_31 < __gotots_slice_build_29.capacity; __gotots_slice_build_31++) {
-                    __gotots_slice_build_29.$initialize(__gotots_slice_build_31, Option__from_collate.$storageOf(Option__from_collate.$zero()));
+                    __gotots_slice_build_29.$initialize(__gotots_slice_build_31, Option__from_collate.$zeroStorage());
                 }
             }
             opts = __gotots_slice_build_29;

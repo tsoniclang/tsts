@@ -37,7 +37,7 @@ import { goInterfaceEqual } from "@gotots/runtime/interface.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex } from "@gotots/runtime/string.js";
-export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler> | undefined, t: reflect__from_gostdlib.Type | undefined): tsonicTypeScriptRuntime.Location<arshaler> | undefined {
+export function makeTimeArshaler(fncs: arshaler | undefined, t: reflect__from_gostdlib.Type | undefined): arshaler | undefined {
     {
         const __gotots_switch_tag_0 = t;
         let __gotots_switch_selection_0 = -1;
@@ -61,9 +61,9 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
         }
         switch (__gotots_switch_selection_0) {
             case 0: {
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.nonDefault = true;
-                let marshalNano: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => GoInterface | undefined) | undefined = ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.marshal;
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.marshal = (enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, va: addressableValue, mo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nonDefault = true;
+                let marshalNano: (($0: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => GoInterface | undefined) | undefined = (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).marshal;
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).marshal = (enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, va: addressableValue, mo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
                     let xe: tsonicTypeScriptRuntime.Location<encoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Encoder(enc);
                     let m = durationArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
@@ -122,8 +122,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     }
                     return void 0;
                 };
-                let unmarshalNano: (($0: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => GoInterface | undefined) | undefined = ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.unmarshal;
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.unmarshal = (dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, va: addressableValue, uo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
+                let unmarshalNano: (($0: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => GoInterface | undefined) | undefined = (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).unmarshal;
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).unmarshal = (dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, va: addressableValue, uo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
                     let xd: tsonicTypeScriptRuntime.Location<decoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Decoder(dec);
                     let u = durationArshaler.$zero();
                     if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
@@ -217,8 +217,8 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                 break;
             }
             case 1: {
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.nonDefault = true;
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.marshal = (enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, va: addressableValue, mo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nonDefault = true;
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).marshal = (enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, va: addressableValue, mo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
                     let err: GoInterface | undefined = void 0;
                     let xe: tsonicTypeScriptRuntime.Location<encoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Encoder(enc);
                     let m = timeArshaler.$zero();
@@ -271,7 +271,7 @@ export function makeTimeArshaler(fncs: tsonicTypeScriptRuntime.Location<arshaler
                     }
                     return void 0;
                 };
-                ((fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<arshaler>).value.unmarshal = (dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, va: addressableValue, uo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
+                (fncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).unmarshal = (dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, va: addressableValue, uo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined): GoInterface | undefined => {
                     let err: GoInterface | undefined = void 0;
                     let xd: tsonicTypeScriptRuntime.Location<decoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Decoder(dec);
                     let u = timeArshaler.$zero();

@@ -71,7 +71,7 @@ export function NewExtendedConfigCache(): {
 export function hash(entry: {
     value: ExtendedConfigCacheEntry__from_tsoptions;
 } | undefined, args: ExtendedConfigParseArgs): Uint128__from_xxh3 {
-    let hasher: tsonicTypeScriptRuntime.Location<Hasher__from_xxh3> | undefined = New__from_xxh3();
+    let hasher: Hasher__from_xxh3 | undefined = New__from_xxh3();
     const __gotots_results_0 = Hasher__from_xxh3.WriteString(hasher, args.Content);
     const __gotots_range_0 = ExtendedConfigCacheEntry__from_tsoptions.ExtendedFileNames(entry);
     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {

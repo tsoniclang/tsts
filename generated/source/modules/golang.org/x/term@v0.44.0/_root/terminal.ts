@@ -75,8 +75,8 @@ export class EscapeCodes {
     public set Reset($value: RuntimeSlice<uint8>) {
         this.$storage.Reset = $value;
     }
-    static $zero(): EscapeCodes {
-        return new EscapeCodes({
+    static $zeroStorage(): EscapeCodes$Storage {
+        return {
             Black: RuntimeSlice.nil<uint8>(),
             Red: RuntimeSlice.nil<uint8>(),
             Green: RuntimeSlice.nil<uint8>(),
@@ -86,7 +86,7 @@ export class EscapeCodes {
             Cyan: RuntimeSlice.nil<uint8>(),
             White: RuntimeSlice.nil<uint8>(),
             Reset: RuntimeSlice.nil<uint8>()
-        });
+        };
     }
     declare private readonly then?: never;
 }
@@ -102,8 +102,8 @@ export class pasteIndicatorError {
     public static $fromStorage($source: pasteIndicatorError$Storage): pasteIndicatorError {
         return new pasteIndicatorError($source);
     }
-    static $zero(): pasteIndicatorError {
-        return new pasteIndicatorError({});
+    static $zeroStorage(): pasteIndicatorError$Storage {
+        return {};
     }
     declare private readonly then?: never;
 }

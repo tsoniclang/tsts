@@ -101,17 +101,17 @@ export class Collator {
             (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options.t = NewNumericWeighter__from_colltab((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options.t);
         }
         const __gotots_store_4 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_address_0 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "_iter");
+        const __gotots_address_0 = __gotots_store_4._iter;
         const __gotots_address_1 = 0;
-        const __gotots_address_2 = (__gotots_address_0 as tsonicTypeScriptRuntime.Location<GoArray<iter$Storage, 2>>).value;
+        const __gotots_address_2 = __gotots_address_0;
         const __gotots_address_3 = __gotots_address_2;
         __gotots_address_3.get(__gotots_address_1);
         const __gotots_address_4 = goArrayLocation(__gotots_address_3);
         iter.$go$private$collate$init(tsonicTypeScriptRuntime.projectLocation<iter$Storage, iter>(tsonicTypeScriptRuntime.nestedPropertyLocation(tsonicTypeScriptRuntime.propertyLocation(__gotots_address_4, 0), __gotots_address_4[1] + globalThis.Number(__gotots_address_1)), iter.$fromStorage, iter.$storageOf), c);
         const __gotots_store_5 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_address_5 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "_iter");
+        const __gotots_address_5 = __gotots_store_5._iter;
         const __gotots_address_6 = 1;
-        const __gotots_address_7 = (__gotots_address_5 as tsonicTypeScriptRuntime.Location<GoArray<iter$Storage, 2>>).value;
+        const __gotots_address_7 = __gotots_address_5;
         const __gotots_address_8 = __gotots_address_7;
         __gotots_address_8.get(__gotots_address_6);
         const __gotots_address_9 = goArrayLocation(__gotots_address_8);
@@ -119,9 +119,9 @@ export class Collator {
     }
     static $go$private$collate$iter(c: Collator | undefined, i: int): tsonicTypeScriptRuntime.Location<iter> | undefined {
         const __gotots_store_6 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_address_10 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "_iter");
+        const __gotots_address_10 = __gotots_store_6._iter;
         const __gotots_address_11 = i;
-        const __gotots_address_12 = (__gotots_address_10 as tsonicTypeScriptRuntime.Location<GoArray<iter$Storage, 2>>).value;
+        const __gotots_address_12 = __gotots_address_10;
         const __gotots_address_13 = __gotots_address_12;
         __gotots_address_13.get(__gotots_address_11);
         const __gotots_address_14 = goArrayLocation(__gotots_address_13);
@@ -132,7 +132,7 @@ export function init(): void {
     let ids = strings__from_gostdlib.Split($state.availableLocales, ",");
     const __gotots_slice_build_0 = goSliceAllocate<Tag__from_language__package_1$Storage>(ids.length, null);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Tag__from_language__package_1.$storageOf(Tag__from_language__package_1.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, Tag__from_language__package_1.$zeroStorage());
     }
     $state.tags = __gotots_slice_build_0;
     const __gotots_range_0 = ids;
@@ -148,9 +148,9 @@ export function New(t: Tag__from_language__package_1, o: RuntimeSlice<Option__fr
     let index = MatchLang__from_colltab(Tag__from_language__package_1.$copy(t), $state.tags);
     let c: Collator | undefined = newCollator(new GoInterfaceAdapter(getTable(tableIndex.$copy(tableIndex.$fromStorage($state.locales.get(index))))));
     const __gotots_store_0 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-    options.$go$private$collate$setFromTag(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "options"), Tag__from_language__package_1.$copy(t));
+    options.$go$private$collate$setFromTag(__gotots_store_0.options, Tag__from_language__package_1.$copy(t));
     const __gotots_store_1 = (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-    options.$go$private$collate$setOptions(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "options"), o);
+    options.$go$private$collate$setOptions(__gotots_store_1.options, o);
     Collator.$go$private$collate$init(c);
     return c;
 }
@@ -215,12 +215,12 @@ export class iter {
     public set pce($value: int) {
         this.$storage.pce = $value;
     }
-    static $zero(): iter {
-        return new iter({
+    static $zeroStorage(): iter$Storage {
+        return {
             wa: GoArray.zero<Elem__from_colltab, 512>(512, 0),
-            Iter: Iter__from_colltab.$storageOf(Iter__from_colltab.$zero()),
+            Iter: Iter__from_colltab.$zeroStorage(),
             pce: 0
-        });
+        };
     }
     declare private readonly then?: never;
     static $go$private$collate$init(i: tsonicTypeScriptRuntime.Location<iter> | undefined, c: Collator | undefined): void {

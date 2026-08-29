@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { ModifierFlags as ModifierFlags__from_ast, ModifierList as ModifierList__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { EmitContext as EmitContext__from_printer } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/printer/package.js";
 import { ModifierFlagsNone$constant as ModifierFlagsNone$constant__from_ast, ModifierToFlag as ModifierToFlag__from_ast, NodeVisitor as NodeVisitor__from_ast, Node as Node__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
@@ -25,7 +25,7 @@ export function ExtractModifiers(emitContext: {
     }
     let tx = new modifierVisitor(Transformer.$zero(), allowed);
     const __gotots_store_0 = tx;
-    const __gotots_receiver_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Transformer");
+    const __gotots_receiver_1 = __gotots_store_0.Transformer;
     const __gotots_receiver_0 = tx;
     const __gotots_argument_0 = ($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
         return modifierVisitor.$go$private$transformers$visit(__gotots_receiver_0, $argument0);

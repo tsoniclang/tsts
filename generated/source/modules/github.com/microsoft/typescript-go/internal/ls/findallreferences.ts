@@ -386,7 +386,9 @@ export function isValidReferencePosition(node: tsonicTypeScriptRuntime.Location<
 export function isForRenameWithPrefixAndSuffixText(options: refOptions): bool {
     return options.use.$value === referenceUseRename$constant().$value && options.useAliasesForRename;
 }
-export function skipPastExportOrImportSpecifierOrUnion(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, useLocalSymbolForExportSpecifier: bool): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function skipPastExportOrImportSpecifierOrUnion(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, useLocalSymbolForExportSpecifier: bool): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (node === undefined) {
         return void 0;
     }
@@ -639,21 +641,23 @@ export class SignatureUsage {
     public set Call($value: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) {
         this.$storage.Call = $value;
     }
-    static $zero(): SignatureUsage {
-        return new SignatureUsage({
-            Name: void 0,
-            Call: void 0
-        });
-    }
     static $copy($source: SignatureUsage): SignatureUsage {
         return new SignatureUsage({
             Name: $source.$storage.Name,
             Call: $source.$storage.Call
         });
     }
+    static $zeroStorage(): SignatureUsage$Storage {
+        return {
+            Name: void 0,
+            Call: void 0
+        };
+    }
     declare private readonly then?: never;
 }
-export function isStringLiteralPropertyReference(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): bool {
+export function isStringLiteralPropertyReference(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): bool {
     if (IsPropertySignatureDeclaration__from_ast(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent)) {
         return !(Checker__from_checker.GetPropertyOfType(checker__shadow_1, Checker__from_checker.GetTypeAtLocation(checker__shadow_1, Node__from_ast.$storageOf(((Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent), Node__from_ast.Text(node)) === undefined);
     }
@@ -981,7 +985,9 @@ export function getReferencesForNonModule(referencedFile: tsonicTypeScriptRuntim
 } | undefined): RuntimeSlice<ReferenceEntry | undefined> {
     return RuntimeSlice.literal<ReferenceEntry | undefined>([]);
 }
-export function getMergedAliasedSymbolOfNamespaceExportDeclaration(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
+export function getMergedAliasedSymbolOfNamespaceExportDeclaration(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined): tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined {
     if (!(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent === undefined) && Node__from_ast.$storageOf(((Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindNamespaceExportDeclaration$constant__from_ast()) {
         {
             const __gotots_results_0 = Checker__from_checker.ResolveAlias(checker__shadow_1, __go_symbol);
@@ -1050,7 +1056,9 @@ export function getSpecialSearchKind(node: tsonicTypeScriptRuntime.Location<Node
 }
 export function getReferencedSymbolsForSymbol(ctx: GoInterface | undefined, program: {
     value: Program__from_compiler;
-} | undefined, originalSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, options: refOptions): RuntimeSlice<SymbolAndEntries | undefined> {
+} | undefined, originalSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, options: refOptions): RuntimeSlice<SymbolAndEntries | undefined> {
     let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Coalesce$PointerTo_Named_ast$Symbol$Named_ast$Symbol(skipPastExportOrImportSpecifierOrUnion(originalSymbol, node, checker__shadow_1, !isForRenameWithPrefixAndSuffixText(refOptions.$copy(options))), originalSymbol);
     let searchMeaning = SemanticMeaningAll$constant__from_ast();
     if (!(options.use.$value === referenceUseRename$constant().$value)) {
@@ -1102,7 +1110,9 @@ export class inheritKey {
 }
 export class refState {
     declare private readonly $goType: void;
-    public constructor(public sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, public sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public specialSearchKind: gostring, public checker: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, public ctx: GoInterface | undefined, public program: {
+    public constructor(public sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, public sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public specialSearchKind: gostring, public checker: {
+        value: Checker__from_checker;
+    } | undefined, public ctx: GoInterface | undefined, public program: {
         value: Program__from_compiler;
     } | undefined, public searchMeaning: SemanticMeaning__from_ast, public options: refOptions, public result: RuntimeSlice<SymbolAndEntries | undefined>, public inheritsFromCache: GoMapValue<inheritKey, bool>, public seenContainingTypeReferences: Set__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public seenReExportRHS: Set__from_collections<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public importTracker: ImportTracker, public symbolToReferences: GoMapValue<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, SymbolAndEntries | undefined>, public sourceFileToSeenSymbols: GoMapValue<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Set__from_collections<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>> | undefined>) {
     }
@@ -1901,14 +1911,18 @@ export class refState {
 }
 export function newState(ctx: GoInterface | undefined, program: {
     value: Program__from_compiler;
-} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, searchMeaning: SemanticMeaning__from_ast, options: refOptions): refState | undefined {
+} | undefined, sourceFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, sourceFilesSet: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, searchMeaning: SemanticMeaning__from_ast, options: refOptions): refState | undefined {
     return new refState(sourceFiles, sourceFilesSet, getSpecialSearchKind(node), checker__shadow_1, ctx, program, searchMeaning, refOptions.$copy(options), RuntimeSlice.nil<SymbolAndEntries | undefined>(), GoMap.make(0, []), Set__from_collections.$zero<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
         return $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void.nil();
     }), Set__from_collections.$zero<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
         return $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void.nil();
     }), new ImportTracker(void 0), $goMap$MapOf_PointerTo_Named_ast$Symbol_To_PointerTo_Named_ls$SymbolAndEntries.make(0, []), $goMap$MapOf_PointerTo_Named_ast$SourceFile_To_PointerTo_Named_collections$SetOf_PointerTo_Named_ast$Symbol.make(0, []));
 }
-export function getReferenceEntriesForShorthandPropertyAssignment(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: tsonicTypeScriptRuntime.Location<Checker__from_checker> | undefined, addReference: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => void) | undefined): void {
+export function getReferenceEntriesForShorthandPropertyAssignment(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, checker__shadow_1: {
+    value: Checker__from_checker;
+} | undefined, addReference: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => void) | undefined): void {
     let refSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetSymbolAtLocation(checker__shadow_1, node);
     if (refSymbol === undefined || Symbol__from_ast.$storageOf(((refSymbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration === undefined) {
         return;

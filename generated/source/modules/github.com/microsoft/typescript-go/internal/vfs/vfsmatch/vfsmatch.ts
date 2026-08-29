@@ -139,14 +139,6 @@ export class globPattern {
     public set excludeMinJs($value: bool) {
         this.$storage.excludeMinJs = $value;
     }
-    static $zero(): globPattern {
-        return new globPattern({
-            components: RuntimeSlice.nil<component$Storage>(),
-            isExclude: false,
-            caseSensitive: false,
-            excludeMinJs: false
-        });
-    }
     static $copy($source: globPattern): globPattern {
         return new globPattern({
             components: $source.$storage.components,
@@ -154,6 +146,14 @@ export class globPattern {
             caseSensitive: $source.$storage.caseSensitive,
             excludeMinJs: $source.$storage.excludeMinJs
         });
+    }
+    static $zeroStorage(): globPattern$Storage {
+        return {
+            components: RuntimeSlice.nil<component$Storage>(),
+            isExclude: false,
+            caseSensitive: false,
+            excludeMinJs: false
+        };
     }
     declare private readonly then?: never;
     static $go$private$vfsmatch$hasMinJsSuffix(p: tsonicTypeScriptRuntime.Location<globPattern> | undefined, filename: gostring): bool {
@@ -414,15 +414,6 @@ export class component {
     public set skipPackageFolders($value: bool) {
         this.$storage.skipPackageFolders = $value;
     }
-    static $zero(): component {
-        return new component({
-            kind: ((void componentKind,
-                0) as int),
-            literal: "",
-            segments: RuntimeSlice.nil<segment$Storage>(),
-            skipPackageFolders: false
-        });
-    }
     static $copy($source: component): component {
         return new component({
             kind: ((void componentKind,
@@ -431,6 +422,15 @@ export class component {
             segments: $source.$storage.segments,
             skipPackageFolders: $source.$storage.skipPackageFolders
         });
+    }
+    static $zeroStorage(): component$Storage {
+        return {
+            kind: ((void componentKind,
+                0) as int),
+            literal: "",
+            segments: RuntimeSlice.nil<segment$Storage>(),
+            skipPackageFolders: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -475,19 +475,19 @@ export class segment {
     public set literal($value: gostring) {
         this.$storage.literal = $value;
     }
-    static $zero(): segment {
-        return new segment({
-            kind: ((void segmentKind,
-                0) as int),
-            literal: ""
-        });
-    }
     static $copy($source: segment): segment {
         return new segment({
             kind: ((void segmentKind,
                 $source.$storage.kind) as int),
             literal: $source.$storage.literal
         });
+    }
+    static $zeroStorage(): segment$Storage {
+        return {
+            kind: ((void segmentKind,
+                0) as int),
+            literal: ""
+        };
     }
     declare private readonly then?: never;
 }
@@ -528,7 +528,7 @@ export function compileGlobPattern(spec: gostring, basePath: gostring, usage: Us
     const __gotots_field_2 = usage === UsageFiles$constant();
     const __gotots_slice_build_6 = goSliceAllocate<component$Storage>(0, parts.length);
     for (let __gotots_slice_build_7 = 0; __gotots_slice_build_7 < __gotots_slice_build_6.capacity; __gotots_slice_build_7++) {
-        __gotots_slice_build_6.$initialize(__gotots_slice_build_7, component.$storageOf(component.$zero()));
+        __gotots_slice_build_6.$initialize(__gotots_slice_build_7, component.$zeroStorage());
     }
     const __gotots_field_3 = __gotots_slice_build_6;
     let p = globPattern.$fromStorage({
@@ -555,7 +555,7 @@ export function compileGlobPattern(spec: gostring, basePath: gostring, usage: Us
             }
             __gotots_slice_build_9.set(__gotots_slice_build_8.length + 0, component.$storageOf(parseComponent(part, !(usage === UsageExclude$constant()))));
             for (let __gotots_slice_build_11 = __gotots_slice_build_10; __gotots_slice_build_11 < __gotots_slice_build_9.capacity; __gotots_slice_build_11++) {
-                __gotots_slice_build_9.$initialize(__gotots_slice_build_11, component.$storageOf(component.$zero()));
+                __gotots_slice_build_9.$initialize(__gotots_slice_build_11, component.$zeroStorage());
             }
         }
         globPattern.$storageOf(p).components = __gotots_slice_build_9;
@@ -598,7 +598,7 @@ export function parseSegments(s: gostring): RuntimeSlice<segment$Storage> {
     }
     const __gotots_slice_build_24 = goSliceAllocate<segment$Storage>(0, 2 * wildcards + 1);
     for (let __gotots_slice_build_25 = 0; __gotots_slice_build_25 < __gotots_slice_build_24.capacity; __gotots_slice_build_25++) {
-        __gotots_slice_build_24.$initialize(__gotots_slice_build_25, segment.$storageOf(segment.$zero()));
+        __gotots_slice_build_24.$initialize(__gotots_slice_build_25, segment.$zeroStorage());
     }
     let result = __gotots_slice_build_24;
     let start = 0;
@@ -632,7 +632,7 @@ export function parseSegments(s: gostring): RuntimeSlice<segment$Storage> {
                                 literal: goStringSlice(s, start, i)
                             })));
                         for (let __gotots_slice_build_29 = __gotots_slice_build_28; __gotots_slice_build_29 < __gotots_slice_build_27.capacity; __gotots_slice_build_29++) {
-                            __gotots_slice_build_27.$initialize(__gotots_slice_build_29, segment.$storageOf(segment.$zero()));
+                            __gotots_slice_build_27.$initialize(__gotots_slice_build_29, segment.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_27;
@@ -660,7 +660,7 @@ export function parseSegments(s: gostring): RuntimeSlice<segment$Storage> {
                                 literal: ""
                             })));
                         for (let __gotots_slice_build_33 = __gotots_slice_build_32; __gotots_slice_build_33 < __gotots_slice_build_31.capacity; __gotots_slice_build_33++) {
-                            __gotots_slice_build_31.$initialize(__gotots_slice_build_33, segment.$storageOf(segment.$zero()));
+                            __gotots_slice_build_31.$initialize(__gotots_slice_build_33, segment.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_31;
@@ -688,7 +688,7 @@ export function parseSegments(s: gostring): RuntimeSlice<segment$Storage> {
                                 literal: ""
                             })));
                         for (let __gotots_slice_build_37 = __gotots_slice_build_36; __gotots_slice_build_37 < __gotots_slice_build_35.capacity; __gotots_slice_build_37++) {
-                            __gotots_slice_build_35.$initialize(__gotots_slice_build_37, segment.$storageOf(segment.$zero()));
+                            __gotots_slice_build_35.$initialize(__gotots_slice_build_37, segment.$zeroStorage());
                         }
                     }
                     result = __gotots_slice_build_35;
@@ -721,7 +721,7 @@ export function parseSegments(s: gostring): RuntimeSlice<segment$Storage> {
                     literal: goStringSlice(s, start)
                 })));
             for (let __gotots_slice_build_41 = __gotots_slice_build_40; __gotots_slice_build_41 < __gotots_slice_build_39.capacity; __gotots_slice_build_41++) {
-                __gotots_slice_build_39.$initialize(__gotots_slice_build_41, segment.$storageOf(segment.$zero()));
+                __gotots_slice_build_39.$initialize(__gotots_slice_build_41, segment.$zeroStorage());
             }
         }
         result = __gotots_slice_build_39;
@@ -880,12 +880,12 @@ export function newGlobMatcher(includeSpecs: RuntimeSlice<gostring>, excludeSpec
     const __gotots_field_4 = includeSpecs.length > 0;
     const __gotots_slice_build_12 = goSliceAllocate<globPattern$Storage>(0, includeSpecs.length);
     for (let __gotots_slice_build_13 = 0; __gotots_slice_build_13 < __gotots_slice_build_12.capacity; __gotots_slice_build_13++) {
-        __gotots_slice_build_12.$initialize(__gotots_slice_build_13, globPattern.$storageOf(globPattern.$zero()));
+        __gotots_slice_build_12.$initialize(__gotots_slice_build_13, globPattern.$zeroStorage());
     }
     const __gotots_field_5 = __gotots_slice_build_12;
     const __gotots_slice_build_14 = goSliceAllocate<globPattern$Storage>(0, excludeSpecs.length);
     for (let __gotots_slice_build_15 = 0; __gotots_slice_build_15 < __gotots_slice_build_14.capacity; __gotots_slice_build_15++) {
-        __gotots_slice_build_14.$initialize(__gotots_slice_build_15, globPattern.$storageOf(globPattern.$zero()));
+        __gotots_slice_build_14.$initialize(__gotots_slice_build_15, globPattern.$zeroStorage());
     }
     const __gotots_field_6 = __gotots_slice_build_14;
     let m: globMatcher | undefined = new globMatcher(__gotots_field_5, __gotots_field_6, __gotots_field_4);
@@ -912,7 +912,7 @@ export function newGlobMatcher(includeSpecs: RuntimeSlice<gostring>, excludeSpec
                     }
                     __gotots_slice_build_17.set(__gotots_slice_build_16.length + 0, globPattern.$storageOf(globPattern.$copy(p)));
                     for (let __gotots_slice_build_19 = __gotots_slice_build_18; __gotots_slice_build_19 < __gotots_slice_build_17.capacity; __gotots_slice_build_19++) {
-                        __gotots_slice_build_17.$initialize(__gotots_slice_build_19, globPattern.$storageOf(globPattern.$zero()));
+                        __gotots_slice_build_17.$initialize(__gotots_slice_build_19, globPattern.$zeroStorage());
                     }
                 }
                 (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).includes = __gotots_slice_build_17;
@@ -942,7 +942,7 @@ export function newGlobMatcher(includeSpecs: RuntimeSlice<gostring>, excludeSpec
                     }
                     __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, globPattern.$storageOf(globPattern.$copy(p)));
                     for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
-                        __gotots_slice_build_21.$initialize(__gotots_slice_build_23, globPattern.$storageOf(globPattern.$zero()));
+                        __gotots_slice_build_21.$initialize(__gotots_slice_build_23, globPattern.$zeroStorage());
                     }
                 }
                 (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).excludes = __gotots_slice_build_21;
@@ -1076,7 +1076,7 @@ export function NewSpecMatcher(specs: RuntimeSlice<gostring>, basePath: gostring
     }
     const __gotots_slice_build_0 = goSliceAllocate<globPattern$Storage>(0, specs.length);
     for (let __gotots_slice_build_1 = 0; __gotots_slice_build_1 < __gotots_slice_build_0.capacity; __gotots_slice_build_1++) {
-        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, globPattern.$storageOf(globPattern.$zero()));
+        __gotots_slice_build_0.$initialize(__gotots_slice_build_1, globPattern.$zeroStorage());
     }
     let patterns = __gotots_slice_build_0;
     const __gotots_range_0 = specs;
@@ -1102,7 +1102,7 @@ export function NewSpecMatcher(specs: RuntimeSlice<gostring>, basePath: gostring
                     }
                     __gotots_slice_build_3.set(__gotots_slice_build_2.length + 0, globPattern.$storageOf(globPattern.$copy(p)));
                     for (let __gotots_slice_build_5 = __gotots_slice_build_4; __gotots_slice_build_5 < __gotots_slice_build_3.capacity; __gotots_slice_build_5++) {
-                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, globPattern.$storageOf(globPattern.$zero()));
+                        __gotots_slice_build_3.$initialize(__gotots_slice_build_5, globPattern.$zeroStorage());
                     }
                 }
                 patterns = __gotots_slice_build_3;

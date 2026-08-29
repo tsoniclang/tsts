@@ -225,6 +225,11 @@ export class SymbolReferenceLinks implements GoContainerStoredValue<SymbolRefere
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.referenceKinds));
         return $hash;
     }
+    static $zeroStorage(): SymbolReferenceLinks$Storage {
+        return {
+            referenceKinds: 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type ValueSymbolLinks$Storage = {
@@ -331,6 +336,17 @@ export class ValueSymbolLinks implements GoContainerStoredValue<ValueSymbolLinks
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.functionOrConstructorChecked));
         return $hash;
     }
+    static $zeroStorage(): ValueSymbolLinks$Storage {
+        return {
+            resolvedType: void 0,
+            writeType: void 0,
+            target: void 0,
+            mapper: void 0,
+            nameType: void 0,
+            containingType: void 0,
+            functionOrConstructorChecked: false
+        };
+    }
     declare private readonly then?: never;
 }
 export type MappedSymbolLinks$Storage = {
@@ -383,6 +399,12 @@ export class MappedSymbolLinks implements GoContainerStoredValue<MappedSymbolLin
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.syntheticOrigin));
         return $hash;
     }
+    static $zeroStorage(): MappedSymbolLinks$Storage {
+        return {
+            keyType: void 0,
+            syntheticOrigin: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type DeferredSymbolLinks$Storage = {
@@ -432,6 +454,13 @@ export class DeferredSymbolLinks implements GoContainerStoredValue<DeferredSymbo
             constituents: $source.$storage.constituents,
             writeConstituents: $source.$storage.writeConstituents
         });
+    }
+    static $zeroStorage(): DeferredSymbolLinks$Storage {
+        return {
+            parent: void 0,
+            constituents: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>(),
+            writeConstituents: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -506,6 +535,14 @@ export class AliasSymbolLinks implements GoContainerStoredValue<AliasSymbolLinks
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.typeOnlyDeclaration));
         return $hash;
     }
+    static $zeroStorage(): AliasSymbolLinks$Storage {
+        return {
+            immediateTarget: void 0,
+            aliasTarget: void 0,
+            referenced: false,
+            typeOnlyDeclaration: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type ModuleSymbolLinks$Storage = {
@@ -555,6 +592,13 @@ export class ModuleSymbolLinks implements GoContainerStoredValue<ModuleSymbolLin
             typeOnlyExportStarMap: $source.$storage.typeOnlyExportStarMap,
             exportsChecked: $source.$storage.exportsChecked
         });
+    }
+    static $zeroStorage(): ModuleSymbolLinks$Storage {
+        return {
+            resolvedExports: new SymbolTable__from_ast(GoMap.nil()).$value,
+            typeOnlyExportStarMap: $goMap$MapOf_string_To_PointerTo_Named_ast$Node.nil(),
+            exportsChecked: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -619,6 +663,13 @@ export class ReverseMappedSymbolLinks implements GoContainerStoredValue<ReverseM
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.constraintType));
         return $hash;
     }
+    static $zeroStorage(): ReverseMappedSymbolLinks$Storage {
+        return {
+            propertyType: void 0,
+            mappedType: void 0,
+            constraintType: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type LateBoundLinks$Storage = {
@@ -658,6 +709,11 @@ export class LateBoundLinks implements GoContainerStoredValue<LateBoundLinks$Sto
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.lateSymbol));
         return $hash;
+    }
+    static $zeroStorage(): LateBoundLinks$Storage {
+        return {
+            lateSymbol: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -710,6 +766,12 @@ export class ExportTypeLinks implements GoContainerStoredValue<ExportTypeLinks$S
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.target));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.originatingImport));
         return $hash;
+    }
+    static $zeroStorage(): ExportTypeLinks$Storage {
+        return {
+            target: void 0,
+            originatingImport: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -769,6 +831,14 @@ export class TypeAliasLinks implements GoContainerStoredValue<TypeAliasLinks$Sto
             instantiations: $source.$storage.instantiations,
             isConstructorDeclaredProperty: $source.$storage.isConstructorDeclaredProperty
         });
+    }
+    static $zeroStorage(): TypeAliasLinks$Storage {
+        return {
+            declaredType: void 0,
+            typeParameters: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>(),
+            instantiations: $goMap$MapOf_Named_checker$CacheHashKey_To_PointerTo_Named_checker$Type.nil(),
+            isConstructorDeclaredProperty: false
+        };
     }
     declare private readonly then?: never;
 }
@@ -851,6 +921,15 @@ export class DeclaredTypeLinks implements GoContainerStoredValue<DeclaredTypeLin
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.enumChecked));
         return $hash;
     }
+    static $zeroStorage(): DeclaredTypeLinks$Storage {
+        return {
+            declaredType: void 0,
+            interfaceChecked: false,
+            indexSignaturesChecked: false,
+            typeParametersChecked: false,
+            enumChecked: false
+        };
+    }
     declare private readonly then?: never;
 }
 export type ExhaustiveState = uint8;
@@ -932,6 +1011,15 @@ export class SwitchStatementLinks implements GoContainerStoredValue<SwitchStatem
             witnesses: $source.$storage.witnesses
         });
     }
+    static $zeroStorage(): SwitchStatementLinks$Storage {
+        return {
+            exhaustiveState: 0,
+            switchTypesComputed: false,
+            witnessesComputed: false,
+            switchTypes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>(),
+            witnesses: RuntimeSlice.nil<gostring>()
+        };
+    }
     declare private readonly then?: never;
 }
 export type ArrayLiteralLinks$Storage = {
@@ -991,6 +1079,13 @@ export class ArrayLiteralLinks implements GoContainerStoredValue<ArrayLiteralLin
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.firstSpreadIndex));
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.$storage.lastSpreadIndex));
         return $hash;
+    }
+    static $zeroStorage(): ArrayLiteralLinks$Storage {
+        return {
+            indicesComputed: false,
+            firstSpreadIndex: 0,
+            lastSpreadIndex: 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1063,6 +1158,12 @@ export class SpreadLinks implements GoContainerStoredValue<SpreadLinks$Storage> 
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.rightSpread));
         return $hash;
     }
+    static $zeroStorage(): SpreadLinks$Storage {
+        return {
+            leftSpread: void 0,
+            rightSpread: void 0
+        };
+    }
     declare private readonly then?: never;
 }
 export type VarianceLinks$Storage = {
@@ -1094,6 +1195,11 @@ export class VarianceLinks implements GoContainerStoredValue<VarianceLinks$Stora
         return new VarianceLinks({
             variances: $source.$storage.variances
         });
+    }
+    static $zeroStorage(): VarianceLinks$Storage {
+        return {
+            variances: RuntimeSlice.nil<VarianceFlags>()
+        };
     }
     declare private readonly then?: never;
 }
@@ -1173,6 +1279,12 @@ export class MarkedAssignmentSymbolLinks implements GoContainerStoredValue<Marke
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.hasDefiniteAssignment));
         return $hash;
     }
+    static $zeroStorage(): MarkedAssignmentSymbolLinks$Storage {
+        return {
+            lastAssignmentPos: 0,
+            hasDefiniteAssignment: false
+        };
+    }
     declare private readonly then?: never;
 }
 export class accessibleChainCacheKey {
@@ -1242,6 +1354,13 @@ export class ContainingSymbolLinks implements GoContainerStoredValue<ContainingS
             extendedContainers: $source.$storage.extendedContainers,
             accessibleChainCache: $source.$storage.accessibleChainCache
         });
+    }
+    static $zeroStorage(): ContainingSymbolLinks$Storage {
+        return {
+            extendedContainersByFile: $goMap$MapOf_Named_ast$NodeId_To_SliceOf_PointerTo_Named_ast$Symbol.nil(),
+            extendedContainers: void 0,
+            accessibleChainCache: $goMap$MapOf_Named_checker$accessibleChainCacheKey_To_SliceOf_PointerTo_Named_ast$Symbol.nil()
+        };
     }
     declare private readonly then?: never;
 }
@@ -1365,6 +1484,13 @@ export class NodeLinks implements GoContainerStoredValue<NodeLinks$Storage> {
         $hash = GoMapHash.mix($hash, GoMapHash.boolean($source.$storage.hasReportedStatementInAmbientContext));
         return $hash;
     }
+    static $zeroStorage(): NodeLinks$Storage {
+        return {
+            flags: 0,
+            declarationRequiresScopeChange: 0,
+            hasReportedStatementInAmbientContext: false
+        };
+    }
     declare private readonly then?: never;
 }
 export type SymbolNodeLinks$Storage = {
@@ -1404,6 +1530,11 @@ export class SymbolNodeLinks implements GoContainerStoredValue<SymbolNodeLinks$S
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.resolvedSymbol));
         return $hash;
+    }
+    static $zeroStorage(): SymbolNodeLinks$Storage {
+        return {
+            resolvedSymbol: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1446,6 +1577,12 @@ export class TypeNodeLinks implements GoContainerStoredValue<TypeNodeLinks$Stora
             outerTypeParameters: $source.$storage.outerTypeParameters
         });
     }
+    static $zeroStorage(): TypeNodeLinks$Storage {
+        return {
+            resolvedType: void 0,
+            outerTypeParameters: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>()
+        };
+    }
     declare private readonly then?: never;
 }
 export type EnumMemberLinks$Storage = {
@@ -1470,7 +1607,7 @@ export class EnumMemberLinks implements GoContainerStoredValue<EnumMemberLinks$S
     declare readonly [$goContainerStorageType]: EnumMemberLinks$Storage;
     static $zero(): EnumMemberLinks {
         return new EnumMemberLinks({
-            value: Result__from_evaluator.$storageOf(Result__from_evaluator.$zero())
+            value: Result__from_evaluator.$zeroStorage()
         });
     }
     static $copy($source: EnumMemberLinks): EnumMemberLinks {
@@ -1485,6 +1622,11 @@ export class EnumMemberLinks implements GoContainerStoredValue<EnumMemberLinks$S
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, Result__from_evaluator.$hash(Result__from_evaluator.$fromStorage($source.$storage.value)));
         return $hash;
+    }
+    static $zeroStorage(): EnumMemberLinks$Storage {
+        return {
+            value: Result__from_evaluator.$zeroStorage()
+        };
     }
     declare private readonly then?: never;
 }
@@ -1525,6 +1667,11 @@ export class AssertionLinks implements GoContainerStoredValue<AssertionLinks$Sto
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.exprType));
         return $hash;
+    }
+    static $zeroStorage(): AssertionLinks$Storage {
+        return {
+            exprType: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1624,9 +1771,9 @@ export class SourceFileLinks implements GoContainerStoredValue<SourceFileLinks$S
             unusedChecked: false,
             externalHelpersModule: void 0,
             requestedExternalEmitHelpers: 0,
-            deferredNodes: OrderedSet__from_collections.$storageOf<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(OrderedSet__from_collections.$zero<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
+            deferredNodes: OrderedSet__from_collections.$zeroStorage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
                 return $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void.nil();
-            })),
+            }),
             identifierCheckNodes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(),
             localJsxNamespace: "",
             localJsxFragmentNamespace: "",
@@ -1649,6 +1796,23 @@ export class SourceFileLinks implements GoContainerStoredValue<SourceFileLinks$S
             localJsxFragmentFactory: $source.$storage.localJsxFragmentFactory,
             jsxFragmentType: $source.$storage.jsxFragmentType
         });
+    }
+    static $zeroStorage(): SourceFileLinks$Storage {
+        return {
+            typeChecked: false,
+            unusedChecked: false,
+            externalHelpersModule: void 0,
+            requestedExternalEmitHelpers: 0,
+            deferredNodes: OrderedSet__from_collections.$zeroStorage<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>((): GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, GoEmptyStruct> => {
+                return $goMap$MapOf_PointerTo_Named_ast$Node_To_Struct_void.nil();
+            }),
+            identifierCheckNodes: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(),
+            localJsxNamespace: "",
+            localJsxFragmentNamespace: "",
+            localJsxFactory: void 0,
+            localJsxFragmentFactory: void 0,
+            jsxFragmentType: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -1712,6 +1876,13 @@ export class SignatureLinks implements GoContainerStoredValue<SignatureLinks$Sto
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.effectsSignature));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.decoratorSignature));
         return $hash;
+    }
+    static $zeroStorage(): SignatureLinks$Storage {
+        return {
+            resolvedSignature: void 0,
+            effectsSignature: void 0,
+            decoratorSignature: void 0
+        };
     }
     declare private readonly then?: never;
 }
@@ -2110,7 +2281,9 @@ export class Type {
     declare private readonly $goType: void;
     public constructor(public flags: TypeFlags, public objectFlags: ObjectFlags, public id: TypeId, public __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, public alias: {
         value: TypeAlias;
-    } | undefined, public checker: tsonicTypeScriptRuntime.Location<Checker> | undefined, public data: TypeData | undefined) {
+    } | undefined, public checker: {
+        value: Checker;
+    } | undefined, public data: TypeData | undefined) {
     }
     static $zero(): Type {
         return new Type(0, 0, 0, void 0, void 0, void 0, void 0);
@@ -2124,7 +2297,9 @@ export class Type {
             $left.alias
                 ===
                     $right.alias &&
-            tsonicTypeScriptRuntime.sameLocation($left.checker, $right.checker) && goInterfaceEqual($left.data, $right.data);
+            $left.checker
+                ===
+                    $right.checker && goInterfaceEqual($left.data, $right.data);
     }
     static $hash($source: Type): number {
         let $hash = 2166136261;
@@ -2133,7 +2308,7 @@ export class Type {
         $hash = GoMapHash.mix($hash, GoMapHash.number($source.id));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.__go_symbol));
         $hash = GoMapHash.mix($hash, (($pointer: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer)))($source.alias));
-        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.checker));
+        $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.checker));
         $hash = GoMapHash.mix($hash, $source.data === undefined ? 0 : $source.data.$go$hash());
         return $hash;
     }
@@ -2820,6 +2995,12 @@ export class TupleElementInfo implements GoContainerStoredValue<TupleElementInfo
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.$storage.labeledDeclaration));
         return $hash;
     }
+    static $zeroStorage(): TupleElementInfo$Storage {
+        return {
+            flags: 0,
+            labeledDeclaration: void 0
+        };
+    }
     declare private readonly then?: never;
     static LabeledDeclaration(t: TupleElementInfo | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         return TupleElementInfo.$storageOf((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).labeledDeclaration;
@@ -3147,7 +3328,7 @@ export class ConditionalType {
     static $hash($source: ConditionalType): number {
         let $hash = 2166136261;
         $hash = GoMapHash.mix($hash, ConstrainedType.$hash($source.ConstrainedType));
-        $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.root));
+        $hash = GoMapHash.mix($hash, (($pointer3: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer3 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer3)))($source.root));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.checkType));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.extendsType));
         $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.resolvedTrueType));
@@ -3358,6 +3539,23 @@ export class Signature implements GoContainerStoredValue<Signature$Storage> {
             composite: $source.$storage.composite
         });
     }
+    static $zeroStorage(): Signature$Storage {
+        return {
+            flags: 0,
+            minArgumentCount: 0,
+            resolvedMinArgumentCount: 0,
+            declaration: void 0,
+            typeParameters: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Type> | undefined>(),
+            parameters: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>(),
+            thisParameter: void 0,
+            resolvedReturnType: void 0,
+            resolvedTypePredicate: void 0,
+            target: void 0,
+            mapper: void 0,
+            isolatedSignatureType: void 0,
+            composite: void 0
+        };
+    }
     declare private readonly then?: never;
     static Declaration(s: tsonicTypeScriptRuntime.Location<Signature> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
         return Signature.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Signature>).value).declaration;
@@ -3521,6 +3719,16 @@ export class IndexInfo implements GoContainerStoredValue<IndexInfo$Storage> {
             indexSymbol: $source.$storage.indexSymbol,
             components: $source.$storage.components
         });
+    }
+    static $zeroStorage(): IndexInfo$Storage {
+        return {
+            keyType: void 0,
+            valueType: void 0,
+            isReadonly: false,
+            declaration: void 0,
+            indexSymbol: void 0,
+            components: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>()
+        };
     }
     declare private readonly then?: never;
     static Declaration(info: tsonicTypeScriptRuntime.Location<IndexInfo> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -3707,8 +3915,8 @@ export class LanguageFeatureMinimumTargetMap {
     public set RegularExpressionFlagsUnicodeSets($value: ScriptTarget__from_core) {
         this.$storage.RegularExpressionFlagsUnicodeSets = $value;
     }
-    static $zero(): LanguageFeatureMinimumTargetMap {
-        return new LanguageFeatureMinimumTargetMap({
+    static $zeroStorage(): LanguageFeatureMinimumTargetMap$Storage {
+        return {
             Exponentiation: 0,
             AsyncFunctions: 0,
             ForAwaitOf: 0,
@@ -3729,7 +3937,7 @@ export class LanguageFeatureMinimumTargetMap {
             UsingAndAwaitUsing: 0,
             ClassAndClassElementDecorators: 0,
             RegularExpressionFlagsUnicodeSets: 0
-        });
+        };
     }
     declare private readonly then?: never;
 }
