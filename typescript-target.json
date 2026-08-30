@@ -10,9 +10,9 @@
     "representationProjections": "closed-direct"
   },
   "acceptance": {
-    "pointerKeyMapCount": 62,
+    "pointerKeyMapCount": 72,
     "locationPointerKeyMapCount": 61,
-    "directObjectPointerKeyMapCount": 1
+    "directObjectPointerKeyMapCount": 11
   },
   "evidence": {
     "representationTransportCallables": [
