@@ -3,10 +3,31 @@ export function verifyOptimizationAcceptance(evidence, acceptance) {
     evidence["pointer"],
     "TypeScript optimization pointer evidence",
   );
-  const actual = pointer["optimizedPointerKeyMapCount"];
-  if (actual !== acceptance.pointerKeyMapCount) {
+  const fields = [
+    ["optimizedPointerKeyMapCount", "pointerKeyMapCount", "total"],
+    ["optimizedLocationPointerKeyMapCount", "locationPointerKeyMapCount", "location"],
+    [
+      "optimizedDirectObjectPointerKeyMapCount",
+      "directObjectPointerKeyMapCount",
+      "direct-object",
+    ],
+  ];
+  for (const [evidenceName, acceptanceName, label] of fields) {
+    const actual = pointer[evidenceName];
+    const expected = acceptance[acceptanceName];
+    if (actual !== expected) {
+      throw new Error(
+        `TypeScript ${label} pointer-key map denominator ${String(actual)} differs from accepted ${String(expected)}`,
+      );
+    }
+  }
+  if (
+    pointer["optimizedLocationPointerKeyMapCount"] +
+        pointer["optimizedDirectObjectPointerKeyMapCount"] !==
+      pointer["optimizedPointerKeyMapCount"]
+  ) {
     throw new Error(
-      `TypeScript pointer-key map denominator ${String(actual)} differs from accepted ${acceptance.pointerKeyMapCount}`,
+      "TypeScript pointer-key map evidence partitions do not equal the total denominator",
     );
   }
 }
