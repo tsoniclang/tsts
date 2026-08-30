@@ -41,6 +41,24 @@ import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class sourceDefResolver {
     declare private readonly $goType: void;
     public constructor(public ls: LanguageService | undefined, public fs: FS__from_vfs | undefined, public options: {
@@ -259,9 +277,9 @@ export class sourceDefResolver {
             const __gotots_range_value_3 = __gotots_range_3.get(__gotots_range_index_3);
             let mode = __gotots_range_value_3;
             const __gotots_results_4 = Resolver__from___go_module.ResolveModuleName((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver, moduleName, resolveFromFile, mode, void 0);
-            let resolved: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_4[0];
-            if (!(resolved === undefined) && ResolvedModule__from___go_module.IsResolved(resolved) && !IsDeclarationFileName__from_tspath(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName)) {
-                return ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+            let resolved: ResolvedModule__from___go_module | undefined = __gotots_results_4[0];
+            if (!(resolved === undefined) && ResolvedModule__from___go_module.IsResolved(resolved) && !IsDeclarationFileName__from_tspath((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName)) {
+                return (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
             }
         }
         return "";
@@ -445,7 +463,7 @@ export function getSourceDefinitionEntryNode(sourceFile: tsonicTypeScriptRuntime
             NodeList__from_ast.$storageOf(((((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(0));
     }
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    return NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
 }
 export function getSourceDefinitionEntryDeclarations(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     return RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>([getSourceDefinitionEntryNode(sourceFile)]);
@@ -633,7 +651,7 @@ export function findDeclarationNodesByName(sourceFile: tsonicTypeScriptRuntime.L
         return Node__from_ast.ForEachChild(node, visit);
     });
     const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), visit);
+    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), visit);
     let declarations = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>();
     const __gotots_range_6 = candidates;
     for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {

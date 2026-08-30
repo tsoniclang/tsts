@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { ModifierFlags as ModifierFlags__from_ast, NodeDefault$Storage as NodeDefault__from_ast$Storage } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { EmitResolver as EmitResolver__from_printer } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/printer/package.js";
 import type { DeclarationEmitHost } from "./transform.js";
@@ -9,6 +9,24 @@ import { Every$PointerTo_Named_ast$Node } from "../../../../../../../support/gen
 import { Some$PointerTo_Named_ast$Node } from "../../../../../../../support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Some.js";
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function needsScopeMarker(result: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     return !IsAnyImportOrReExport__from_ast(result) && !IsExportAssignment__from_ast(result) && !HasSyntacticModifier__from_ast(result, ModifierFlagsExport$constant__from_ast()) && !IsAmbientModule__from_ast(result);
 }
@@ -121,12 +139,12 @@ export function unwrapParenthesizedExpression(o: tsonicTypeScriptRuntime.Locatio
 export function isPrivateMethodTypeParameter(host: DeclarationEmitHost | undefined, node: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined): bool {
     const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
         TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-    let __gotots_logical_result_0 = Node__from_ast.$storageOf(((Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindMethodDeclaration$constant__from_ast();
+    let __gotots_logical_result_0 = Node__from_ast.$storageOf(((Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindMethodDeclaration$constant__from_ast();
     if (__gotots_logical_result_0) {
         const __gotots_receiver_2 = host;
         const __gotots_store_1 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_2 = Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
+        const __gotots_argument_2 = Node__from_ast.$storageOf(((NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent;
         const __gotots_argument_3 = ModifierFlagsPrivate$constant__from_ast();
         __gotots_logical_result_0 = !(goInterfaceNonNil<DeclarationEmitHost>(__gotots_receiver_2).GetEffectiveDeclarationFlags(__gotots_argument_2, __gotots_argument_3) === 0);
     }

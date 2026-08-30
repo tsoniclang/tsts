@@ -12,6 +12,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class taggedTemplateTransformer {
     declare private readonly $goType: void;
     public constructor(public Transformer: Transformer__from_transformers, public currentSourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, public taggedTemplateStringDeclarations: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>) {
@@ -32,7 +50,7 @@ export class taggedTemplateTransformer {
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 MemberExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_11 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_11 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_18, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_6, __gotots_argument_11);
         }
         const __gotots_store_19 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -137,7 +155,7 @@ export class taggedTemplateTransformer {
         const __gotots_store_2 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         const __gotots_receiver_2 = Transformer__from_transformers.Visitor(__gotots_store_2.Transformer);
         const __gotots_store_3 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_2 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let visited: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_2, __gotots_argument_2);
         if ((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).taggedTemplateStringDeclarations.length > 0) {
             let visitedSourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Node__from_ast.AsSourceFile(visited);

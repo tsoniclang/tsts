@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { NodeDefault$Storage as NodeDefault__from_ast$Storage } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { bool } from "@gotots/runtime/scalars.js";
 import { ForEachDynamicImportOrRequireCall as ForEachDynamicImportOrRequireCall__from_ast, GetExternalModuleName as GetExternalModuleName__from_ast, HasSyntacticModifier as HasSyntacticModifier__from_ast, IsAmbientModule as IsAmbientModule__from_ast, IsAnyImportOrReExport as IsAnyImportOrReExport__from_ast, IsExternalModule as IsExternalModule__from_ast, IsInJSFile as IsInJSFile__from_ast, IsModuleDeclaration as IsModuleDeclaration__from_ast, IsStringLiteral as IsStringLiteral__from_ast, ModifierFlagsAmbient$constant as ModifierFlagsAmbient$constant__from_ast, ModuleDeclaration as ModuleDeclaration__from_ast, NodeBase as NodeBase__from_ast, NodeDefault as NodeDefault__from_ast, NodeFlagsPossiblyContainsDynamicImport$constant as NodeFlagsPossiblyContainsDynamicImport$constant__from_ast, NodeList as NodeList__from_ast, Node as Node__from_ast, SetImportsOfSourceFile as SetImportsOfSourceFile__from_ast, SourceFile as SourceFile__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
@@ -6,6 +6,24 @@ import { $state as $state__core, TSFalse$constant as TSFalse$constant__from_core
 import { IsExternalModuleNameRelative as IsExternalModuleNameRelative__from_tspath } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/tspath/package.js";
 import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function collectExternalModuleReferences(file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void {
     const __gotots_range_0 = NodeList__from_ast.$storageOf(((((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes;
     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
@@ -18,7 +36,7 @@ export function collectExternalModuleReferences(file: tsonicTypeScriptRuntime.Lo
             NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault)).Node)).Flags & NodeFlagsPossiblyContainsDynamicImport$constant__from_ast()) >>> 0 === 0);
     if (!__gotots_logical_result_0) {
         const __gotots_store_0 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_0 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_0 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_0 = IsInJSFile__from_ast(__gotots_argument_0);
     }
     if (__gotots_logical_result_0) {

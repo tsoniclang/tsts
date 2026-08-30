@@ -8,6 +8,24 @@ import { GetECMALineOfPosition as GetECMALineOfPosition__from_scanner, GetECMALi
 import { Contains$SliceOf_PointerTo_Named_ast$Node$PointerTo_Named_ast$Node } from "../../../../../../support/generics/concretizations/slices/Contains.js";
 import { $goInterfaceAdapter$PointerTo_Named_ast$SourceFile as GoInterfaceAdapter } from "../../../../../../support/interface-adapters.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function rangeIsOnOneLine(node: TextRange__from_core, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): bool {
     let startLine = GetECMALineOfPosition__from_scanner(new GoInterfaceAdapter(file), node.Pos());
     let endLine = GetECMALineOfPosition__from_scanner(new GoInterfaceAdapter(file), node.End());
@@ -107,14 +125,14 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
     if (IsPropertyAssignment__from_ast(parent)) {
         let pa: tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast> | undefined = Node__from_ast.AsPropertyAssignment(parent);
         const __gotots_store_0 = PropertyAssignment__from_ast.$storageOf(((pa ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value);
-        let mods: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+        let mods: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_0, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
         let __gotots_logical_result_1 = tsonicTypeScriptRuntime.sameLocation(child, (void NamedMemberBase__from_ast.$storageOf, (void NamedMemberBase__from_ast.$fromStorage,
             PropertyAssignment__from_ast.$storageOf(((pa ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NamedMemberBase)).PostfixToken);
         if (!__gotots_logical_result_1) {
             let __gotots_logical_result_0 = !(mods === undefined);
             if (__gotots_logical_result_0) {
                 const __gotots_store_1 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_0 = new $ProjectedPropertyLocation(__gotots_store_1, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_1 = child;
                 const __gotots_argument_2 = IsModifierLike__from_ast;
                 __gotots_logical_result_0 = isGrammarErrorElement(__gotots_argument_0, __gotots_argument_1, __gotots_argument_2);
@@ -136,7 +154,7 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
             let __gotots_logical_result_2 = !(mods === undefined);
             if (__gotots_logical_result_2) {
                 const __gotots_store_3 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_3 = new $ProjectedPropertyLocation(__gotots_store_3, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_4 = child;
                 const __gotots_argument_5 = IsModifierLike__from_ast;
                 __gotots_logical_result_2 = isGrammarErrorElement(__gotots_argument_3, __gotots_argument_4, __gotots_argument_5);
@@ -168,7 +186,7 @@ export function isGrammarError(parent: tsonicTypeScriptRuntime.Location<Node__fr
         let __gotots_logical_result_4 = !(mods === undefined);
         if (__gotots_logical_result_4) {
             const __gotots_store_5 = ModifierList__from_ast.$storageOf(((mods ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-            const __gotots_argument_6 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+            const __gotots_argument_6 = new $ProjectedPropertyLocation(__gotots_store_5, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             const __gotots_argument_7 = child;
             const __gotots_argument_8 = IsModifierLike__from_ast;
             __gotots_logical_result_4 = isGrammarErrorElement(__gotots_argument_6, __gotots_argument_7, __gotots_argument_8);

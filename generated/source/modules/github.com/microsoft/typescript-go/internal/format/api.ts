@@ -21,6 +21,24 @@ import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class FormatRequestKind {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -128,7 +146,7 @@ export function FormatDocument(ctx: GoInterface | undefined, sourceFile: tsonicT
     const __gotots_argument_8 = 0;
     const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_9 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_argument_9 = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_0, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     const __gotots_argument_11 = NewTextRange__from_core(__gotots_argument_8, __gotots_argument_9);
     const __gotots_argument_12 = sourceFile;
     const __gotots_argument_13 = FormatRequestKindFormatDocument$constant();

@@ -13,45 +13,33 @@ export function mapEntry$Key$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, RegistryBucket__from_autoimport | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$directory($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, directory__from_autoimport | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, directory__from_autoimport | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$directory($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, {
-    value: configFileEntry__from_project;
-} | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, configFileNames__from_project | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, configFileNames__from_project | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$configFileNames($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }
-export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, {
-    value: diskFile__from_project;
-} | undefined>> | undefined): Path__from_tspath {
-    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, {
-        value: diskFile__from_project;
-    } | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
+export function mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile($argument0: tsonicTypeScriptRuntime.Location<mapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined): Path__from_tspath {
+    return mapEntry__from_dirty.Key$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>($argument0, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
     });
 }

@@ -1,10 +1,27 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { sparseBlocks$Storage as sparseBlocks__from_norm$Storage } from "./trie.js";
 import type { gostring, int, uint16, uint32, uint8 } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { $state } from "../../../../../../packages/golang.org/x/text@v0.38.0/unicode/norm/state.js";
 import { sparseBlocks } from "./trie.js";
 import { goStringIndex } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export const firstMulti$uint16: uint16 = 6554;
 export const firstCCC$uint16: uint16 = 11733;
 export const endMulti$uint16: uint16 = 11967;
@@ -158,7 +175,7 @@ export class nfcTrie {
             }
             else {
                 n = n - 46;
-                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfcSparse"), sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
+                return sparseBlocks.$go$private$norm$lookup(new $ProjectedPropertyLocation($state, "nfcSparse", sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
             }
         }
     }
@@ -314,7 +331,7 @@ export class nfkcTrie {
             }
             else {
                 n = n - 95;
-                return sparseBlocks.$go$private$norm$lookup(tsonicTypeScriptRuntime.projectLocation<sparseBlocks__from_norm$Storage, sparseBlocks>(tsonicTypeScriptRuntime.propertyLocation($state, "nfkcSparse"), sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
+                return sparseBlocks.$go$private$norm$lookup(new $ProjectedPropertyLocation($state, "nfkcSparse", sparseBlocks.$fromStorage, sparseBlocks.$storageOf), n, b);
             }
         }
     }

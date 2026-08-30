@@ -51,6 +51,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class PrinterOptions {
     declare private readonly $goType: void;
     public constructor(public RemoveComments: bool, public NewLine: NewLineKind__from_core, public NoEmitHelpers: bool, public Target: ScriptTarget__from_core, public SourceMap: bool, public InlineSourceMap: bool, public InlineSources: bool, public OmitBraceSourceMapPositions: bool, public OnlyPrintJSDocStyle: bool, public NeverAsciiEscape: bool, public PreserveSourceNewlines: bool, public TerminateUnterminatedLiterals: bool) {
@@ -418,11 +436,11 @@ export class Printer {
     static $go$private$printer$emitAccessorDeclaration(p: Printer | undefined, token: Kind__from_ast, node: tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast> | undefined): void {
         const __gotots_receiver_231 = p;
         const __gotots_store_254 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_476 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_254, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_476 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_254, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_231, __gotots_argument_476);
         const __gotots_receiver_232 = p;
         const __gotots_store_255 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_477 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_255, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_477 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_255, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_256 = ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value;
         const __gotots_argument_478 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_256, "NamedMemberBase"));
         const __gotots_argument_479 = true;
@@ -432,7 +450,7 @@ export class Printer {
         const __gotots_argument_481 = pos;
         const __gotots_argument_482 = WriteKindKeyword$constant();
         const __gotots_store_257 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_483 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_257, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_483 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_257, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_233, __gotots_argument_480, __gotots_argument_481, __gotots_argument_482, __gotots_argument_483);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_234 = p;
@@ -441,27 +459,27 @@ export class Printer {
         Printer.$go$private$printer$emitPropertyName(__gotots_receiver_234, __gotots_argument_484);
         const __gotots_receiver_235 = p;
         const __gotots_store_259 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_485 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_259, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_485 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_259, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_235, __gotots_argument_485);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_236 = p;
         const __gotots_store_260 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_486 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_260, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_486 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_260, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_236, __gotots_argument_486);
         const __gotots_receiver_237 = p;
         const __gotots_store_261 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_487 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_261, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_487 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_261, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_237, __gotots_argument_487);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_receiver_238 = p;
         const __gotots_store_262 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_488 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_262, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_488 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_262, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_238, __gotots_argument_488);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_239 = p;
         const __gotots_store_263 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<AccessorDeclarationBase__from_ast>).value.NodeBase);
-        const __gotots_argument_489 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_263, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_489 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_263, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_490 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_239, __gotots_argument_489, __gotots_argument_490);
     }
@@ -473,7 +491,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_89 = p;
         const __gotots_store_95 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_95, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_95, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_89, __gotots_argument_144);
         Printer.$go$private$printer$writePunctuation(p, "[");
         const __gotots_receiver_90 = p;
@@ -481,14 +499,14 @@ export class Printer {
             Printer.$go$private$printer$emitBindingElementNode($argument0, $argument1);
         };
         const __gotots_store_96 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_146 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_96, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_146 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_96, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_147: BindingPattern__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_148 = LFArrayBindingPatternElements$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_90, __gotots_argument_145, __gotots_argument_146, __gotots_argument_147, __gotots_argument_148);
         Printer.$go$private$printer$writePunctuation(p, "]");
         const __gotots_receiver_91 = p;
         const __gotots_store_97 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_149 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_97, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_149 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_97, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_150 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_91, __gotots_argument_149, __gotots_argument_150);
     }
@@ -503,7 +521,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_582 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_302, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_582 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_302, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_275, __gotots_argument_582);
         const __gotots_receiver_276 = p;
         const __gotots_argument_583 = ($argument0: Printer | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
@@ -516,7 +534,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_584 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_303, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_584 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_303, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_585: ArrayLiteralExpression__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_586 = new ListFormat(LFArrayLiteralExpressionElements$constant().$value | IfElse$Named_printer$ListFormat((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MultiLine, LFPreferNewLine$constant(), LFNone$constant()).$value);
         Printer.$go$private$printer$emitList(__gotots_receiver_276, __gotots_argument_583, __gotots_argument_584, __gotots_argument_585, __gotots_argument_586);
@@ -528,7 +546,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_587 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_304, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_587 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_304, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_588 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_277, __gotots_argument_587, __gotots_argument_588);
     }
@@ -540,14 +558,14 @@ export class Printer {
         const __gotots_store_714 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 ArrayTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ArrayTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1405 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_714, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1405 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_714, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_615, __gotots_argument_1405);
         const __gotots_receiver_616 = p;
         const __gotots_argument_1406 = ArrayTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ArrayTypeNode__from_ast>).value).ElementType;
         const __gotots_store_715 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 ArrayTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ArrayTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1407 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_715, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1407 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_715, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitPostfixTypeOperand(__gotots_receiver_616, __gotots_argument_1406, __gotots_argument_1407);
         Printer.$go$private$printer$writePunctuation(p, "[");
         Printer.$go$private$printer$writePunctuation(p, "]");
@@ -555,7 +573,7 @@ export class Printer {
         const __gotots_store_716 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 ArrayTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ArrayTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1408 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_716, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1408 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_716, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1409 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_617, __gotots_argument_1408, __gotots_argument_1409);
     }
@@ -565,12 +583,12 @@ export class Printer {
         const __gotots_receiver_327 = p;
         const __gotots_store_356 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_699 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_356, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_699 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_356, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_327, __gotots_argument_699);
         const __gotots_receiver_328 = p;
         const __gotots_store_357 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_700 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_357, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_700 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_357, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_358 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_701 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_358, "ModifiersBase"));
         const __gotots_argument_702 = false;
@@ -578,25 +596,25 @@ export class Printer {
         const __gotots_receiver_329 = p;
         const __gotots_store_359 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_703 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_359, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_703 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_359, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_329, __gotots_argument_703);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_330 = p;
         const __gotots_store_360 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_704 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_360, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_704 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_360, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_330, __gotots_argument_704);
         const __gotots_receiver_331 = p;
         const __gotots_store_361 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_705 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_361, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_705 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_361, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_706 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_331, __gotots_argument_705, __gotots_argument_706);
         const __gotots_receiver_332 = p;
         const __gotots_store_362 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_707 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_362, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_707 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_362, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_708 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Parameters;
         Printer.$go$private$printer$emitParametersForArrow(__gotots_receiver_332, __gotots_argument_707, __gotots_argument_708);
@@ -610,13 +628,13 @@ export class Printer {
         const __gotots_receiver_333 = p;
         const __gotots_store_363 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_709 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_363, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_709 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_363, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_333, __gotots_argument_709);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_334 = p;
         const __gotots_store_364 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_710 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_364, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_710 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_364, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_711 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_334, __gotots_argument_710, __gotots_argument_711);
     }
@@ -626,7 +644,7 @@ export class Printer {
         const __gotots_receiver_382 = p;
         const __gotots_store_420 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_822 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_420, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_822 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_420, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_382, __gotots_argument_822);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceRelational$constant__from_ast());
         Printer.$go$private$printer$writeSpace(p);
@@ -636,7 +654,7 @@ export class Printer {
         const __gotots_receiver_383 = p;
         const __gotots_store_421 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_823 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_421, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_823 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_421, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_824 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_383, __gotots_argument_823, __gotots_argument_824);
     }
@@ -647,7 +665,7 @@ export class Printer {
         const __gotots_store_377 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_733 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_377, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_733 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_377, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_344, __gotots_argument_733);
         const __gotots_receiver_345 = p;
         const __gotots_argument_734 = KindAwaitKeyword$constant__from_ast();
@@ -655,12 +673,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                     UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_735 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_378, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_735 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_378, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_736 = WriteKindKeyword$constant();
         const __gotots_store_379 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_737 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_379, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_737 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_379, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_345, __gotots_argument_734, __gotots_argument_735, __gotots_argument_736, __gotots_argument_737);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceUnary$constant__from_ast());
@@ -668,7 +686,7 @@ export class Printer {
         const __gotots_store_380 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_738 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_380, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_738 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_380, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_739 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_346, __gotots_argument_738, __gotots_argument_739);
     }
@@ -684,7 +702,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_554 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_284, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_554 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_284, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_258, __gotots_argument_554);
         const __gotots_receiver_259 = p;
         const __gotots_store_285 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -695,7 +713,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_555 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_285, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_555 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_285, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_556 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_259, __gotots_argument_555, __gotots_argument_556);
         const __gotots_receiver_260 = p;
@@ -707,7 +725,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_557 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_286, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_557 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_286, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_558 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_260, __gotots_argument_557, __gotots_argument_558);
     }
@@ -731,14 +749,14 @@ export class Printer {
         const __gotots_store_388 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_754 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_388, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_754 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_388, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_353, __gotots_argument_754);
         Printer.$go$private$printer$emitExpression(p, BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Left, leftPrec);
         const __gotots_receiver_354 = p;
         const __gotots_store_389 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_755 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_389, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_755 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_389, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_756 = BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Left;
         const __gotots_argument_757 = BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).OperatorToken;
         let linesBeforeOperator = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_354, __gotots_argument_755, __gotots_argument_756, __gotots_argument_757);
@@ -746,7 +764,7 @@ export class Printer {
         const __gotots_store_390 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_758 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_390, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_758 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_390, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_759 = BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).OperatorToken;
         const __gotots_argument_760 = BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Right;
         let linesAfterOperator = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_355, __gotots_argument_758, __gotots_argument_759, __gotots_argument_760);
@@ -760,7 +778,7 @@ export class Printer {
         const __gotots_store_391 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_761 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_391, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_761 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_391, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_762 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_356, __gotots_argument_761, __gotots_argument_762);
     }
@@ -769,7 +787,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_92 = p;
         const __gotots_store_98 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_151 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_98, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_151 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_98, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_92, __gotots_argument_151);
         Printer.$go$private$printer$emitTokenNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DotDotDotToken);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PropertyName === undefined)) {
@@ -785,13 +803,13 @@ export class Printer {
                 const __gotots_argument_152: BindingElement__from_ast["Initializer"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer;
                 const __gotots_argument_153 = Node__from_ast.End(BindingElement__from_ast.Name(node));
                 const __gotots_store_99 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                const __gotots_argument_154 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_99, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_154 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_99, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 Printer.$go$private$printer$emitInitializer(__gotots_receiver_93, __gotots_argument_152, __gotots_argument_153, __gotots_argument_154);
             }
         }
         const __gotots_receiver_94 = p;
         const __gotots_store_100 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_155 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_100, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_155 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_100, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_156 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_94, __gotots_argument_155, __gotots_argument_156);
     }
@@ -810,7 +828,7 @@ export class Printer {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_465 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_248, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_465 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_248, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_binary_operand_4 = EmitContext.EmitFlags(__gotots_receiver_223, __gotots_argument_465);
             const __gotots_binary_operand_5 = EFHelperName$constant();
             __gotots_logical_result_7 = !((__gotots_binary_operand_4 & __gotots_binary_operand_5) >>> 0 === 0);
@@ -827,7 +845,7 @@ export class Printer {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_467 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_249, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_467 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_249, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             EmitContext.AssignCommentAndSourceMapRanges(__gotots_receiver_224, __gotots_argument_466, __gotots_argument_467);
             node = Node__from_ast.AsIdentifier(helperName);
         }
@@ -840,7 +858,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_468 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_250, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_468 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_250, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_225, __gotots_argument_468);
         Printer.$go$private$printer$emitIdentifierText(p, node);
         const __gotots_receiver_226 = p;
@@ -852,7 +870,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_469 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_251, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_469 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_251, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_470 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_226, __gotots_argument_469, __gotots_argument_470);
     }
@@ -885,13 +903,13 @@ export class Printer {
         const __gotots_store_270 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_518 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_270, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_518 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_270, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_243, __gotots_argument_518);
         const __gotots_receiver_244 = p;
         const __gotots_store_271 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_519 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_271, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_519 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_271, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$generateNames(__gotots_receiver_244, __gotots_argument_519);
         const __gotots_receiver_245 = p;
         const __gotots_argument_520 = KindOpenBraceToken$constant__from_ast();
@@ -899,12 +917,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_521 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_272, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_521 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_272, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_522 = WriteKindPunctuation$constant();
         const __gotots_store_273 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_523 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_273, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_523 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_273, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_245, __gotots_argument_520, __gotots_argument_521, __gotots_argument_522, __gotots_argument_523);
         let __gotots_logical_result_10 = !Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).MultiLine;
         if (__gotots_logical_result_10) {
@@ -912,7 +930,7 @@ export class Printer {
             const __gotots_store_274 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_524 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_274, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_524 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_274, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_525 = Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements;
             __gotots_logical_result_10 = Printer.$go$private$printer$isEmptyBlock(__gotots_receiver_246, __gotots_argument_524, __gotots_argument_525);
         }
@@ -922,7 +940,7 @@ export class Printer {
             const __gotots_store_275 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_526 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_275, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_526 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_275, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             __gotots_logical_result_11 = Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_247, __gotots_argument_526);
         }
         const __gotots_argument_527 = __gotots_logical_result_11;
@@ -936,7 +954,7 @@ export class Printer {
         const __gotots_store_276 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_531 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_276, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_531 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_276, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_532 = Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements;
         const __gotots_argument_533 = format;
         Printer.$go$private$printer$emitList(__gotots_receiver_248, __gotots_argument_530, __gotots_argument_531, __gotots_argument_532, __gotots_argument_533);
@@ -947,7 +965,7 @@ export class Printer {
         const __gotots_store_277 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_537 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_277, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_537 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_277, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_538 = IfElse$Named_printer$tokenEmitFlags(!(((void ListFormat,
             format.$value & LFMultiLine$constant().$value) as int)
             ===
@@ -958,7 +976,7 @@ export class Printer {
         const __gotots_store_278 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_539 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_278, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_539 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_278, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_540 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_250, __gotots_argument_539, __gotots_argument_540);
     }
@@ -968,18 +986,18 @@ export class Printer {
         const __gotots_receiver_458 = p;
         const __gotots_store_507 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1002 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_507, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1002 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_507, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_458, __gotots_argument_1002);
         const __gotots_receiver_459 = p;
         const __gotots_argument_1003 = KindBreakKeyword$constant__from_ast();
         const __gotots_store_508 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1004 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_508, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1004 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_508, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1005 = WriteKindKeyword$constant();
         const __gotots_store_509 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1006 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_509, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1006 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_509, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_459, __gotots_argument_1003, __gotots_argument_1004, __gotots_argument_1005, __gotots_argument_1006);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Label === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -989,7 +1007,7 @@ export class Printer {
         const __gotots_receiver_460 = p;
         const __gotots_store_510 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1007 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_510, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1007 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_510, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1008 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_460, __gotots_argument_1007, __gotots_argument_1008);
     }
@@ -1001,7 +1019,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_640 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_324, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_640 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_324, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_298, __gotots_argument_640);
         const __gotots_receiver_299 = p;
         const __gotots_argument_641 = CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Expression;
@@ -1011,7 +1029,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_642 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_325, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_642 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_325, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitCallee(__gotots_receiver_299, __gotots_argument_641, __gotots_argument_642);
         Printer.$go$private$printer$emitTokenNode(p, CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).QuestionDotToken);
         const __gotots_receiver_300 = p;
@@ -1021,7 +1039,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_643 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_326, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_643 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_326, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_644 = CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_300, __gotots_argument_643, __gotots_argument_644);
         const __gotots_receiver_301 = p;
@@ -1034,7 +1052,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_646 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_327, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_646 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_327, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_647 = CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments;
         const __gotots_argument_648 = LFCallExpressionArguments$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_301, __gotots_argument_645, __gotots_argument_646, __gotots_argument_647, __gotots_argument_648);
@@ -1045,7 +1063,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_649 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_328, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_649 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_328, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_650 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_302, __gotots_argument_649, __gotots_argument_650);
     }
@@ -1054,30 +1072,30 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_67 = p;
         const __gotots_store_72 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_112 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_72, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_112 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_72, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_67, __gotots_argument_112);
         const __gotots_receiver_68 = p;
         const __gotots_store_73 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_113 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_73, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_113 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_73, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_68, __gotots_argument_113);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_69 = p;
         const __gotots_store_74 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_114 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_74, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_114 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_74, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_69, __gotots_argument_114);
         const __gotots_receiver_70 = p;
         const __gotots_store_75 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_115 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_75, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_115 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_75, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_70, __gotots_argument_115);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_71 = p;
         const __gotots_store_76 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_116 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_116 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_76, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_71, __gotots_argument_116);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_72 = p;
         const __gotots_store_77 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_117 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_77, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_117 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_77, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_118 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_72, __gotots_argument_117, __gotots_argument_118);
     }
@@ -1102,23 +1120,23 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_113 = p;
         const __gotots_store_124 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_203 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_124, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_203 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_124, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_113, __gotots_argument_203);
         const __gotots_receiver_114 = p;
         const __gotots_argument_204 = KindOpenBraceToken$constant__from_ast();
         const __gotots_store_125 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_205 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_125, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_205 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_125, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_206 = WriteKindPunctuation$constant();
         const __gotots_store_126 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_207 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_126, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_207 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_126, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_114, __gotots_argument_204, __gotots_argument_205, __gotots_argument_206, __gotots_argument_207);
         const __gotots_receiver_115 = p;
         const __gotots_argument_208 = ($argument0: Printer | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
             Printer.$go$private$printer$emitCaseOrDefaultClauseNode($argument0, $argument1);
         };
         const __gotots_store_127 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_209 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_127, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_209 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_127, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_210: CaseBlock__from_ast["Clauses"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Clauses;
         const __gotots_argument_211 = LFCaseBlockClauses$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_115, __gotots_argument_208, __gotots_argument_209, __gotots_argument_210, __gotots_argument_211);
@@ -1127,12 +1145,12 @@ export class Printer {
         const __gotots_argument_213 = NodeList__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Clauses);
         const __gotots_argument_214 = WriteKindPunctuation$constant();
         const __gotots_store_128 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_215 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_128, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_215 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_128, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_216 = tefIndentLeadingComments$constant();
         Printer.$go$private$printer$emitTokenEx(__gotots_receiver_116, __gotots_argument_212, __gotots_argument_213, __gotots_argument_214, __gotots_argument_215, __gotots_argument_216);
         const __gotots_receiver_117 = p;
         const __gotots_store_129 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_217 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_129, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_217 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_129, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_218 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_117, __gotots_argument_217, __gotots_argument_218);
     }
@@ -1141,23 +1159,23 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_177 = p;
         const __gotots_store_198 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_351 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_198, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_351 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_198, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_177, __gotots_argument_351);
         const __gotots_receiver_178 = p;
         const __gotots_argument_352 = KindCaseKeyword$constant__from_ast();
         const __gotots_store_199 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_353 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_199, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_353 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_199, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_354 = WriteKindKeyword$constant();
         const __gotots_store_200 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_355 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_200, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_355 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_200, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_178, __gotots_argument_352, __gotots_argument_353, __gotots_argument_354, __gotots_argument_355);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
         Printer.$go$private$printer$emitCaseOrDefaultClauseStatements(p, node, Node__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression));
         const __gotots_receiver_179 = p;
         const __gotots_store_201 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_356 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_201, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_356 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_201, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_357 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_179, __gotots_argument_356, __gotots_argument_357);
     }
@@ -1186,7 +1204,7 @@ export class Printer {
             let __gotots_logical_result_8 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile === undefined;
             if (!__gotots_logical_result_8) {
                 const __gotots_store_267 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                const __gotots_argument_509 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_267, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_509 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_267, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 __gotots_logical_result_8 = NodeIsSynthesized__from_ast(__gotots_argument_509);
             }
             __gotots_logical_result_9 = (__gotots_logical_result_8 || NodeIsSynthesized__from_ast(NodeList__from_ast.$storageOf((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(0)) || RangeStartPositionsAreOnSameLine(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
@@ -1206,7 +1224,7 @@ export class Printer {
             const __gotots_argument_511 = colonPos;
             const __gotots_argument_512 = WriteKindPunctuation$constant();
             const __gotots_store_268 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_513 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_268, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_513 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_268, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_241, __gotots_argument_510, __gotots_argument_511, __gotots_argument_512, __gotots_argument_513);
         }
         const __gotots_receiver_242 = p;
@@ -1214,7 +1232,7 @@ export class Printer {
             Printer.$go$private$printer$emitStatement($argument0, $argument1);
         };
         const __gotots_store_269 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_515 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_269, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_515 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_269, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_516: CaseOrDefaultClause__from_ast["Statements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statements;
         const __gotots_argument_517 = format;
         Printer.$go$private$printer$emitList(__gotots_receiver_242, __gotots_argument_514, __gotots_argument_515, __gotots_argument_516, __gotots_argument_517);
@@ -1224,16 +1242,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_187 = p;
         const __gotots_store_211 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_376 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_211, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_376 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_211, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_187, __gotots_argument_376);
         const __gotots_receiver_188 = p;
         const __gotots_argument_377 = KindCatchKeyword$constant__from_ast();
         const __gotots_store_212 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_378 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_212, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_378 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_212, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_379 = WriteKindKeyword$constant();
         const __gotots_store_213 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_380 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_213, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_380 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_213, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let openParenPos = Printer.$go$private$printer$emitToken(__gotots_receiver_188, __gotots_argument_377, __gotots_argument_378, __gotots_argument_379, __gotots_argument_380);
         Printer.$go$private$printer$writeSpace(p);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.VariableDeclaration === undefined)) {
@@ -1242,7 +1260,7 @@ export class Printer {
             const __gotots_argument_382 = openParenPos;
             const __gotots_argument_383 = WriteKindPunctuation$constant();
             const __gotots_store_214 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_384 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_214, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_384 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_214, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_189, __gotots_argument_381, __gotots_argument_382, __gotots_argument_383, __gotots_argument_384);
             Printer.$go$private$printer$emitVariableDeclaration(p, Node__from_ast.AsVariableDeclaration((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.VariableDeclaration));
             const __gotots_receiver_190 = p;
@@ -1250,14 +1268,14 @@ export class Printer {
             const __gotots_argument_386 = Node__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.VariableDeclaration);
             const __gotots_argument_387 = WriteKindPunctuation$constant();
             const __gotots_store_215 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_388 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_215, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_388 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_215, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_190, __gotots_argument_385, __gotots_argument_386, __gotots_argument_387, __gotots_argument_388);
             Printer.$go$private$printer$writeSpace(p);
         }
         Printer.$go$private$printer$emitBlock(p, Node__from_ast.AsBlock((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Block));
         const __gotots_receiver_191 = p;
         const __gotots_store_216 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_389 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_216, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_389 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_216, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_390 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_191, __gotots_argument_389, __gotots_argument_390);
     }
@@ -1267,13 +1285,13 @@ export class Printer {
         const __gotots_receiver_499 = p;
         const __gotots_store_556 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1099 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_556, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1099 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_556, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_499, __gotots_argument_1099);
         Printer.$go$private$printer$generateNameIfNeeded(p, ClassDeclaration__from_ast.Name(node));
         const __gotots_receiver_500 = p;
         const __gotots_store_557 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1100 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_557, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1100 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_557, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_558: ClassDeclaration__from_ast["ClassLikeBase"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
         const __gotots_argument_1101 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_558, "ModifiersBase"));
         const __gotots_argument_1102 = true;
@@ -1284,7 +1302,7 @@ export class Printer {
         const __gotots_argument_1105 = WriteKindKeyword$constant();
         const __gotots_store_559 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1106 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_559, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1106 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_559, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_501, __gotots_argument_1103, __gotots_argument_1104, __gotots_argument_1105, __gotots_argument_1106);
         if (!(ClassDeclaration__from_ast.Name(node) === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -1293,13 +1311,13 @@ export class Printer {
         const __gotots_receiver_502 = p;
         const __gotots_store_560 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1107 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_560, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1107 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_560, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_502, __gotots_argument_1107);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_503 = p;
         const __gotots_store_561 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1108 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_561, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1108 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_561, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1109 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_503, __gotots_argument_1108, __gotots_argument_1109);
         const __gotots_receiver_504 = p;
@@ -1308,7 +1326,7 @@ export class Printer {
         };
         const __gotots_store_562 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1111 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_562, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1111 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_562, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1112 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.HeritageClauses;
         const __gotots_argument_1113 = LFClassHeritageClauses$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_504, __gotots_argument_1110, __gotots_argument_1111, __gotots_argument_1112, __gotots_argument_1113);
@@ -1317,7 +1335,7 @@ export class Printer {
         const __gotots_receiver_505 = p;
         const __gotots_store_563 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1114 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_563, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1114 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_563, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_505, __gotots_argument_1114);
         Printer.$go$private$printer$generateAllMemberNames(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.Members);
         const __gotots_receiver_506 = p;
@@ -1326,21 +1344,21 @@ export class Printer {
         };
         const __gotots_store_564 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1116 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_564, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1116 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_564, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1117 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.Members;
         const __gotots_argument_1118 = LFClassMembers$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_506, __gotots_argument_1115, __gotots_argument_1116, __gotots_argument_1117, __gotots_argument_1118);
         const __gotots_receiver_507 = p;
         const __gotots_store_565 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1119 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_565, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1119 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_565, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_507, __gotots_argument_1119);
         Printer.$go$private$printer$writePunctuation(p, "}");
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_508 = p;
         const __gotots_store_566 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1120 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_566, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1120 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_566, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1121 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_508, __gotots_argument_1120, __gotots_argument_1121);
     }
@@ -1404,7 +1422,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_799 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_409, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_799 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_409, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_372, __gotots_argument_799);
         Printer.$go$private$printer$generateNameIfNeeded(p, ClassExpression__from_ast.Name(node));
         const __gotots_receiver_373 = p;
@@ -1415,7 +1433,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_800 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_410, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_800 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_410, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_411: ClassExpression__from_ast["ClassLikeBase"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase;
         const __gotots_argument_801 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_411, "ModifiersBase"));
         const __gotots_argument_802 = true;
@@ -1431,7 +1449,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_806 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_412, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_806 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_412, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_374, __gotots_argument_803, __gotots_argument_804, __gotots_argument_805, __gotots_argument_806);
         if (!(ClassExpression__from_ast.Name(node) === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -1445,7 +1463,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_807 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_413, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_807 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_413, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_375, __gotots_argument_807);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_376 = p;
@@ -1456,7 +1474,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_808 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_414, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_808 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_414, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_809 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_376, __gotots_argument_808, __gotots_argument_809);
         const __gotots_receiver_377 = p;
@@ -1470,7 +1488,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_811 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_415, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_811 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_415, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_812 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.HeritageClauses;
         const __gotots_argument_813 = LFClassHeritageClauses$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_377, __gotots_argument_810, __gotots_argument_811, __gotots_argument_812, __gotots_argument_813);
@@ -1484,7 +1502,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_814 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_416, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_814 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_416, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_378, __gotots_argument_814);
         Printer.$go$private$printer$generateAllMemberNames(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.Members);
         const __gotots_receiver_379 = p;
@@ -1498,7 +1516,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_816 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_417, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_816 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_417, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_817 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ClassLikeBase.Members;
         const __gotots_argument_818 = LFClassMembers$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_379, __gotots_argument_815, __gotots_argument_816, __gotots_argument_817, __gotots_argument_818);
@@ -1510,7 +1528,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_819 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_418, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_819 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_418, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_380, __gotots_argument_819);
         Printer.$go$private$printer$writePunctuation(p, "}");
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
@@ -1522,7 +1540,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_820 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_419, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_820 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_419, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_821 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_381, __gotots_argument_820, __gotots_argument_821);
     }
@@ -1531,21 +1549,21 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_54 = p;
         const __gotots_store_58 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_93 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_58, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_93 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_58, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_54, __gotots_argument_93);
         Printer.$go$private$printer$writeKeyword(p, "static");
         const __gotots_receiver_55 = p;
         const __gotots_store_59 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_94 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_59, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_94 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_59, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_55, __gotots_argument_94);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Body);
         const __gotots_receiver_56 = p;
         const __gotots_store_60 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_95 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_60, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_95 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_60, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_56, __gotots_argument_95);
         const __gotots_receiver_57 = p;
         const __gotots_store_61 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_96 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_96 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_61, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_97 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_57, __gotots_argument_96, __gotots_argument_97);
     }
@@ -1675,14 +1693,14 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_22 = p;
         const __gotots_store_18 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_31 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_31 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_18, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_22, __gotots_argument_31);
         Printer.$go$private$printer$writePunctuation(p, "[");
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceDisallowComma$constant__from_ast());
         Printer.$go$private$printer$writePunctuation(p, "]");
         const __gotots_receiver_23 = p;
         const __gotots_store_19 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_19, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_33 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_23, __gotots_argument_32, __gotots_argument_33);
     }
@@ -1711,13 +1729,13 @@ export class Printer {
         const __gotots_store_392 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_763 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_392, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_763 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_392, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_357, __gotots_argument_763);
         const __gotots_receiver_358 = p;
         const __gotots_store_393 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_764 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_393, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_764 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_393, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_765 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).Condition;
         const __gotots_argument_766 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).QuestionToken;
         let linesBeforeQuestion = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_358, __gotots_argument_764, __gotots_argument_765, __gotots_argument_766);
@@ -1725,7 +1743,7 @@ export class Printer {
         const __gotots_store_394 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_767 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_394, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_767 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_394, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_768 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).QuestionToken;
         const __gotots_argument_769 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).WhenTrue;
         let linesAfterQuestion = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_359, __gotots_argument_767, __gotots_argument_768, __gotots_argument_769);
@@ -1733,7 +1751,7 @@ export class Printer {
         const __gotots_store_395 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_770 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_395, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_770 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_395, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_771 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).WhenTrue;
         const __gotots_argument_772 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ColonToken;
         let linesBeforeColon = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_360, __gotots_argument_770, __gotots_argument_771, __gotots_argument_772);
@@ -1741,7 +1759,7 @@ export class Printer {
         const __gotots_store_396 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_773 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_396, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_773 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_396, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_774 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ColonToken;
         const __gotots_argument_775 = ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).WhenFalse;
         let linesAfterColon = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_361, __gotots_argument_773, __gotots_argument_774, __gotots_argument_775);
@@ -1762,7 +1780,7 @@ export class Printer {
         const __gotots_store_397 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 ConditionalExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConditionalExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_776 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_397, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_776 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_397, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_777 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_362, __gotots_argument_776, __gotots_argument_777);
     }
@@ -1772,7 +1790,7 @@ export class Printer {
         const __gotots_receiver_635 = p;
         const __gotots_store_735 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1451 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_735, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1451 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_735, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_635, __gotots_argument_1451);
         Printer.$go$private$printer$emitTypeNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CheckType, TypePrecedenceUnion$constant__from_ast());
         Printer.$go$private$printer$writeSpace(p);
@@ -1790,7 +1808,7 @@ export class Printer {
         const __gotots_receiver_636 = p;
         const __gotots_store_736 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1452 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_736, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1452 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_736, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1453 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_636, __gotots_argument_1452, __gotots_argument_1453);
     }
@@ -1798,37 +1816,37 @@ export class Printer {
         const __gotots_receiver_73 = p;
         const __gotots_store_78 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_119 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_78, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_119 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_78, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_73, __gotots_argument_119);
         Printer.$go$private$printer$writeKeyword(p, "new");
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_74 = p;
         const __gotots_store_79 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_120 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_79, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_120 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_79, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_74, __gotots_argument_120);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_75 = p;
         const __gotots_store_80 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_121 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_80, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_121 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_80, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_75, __gotots_argument_121);
         const __gotots_receiver_76 = p;
         const __gotots_store_81 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_122 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_81, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_122 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_81, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_76, __gotots_argument_122);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_77 = p;
         const __gotots_store_82 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_123 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_82, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_123 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_82, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_77, __gotots_argument_123);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_78 = p;
         const __gotots_store_83 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ConstructSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ConstructSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_124 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_83, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_124 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_83, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_125 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_78, __gotots_argument_124, __gotots_argument_125);
     }
@@ -1837,11 +1855,11 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_58 = p;
         const __gotots_store_62 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_98 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_62, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_98 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_62, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_58, __gotots_argument_98);
         const __gotots_receiver_59 = p;
         const __gotots_store_63 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_99 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_63, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_99 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_63, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_64 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_100 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_64, "ModifiersBase"));
         const __gotots_argument_101 = false;
@@ -1849,27 +1867,27 @@ export class Printer {
         Printer.$go$private$printer$writeKeyword(p, "constructor");
         const __gotots_receiver_60 = p;
         const __gotots_store_65 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_102 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_65, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_102 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_65, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_60, __gotots_argument_102);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_61 = p;
         const __gotots_store_66 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_103 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_66, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_103 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_66, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_61, __gotots_argument_103);
         const __gotots_receiver_62 = p;
         const __gotots_store_67 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_104 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_67, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_104 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_67, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_62, __gotots_argument_104);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_receiver_63 = p;
         const __gotots_store_68 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_105 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_68, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_105 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_68, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_63, __gotots_argument_105);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_64 = p;
         const __gotots_store_69 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_106 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_69, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_106 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_69, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_107 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_64, __gotots_argument_106, __gotots_argument_107);
     }
@@ -1879,14 +1897,14 @@ export class Printer {
         const __gotots_receiver_598 = p;
         const __gotots_store_696 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1374 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_696, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1374 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_696, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_598, __gotots_argument_1374);
         const __gotots_receiver_599 = p;
         const __gotots_store_697 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1375 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_697, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1375 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_697, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_698 = FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase);
-        const __gotots_argument_1376 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_698, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_1376 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_698, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_1377 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_599, __gotots_argument_1375, __gotots_argument_1376, __gotots_argument_1377);
         Printer.$go$private$printer$writeKeyword(p, "new");
@@ -1894,25 +1912,25 @@ export class Printer {
         const __gotots_receiver_600 = p;
         const __gotots_store_699 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1378 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_699, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1378 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_699, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_600, __gotots_argument_1378);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_601 = p;
         const __gotots_store_700 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1379 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_700, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1379 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_700, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_601, __gotots_argument_1379);
         const __gotots_receiver_602 = p;
         const __gotots_store_701 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1380 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_701, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1380 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_701, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1381 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_602, __gotots_argument_1380, __gotots_argument_1381);
         const __gotots_receiver_603 = p;
         const __gotots_store_702 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1382 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_702, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1382 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_702, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1383 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase).FunctionLikeBase)).Parameters;
         Printer.$go$private$printer$emitParameters(__gotots_receiver_603, __gotots_argument_1382, __gotots_argument_1383);
@@ -1922,13 +1940,13 @@ export class Printer {
         const __gotots_receiver_604 = p;
         const __gotots_store_703 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1384 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_703, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1384 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_703, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_604, __gotots_argument_1384);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_605 = p;
         const __gotots_store_704 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1385 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_704, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1385 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_704, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1386 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_605, __gotots_argument_1385, __gotots_argument_1386);
     }
@@ -1938,18 +1956,18 @@ export class Printer {
         const __gotots_receiver_455 = p;
         const __gotots_store_503 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_995 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_503, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_995 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_503, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_455, __gotots_argument_995);
         const __gotots_receiver_456 = p;
         const __gotots_argument_996 = KindContinueKeyword$constant__from_ast();
         const __gotots_store_504 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_997 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_504, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_997 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_504, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_998 = WriteKindKeyword$constant();
         const __gotots_store_505 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_999 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_505, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_999 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_505, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_456, __gotots_argument_996, __gotots_argument_997, __gotots_argument_998, __gotots_argument_999);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Label === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -1959,7 +1977,7 @@ export class Printer {
         const __gotots_receiver_457 = p;
         const __gotots_store_506 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1000 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_506, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1000 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_506, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1001 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_457, __gotots_argument_1000, __gotots_argument_1001);
     }
@@ -1969,24 +1987,24 @@ export class Printer {
         const __gotots_receiver_487 = p;
         const __gotots_store_542 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1079 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_542, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1079 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_542, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_487, __gotots_argument_1079);
         const __gotots_receiver_488 = p;
         const __gotots_argument_1080 = KindDebuggerKeyword$constant__from_ast();
         const __gotots_store_543 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1081 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_543, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1081 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_543, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1082 = WriteKindKeyword$constant();
         const __gotots_store_544 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1083 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_544, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1083 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_544, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_488, __gotots_argument_1080, __gotots_argument_1081, __gotots_argument_1082, __gotots_argument_1083);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_489 = p;
         const __gotots_store_545 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1084 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_545, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1084 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_545, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1085 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_489, __gotots_argument_1084, __gotots_argument_1085);
     }
@@ -1995,13 +2013,13 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_31 = p;
         const __gotots_store_31 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_31, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_31, __gotots_argument_55);
         Printer.$go$private$printer$writePunctuation(p, "@");
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLeftHandSide$constant__from_ast());
         const __gotots_receiver_32 = p;
         const __gotots_store_32 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_56 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_56 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_32, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_57 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_32, __gotots_argument_56, __gotots_argument_57);
     }
@@ -2010,21 +2028,21 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_180 = p;
         const __gotots_store_202 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_358 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_202, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_358 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_202, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_180, __gotots_argument_358);
         const __gotots_receiver_181 = p;
         const __gotots_argument_359 = KindDefaultKeyword$constant__from_ast();
         const __gotots_store_203 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_360 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_203, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_360 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_203, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_361 = WriteKindKeyword$constant();
         const __gotots_store_204 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_362 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_204, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_362 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_204, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_181, __gotots_argument_359, __gotots_argument_360, __gotots_argument_361, __gotots_argument_362);
         Printer.$go$private$printer$emitCaseOrDefaultClauseStatements(p, node, pos);
         const __gotots_receiver_182 = p;
         const __gotots_store_205 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_363 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_205, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_363 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_205, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_364 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_182, __gotots_argument_363, __gotots_argument_364);
     }
@@ -2035,7 +2053,7 @@ export class Printer {
         const __gotots_store_365 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_712 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_365, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_712 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_365, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_335, __gotots_argument_712);
         const __gotots_receiver_336 = p;
         const __gotots_argument_713 = KindDeleteKeyword$constant__from_ast();
@@ -2043,12 +2061,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                     UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_714 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_366, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_714 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_366, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_715 = WriteKindKeyword$constant();
         const __gotots_store_367 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_716 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_367, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_716 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_367, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_336, __gotots_argument_713, __gotots_argument_714, __gotots_argument_715, __gotots_argument_716);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceUnary$constant__from_ast());
@@ -2056,7 +2074,7 @@ export class Printer {
         const __gotots_store_368 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_717 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_368, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_717 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_368, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_718 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_337, __gotots_argument_717, __gotots_argument_718);
     }
@@ -2297,23 +2315,23 @@ export class Printer {
         const __gotots_receiver_423 = p;
         const __gotots_store_466 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_905 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_466, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_905 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_466, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_423, __gotots_argument_905);
         const __gotots_receiver_424 = p;
         const __gotots_argument_906 = KindDoKeyword$constant__from_ast();
         const __gotots_store_467 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_907 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_467, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_907 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_467, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_908 = WriteKindKeyword$constant();
         const __gotots_store_468 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_909 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_468, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_909 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_468, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_424, __gotots_argument_906, __gotots_argument_907, __gotots_argument_908, __gotots_argument_909);
         const __gotots_receiver_425 = p;
         const __gotots_store_469 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_910 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_469, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_910 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_469, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_911 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_425, __gotots_argument_910, __gotots_argument_911);
         if (IsBlock__from_ast((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement) && !(p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Options.PreserveSourceNewlines) {
@@ -2323,7 +2341,7 @@ export class Printer {
             const __gotots_receiver_426 = p;
             const __gotots_store_470 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-            const __gotots_argument_912 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_470, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_912 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_470, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_913 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement;
             const __gotots_argument_914: DoStatement__from_ast["Expression"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression;
             Printer.$go$private$printer$writeLineOrSpace(__gotots_receiver_426, __gotots_argument_912, __gotots_argument_913, __gotots_argument_914);
@@ -2331,7 +2349,7 @@ export class Printer {
         const __gotots_receiver_427 = p;
         const __gotots_store_471 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_915 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_471, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_915 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_471, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_916: DoStatement__from_ast["Expression"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression;
         const __gotots_argument_917 = Node__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement);
         Printer.$go$private$printer$emitWhileClause(__gotots_receiver_427, __gotots_argument_915, __gotots_argument_916, __gotots_argument_917);
@@ -2339,7 +2357,7 @@ export class Printer {
         const __gotots_receiver_428 = p;
         const __gotots_store_472 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_918 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_472, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_918 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_472, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_919 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_428, __gotots_argument_918, __gotots_argument_919);
     }
@@ -2352,7 +2370,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_623 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_319, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_623 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_319, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_293, __gotots_argument_623);
         const __gotots_receiver_294 = p;
         const __gotots_argument_628 = ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).Expression;
@@ -2363,7 +2381,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_624 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_320, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_624 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_320, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_625 = IsOptionalChain__from_ast(__gotots_argument_624);
         const __gotots_argument_626 = OperatorPrecedenceOptionalChain$constant__from_ast();
         const __gotots_argument_627 = OperatorPrecedenceMember$constant__from_ast();
@@ -2381,7 +2399,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_633 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_321, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_633 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_321, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_295, __gotots_argument_630, __gotots_argument_631, __gotots_argument_632, __gotots_argument_633);
         Printer.$go$private$printer$emitExpression(p, ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression, OperatorPrecedenceComma$constant__from_ast());
         const __gotots_receiver_296 = p;
@@ -2395,7 +2413,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_637 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_322, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_637 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_322, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_296, __gotots_argument_634, __gotots_argument_635, __gotots_argument_636, __gotots_argument_637);
         const __gotots_receiver_297 = p;
         const __gotots_store_323 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -2405,7 +2423,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ElementAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_638 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_323, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_638 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_323, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_639 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_297, __gotots_argument_638, __gotots_argument_639);
     }
@@ -2432,7 +2450,7 @@ export class Printer {
         const __gotots_receiver_407 = p;
         const __gotots_store_448 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_867 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_448, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_867 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_448, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_407, __gotots_argument_867);
         if (isEmbeddedStatement) {
             Printer.$go$private$printer$writePunctuation(p, ";");
@@ -2443,7 +2461,7 @@ export class Printer {
         const __gotots_receiver_408 = p;
         const __gotots_store_449 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_868 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_449, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_868 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_449, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_869 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_408, __gotots_argument_868, __gotots_argument_869);
     }
@@ -2474,12 +2492,12 @@ export class Printer {
         const __gotots_receiver_521 = p;
         const __gotots_store_581 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1148 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_581, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1148 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_581, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_521, __gotots_argument_1148);
         const __gotots_receiver_522 = p;
         const __gotots_store_582 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1149 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_582, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1149 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_582, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_583 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1150 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_583, "ModifiersBase"));
         const __gotots_argument_1151 = false;
@@ -2495,7 +2513,7 @@ export class Printer {
         };
         const __gotots_store_584 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1153 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_584, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1153 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_584, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1154: EnumDeclaration__from_ast["Members"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Members;
         const __gotots_argument_1155 = LFEnumMembers$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_523, __gotots_argument_1152, __gotots_argument_1153, __gotots_argument_1154, __gotots_argument_1155);
@@ -2503,7 +2521,7 @@ export class Printer {
         const __gotots_receiver_524 = p;
         const __gotots_store_585 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1156 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_585, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1156 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_585, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1157 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_524, __gotots_argument_1156, __gotots_argument_1157);
     }
@@ -2512,18 +2530,18 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_199 = p;
         const __gotots_store_225 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_404 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_225, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_404 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_225, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_199, __gotots_argument_404);
         Printer.$go$private$printer$emitPropertyName(p, EnumMember__from_ast.Name(node));
         const __gotots_receiver_200 = p;
         const __gotots_argument_405: EnumMember__from_ast["Initializer"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer;
         const __gotots_argument_406 = Node__from_ast.End(EnumMember__from_ast.Name(node));
         const __gotots_store_226 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_407 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_226, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_407 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_226, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitInitializer(__gotots_receiver_200, __gotots_argument_405, __gotots_argument_406, __gotots_argument_407);
         const __gotots_receiver_201 = p;
         const __gotots_store_227 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_408 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_227, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_408 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_227, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_409 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_201, __gotots_argument_408, __gotots_argument_409);
     }
@@ -2536,18 +2554,18 @@ export class Printer {
         const __gotots_receiver_544 = p;
         const __gotots_store_613 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1217 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_613, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1217 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_613, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_544, __gotots_argument_1217);
         const __gotots_receiver_545 = p;
         const __gotots_argument_1218 = KindExportKeyword$constant__from_ast();
         const __gotots_store_614 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1219 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_614, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1219 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_614, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1220 = WriteKindKeyword$constant();
         const __gotots_store_615 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1221 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_615, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1221 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_615, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let nextPos = Printer.$go$private$printer$emitToken(__gotots_receiver_545, __gotots_argument_1218, __gotots_argument_1219, __gotots_argument_1220, __gotots_argument_1221);
         Printer.$go$private$printer$writeSpace(p);
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsExportEquals) {
@@ -2557,7 +2575,7 @@ export class Printer {
             const __gotots_argument_1224 = WriteKindOperator$constant();
             const __gotots_store_616 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1225 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_616, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1225 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_616, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_546, __gotots_argument_1222, __gotots_argument_1223, __gotots_argument_1224, __gotots_argument_1225);
         }
         else {
@@ -2567,7 +2585,7 @@ export class Printer {
             const __gotots_argument_1228 = WriteKindKeyword$constant();
             const __gotots_store_617 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1229 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_617, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1229 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_617, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_547, __gotots_argument_1226, __gotots_argument_1227, __gotots_argument_1228, __gotots_argument_1229);
         }
         Printer.$go$private$printer$writeSpace(p);
@@ -2587,7 +2605,7 @@ export class Printer {
         const __gotots_receiver_548 = p;
         const __gotots_store_618 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1230 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_618, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1230 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_618, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1231 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_548, __gotots_argument_1230, __gotots_argument_1231);
     }
@@ -2597,12 +2615,12 @@ export class Printer {
         const __gotots_receiver_549 = p;
         const __gotots_store_619 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1232 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_619, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1232 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_619, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_549, __gotots_argument_1232);
         const __gotots_receiver_550 = p;
         const __gotots_store_620 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1233 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_620, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1233 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_620, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_621 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1234 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_621, "ModifiersBase"));
         const __gotots_argument_1235 = false;
@@ -2612,11 +2630,11 @@ export class Printer {
         const __gotots_store_622 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1237 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_622, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1237 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_622, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1238 = WriteKindKeyword$constant();
         const __gotots_store_623 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1239 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_623, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1239 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_623, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_551, __gotots_argument_1236, __gotots_argument_1237, __gotots_argument_1238, __gotots_argument_1239);
         Printer.$go$private$printer$writeSpace(p);
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly) {
@@ -2626,7 +2644,7 @@ export class Printer {
             const __gotots_argument_1242 = WriteKindKeyword$constant();
             const __gotots_store_624 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1243 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_624, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1243 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_624, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             pos = Printer.$go$private$printer$emitToken(__gotots_receiver_552, __gotots_argument_1240, __gotots_argument_1241, __gotots_argument_1242, __gotots_argument_1243);
             Printer.$go$private$printer$writeSpace(p);
         }
@@ -2640,7 +2658,7 @@ export class Printer {
             const __gotots_argument_1246 = WriteKindPunctuation$constant();
             const __gotots_store_625 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1247 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_625, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1247 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_625, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             pos = Printer.$go$private$printer$emitToken(__gotots_receiver_553, __gotots_argument_1244, __gotots_argument_1245, __gotots_argument_1246, __gotots_argument_1247);
         }
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier === undefined)) {
@@ -2651,7 +2669,7 @@ export class Printer {
             const __gotots_argument_1250 = WriteKindKeyword$constant();
             const __gotots_store_626 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1251 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_626, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1251 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_626, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_554, __gotots_argument_1248, __gotots_argument_1249, __gotots_argument_1250, __gotots_argument_1251);
             Printer.$go$private$printer$writeSpace(p);
             Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleSpecifier, OperatorPrecedenceLowest$constant__from_ast());
@@ -2664,7 +2682,7 @@ export class Printer {
         const __gotots_receiver_555 = p;
         const __gotots_store_627 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1252 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_627, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1252 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_627, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1253 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_555, __gotots_argument_1252, __gotots_argument_1253);
     }
@@ -2673,7 +2691,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_139 = p;
         const __gotots_store_154 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_273 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_154, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_273 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_154, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_139, __gotots_argument_273);
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly) {
             Printer.$go$private$printer$writeKeyword(p, "type");
@@ -2687,14 +2705,14 @@ export class Printer {
             const __gotots_argument_275 = Node__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PropertyName);
             const __gotots_argument_276 = WriteKindKeyword$constant();
             const __gotots_store_155 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_277 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_155, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_277 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_155, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_140, __gotots_argument_274, __gotots_argument_275, __gotots_argument_276, __gotots_argument_277);
             Printer.$go$private$printer$writeSpace(p);
         }
         Printer.$go$private$printer$emitModuleExportName(p, ExportSpecifier__from_ast.Name(node));
         const __gotots_receiver_141 = p;
         const __gotots_store_156 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_278 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_156, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_278 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_156, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_279 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_141, __gotots_argument_278, __gotots_argument_279);
     }
@@ -2921,7 +2939,7 @@ export class Printer {
         const __gotots_store_454 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 ExpressionStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_876 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_454, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_876 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_454, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_412, __gotots_argument_876);
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile === undefined) && (((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind === ScriptKindJSON$constant__from_core()) {
             Printer.$go$private$printer$emitExpression(p, ExpressionStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionStatement__from_ast>).value).Expression, OperatorPrecedenceComma$constant__from_ast());
@@ -2949,7 +2967,7 @@ export class Printer {
         const __gotots_store_455 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 ExpressionStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_877 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_455, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_877 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_455, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_878 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_413, __gotots_argument_877, __gotots_argument_878);
     }
@@ -2962,7 +2980,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ExpressionWithTypeArguments__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_828 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_424, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_828 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_424, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_386, __gotots_argument_828);
         Printer.$go$private$printer$emitExpression(p, ExpressionWithTypeArguments__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast>).value).Expression, OperatorPrecedenceMember$constant__from_ast());
         const __gotots_receiver_387 = p;
@@ -2973,7 +2991,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ExpressionWithTypeArguments__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_829 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_425, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_829 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_425, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_830 = ExpressionWithTypeArguments__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast>).value).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_387, __gotots_argument_829, __gotots_argument_830);
         const __gotots_receiver_388 = p;
@@ -2984,7 +3002,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 ExpressionWithTypeArguments__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExpressionWithTypeArguments__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_831 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_426, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_831 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_426, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_832 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_388, __gotots_argument_831, __gotots_argument_832);
     }
@@ -2996,7 +3014,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_148 = p;
         const __gotots_store_164 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_294 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_164, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_294 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_164, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_148, __gotots_argument_294);
         Printer.$go$private$printer$writeKeyword(p, "require");
         Printer.$go$private$printer$writePunctuation(p, "(");
@@ -3004,7 +3022,7 @@ export class Printer {
         Printer.$go$private$printer$writePunctuation(p, ")");
         const __gotots_receiver_149 = p;
         const __gotots_store_165 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_295 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_165, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_295 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_165, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_296 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_149, __gotots_argument_295, __gotots_argument_296);
     }
@@ -3014,18 +3032,18 @@ export class Printer {
         const __gotots_receiver_441 = p;
         const __gotots_store_487 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_953 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_487, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_953 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_487, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_441, __gotots_argument_953);
         const __gotots_receiver_442 = p;
         const __gotots_argument_954 = KindForKeyword$constant__from_ast();
         const __gotots_store_488 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_955 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_488, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_955 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_488, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_956 = WriteKindKeyword$constant();
         const __gotots_store_489 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_957 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_489, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_957 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_489, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_442, __gotots_argument_954, __gotots_argument_955, __gotots_argument_956, __gotots_argument_957);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_443 = p;
@@ -3034,7 +3052,7 @@ export class Printer {
         const __gotots_argument_960 = WriteKindPunctuation$constant();
         const __gotots_store_490 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_961 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_490, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_961 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_490, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_443, __gotots_argument_958, __gotots_argument_959, __gotots_argument_960, __gotots_argument_961);
         Printer.$go$private$printer$emitForInitializer(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer);
         Printer.$go$private$printer$writeSpace(p);
@@ -3044,7 +3062,7 @@ export class Printer {
         const __gotots_argument_964 = WriteKindKeyword$constant();
         const __gotots_store_491 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_965 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_491, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_965 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_491, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_444, __gotots_argument_962, __gotots_argument_963, __gotots_argument_964, __gotots_argument_965);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
@@ -3054,18 +3072,18 @@ export class Printer {
         const __gotots_argument_968 = WriteKindPunctuation$constant();
         const __gotots_store_492 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_969 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_492, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_969 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_492, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_445, __gotots_argument_966, __gotots_argument_967, __gotots_argument_968, __gotots_argument_969);
         const __gotots_receiver_446 = p;
         const __gotots_store_493 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_970 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_493, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_970 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_493, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_971: ForInOrOfStatement__from_ast["Statement"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_446, __gotots_argument_970, __gotots_argument_971);
         const __gotots_receiver_447 = p;
         const __gotots_store_494 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_972 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_494, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_972 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_494, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_973 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_447, __gotots_argument_972, __gotots_argument_973);
     }
@@ -3083,18 +3101,18 @@ export class Printer {
         const __gotots_receiver_448 = p;
         const __gotots_store_495 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_974 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_495, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_974 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_495, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_448, __gotots_argument_974);
         const __gotots_receiver_449 = p;
         const __gotots_argument_975 = KindForKeyword$constant__from_ast();
         const __gotots_store_496 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_976 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_496, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_976 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_496, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_977 = WriteKindKeyword$constant();
         const __gotots_store_497 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_978 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_497, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_978 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_497, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let openParenPos = Printer.$go$private$printer$emitToken(__gotots_receiver_449, __gotots_argument_975, __gotots_argument_976, __gotots_argument_977, __gotots_argument_978);
         Printer.$go$private$printer$writeSpace(p);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AwaitModifier === undefined)) {
@@ -3107,7 +3125,7 @@ export class Printer {
         const __gotots_argument_981 = WriteKindPunctuation$constant();
         const __gotots_store_498 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_982 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_498, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_982 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_498, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_450, __gotots_argument_979, __gotots_argument_980, __gotots_argument_981, __gotots_argument_982);
         Printer.$go$private$printer$emitForInitializer(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer);
         Printer.$go$private$printer$writeSpace(p);
@@ -3117,7 +3135,7 @@ export class Printer {
         const __gotots_argument_985 = WriteKindKeyword$constant();
         const __gotots_store_499 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_986 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_499, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_986 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_499, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_451, __gotots_argument_983, __gotots_argument_984, __gotots_argument_985, __gotots_argument_986);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
@@ -3127,18 +3145,18 @@ export class Printer {
         const __gotots_argument_989 = WriteKindPunctuation$constant();
         const __gotots_store_500 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_990 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_500, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_990 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_500, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_452, __gotots_argument_987, __gotots_argument_988, __gotots_argument_989, __gotots_argument_990);
         const __gotots_receiver_453 = p;
         const __gotots_store_501 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_991 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_501, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_991 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_501, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_992: ForInOrOfStatement__from_ast["Statement"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_453, __gotots_argument_991, __gotots_argument_992);
         const __gotots_receiver_454 = p;
         const __gotots_store_502 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_993 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_502, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_993 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_502, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_994 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_454, __gotots_argument_993, __gotots_argument_994);
     }
@@ -3148,18 +3166,18 @@ export class Printer {
         const __gotots_receiver_433 = p;
         const __gotots_store_478 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_928 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_478, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_928 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_478, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_433, __gotots_argument_928);
         const __gotots_receiver_434 = p;
         const __gotots_argument_929 = KindForKeyword$constant__from_ast();
         const __gotots_store_479 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_930 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_479, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_930 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_479, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_931 = WriteKindKeyword$constant();
         const __gotots_store_480 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_932 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_480, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_932 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_480, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_434, __gotots_argument_929, __gotots_argument_930, __gotots_argument_931, __gotots_argument_932);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_435 = p;
@@ -3168,7 +3186,7 @@ export class Printer {
         const __gotots_argument_935 = WriteKindPunctuation$constant();
         const __gotots_store_481 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_936 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_481, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_936 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_481, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         pos = Printer.$go$private$printer$emitToken(__gotots_receiver_435, __gotots_argument_933, __gotots_argument_934, __gotots_argument_935, __gotots_argument_936);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer === undefined)) {
             Printer.$go$private$printer$emitForInitializer(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer);
@@ -3180,7 +3198,7 @@ export class Printer {
         const __gotots_argument_939 = WriteKindPunctuation$constant();
         const __gotots_store_482 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_940 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_482, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_940 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_482, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         pos = Printer.$go$private$printer$emitToken(__gotots_receiver_436, __gotots_argument_937, __gotots_argument_938, __gotots_argument_939, __gotots_argument_940);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Condition === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -3193,7 +3211,7 @@ export class Printer {
         const __gotots_argument_943 = WriteKindPunctuation$constant();
         const __gotots_store_483 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_944 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_483, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_944 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_483, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         pos = Printer.$go$private$printer$emitToken(__gotots_receiver_437, __gotots_argument_941, __gotots_argument_942, __gotots_argument_943, __gotots_argument_944);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Incrementor === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -3206,18 +3224,18 @@ export class Printer {
         const __gotots_argument_947 = WriteKindPunctuation$constant();
         const __gotots_store_484 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_948 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_484, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_948 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_484, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_438, __gotots_argument_945, __gotots_argument_946, __gotots_argument_947, __gotots_argument_948);
         const __gotots_receiver_439 = p;
         const __gotots_store_485 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_949 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_485, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_949 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_485, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_950 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_439, __gotots_argument_949, __gotots_argument_950);
         const __gotots_receiver_440 = p;
         const __gotots_store_486 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_951 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_486, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_951 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_486, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_952 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_440, __gotots_argument_951, __gotots_argument_952);
     }
@@ -3226,7 +3244,7 @@ export class Printer {
         const __gotots_store_630 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1263 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_630, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1263 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_630, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1264 = EFNoSourceMap$constant();
         EmitContext.AddEmitFlags(__gotots_receiver_561, __gotots_argument_1263, __gotots_argument_1264);
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnBeforeEmitNode === undefined)) {
@@ -3234,14 +3252,14 @@ export class Printer {
             const __gotots_store_631 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_1265 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_631, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1265 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_631, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             (__gotots_callee_10 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1265);
         }
         const __gotots_receiver_562 = p;
         const __gotots_store_632 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1266 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_632, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1266 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_632, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$generateNames(__gotots_receiver_562, __gotots_argument_1266);
         Printer.$go$private$printer$writePunctuation(p, "{");
         Printer.$go$private$printer$increaseIndent(p);
@@ -3249,7 +3267,7 @@ export class Printer {
         const __gotots_store_633 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1267 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_633, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1267 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_633, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1268 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
         let detachedState: tsonicTypeScriptRuntime.Location<commentState> | undefined = Printer.$go$private$printer$emitDetachedCommentsBeforeStatementList(__gotots_receiver_563, __gotots_argument_1267, __gotots_argument_1268);
         let statementOffset = Printer.$go$private$printer$emitPrologueDirectives(p, Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements);
@@ -3259,7 +3277,7 @@ export class Printer {
         const __gotots_store_634 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1269 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_634, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1269 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_634, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitHelpers(__gotots_receiver_565, __gotots_argument_1269);
         let __gotots_logical_result_18 = Printer.$go$private$printer$shouldEmitBlockFunctionBodyOnSingleLine(p, body) && statementOffset === 0;
         if (__gotots_logical_result_18) {
@@ -3277,7 +3295,7 @@ export class Printer {
             const __gotots_store_635 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_1271 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_635, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1271 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_635, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_1272 = Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements;
             const __gotots_argument_1273 = LFSingleLineFunctionBodyStatements$constant();
             const __gotots_argument_1274 = statementOffset;
@@ -3293,7 +3311,7 @@ export class Printer {
             const __gotots_store_636 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_1277 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_636, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1277 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_636, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_1278 = Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements;
             const __gotots_argument_1279 = LFMultiLineFunctionBodyStatements$constant();
             const __gotots_argument_1280 = statementOffset;
@@ -3304,7 +3322,7 @@ export class Printer {
         const __gotots_store_637 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1282 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_637, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1282 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_637, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1283 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
         const __gotots_argument_1284 = detachedState;
         Printer.$go$private$printer$emitDetachedCommentsAfterStatementList(__gotots_receiver_569, __gotots_argument_1282, __gotots_argument_1283, __gotots_argument_1284);
@@ -3316,7 +3334,7 @@ export class Printer {
         const __gotots_store_638 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1288 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_638, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1288 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_638, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1289 = tefNoComments$constant();
         Printer.$go$private$printer$emitTokenEx(__gotots_receiver_570, __gotots_argument_1285, __gotots_argument_1286, __gotots_argument_1287, __gotots_argument_1288, __gotots_argument_1289);
         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnAfterEmitNode === undefined)) {
@@ -3324,7 +3342,7 @@ export class Printer {
             const __gotots_store_639 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_1290 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_639, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1290 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_639, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1290);
         }
     }
@@ -3341,16 +3359,16 @@ export class Printer {
         const __gotots_store_548 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1089 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_548, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1089 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_548, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_492, __gotots_argument_1089);
         Printer.$go$private$printer$generateNameIfNeeded(p, FunctionDeclaration__from_ast.Name(node));
         const __gotots_receiver_493 = p;
         const __gotots_store_549 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1090 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_549, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1090 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_549, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_550 = FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value);
-        const __gotots_argument_1091 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_550, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_1091 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_550, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_1092 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_493, __gotots_argument_1090, __gotots_argument_1091, __gotots_argument_1092);
         Printer.$go$private$printer$writeKeyword(p, "function");
@@ -3368,20 +3386,20 @@ export class Printer {
         const __gotots_store_551 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1093 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_551, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1093 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_551, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_494, __gotots_argument_1093);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_495 = p;
         const __gotots_store_552 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1094 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_552, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1094 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_552, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_495, __gotots_argument_1094);
         const __gotots_receiver_496 = p;
         const __gotots_store_553 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1095 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_553, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1095 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_553, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_496, __gotots_argument_1095);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
             (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
@@ -3390,14 +3408,14 @@ export class Printer {
         const __gotots_store_554 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1096 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_554, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1096 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_554, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_497, __gotots_argument_1096);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_498 = p;
         const __gotots_store_555 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 FunctionDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1097 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_555, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1097 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_555, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1098 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_498, __gotots_argument_1097, __gotots_argument_1098);
     }
@@ -3412,7 +3430,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_689 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_348, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_689 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_348, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_320, __gotots_argument_689);
         Printer.$go$private$printer$generateNameIfNeeded(p, FunctionExpression__from_ast.Name(node));
         const __gotots_receiver_321 = p;
@@ -3423,7 +3441,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_690 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_349, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_690 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_349, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_350 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_691 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_350, "ModifiersBase"));
         const __gotots_argument_692 = false;
@@ -3441,7 +3459,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_693 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_351, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_693 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_351, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_322, __gotots_argument_693);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_323 = p;
@@ -3452,7 +3470,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_694 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_352, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_694 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_352, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_323, __gotots_argument_694);
         const __gotots_receiver_324 = p;
         const __gotots_store_353 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -3462,7 +3480,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_695 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_353, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_695 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_353, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_324, __gotots_argument_695);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
@@ -3474,7 +3492,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_696 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_354, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_696 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_354, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_325, __gotots_argument_696);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_326 = p;
@@ -3485,7 +3503,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_697 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_355, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_697 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_355, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_698 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_326, __gotots_argument_697, __gotots_argument_698);
     }
@@ -3494,26 +3512,26 @@ export class Printer {
         const __gotots_store_689 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1364 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_689, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1364 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_689, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_591, __gotots_argument_1364);
         const __gotots_receiver_592 = p;
         const __gotots_store_690 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1365 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_690, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1365 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_690, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_592, __gotots_argument_1365);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_593 = p;
         const __gotots_store_691 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1366 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_691, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1366 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_691, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_593, __gotots_argument_1366);
         const __gotots_receiver_594 = p;
         const __gotots_store_692 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1367 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_692, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1367 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_692, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1368 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             (void FunctionOrConstructorTypeNodeBase__from_ast.$storageOf, (void FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).TypeParameters;
@@ -3522,7 +3540,7 @@ export class Printer {
         const __gotots_store_693 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1369 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_693, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1369 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_693, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1370 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
             (void FunctionOrConstructorTypeNodeBase__from_ast.$storageOf, (void FunctionOrConstructorTypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).FunctionOrConstructorTypeNodeBase)).FunctionLikeBase)).Parameters;
@@ -3535,14 +3553,14 @@ export class Printer {
         const __gotots_store_694 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1371 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_694, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1371 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_694, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_596, __gotots_argument_1371);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_597 = p;
         const __gotots_store_695 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 FunctionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1372 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_695, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1372 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_695, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1373 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_597, __gotots_argument_1372, __gotots_argument_1373);
     }
@@ -3592,7 +3610,7 @@ export class Printer {
         const __gotots_receiver_183 = p;
         const __gotots_store_206 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).NodeBase));
-        const __gotots_argument_365 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_206, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_365 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_206, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_183, __gotots_argument_365);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_184 = p;
@@ -3600,11 +3618,11 @@ export class Printer {
         const __gotots_store_207 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).NodeBase)).NodeDefault));
-        const __gotots_argument_367 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_207, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_367 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_207, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_368 = WriteKindKeyword$constant();
         const __gotots_store_208 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).NodeBase));
-        const __gotots_argument_369 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_208, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_369 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_208, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_184, __gotots_argument_366, __gotots_argument_367, __gotots_argument_368, __gotots_argument_369);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_185 = p;
@@ -3613,14 +3631,14 @@ export class Printer {
         };
         const __gotots_store_209 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).NodeBase));
-        const __gotots_argument_371 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_209, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_371 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_209, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_372 = HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).Types;
         const __gotots_argument_373 = LFHeritageClauseTypes$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_185, __gotots_argument_370, __gotots_argument_371, __gotots_argument_372, __gotots_argument_373);
         const __gotots_receiver_186 = p;
         const __gotots_store_210 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             HeritageClause__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<HeritageClause__from_ast>).value).NodeBase));
-        const __gotots_argument_374 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_210, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_374 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_210, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_375 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_186, __gotots_argument_374, __gotots_argument_375);
     }
@@ -3636,7 +3654,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1310 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_649, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1310 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_649, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_573, __gotots_argument_1310);
         Printer.$go$private$printer$writePunctuation(p, "(");
         Printer.$go$private$printer$emitExpression(p, CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Expression, OperatorPrecedenceLowest$constant__from_ast());
@@ -3649,7 +3667,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1311 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_650, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1311 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_650, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1312 = CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_574, __gotots_argument_1311, __gotots_argument_1312);
         const __gotots_receiver_575 = p;
@@ -3662,7 +3680,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1314 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_651, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1314 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_651, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1315 = CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).Arguments;
         const __gotots_argument_1316 = LFCallExpressionArguments$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_575, __gotots_argument_1313, __gotots_argument_1314, __gotots_argument_1315, __gotots_argument_1316);
@@ -3673,7 +3691,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1317 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_652, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1317 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_652, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1318 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_576, __gotots_argument_1317, __gotots_argument_1318);
     }
@@ -3687,7 +3705,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_19 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_19 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_11, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_14, __gotots_argument_19);
         Printer.$go$private$printer$emitIdentifierText(p, node);
         const __gotots_receiver_15 = p;
@@ -3699,7 +3717,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_12, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_21 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_15, __gotots_argument_20, __gotots_argument_21);
     }
@@ -3721,7 +3739,7 @@ export class Printer {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_574 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_296, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_574 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_296, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_binary_operand_6 = EmitContext.EmitFlags(__gotots_receiver_270, __gotots_argument_574);
             const __gotots_binary_operand_7 = EFHelperName$constant();
             __gotots_logical_result_13 = !((__gotots_binary_operand_6 & __gotots_binary_operand_7) >>> 0 === 0);
@@ -3740,7 +3758,7 @@ export class Printer {
                                     (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                         (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                             Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                const __gotots_argument_576 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_298, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_576 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_298, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 EmitContext.AssignCommentAndSourceMapRanges(__gotots_receiver_271, __gotots_argument_575, __gotots_argument_576);
                 Printer.$go$private$printer$emitPropertyAccessExpression(p, Node__from_ast.AsPropertyAccessExpression(helper));
                 return;
@@ -3757,7 +3775,7 @@ export class Printer {
                                     (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                         (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                             Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                const __gotots_argument_578 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_299, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_578 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_299, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 EmitContext.AssignCommentAndSourceMapRanges(__gotots_receiver_272, __gotots_argument_577, __gotots_argument_578);
                 node = Node__from_ast.AsIdentifier(helperName);
             }
@@ -3771,7 +3789,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_579 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_300, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_579 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_300, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_273, __gotots_argument_579);
         Printer.$go$private$printer$emitIdentifierText(p, node);
         const __gotots_receiver_274 = p;
@@ -3783,7 +3801,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_580 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_301, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_580 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_301, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_581 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_274, __gotots_argument_580, __gotots_argument_581);
     }
@@ -3796,7 +3814,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_446 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_239, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_446 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_239, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let f: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = GetSourceFileOfNode__from_ast(__gotots_argument_446);
         Assert__from_debug(f === undefined || (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile === undefined || SourceFile__from_ast.FileName(f) === SourceFile__from_ast.FileName((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile), RuntimeSlice.nil<$goInterface$Interface_void | undefined>());
         const __gotots_receiver_219 = p;
@@ -3808,7 +3826,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_447 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_240, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_447 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_240, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_448 = false;
         let text = Printer.$go$private$printer$getTextOfNode(__gotots_receiver_219, __gotots_argument_447, __gotots_argument_448);
         if (!(p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IdToSymbol.isNil()) {
@@ -3822,7 +3840,7 @@ export class Printer {
                                     (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                         (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                             Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                const __gotots_map_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_241, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_map_1 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_241, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_results_1 = __gotots_map_0.lookupOk(__gotots_map_1);
                 let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __gotots_results_1[0];
                 let ok = __gotots_results_1[1];
@@ -3839,7 +3857,7 @@ export class Printer {
         const __gotots_store_456 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_879 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_456, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_879 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_456, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_414, __gotots_argument_879);
         const __gotots_receiver_415 = p;
         const __gotots_argument_880 = KindIfKeyword$constant__from_ast();
@@ -3847,12 +3865,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_881 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_457, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_881 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_457, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_882 = WriteKindKeyword$constant();
         const __gotots_store_458 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_883 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_458, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_883 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_458, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_415, __gotots_argument_880, __gotots_argument_881, __gotots_argument_882, __gotots_argument_883);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_416 = p;
@@ -3862,7 +3880,7 @@ export class Printer {
         const __gotots_store_459 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_887 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_459, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_887 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_459, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_416, __gotots_argument_884, __gotots_argument_885, __gotots_argument_886, __gotots_argument_887);
         Printer.$go$private$printer$emitExpression(p, IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).Expression, OperatorPrecedenceLowest$constant__from_ast());
         const __gotots_receiver_417 = p;
@@ -3872,13 +3890,13 @@ export class Printer {
         const __gotots_store_460 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_891 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_460, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_891 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_460, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_417, __gotots_argument_888, __gotots_argument_889, __gotots_argument_890, __gotots_argument_891);
         const __gotots_receiver_418 = p;
         const __gotots_store_461 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_892 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_461, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_892 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_461, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_893 = IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ThenStatement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_418, __gotots_argument_892, __gotots_argument_893);
         if (!(IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ElseStatement === undefined)) {
@@ -3886,7 +3904,7 @@ export class Printer {
             const __gotots_store_462 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_894 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_462, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_894 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_462, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_895 = IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ThenStatement;
             const __gotots_argument_896 = IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ElseStatement;
             Printer.$go$private$printer$writeLineOrSpace(__gotots_receiver_419, __gotots_argument_894, __gotots_argument_895, __gotots_argument_896);
@@ -3897,7 +3915,7 @@ export class Printer {
             const __gotots_store_463 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_900 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_463, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_900 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_463, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_420, __gotots_argument_897, __gotots_argument_898, __gotots_argument_899, __gotots_argument_900);
             if (Node__from_ast.$storageOf(((IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ElseStatement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindIfStatement$constant__from_ast()) {
                 Printer.$go$private$printer$writeSpace(p);
@@ -3908,7 +3926,7 @@ export class Printer {
                 const __gotots_store_464 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                         IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-                const __gotots_argument_901 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_464, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_901 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_464, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_902 = IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).ElseStatement;
                 Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_421, __gotots_argument_901, __gotots_argument_902);
             }
@@ -3917,7 +3935,7 @@ export class Printer {
         const __gotots_store_465 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_903 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_465, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_903 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_465, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_904 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_422, __gotots_argument_903, __gotots_argument_904);
     }
@@ -3926,7 +3944,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_146 = p;
         const __gotots_store_162 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_291 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_162, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_291 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_162, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_146, __gotots_argument_291);
         Printer.$go$private$printer$emitImportAttributeName(p, ImportAttribute__from_ast.Name(node));
         Printer.$go$private$printer$writePunctuation(p, ":");
@@ -3939,7 +3957,7 @@ export class Printer {
         Printer.$go$private$printer$emitExpression(p, value, OperatorPrecedenceDisallowComma$constant__from_ast());
         const __gotots_receiver_147 = p;
         const __gotots_store_163 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_292 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_163, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_292 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_163, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_293 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_147, __gotots_argument_292, __gotots_argument_293);
     }
@@ -3968,16 +3986,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_142 = p;
         const __gotots_store_157 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_280 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_157, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_280 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_157, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_142, __gotots_argument_280);
         const __gotots_receiver_143 = p;
         const __gotots_argument_281: ImportAttributes__from_ast["Token"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Token;
         const __gotots_store_158 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_282 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_158, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_282 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_158, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_283 = WriteKindKeyword$constant();
         const __gotots_store_159 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_284 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_159, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_284 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_159, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_143, __gotots_argument_281, __gotots_argument_282, __gotots_argument_283, __gotots_argument_284);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_144 = p;
@@ -3985,13 +4003,13 @@ export class Printer {
             Printer.$go$private$printer$emitImportAttributeNode($argument0, $argument1);
         };
         const __gotots_store_160 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_286 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_160, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_286 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_160, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_287: ImportAttributes__from_ast["Attributes"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
         const __gotots_argument_288 = LFImportAttributes$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_144, __gotots_argument_285, __gotots_argument_286, __gotots_argument_287, __gotots_argument_288);
         const __gotots_receiver_145 = p;
         const __gotots_store_161 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_289 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_161, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_289 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_161, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_290 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_145, __gotots_argument_289, __gotots_argument_290);
     }
@@ -4000,17 +4018,17 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_118 = p;
         const __gotots_store_130 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_219 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_130, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_219 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_130, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_118, __gotots_argument_219);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PhaseModifier === KindUnknown$constant__from_ast())) {
             const __gotots_receiver_119 = p;
             const __gotots_argument_220: ImportClause__from_ast["PhaseModifier"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PhaseModifier;
             const __gotots_store_131 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            const __gotots_argument_221 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_131, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_221 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_131, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_222 = WriteKindKeyword$constant();
             const __gotots_store_132 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_223 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_132, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_223 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_132, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_119, __gotots_argument_220, __gotots_argument_221, __gotots_argument_222, __gotots_argument_223);
             Printer.$go$private$printer$writeSpace(p);
         }
@@ -4024,7 +4042,7 @@ export class Printer {
                     const __gotots_argument_225 = Node__from_ast.End(name);
                     const __gotots_argument_226 = WriteKindPunctuation$constant();
                     const __gotots_store_133 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                    const __gotots_argument_227 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_133, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_227 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_133, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     Printer.$go$private$printer$emitToken(__gotots_receiver_120, __gotots_argument_224, __gotots_argument_225, __gotots_argument_226, __gotots_argument_227);
                     Printer.$go$private$printer$writeSpace(p);
                 }
@@ -4033,7 +4051,7 @@ export class Printer {
         Printer.$go$private$printer$emitNamedImportBindings(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings);
         const __gotots_receiver_121 = p;
         const __gotots_store_134 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_228 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_134, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_228 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_134, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_229 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_121, __gotots_argument_228, __gotots_argument_229);
     }
@@ -4043,12 +4061,12 @@ export class Printer {
         const __gotots_receiver_539 = p;
         const __gotots_store_605 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1200 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_605, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1200 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_605, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_539, __gotots_argument_1200);
         const __gotots_receiver_540 = p;
         const __gotots_store_606 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1201 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_606, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1201 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_606, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_607 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1202 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_607, "ModifiersBase"));
         const __gotots_argument_1203 = false;
@@ -4058,7 +4076,7 @@ export class Printer {
         const __gotots_store_608 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1205 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_608, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1205 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_608, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_store_609 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1204 = new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_609, "ModifiersBase")));
         const __gotots_argument_1206 = RuntimeSlice.literal<$goInterface$Interface_Method_printer$End_void_to_int | undefined>([__gotots_argument_1204]);
@@ -4066,7 +4084,7 @@ export class Printer {
         const __gotots_argument_1209 = WriteKindKeyword$constant();
         const __gotots_store_610 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1210 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_610, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1210 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_610, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_541, __gotots_argument_1207, __gotots_argument_1208, __gotots_argument_1209, __gotots_argument_1210);
         Printer.$go$private$printer$writeSpace(p);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImportClause === undefined)) {
@@ -4078,7 +4096,7 @@ export class Printer {
             const __gotots_argument_1213 = WriteKindKeyword$constant();
             const __gotots_store_611 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1214 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_611, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1214 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_611, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_542, __gotots_argument_1211, __gotots_argument_1212, __gotots_argument_1213, __gotots_argument_1214);
             Printer.$go$private$printer$writeSpace(p);
         }
@@ -4091,7 +4109,7 @@ export class Printer {
         const __gotots_receiver_543 = p;
         const __gotots_store_612 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1215 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_612, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1215 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_612, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1216 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_543, __gotots_argument_1215, __gotots_argument_1216);
     }
@@ -4101,12 +4119,12 @@ export class Printer {
         const __gotots_receiver_533 = p;
         const __gotots_store_596 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1179 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_596, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1179 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_596, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_533, __gotots_argument_1179);
         const __gotots_receiver_534 = p;
         const __gotots_store_597 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1180 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_597, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1180 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_597, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_598 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1181 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_598, "ModifiersBase"));
         const __gotots_argument_1182 = false;
@@ -4116,7 +4134,7 @@ export class Printer {
         const __gotots_store_599 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1184 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_599, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1184 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_599, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_store_600 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1183 = new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_600, "ModifiersBase")));
         const __gotots_argument_1185 = RuntimeSlice.literal<$goInterface$Interface_Method_printer$End_void_to_int | undefined>([__gotots_argument_1183]);
@@ -4124,7 +4142,7 @@ export class Printer {
         const __gotots_argument_1188 = WriteKindKeyword$constant();
         const __gotots_store_601 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1189 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_601, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1189 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_601, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_535, __gotots_argument_1186, __gotots_argument_1187, __gotots_argument_1188, __gotots_argument_1189);
         Printer.$go$private$printer$writeSpace(p);
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOnly) {
@@ -4134,7 +4152,7 @@ export class Printer {
             const __gotots_argument_1192 = WriteKindKeyword$constant();
             const __gotots_store_602 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1193 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_602, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1193 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_602, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_536, __gotots_argument_1190, __gotots_argument_1191, __gotots_argument_1192, __gotots_argument_1193);
             Printer.$go$private$printer$writeSpace(p);
         }
@@ -4146,7 +4164,7 @@ export class Printer {
         const __gotots_argument_1196 = WriteKindPunctuation$constant();
         const __gotots_store_603 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1197 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_603, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1197 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_603, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_537, __gotots_argument_1194, __gotots_argument_1195, __gotots_argument_1196, __gotots_argument_1197);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitModuleReference(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ModuleReference);
@@ -4154,7 +4172,7 @@ export class Printer {
         const __gotots_receiver_538 = p;
         const __gotots_store_604 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1198 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_604, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1198 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_604, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1199 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_538, __gotots_argument_1198, __gotots_argument_1199);
     }
@@ -4162,7 +4180,7 @@ export class Printer {
         const __gotots_receiver_133 = p;
         const __gotots_store_148 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ImportSpecifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImportSpecifier__from_ast>).value).NodeBase));
-        const __gotots_argument_259 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_148, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_259 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_148, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_133, __gotots_argument_259);
         if (ImportSpecifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImportSpecifier__from_ast>).value).IsTypeOnly) {
             Printer.$go$private$printer$writeKeyword(p, "type");
@@ -4177,7 +4195,7 @@ export class Printer {
             const __gotots_argument_262 = WriteKindKeyword$constant();
             const __gotots_store_149 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ImportSpecifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImportSpecifier__from_ast>).value).NodeBase));
-            const __gotots_argument_263 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_149, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_263 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_149, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_134, __gotots_argument_260, __gotots_argument_261, __gotots_argument_262, __gotots_argument_263);
             Printer.$go$private$printer$writeSpace(p);
         }
@@ -4185,7 +4203,7 @@ export class Printer {
         const __gotots_receiver_135 = p;
         const __gotots_store_150 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ImportSpecifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ImportSpecifier__from_ast>).value).NodeBase));
-        const __gotots_argument_264 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_150, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_264 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_150, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_265 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_135, __gotots_argument_264, __gotots_argument_265);
     }
@@ -4199,7 +4217,7 @@ export class Printer {
         const __gotots_store_764 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1503 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_764, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1503 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_764, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_663, __gotots_argument_1503);
         if ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IsTypeOf) {
             Printer.$go$private$printer$writeKeyword(p, "typeof");
@@ -4222,14 +4240,14 @@ export class Printer {
         const __gotots_store_765 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1504 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_765, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1504 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_765, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1505 = NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_664, __gotots_argument_1504, __gotots_argument_1505);
         const __gotots_receiver_665 = p;
         const __gotots_store_766 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1506 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_766, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1506 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_766, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1507 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_665, __gotots_argument_1506, __gotots_argument_1507);
     }
@@ -4238,7 +4256,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_688 = p;
         const __gotots_store_781 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_1543 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_781, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1543 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_781, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_688, __gotots_argument_1543);
         Printer.$go$private$printer$writePunctuation(p, "{");
         Printer.$go$private$printer$writeSpace(p);
@@ -4250,7 +4268,7 @@ export class Printer {
             Printer.$go$private$printer$emitImportAttributeNode($argument0, $argument1);
         };
         const __gotots_store_782 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_1545 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_782, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1545 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_782, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1546: ImportAttributes__from_ast["Attributes"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
         const __gotots_argument_1547 = LFImportAttributes$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_689, __gotots_argument_1544, __gotots_argument_1545, __gotots_argument_1546, __gotots_argument_1547);
@@ -4258,7 +4276,7 @@ export class Printer {
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_690 = p;
         const __gotots_store_783 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_1548 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_783, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1548 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_783, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1549 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_690, __gotots_argument_1548, __gotots_argument_1549);
     }
@@ -4267,39 +4285,39 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_79 = p;
         const __gotots_store_84 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_126 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_84, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_126 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_84, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_79, __gotots_argument_126);
         const __gotots_receiver_80 = p;
         const __gotots_store_85 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_127 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_85, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_127 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_85, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_86 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_128 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_86, "ModifiersBase"));
         const __gotots_argument_129 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_80, __gotots_argument_127, __gotots_argument_128, __gotots_argument_129);
         const __gotots_receiver_81 = p;
         const __gotots_store_87 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_130 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_87, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_130 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_87, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_81, __gotots_argument_130);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_82 = p;
         const __gotots_store_88 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_131 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_88, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_131 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_88, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_82, __gotots_argument_131);
         const __gotots_receiver_83 = p;
         const __gotots_store_89 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_132 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_89, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_132 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_89, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_133 = FunctionLikeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeBase).Parameters;
         Printer.$go$private$printer$emitParametersForIndexSignature(__gotots_receiver_83, __gotots_argument_132, __gotots_argument_133);
         Printer.$go$private$printer$emitTypeAnnotation(p, FunctionLikeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeBase).Type);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_84 = p;
         const __gotots_store_90 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_134 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_90, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_134 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_90, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_84, __gotots_argument_134);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_85 = p;
         const __gotots_store_91 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_135 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_91, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_135 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_91, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_136 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_85, __gotots_argument_135, __gotots_argument_136);
     }
@@ -4308,14 +4326,14 @@ export class Printer {
         const __gotots_store_747 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IndexedAccessTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1470 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_747, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1470 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_747, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_646, __gotots_argument_1470);
         const __gotots_receiver_647 = p;
         const __gotots_argument_1471 = IndexedAccessTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast>).value).ObjectType;
         const __gotots_store_748 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IndexedAccessTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1472 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_748, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1472 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_748, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitPostfixTypeOperand(__gotots_receiver_647, __gotots_argument_1471, __gotots_argument_1472);
         Printer.$go$private$printer$writePunctuation(p, "[");
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, IndexedAccessTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast>).value).IndexType);
@@ -4324,7 +4342,7 @@ export class Printer {
         const __gotots_store_749 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IndexedAccessTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IndexedAccessTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1473 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_749, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1473 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_749, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1474 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_648, __gotots_argument_1473, __gotots_argument_1474);
     }
@@ -4334,7 +4352,7 @@ export class Printer {
         const __gotots_receiver_637 = p;
         const __gotots_store_737 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1454 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_737, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1454 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_737, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_637, __gotots_argument_1454);
         Printer.$go$private$printer$writeKeyword(p, "infer");
         Printer.$go$private$printer$writeSpace(p);
@@ -4342,7 +4360,7 @@ export class Printer {
         const __gotots_receiver_638 = p;
         const __gotots_store_738 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1455 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_738, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1455 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_738, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1456 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_638, __gotots_argument_1455, __gotots_argument_1456);
     }
@@ -4350,7 +4368,7 @@ export class Printer {
         const __gotots_receiver_684 = p;
         const __gotots_store_777 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_1537 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_777, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1537 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_777, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_684, __gotots_argument_1537);
         Printer.$go$private$printer$emitBindingIdentifier(p, Node__from_ast.AsIdentifier(TypeParameterDeclaration__from_ast.Name(node)));
         if (!(TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).Constraint === undefined)) {
@@ -4362,7 +4380,7 @@ export class Printer {
         const __gotots_receiver_685 = p;
         const __gotots_store_778 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_1538 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_778, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1538 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_778, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1539 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_685, __gotots_argument_1538, __gotots_argument_1539);
     }
@@ -4380,15 +4398,15 @@ export class Printer {
         const __gotots_store_567 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1122 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_567, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1122 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_567, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_509, __gotots_argument_1122);
         const __gotots_receiver_510 = p;
         const __gotots_store_568 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1123 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_568, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1123 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_568, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_569 = InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value);
-        const __gotots_argument_1124 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_569, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_1124 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_569, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_1125 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_510, __gotots_argument_1123, __gotots_argument_1124, __gotots_argument_1125);
         Printer.$go$private$printer$writeKeyword(p, "interface");
@@ -4398,7 +4416,7 @@ export class Printer {
         const __gotots_store_570 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1126 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_570, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1126 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_570, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1127 = InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_511, __gotots_argument_1126, __gotots_argument_1127);
         const __gotots_receiver_512 = p;
@@ -4408,7 +4426,7 @@ export class Printer {
         const __gotots_store_571 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1129 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_571, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1129 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_571, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1130 = InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).HeritageClauses;
         const __gotots_argument_1131 = LFHeritageClauses$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_512, __gotots_argument_1128, __gotots_argument_1129, __gotots_argument_1130, __gotots_argument_1131);
@@ -4418,7 +4436,7 @@ export class Printer {
         const __gotots_store_572 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1132 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_572, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1132 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_572, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_513, __gotots_argument_1132);
         Printer.$go$private$printer$generateAllMemberNames(p, InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).Members);
         const __gotots_receiver_514 = p;
@@ -4428,7 +4446,7 @@ export class Printer {
         const __gotots_store_573 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1134 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_573, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1134 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_573, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1135 = InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).Members;
         const __gotots_argument_1136 = LFInterfaceMembers$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_514, __gotots_argument_1133, __gotots_argument_1134, __gotots_argument_1135, __gotots_argument_1136);
@@ -4436,14 +4454,14 @@ export class Printer {
         const __gotots_store_574 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1137 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_574, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1137 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_574, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_515, __gotots_argument_1137);
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_516 = p;
         const __gotots_store_575 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 InterfaceDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1138 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_575, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1138 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_575, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1139 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_516, __gotots_argument_1138, __gotots_argument_1139);
     }
@@ -4452,7 +4470,7 @@ export class Printer {
         const __gotots_store_732 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IntersectionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1444 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_732, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1444 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_732, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_632, __gotots_argument_1444);
         const __gotots_receiver_633 = p;
         const __gotots_argument_1445 = ($argument0: Printer | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
@@ -4461,7 +4479,7 @@ export class Printer {
         const __gotots_store_733 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IntersectionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1446 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_733, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1446 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_733, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1447 = (void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
             IntersectionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types;
         const __gotots_argument_1448 = LFIntersectionTypeConstituents$constant();
@@ -4470,7 +4488,7 @@ export class Printer {
         const __gotots_store_734 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 IntersectionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IntersectionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1449 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_734, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1449 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_734, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1450 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_634, __gotots_argument_1449, __gotots_argument_1450);
     }
@@ -4490,14 +4508,14 @@ export class Printer {
         const __gotots_receiver_666 = p;
         const __gotots_store_767 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1508 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_767, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1508 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_767, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_666, __gotots_argument_1508);
         Printer.$go$private$printer$writePunctuation(p, "!");
         Printer.$go$private$printer$emitTypeNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type, TypePrecedenceNonArray$constant__from_ast());
         const __gotots_receiver_667 = p;
         const __gotots_store_768 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1509 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_768, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1509 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_768, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1510 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_667, __gotots_argument_1509, __gotots_argument_1510);
     }
@@ -4507,14 +4525,14 @@ export class Printer {
         const __gotots_receiver_668 = p;
         const __gotots_store_769 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1511 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_769, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1511 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_769, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_668, __gotots_argument_1511);
         Printer.$go$private$printer$writePunctuation(p, "?");
         Printer.$go$private$printer$emitTypeNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type, TypePrecedenceNonArray$constant__from_ast());
         const __gotots_receiver_669 = p;
         const __gotots_store_770 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1512 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_770, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1512 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_770, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1513 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_669, __gotots_argument_1512, __gotots_argument_1513);
     }
@@ -4524,14 +4542,14 @@ export class Printer {
         const __gotots_receiver_670 = p;
         const __gotots_store_771 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1514 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_771, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1514 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_771, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_670, __gotots_argument_1514);
         Printer.$go$private$printer$emitTypeNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type, TypePrecedenceJSDoc$constant__from_ast());
         Printer.$go$private$printer$writePunctuation(p, "=");
         const __gotots_receiver_671 = p;
         const __gotots_store_772 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1515 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_772, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1515 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_772, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1516 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_671, __gotots_argument_1515, __gotots_argument_1516);
     }
@@ -4541,14 +4559,14 @@ export class Printer {
         const __gotots_receiver_672 = p;
         const __gotots_store_773 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1517 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_773, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1517 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_773, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_672, __gotots_argument_1517);
         Printer.$go$private$printer$writePunctuation(p, "...");
         Printer.$go$private$printer$emitTypeNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type, TypePrecedenceJSDoc$constant__from_ast());
         const __gotots_receiver_673 = p;
         const __gotots_store_774 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTypeBase.TypeNodeBase).NodeBase));
-        const __gotots_argument_1518 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_774, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1518 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_774, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1519 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_673, __gotots_argument_1518, __gotots_argument_1519);
     }
@@ -4557,7 +4575,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_163 = p;
         const __gotots_store_179 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_318 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_179, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_318 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_179, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_163, __gotots_argument_318);
         Printer.$go$private$printer$emitJsxAttributeName(p, JsxAttribute__from_ast.Name(node));
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer === undefined)) {
@@ -4566,7 +4584,7 @@ export class Printer {
         }
         const __gotots_receiver_164 = p;
         const __gotots_store_180 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_319 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_180, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_319 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_180, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_320 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_164, __gotots_argument_319, __gotots_argument_320);
     }
@@ -4643,7 +4661,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_321 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_181, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_321 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_181, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_165, __gotots_argument_321);
         const __gotots_receiver_166 = p;
         const __gotots_argument_322 = ($argument0: Printer | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
@@ -4656,7 +4674,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_323 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_182, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_323 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_182, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_324: JsxAttributes__from_ast["Properties"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties;
         const __gotots_argument_325 = LFJsxElementAttributes$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_166, __gotots_argument_322, __gotots_argument_323, __gotots_argument_324, __gotots_argument_325);
@@ -4668,7 +4686,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_326 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_183, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_326 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_183, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_327 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_167, __gotots_argument_326, __gotots_argument_327);
     }
@@ -4706,14 +4724,14 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_159 = p;
         const __gotots_store_175 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_312 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_175, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_312 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_175, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_159, __gotots_argument_312);
         Printer.$go$private$printer$writePunctuation(p, "</");
         Printer.$go$private$printer$emitJsxTagName(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TagName);
         Printer.$go$private$printer$writePunctuation(p, ">");
         const __gotots_receiver_160 = p;
         const __gotots_store_176 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_313 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_176, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_313 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_176, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_314 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_160, __gotots_argument_313, __gotots_argument_314);
     }
@@ -4723,14 +4741,14 @@ export class Printer {
         const __gotots_receiver_161 = p;
         const __gotots_store_177 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_315 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_177, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_315 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_177, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_161, __gotots_argument_315);
         Printer.$go$private$printer$writePunctuation(p, "</");
         Printer.$go$private$printer$writePunctuation(p, ">");
         const __gotots_receiver_162 = p;
         const __gotots_store_178 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_316 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_178, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_316 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_178, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_317 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_162, __gotots_argument_316, __gotots_argument_317);
     }
@@ -4745,7 +4763,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_843 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_433, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_843 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_433, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_394, __gotots_argument_843);
         Printer.$go$private$printer$emitJsxOpeningElement(p, Node__from_ast.AsJsxOpeningElement((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OpeningElement));
         const __gotots_receiver_395 = p;
@@ -4759,7 +4777,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_845 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_434, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_845 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_434, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_846: JsxElement__from_ast["Children"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Children;
         const __gotots_argument_847 = LFJsxElementOrFragmentChildren$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_395, __gotots_argument_844, __gotots_argument_845, __gotots_argument_846, __gotots_argument_847);
@@ -4772,7 +4790,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_848 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_435, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_848 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_435, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_849 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_396, __gotots_argument_848, __gotots_argument_849);
     }
@@ -4782,7 +4800,7 @@ export class Printer {
         const __gotots_receiver_170 = p;
         const __gotots_store_186 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_331 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_186, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_331 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_186, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_170, __gotots_argument_331);
         let __gotots_logical_result_3 = !((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression === undefined);
         if (!__gotots_logical_result_3) {
@@ -4790,7 +4808,7 @@ export class Printer {
             if (__gotots_logical_result_1) {
                 const __gotots_store_187 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-                const __gotots_argument_332 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_187, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_332 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_187, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 __gotots_logical_result_1 = !NodeIsSynthesized__from_ast(__gotots_argument_332);
             }
             let __gotots_logical_result_2 = __gotots_logical_result_1;
@@ -4799,7 +4817,7 @@ export class Printer {
                 const __gotots_store_188 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-                const __gotots_argument_333 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_188, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_argument_333 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_188, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 __gotots_logical_result_2 = Printer.$go$private$printer$hasCommentsAtPosition(__gotots_receiver_171, __gotots_argument_333);
             }
             __gotots_logical_result_3 = __gotots_logical_result_2;
@@ -4809,7 +4827,7 @@ export class Printer {
             if (__gotots_logical_result_4) {
                 const __gotots_store_189 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-                const __gotots_argument_334 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_189, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_334 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_189, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 __gotots_logical_result_4 = !NodeIsSynthesized__from_ast(__gotots_argument_334);
             }
             let __gotots_logical_result_5 = __gotots_logical_result_4;
@@ -4818,11 +4836,11 @@ export class Printer {
                 const __gotots_store_190 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-                const __gotots_argument_336 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_190, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_argument_336 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_190, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_store_191 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-                const __gotots_argument_337 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_191, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_argument_337 = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_191, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_binary_operand_2 = GetLinesBetweenPositions(__gotots_argument_335, __gotots_argument_336, __gotots_argument_337);
                 const __gotots_binary_operand_3 = 0;
                 __gotots_logical_result_5 = __gotots_binary_operand_2 !== __gotots_binary_operand_3;
@@ -4834,11 +4852,11 @@ export class Printer {
             const __gotots_store_192 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-            const __gotots_argument_339 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_192, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_339 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_192, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_340 = WriteKindPunctuation$constant();
             const __gotots_store_193 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-            const __gotots_argument_341 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_193, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_341 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_193, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let end = Printer.$go$private$printer$emitToken(__gotots_receiver_172, __gotots_argument_338, __gotots_argument_339, __gotots_argument_340, __gotots_argument_341);
             Printer.$go$private$printer$emitTokenNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DotDotDotToken);
             if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression === undefined)) {
@@ -4850,14 +4868,14 @@ export class Printer {
             const __gotots_argument_344 = WriteKindPunctuation$constant();
             const __gotots_store_194 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-            const __gotots_argument_345 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_194, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_345 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_194, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_173, __gotots_argument_342, __gotots_argument_343, __gotots_argument_344, __gotots_argument_345);
             Printer.$go$private$printer$decreaseIndentIf(p, indented);
         }
         const __gotots_receiver_174 = p;
         const __gotots_store_195 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_346 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_195, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_346 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_195, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_347 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_174, __gotots_argument_346, __gotots_argument_347);
     }
@@ -4872,7 +4890,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_855 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_439, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_855 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_439, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_400, __gotots_argument_855);
         Printer.$go$private$printer$emitJsxOpeningFragment(p, Node__from_ast.AsJsxOpeningFragment((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OpeningFragment));
         const __gotots_receiver_401 = p;
@@ -4886,7 +4904,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_857 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_440, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_857 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_440, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_858: JsxFragment__from_ast["Children"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Children;
         const __gotots_argument_859 = LFJsxElementOrFragmentChildren$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_401, __gotots_argument_856, __gotots_argument_857, __gotots_argument_858, __gotots_argument_859);
@@ -4899,7 +4917,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_860 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_441, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_860 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_441, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_861 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_402, __gotots_argument_860, __gotots_argument_861);
     }
@@ -4909,7 +4927,7 @@ export class Printer {
         const __gotots_receiver_175 = p;
         const __gotots_store_196 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_348 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_196, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_348 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_196, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_175, __gotots_argument_348);
         Printer.$go$private$printer$emitIdentifierName(p, Node__from_ast.AsIdentifier((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Namespace));
         Printer.$go$private$printer$writePunctuation(p, ":");
@@ -4917,7 +4935,7 @@ export class Printer {
         const __gotots_receiver_176 = p;
         const __gotots_store_197 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_349 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_197, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_349 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_197, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_350 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_176, __gotots_argument_349, __gotots_argument_350);
     }
@@ -4927,20 +4945,20 @@ export class Printer {
         const __gotots_receiver_152 = p;
         const __gotots_store_168 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_300 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_168, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_300 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_168, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_152, __gotots_argument_300);
         Printer.$go$private$printer$writePunctuation(p, "<");
         const __gotots_receiver_153 = p;
         const __gotots_argument_301: JsxOpeningElement__from_ast["TagName"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TagName;
         const __gotots_store_169 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_302 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_169, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_302 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_169, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$writeLineSeparatorsAndIndentBefore(__gotots_receiver_153, __gotots_argument_301, __gotots_argument_302);
         Printer.$go$private$printer$emitJsxTagName(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TagName);
         const __gotots_receiver_154 = p;
         const __gotots_store_170 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_303 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_170, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_303 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_170, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_304: JsxOpeningElement__from_ast["TypeArguments"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_154, __gotots_argument_303, __gotots_argument_304);
         if (Node__from_ast.Properties((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes).length > 0) {
@@ -4951,14 +4969,14 @@ export class Printer {
         const __gotots_argument_305: JsxOpeningElement__from_ast["Attributes"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Attributes;
         const __gotots_store_171 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_306 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_171, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_306 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_171, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$writeLineSeparatorsAfter(__gotots_receiver_155, __gotots_argument_305, __gotots_argument_306);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         Printer.$go$private$printer$writePunctuation(p, ">");
         const __gotots_receiver_156 = p;
         const __gotots_store_172 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_307 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_172, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_307 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_172, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_308 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_156, __gotots_argument_307, __gotots_argument_308);
     }
@@ -4968,14 +4986,14 @@ export class Printer {
         const __gotots_receiver_157 = p;
         const __gotots_store_173 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_309 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_173, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_309 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_173, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_157, __gotots_argument_309);
         Printer.$go$private$printer$writePunctuation(p, "<");
         Printer.$go$private$printer$writePunctuation(p, ">");
         const __gotots_receiver_158 = p;
         const __gotots_store_174 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_310 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_174, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_310 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_174, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_311 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_158, __gotots_argument_310, __gotots_argument_311);
     }
@@ -4990,7 +5008,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_850 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_436, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_850 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_436, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_397, __gotots_argument_850);
         Printer.$go$private$printer$writePunctuation(p, "<");
         Printer.$go$private$printer$emitJsxTagName(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TagName);
@@ -5002,7 +5020,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_851 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_437, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_851 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_437, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_852: JsxSelfClosingElement__from_ast["TypeArguments"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_398, __gotots_argument_851, __gotots_argument_852);
         Printer.$go$private$printer$writeSpace(p);
@@ -5016,7 +5034,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_853 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_438, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_853 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_438, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_854 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_399, __gotots_argument_853, __gotots_argument_854);
     }
@@ -5025,14 +5043,14 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_168 = p;
         const __gotots_store_184 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_328 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_184, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_328 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_184, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_168, __gotots_argument_328);
         Printer.$go$private$printer$writePunctuation(p, "{...");
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_169 = p;
         const __gotots_store_185 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_329 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_185, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_329 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_185, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_330 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_169, __gotots_argument_329, __gotots_argument_330);
     }
@@ -5067,13 +5085,13 @@ export class Printer {
         const __gotots_receiver_150 = p;
         const __gotots_store_166 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_297 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_166, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_297 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_166, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_150, __gotots_argument_297);
         Printer.$go$private$printer$writeLiteral(p, LiteralLikeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralLikeNodeBase).Text);
         const __gotots_receiver_151 = p;
         const __gotots_store_167 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_298 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_167, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_298 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_167, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_299 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_151, __gotots_argument_298, __gotots_argument_299);
     }
@@ -5082,7 +5100,7 @@ export class Printer {
         const __gotots_store_280 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 KeywordExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<KeywordExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_548 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_280, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_548 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_280, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitKeywordNode(__gotots_receiver_254, __gotots_argument_548);
     }
     static $go$private$printer$emitKeywordNode(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void {
@@ -5101,7 +5119,7 @@ export class Printer {
         const __gotots_store_683 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 KeywordTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<KeywordTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1355 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_683, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1355 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_683, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitKeywordNode(__gotots_receiver_585, __gotots_argument_1355);
     }
     static $go$private$printer$emitLabelIdentifier(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined): void {
@@ -5114,7 +5132,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1319 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_653, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1319 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_653, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_577, __gotots_argument_1319);
         Printer.$go$private$printer$emitIdentifierText(p, node);
         const __gotots_receiver_578 = p;
@@ -5126,7 +5144,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_1320 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_654, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1320 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_654, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1321 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_578, __gotots_argument_1320, __gotots_argument_1321);
     }
@@ -5136,7 +5154,7 @@ export class Printer {
         const __gotots_receiver_475 = p;
         const __gotots_store_528 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1048 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_528, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1048 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_528, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_475, __gotots_argument_1048);
         Printer.$go$private$printer$emitLabelIdentifier(p, Node__from_ast.AsIdentifier((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Label));
         const __gotots_receiver_476 = p;
@@ -5145,14 +5163,14 @@ export class Printer {
         const __gotots_argument_1051 = WriteKindPunctuation$constant();
         const __gotots_store_529 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1052 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_529, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1052 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_529, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_476, __gotots_argument_1049, __gotots_argument_1050, __gotots_argument_1051, __gotots_argument_1052);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitStatement(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statement);
         const __gotots_receiver_477 = p;
         const __gotots_store_530 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1053 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_530, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1053 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_530, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1054 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_477, __gotots_argument_1053, __gotots_argument_1054);
     }
@@ -5577,14 +5595,14 @@ export class Printer {
         const __gotots_store_754 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 LiteralTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LiteralTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1483 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_754, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1483 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_754, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_653, __gotots_argument_1483);
         Printer.$go$private$printer$emitExpression(p, LiteralTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LiteralTypeNode__from_ast>).value).Literal, OperatorPrecedenceComma$constant__from_ast());
         const __gotots_receiver_654 = p;
         const __gotots_store_755 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 LiteralTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LiteralTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1484 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_755, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1484 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_755, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1485 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_654, __gotots_argument_1484, __gotots_argument_1485);
     }
@@ -5594,12 +5612,12 @@ export class Printer {
         const __gotots_receiver_649 = p;
         const __gotots_store_750 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1475 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_750, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1475 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_750, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_649, __gotots_argument_1475);
         const __gotots_receiver_650 = p;
         const __gotots_store_751 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1476 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_751, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1476 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_751, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let singleLine = Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_650, __gotots_argument_1476);
         Printer.$go$private$printer$writePunctuation(p, "{");
         if (singleLine) {
@@ -5649,7 +5667,7 @@ export class Printer {
                 };
                 const __gotots_store_752 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_1478 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_752, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_1478 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_752, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_1479: MappedTypeNode__from_ast["Members"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Members;
                 const __gotots_argument_1480 = LFPreserveLines$constant();
                 Printer.$go$private$printer$emitList(__gotots_receiver_651, __gotots_argument_1477, __gotots_argument_1478, __gotots_argument_1479, __gotots_argument_1480);
@@ -5666,7 +5684,7 @@ export class Printer {
         const __gotots_receiver_652 = p;
         const __gotots_store_753 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1481 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_753, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1481 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_753, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1482 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_652, __gotots_argument_1481, __gotots_argument_1482);
     }
@@ -5674,7 +5692,7 @@ export class Printer {
         const __gotots_receiver_686 = p;
         const __gotots_store_779 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_1540 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_779, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1540 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_779, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_686, __gotots_argument_1540);
         Printer.$go$private$printer$emitBindingIdentifier(p, Node__from_ast.AsIdentifier(TypeParameterDeclaration__from_ast.Name(node)));
         Printer.$go$private$printer$writeSpace(p);
@@ -5684,7 +5702,7 @@ export class Printer {
         const __gotots_receiver_687 = p;
         const __gotots_store_780 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_1541 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_780, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1541 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_780, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1542 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_687, __gotots_argument_1541, __gotots_argument_1542);
     }
@@ -5719,7 +5737,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_836 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_429, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_836 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_429, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_391, __gotots_argument_836);
         const __gotots_receiver_392 = p;
         const __gotots_argument_837: MetaProperty__from_ast["KeywordToken"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.KeywordToken;
@@ -5731,7 +5749,7 @@ export class Printer {
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_838 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_430, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_838 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_430, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_839 = WriteKindPunctuation$constant();
         const __gotots_store_431 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -5740,7 +5758,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_840 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_431, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_840 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_431, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_392, __gotots_argument_837, __gotots_argument_838, __gotots_argument_839, __gotots_argument_840);
         Printer.$go$private$printer$writePunctuation(p, ".");
         Printer.$go$private$printer$emitIdentifierName(p, Node__from_ast.AsIdentifier(MetaProperty__from_ast.Name(node)));
@@ -5752,7 +5770,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_841 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_432, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_841 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_432, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_842 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_393, __gotots_argument_841, __gotots_argument_842);
     }
@@ -5761,11 +5779,11 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_47 = p;
         const __gotots_store_50 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_83 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_50, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_83 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_50, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_47, __gotots_argument_83);
         const __gotots_receiver_48 = p;
         const __gotots_store_51 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_84 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_51, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_84 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_51, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_52 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_85 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_52, "NamedMemberBase"));
         const __gotots_argument_86 = true;
@@ -5776,27 +5794,27 @@ export class Printer {
         Printer.$go$private$printer$emitTokenNode(p, NamedMemberBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken);
         const __gotots_receiver_49 = p;
         const __gotots_store_53 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_87 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_87 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_53, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_49, __gotots_argument_87);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_50 = p;
         const __gotots_store_54 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_88 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_54, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_88 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_54, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_50, __gotots_argument_88);
         const __gotots_receiver_51 = p;
         const __gotots_store_55 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_89 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_55, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_89 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_55, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_51, __gotots_argument_89);
         Printer.$go$private$printer$emitFunctionBodyNode(p, (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_receiver_52 = p;
         const __gotots_store_56 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_90 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_56, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_90 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_56, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_52, __gotots_argument_90);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_53 = p;
         const __gotots_store_57 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_91 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_57, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_91 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_57, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_92 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_53, __gotots_argument_91, __gotots_argument_92);
     }
@@ -5804,14 +5822,14 @@ export class Printer {
         const __gotots_receiver_40 = p;
         const __gotots_store_42 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_73 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_73 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_42, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_40, __gotots_argument_73);
         const __gotots_receiver_41 = p;
         const __gotots_store_43 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_74 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_43, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_74 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_43, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_44 = MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value);
-        const __gotots_argument_75 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_44, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+        const __gotots_argument_75 = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_44, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
         const __gotots_argument_76 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_41, __gotots_argument_74, __gotots_argument_75, __gotots_argument_76);
         Printer.$go$private$printer$emitPropertyName(p, MethodSignatureDeclaration__from_ast.Name(node));
@@ -5820,30 +5838,30 @@ export class Printer {
         const __gotots_receiver_42 = p;
         const __gotots_store_45 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_77 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_45, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_77 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_45, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_42, __gotots_argument_77);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_43 = p;
         const __gotots_store_46 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_78 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_46, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_78 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_46, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_43, __gotots_argument_78);
         const __gotots_receiver_44 = p;
         const __gotots_store_47 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_79 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_47, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_79 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_47, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitSignature(__gotots_receiver_44, __gotots_argument_79);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_45 = p;
         const __gotots_store_48 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_80 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_48, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_80 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_48, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_45, __gotots_argument_80);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_46 = p;
         const __gotots_store_49 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             MethodSignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_81 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_49, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_81 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_49, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_82 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_46, __gotots_argument_81, __gotots_argument_82);
     }
@@ -5874,7 +5892,7 @@ export class Printer {
             };
             const __gotots_argument_452 = parentNode;
             const __gotots_store_242 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-            const __gotots_argument_453 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_242, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+            const __gotots_argument_453 = new $ProjectedPropertyLocation(__gotots_store_242, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             const __gotots_argument_454 = LFModifiers$constant();
             Printer.$go$private$printer$emitList(__gotots_receiver_221, __gotots_argument_451, __gotots_argument_452, __gotots_argument_453, __gotots_argument_454);
         }
@@ -5889,7 +5907,7 @@ export class Printer {
             };
             const __gotots_argument_456 = parentNode;
             const __gotots_store_243 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-            const __gotots_argument_457 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_243, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+            const __gotots_argument_457 = new $ProjectedPropertyLocation(__gotots_store_243, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             const __gotots_argument_458 = LFDecorators$constant();
             Printer.$go$private$printer$emitList(__gotots_receiver_222, __gotots_argument_455, __gotots_argument_456, __gotots_argument_457, __gotots_argument_458);
         }
@@ -5897,7 +5915,7 @@ export class Printer {
             if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnBeforeEmitNodeList === undefined)) {
                 const __gotots_callee_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnBeforeEmitNodeList;
                 const __gotots_store_244 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_459 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_244, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_459 = new $ProjectedPropertyLocation(__gotots_store_244, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_459);
             }
             class Mode {
@@ -5937,7 +5955,7 @@ export class Printer {
                 let textRange = NewTextRange__from_core(-1, -1);
                 if (start === 0) {
                     const __gotots_store_245 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                    const __gotots_argument_460 = NodeList__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_245, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
+                    const __gotots_argument_460 = NodeList__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_245, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
                     const __gotots_argument_461 = textRange.End();
                     textRange = NewTextRange__from_core(__gotots_argument_460, __gotots_argument_461);
                 }
@@ -5945,7 +5963,7 @@ export class Printer {
                     ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Nodes.length - 1) {
                     const __gotots_argument_462 = textRange.Pos();
                     const __gotots_store_246 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                    const __gotots_argument_463 = NodeList__from_ast.End(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_246, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
+                    const __gotots_argument_463 = NodeList__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_246, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
                     textRange = NewTextRange__from_core(__gotots_argument_462, __gotots_argument_463);
                 }
                 if (allowDecorators || lastMode.$value === ModeModifiers.$value) {
@@ -5961,7 +5979,7 @@ export class Printer {
             if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnAfterEmitNodeList === undefined)) {
                 const __gotots_callee_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PrintHandlers.OnAfterEmitNodeList;
                 const __gotots_store_247 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_464 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_247, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_464 = new $ProjectedPropertyLocation(__gotots_store_247, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 (__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_464);
             }
         }
@@ -5974,35 +5992,35 @@ export class Printer {
         const __gotots_receiver_105 = p;
         const __gotots_store_115 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_180 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_115, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_180 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_115, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_105, __gotots_argument_180);
         const __gotots_receiver_106 = p;
         const __gotots_store_116 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_181 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_116, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_181 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_116, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$generateNames(__gotots_receiver_106, __gotots_argument_181);
         const __gotots_receiver_107 = p;
         const __gotots_argument_182 = KindOpenBraceToken$constant__from_ast();
         const __gotots_store_117 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_183 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_117, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_183 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_117, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_184 = WriteKindPunctuation$constant();
         const __gotots_store_118 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_185 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_118, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_185 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_118, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_107, __gotots_argument_182, __gotots_argument_183, __gotots_argument_184, __gotots_argument_185);
         const __gotots_receiver_108 = p;
         const __gotots_store_119 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_186 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_119, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_186 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_119, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_187: ModuleBlock__from_ast["Statements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statements;
         let __gotots_logical_result_0 = Printer.$go$private$printer$isEmptyBlock(__gotots_receiver_108, __gotots_argument_186, __gotots_argument_187);
         if (!__gotots_logical_result_0) {
             const __gotots_receiver_109 = p;
             const __gotots_store_120 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_188 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_120, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_188 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_120, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             __gotots_logical_result_0 = Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_109, __gotots_argument_188);
         }
         const __gotots_argument_189 = __gotots_logical_result_0;
@@ -6015,7 +6033,7 @@ export class Printer {
         };
         const __gotots_store_121 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_193 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_121, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_193 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_121, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_194: ModuleBlock__from_ast["Statements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statements;
         const __gotots_argument_195 = format;
         Printer.$go$private$printer$emitList(__gotots_receiver_110, __gotots_argument_192, __gotots_argument_193, __gotots_argument_194, __gotots_argument_195);
@@ -6025,7 +6043,7 @@ export class Printer {
         const __gotots_argument_198 = WriteKindPunctuation$constant();
         const __gotots_store_122 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_199 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_122, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_199 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_122, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_200 = IfElse$Named_printer$tokenEmitFlags(!(((void ListFormat,
             format.$value & LFMultiLine$constant().$value) as int)
             ===
@@ -6035,7 +6053,7 @@ export class Printer {
         const __gotots_receiver_112 = p;
         const __gotots_store_123 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_201 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_123, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_201 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_123, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_202 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_112, __gotots_argument_201, __gotots_argument_202);
     }
@@ -6045,12 +6063,12 @@ export class Printer {
         const __gotots_receiver_525 = p;
         const __gotots_store_586 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1158 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_586, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1158 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_586, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_525, __gotots_argument_1158);
         const __gotots_receiver_526 = p;
         const __gotots_store_587 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1159 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_587, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1159 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_587, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_588 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_1160 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_588, "ModifiersBase"));
         const __gotots_argument_1161 = false;
@@ -6079,7 +6097,7 @@ export class Printer {
         const __gotots_receiver_527 = p;
         const __gotots_store_589 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1162 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_589, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1162 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_589, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1163 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_527, __gotots_argument_1162, __gotots_argument_1163);
     }
@@ -6166,7 +6184,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_136 = p;
         const __gotots_store_151 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_266 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_151, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_266 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_151, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_136, __gotots_argument_266);
         Printer.$go$private$printer$writePunctuation(p, "{");
         const __gotots_receiver_137 = p;
@@ -6174,14 +6192,14 @@ export class Printer {
             Printer.$go$private$printer$emitExportSpecifierNode($argument0, $argument1);
         };
         const __gotots_store_152 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_268 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_152, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_268 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_152, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_269: NamedExports__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_270 = LFNamedImportsOrExportsElements$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_137, __gotots_argument_267, __gotots_argument_268, __gotots_argument_269, __gotots_argument_270);
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_138 = p;
         const __gotots_store_153 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_271 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_153, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_271 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_153, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_272 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_138, __gotots_argument_271, __gotots_argument_272);
     }
@@ -6210,7 +6228,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_130 = p;
         const __gotots_store_145 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_252 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_145, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_252 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_145, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_130, __gotots_argument_252);
         Printer.$go$private$printer$writePunctuation(p, "{");
         const __gotots_receiver_131 = p;
@@ -6218,14 +6236,14 @@ export class Printer {
             Printer.$go$private$printer$emitImportSpecifierNode($argument0, $argument1);
         };
         const __gotots_store_146 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_254 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_146, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_254 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_146, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_255: NamedImports__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_256 = LFNamedImportsOrExportsElements$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_131, __gotots_argument_253, __gotots_argument_254, __gotots_argument_255, __gotots_argument_256);
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_132 = p;
         const __gotots_store_147 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_257 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_147, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_257 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_147, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_258 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_132, __gotots_argument_257, __gotots_argument_258);
     }
@@ -6235,7 +6253,7 @@ export class Printer {
         const __gotots_receiver_655 = p;
         const __gotots_store_756 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1486 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_756, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1486 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_756, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_655, __gotots_argument_1486);
         Printer.$go$private$printer$emitPunctuationNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DotDotDotToken);
         Printer.$go$private$printer$emitIdentifierName(p, Node__from_ast.AsIdentifier(NamedTupleMember__from_ast.Name(node)));
@@ -6246,14 +6264,14 @@ export class Printer {
         const __gotots_argument_1489 = WriteKindPunctuation$constant();
         const __gotots_store_757 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1490 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_757, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1490 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_757, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_656, __gotots_argument_1487, __gotots_argument_1488, __gotots_argument_1489, __gotots_argument_1490);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type);
         const __gotots_receiver_657 = p;
         const __gotots_store_758 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1491 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_758, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1491 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_758, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1492 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_657, __gotots_argument_1491, __gotots_argument_1492);
     }
@@ -6262,16 +6280,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_126 = p;
         const __gotots_store_140 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_241 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_140, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_241 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_140, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_126, __gotots_argument_241);
         const __gotots_receiver_127 = p;
         const __gotots_argument_242 = KindAsteriskToken$constant__from_ast();
         const __gotots_store_141 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_243 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_141, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_243 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_141, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_244 = WriteKindPunctuation$constant();
         const __gotots_store_142 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_245 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_142, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_245 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_142, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_127, __gotots_argument_242, __gotots_argument_243, __gotots_argument_244, __gotots_argument_245);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_128 = p;
@@ -6279,13 +6297,13 @@ export class Printer {
         const __gotots_argument_247 = pos;
         const __gotots_argument_248 = WriteKindKeyword$constant();
         const __gotots_store_143 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_249 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_143, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_249 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_143, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_128, __gotots_argument_246, __gotots_argument_247, __gotots_argument_248, __gotots_argument_249);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitModuleExportName(p, NamespaceExport__from_ast.Name(node));
         const __gotots_receiver_129 = p;
         const __gotots_store_144 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_250 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_144, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_250 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_144, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_251 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_129, __gotots_argument_250, __gotots_argument_251);
     }
@@ -6295,18 +6313,18 @@ export class Printer {
         const __gotots_receiver_528 = p;
         const __gotots_store_590 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1164 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_590, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1164 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_590, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_528, __gotots_argument_1164);
         const __gotots_receiver_529 = p;
         const __gotots_argument_1165 = KindExportKeyword$constant__from_ast();
         const __gotots_store_591 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1166 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_591, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1166 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_591, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1167 = WriteKindKeyword$constant();
         const __gotots_store_592 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1168 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_592, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1168 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_592, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_529, __gotots_argument_1165, __gotots_argument_1166, __gotots_argument_1167, __gotots_argument_1168);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_530 = p;
@@ -6315,7 +6333,7 @@ export class Printer {
         const __gotots_argument_1171 = WriteKindKeyword$constant();
         const __gotots_store_593 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1172 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_593, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1172 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_593, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         pos = Printer.$go$private$printer$emitToken(__gotots_receiver_530, __gotots_argument_1169, __gotots_argument_1170, __gotots_argument_1171, __gotots_argument_1172);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_531 = p;
@@ -6324,7 +6342,7 @@ export class Printer {
         const __gotots_argument_1175 = WriteKindKeyword$constant();
         const __gotots_store_594 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1176 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_594, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1176 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_594, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_531, __gotots_argument_1173, __gotots_argument_1174, __gotots_argument_1175, __gotots_argument_1176);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitBindingIdentifier(p, Node__from_ast.AsIdentifier(NamespaceExportDeclaration__from_ast.Name(node)));
@@ -6332,7 +6350,7 @@ export class Printer {
         const __gotots_receiver_532 = p;
         const __gotots_store_595 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1177 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_595, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1177 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_595, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1178 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_532, __gotots_argument_1177, __gotots_argument_1178);
     }
@@ -6341,16 +6359,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_122 = p;
         const __gotots_store_135 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_230 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_135, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_230 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_135, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_122, __gotots_argument_230);
         const __gotots_receiver_123 = p;
         const __gotots_argument_231 = KindAsteriskToken$constant__from_ast();
         const __gotots_store_136 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        const __gotots_argument_232 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_136, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_232 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_136, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_233 = WriteKindPunctuation$constant();
         const __gotots_store_137 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_234 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_137, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_234 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_137, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_123, __gotots_argument_231, __gotots_argument_232, __gotots_argument_233, __gotots_argument_234);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_124 = p;
@@ -6358,13 +6376,13 @@ export class Printer {
         const __gotots_argument_236 = pos;
         const __gotots_argument_237 = WriteKindKeyword$constant();
         const __gotots_store_138 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_238 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_138, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_238 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_138, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_124, __gotots_argument_235, __gotots_argument_236, __gotots_argument_237, __gotots_argument_238);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitBindingIdentifier(p, Node__from_ast.AsIdentifier(NamespaceImport__from_ast.Name(node)));
         const __gotots_receiver_125 = p;
         const __gotots_store_139 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_239 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_139, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_239 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_139, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_240 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_125, __gotots_argument_239, __gotots_argument_240);
     }
@@ -6399,7 +6417,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_651 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_329, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_651 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_329, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_303, __gotots_argument_651);
         const __gotots_receiver_304 = p;
         const __gotots_argument_652 = KindNewKeyword$constant__from_ast();
@@ -6411,7 +6429,7 @@ export class Printer {
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_653 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_330, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_653 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_330, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_654 = WriteKindKeyword$constant();
         const __gotots_store_331 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -6420,7 +6438,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_655 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_331, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_655 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_331, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_304, __gotots_argument_652, __gotots_argument_653, __gotots_argument_654, __gotots_argument_655);
         Printer.$go$private$printer$writeSpace(p);
         if (Node__from_ast.$storageOf(((SkipPartiallyEmittedExpressions__from_ast((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindCallExpression$constant__from_ast()) {
@@ -6437,7 +6455,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_656 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_332, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_656 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_332, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_657: NewExpression__from_ast["TypeArguments"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_305, __gotots_argument_656, __gotots_argument_657);
         const __gotots_receiver_306 = p;
@@ -6451,7 +6469,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_659 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_333, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_659 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_333, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_660: NewExpression__from_ast["Arguments"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Arguments;
         const __gotots_argument_661 = LFNewExpressionArguments$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_306, __gotots_argument_658, __gotots_argument_659, __gotots_argument_660, __gotots_argument_661);
@@ -6463,7 +6481,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_662 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_334, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_662 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_334, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_663 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_307, __gotots_argument_662, __gotots_argument_663);
     }
@@ -6473,18 +6491,18 @@ export class Printer {
         const __gotots_receiver_267 = p;
         const __gotots_store_293 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_569 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_293, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_569 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_293, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_267, __gotots_argument_569);
         const __gotots_receiver_268 = p;
         const __gotots_store_294 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_570 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_294, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_570 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_294, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_571 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_268, __gotots_argument_570, __gotots_argument_571);
         const __gotots_receiver_269 = p;
         const __gotots_store_295 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_572 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_295, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_572 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_295, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_573 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_269, __gotots_argument_572, __gotots_argument_573);
     }
@@ -6497,7 +6515,7 @@ export class Printer {
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_825 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_422, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_825 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_422, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_384, __gotots_argument_825);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceMember$constant__from_ast());
         Printer.$go$private$printer$writeOperator(p, "!");
@@ -6507,7 +6525,7 @@ export class Printer {
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_826 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_423, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_826 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_423, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_827 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_385, __gotots_argument_826, __gotots_argument_827);
     }
@@ -6517,11 +6535,11 @@ export class Printer {
         const __gotots_receiver_491 = p;
         const __gotots_store_546 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1087 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_546, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1087 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_546, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_receiver_490 = p;
         const __gotots_store_547 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1086 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_547, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1086 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_547, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1088 = Printer.$go$private$printer$enterNode(__gotots_receiver_490, __gotots_argument_1086);
         Printer.$go$private$printer$exitNode(__gotots_receiver_491, __gotots_argument_1087, __gotots_argument_1088);
     }
@@ -6530,10 +6548,10 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_211 = p;
         const __gotots_store_235 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_427 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_235, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_427 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_235, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_receiver_210 = p;
         const __gotots_store_236 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_426 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_236, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_426 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_236, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_428 = Printer.$go$private$printer$enterNode(__gotots_receiver_210, __gotots_argument_426);
         Printer.$go$private$printer$exitNode(__gotots_receiver_211, __gotots_argument_427, __gotots_argument_428);
     }
@@ -6548,7 +6566,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         NumericLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NumericLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_549 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_281, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_549 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_281, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_255, __gotots_argument_549);
         const __gotots_receiver_256 = p;
         const __gotots_store_282 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -6560,7 +6578,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         NumericLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NumericLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_550 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_282, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_550 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_282, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_551 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_256, __gotots_argument_550, __gotots_argument_551);
         const __gotots_receiver_257 = p;
@@ -6573,7 +6591,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         NumericLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NumericLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_552 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_283, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_552 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_283, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_553 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_257, __gotots_argument_552, __gotots_argument_553);
     }
@@ -6582,7 +6600,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_86 = p;
         const __gotots_store_92 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_137 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_92, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_137 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_92, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_86, __gotots_argument_137);
         Printer.$go$private$printer$writePunctuation(p, "{");
         const __gotots_receiver_87 = p;
@@ -6590,14 +6608,14 @@ export class Printer {
             Printer.$go$private$printer$emitBindingElementNode($argument0, $argument1);
         };
         const __gotots_store_93 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_139 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_93, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_139 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_93, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_140: BindingPattern__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_141 = LFObjectBindingPatternElements$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_87, __gotots_argument_138, __gotots_argument_139, __gotots_argument_140, __gotots_argument_141);
         Printer.$go$private$printer$writePunctuation(p, "}");
         const __gotots_receiver_88 = p;
         const __gotots_store_94 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_142 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_142 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_94, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_143 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_88, __gotots_argument_142, __gotots_argument_143);
     }
@@ -6645,7 +6663,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_589 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_305, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_589 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_305, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_278, __gotots_argument_589);
         const __gotots_receiver_279 = p;
         const __gotots_store_306 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -6655,7 +6673,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_590 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_306, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_590 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_306, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$shouldEmitIndented(__gotots_receiver_279, __gotots_argument_590);
         Printer.$go$private$printer$increaseIndentIf(p, indented);
         const __gotots_receiver_280 = p;
@@ -6666,7 +6684,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_591 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_307, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_591 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_307, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_280, __gotots_argument_591);
         Printer.$go$private$printer$generateAllMemberNames(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties);
         const __gotots_receiver_282 = p;
@@ -6680,7 +6698,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_598 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_308, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_598 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_308, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_599: ObjectLiteralExpression__from_ast["Properties"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties;
         const __gotots_binary_operand_8 = ((void ListFormat,
             LFObjectLiteralExpressionProperties$constant().$value | IfElse$Named_printer$ListFormat((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MultiLine, LFPreferNewLine$constant(), LFNone$constant()).$value) as int);
@@ -6692,7 +6710,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_592 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_309, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_592 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_309, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_593: ObjectLiteralExpression__from_ast["Properties"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Properties;
         const __gotots_argument_594 = Printer.$go$private$printer$shouldAllowTrailingComma(__gotots_receiver_281, __gotots_argument_592, __gotots_argument_593);
         const __gotots_argument_595 = LFAllowTrailingComma$constant();
@@ -6708,7 +6726,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_601 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_310, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_601 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_310, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_283, __gotots_argument_601);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         const __gotots_receiver_284 = p;
@@ -6719,7 +6737,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_602 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_311, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_602 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_311, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_603 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_284, __gotots_argument_602, __gotots_argument_603);
     }
@@ -6732,19 +6750,19 @@ export class Printer {
         const __gotots_receiver_624 = p;
         const __gotots_store_724 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1429 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_724, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1429 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_724, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_624, __gotots_argument_1429);
         const __gotots_receiver_625 = p;
         const __gotots_argument_1430: OptionalTypeNode__from_ast["Type"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type;
         const __gotots_store_725 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1431 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_725, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1431 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_725, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitPostfixTypeOperand(__gotots_receiver_625, __gotots_argument_1430, __gotots_argument_1431);
         Printer.$go$private$printer$writePunctuation(p, "?");
         const __gotots_receiver_626 = p;
         const __gotots_store_726 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1432 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_726, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1432 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_726, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1433 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_626, __gotots_argument_1432, __gotots_argument_1433);
     }
@@ -6752,14 +6770,14 @@ export class Printer {
         const __gotots_receiver_27 = p;
         const __gotots_store_24 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_24, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_27, __gotots_argument_40);
         const __gotots_receiver_28 = p;
         const __gotots_store_25 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_41 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_41 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_25, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_26 = ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-        const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_26, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_43 = true;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_28, __gotots_argument_41, __gotots_argument_42, __gotots_argument_43);
         Printer.$go$private$printer$emitTokenNode(p, ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).DotDotDotToken);
@@ -6771,22 +6789,22 @@ export class Printer {
         const __gotots_store_27 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase)).NodeDefault));
-        const __gotots_argument_48 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_48 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_27, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_44 = new $goInterfaceAdapter$PointerTo_Named_ast$Node(ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Type);
         const __gotots_argument_45 = new $goInterfaceAdapter$PointerTo_Named_ast$Node(ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).QuestionToken);
         const __gotots_argument_46 = new $goInterfaceAdapter$PointerTo_Named_ast$Node(ParameterDeclaration__from_ast.Name(node));
         const __gotots_store_28 = ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-        const __gotots_argument_47 = new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)));
+        const __gotots_argument_47 = new $goInterfaceAdapter$PointerTo_Named_ast$ModifierList(ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_28, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)));
         const __gotots_argument_49 = RuntimeSlice.literal<$goInterface$Interface_Method_printer$End_void_to_int | undefined>([__gotots_argument_44, __gotots_argument_45, __gotots_argument_46, __gotots_argument_47]);
         const __gotots_argument_51 = greatestEnd(__gotots_argument_48, __gotots_argument_49);
         const __gotots_store_29 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_52 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_52 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_29, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitInitializer(__gotots_receiver_29, __gotots_argument_50, __gotots_argument_51, __gotots_argument_52);
         const __gotots_receiver_30 = p;
         const __gotots_store_30 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_53 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_53 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_30, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_54 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_30, __gotots_argument_53, __gotots_argument_54);
     }
@@ -6832,7 +6850,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_674 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_341, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_674 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_341, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_314, __gotots_argument_674);
         const __gotots_receiver_315 = p;
         const __gotots_argument_675 = KindOpenParenToken$constant__from_ast();
@@ -6845,7 +6863,7 @@ export class Printer {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_676 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_342, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_676 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_342, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_677 = WriteKindPunctuation$constant();
         const __gotots_store_343 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
@@ -6855,7 +6873,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_678 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_343, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_678 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_343, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let openParenPos = Printer.$go$private$printer$emitToken(__gotots_receiver_315, __gotots_argument_675, __gotots_argument_676, __gotots_argument_677, __gotots_argument_678);
         const __gotots_receiver_316 = p;
         const __gotots_argument_679 = ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).Expression;
@@ -6867,7 +6885,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_680 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_344, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_680 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_344, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let indented = Printer.$go$private$printer$writeLineSeparatorsAndIndentBefore(__gotots_receiver_316, __gotots_argument_679, __gotots_argument_680);
         Printer.$go$private$printer$emitExpression(p, ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).Expression, OperatorPrecedenceComma$constant__from_ast());
         const __gotots_receiver_317 = p;
@@ -6880,7 +6898,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_682 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_345, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_682 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_345, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$writeLineSeparatorsAfter(__gotots_receiver_317, __gotots_argument_681, __gotots_argument_682);
         Printer.$go$private$printer$decreaseIndentIf(p, indented);
         let closeParenPos = openParenPos;
@@ -6899,7 +6917,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_686 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_346, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_686 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_346, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_318, __gotots_argument_683, __gotots_argument_684, __gotots_argument_685, __gotots_argument_686);
         const __gotots_receiver_319 = p;
         const __gotots_store_347 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -6910,7 +6928,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_687 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_347, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_687 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_347, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_688 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_319, __gotots_argument_687, __gotots_argument_688);
     }
@@ -6919,7 +6937,7 @@ export class Printer {
         const __gotots_store_739 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 ParenthesizedTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1457 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_739, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1457 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_739, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_639, __gotots_argument_1457);
         Printer.$go$private$printer$writePunctuation(p, "(");
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, ParenthesizedTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedTypeNode__from_ast>).value).Type);
@@ -6928,7 +6946,7 @@ export class Printer {
         const __gotots_store_740 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 ParenthesizedTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1458 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_740, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1458 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_740, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1459 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_640, __gotots_argument_1458, __gotots_argument_1459);
     }
@@ -7020,7 +7038,7 @@ export class Printer {
                     (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_862 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_442, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_862 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_442, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let state = Printer.$go$private$printer$enterNode(__gotots_receiver_403, __gotots_argument_862);
             const __gotots_receiver_404 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext;
             const __gotots_store_443 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -7028,7 +7046,7 @@ export class Printer {
                     (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_863 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_443, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_863 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_443, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let emitFlags = EmitContext.EmitFlags(__gotots_receiver_404, __gotots_argument_863);
             let __gotots_logical_result_16 = (emitFlags & EFNoLeadingComments$constant()) >>> 0 === 0;
             if (__gotots_logical_result_16) {
@@ -7038,7 +7056,7 @@ export class Printer {
                             (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                                 (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                                     LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-                const __gotots_binary_operand_10 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_444, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_binary_operand_10 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_444, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_binary_operand_11 = Node__from_ast.Pos((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression);
                 __gotots_logical_result_16 = __gotots_binary_operand_10 !== __gotots_binary_operand_11;
             }
@@ -7063,7 +7081,7 @@ export class Printer {
                     (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_864 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_445, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_864 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_445, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let emitFlags = EmitContext.EmitFlags(__gotots_receiver_405, __gotots_argument_864);
             let __gotots_logical_result_17 = (emitFlags & EFNoTrailingComments$constant()) >>> 0 === 0;
             if (__gotots_logical_result_17) {
@@ -7073,7 +7091,7 @@ export class Printer {
                             (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                                 (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                                     LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-                const __gotots_binary_operand_12 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_446, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_binary_operand_12 = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_446, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_binary_operand_13 = Node__from_ast.End((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression);
                 __gotots_logical_result_17 = __gotots_binary_operand_12 !== __gotots_binary_operand_13;
             }
@@ -7086,7 +7104,7 @@ export class Printer {
                     (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             LeftHandSideExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LeftHandSideExpressionBase).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_865 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_447, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_865 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_447, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_866 = printerState.$copy(printerState.$fromStorage(entry.$storageOf(entry__shadow_1).state));
             Printer.$go$private$printer$exitNode(__gotots_receiver_406, __gotots_argument_865, __gotots_argument_866);
             node = entry.$storageOf(entry__shadow_1).node;
@@ -7130,7 +7148,7 @@ export class Printer {
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     UpdateExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UpdateExpressionBase).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_747 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_385, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_747 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_385, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_350, __gotots_argument_747);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Operand, OperatorPrecedenceLeftHandSide$constant__from_ast());
         const __gotots_receiver_351 = p;
@@ -7141,14 +7159,14 @@ export class Printer {
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     UpdateExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UpdateExpressionBase).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_751 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_386, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_751 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_386, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_351, __gotots_argument_748, __gotots_argument_749, __gotots_argument_750, __gotots_argument_751);
         const __gotots_receiver_352 = p;
         const __gotots_store_387 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     UpdateExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UpdateExpressionBase).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_752 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_387, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_752 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_387, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_753 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_352, __gotots_argument_752, __gotots_argument_753);
     }
@@ -7159,7 +7177,7 @@ export class Printer {
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_740 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_381, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_740 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_381, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_347, __gotots_argument_740);
         let operator = PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).Operator;
         let operand: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).Operand;
@@ -7171,14 +7189,14 @@ export class Printer {
                     (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_742 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_382, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_742 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_382, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_743 = WriteKindOperator$constant();
         const __gotots_store_383 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_744 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_383, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_744 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_383, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_348, __gotots_argument_741, __gotots_argument_742, __gotots_argument_743, __gotots_argument_744);
         if (Node__from_ast.$storageOf(((operand ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindPrefixUnaryExpression$constant__from_ast()) {
             let inner = PrefixUnaryExpression__from_ast.$storageOf(((Node__from_ast.AsPrefixUnaryExpression(operand) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).Operator;
@@ -7193,7 +7211,7 @@ export class Printer {
                 (void UnaryExpressionBase__from_ast.$storageOf, (void UnaryExpressionBase__from_ast.$fromStorage,
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         PrefixUnaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrefixUnaryExpression__from_ast>).value).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_745 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_384, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_745 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_384, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_746 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_349, __gotots_argument_745, __gotots_argument_746);
     }
@@ -7208,7 +7226,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_13, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_16, __gotots_argument_22);
         const __gotots_receiver_18 = p;
         const __gotots_receiver_17 = p;
@@ -7219,7 +7237,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_14, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_24 = false;
         const __gotots_argument_25 = Printer.$go$private$printer$getTextOfNode(__gotots_receiver_17, __gotots_argument_23, __gotots_argument_24);
         Printer.$go$private$printer$write(__gotots_receiver_18, __gotots_argument_25);
@@ -7231,7 +7249,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_26 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_26 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_15, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_27 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_19, __gotots_argument_26, __gotots_argument_27);
     }
@@ -7261,7 +7279,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_604 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_312, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_604 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_312, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_285, __gotots_argument_604);
         const __gotots_receiver_286 = p;
         const __gotots_argument_609 = PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).Expression;
@@ -7272,7 +7290,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_605 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_313, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_605 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_313, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_606 = IsOptionalChain__from_ast(__gotots_argument_605);
         const __gotots_argument_607 = OperatorPrecedenceOptionalChain$constant__from_ast();
         const __gotots_argument_608 = OperatorPrecedenceMember$constant__from_ast();
@@ -7293,7 +7311,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_611 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_315, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_611 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_315, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_612 = PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).Expression;
         const __gotots_argument_613 = token;
         let linesBeforeDot = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_287, __gotots_argument_611, __gotots_argument_612, __gotots_argument_613);
@@ -7328,7 +7346,7 @@ export class Printer {
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_617 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_316, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_617 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_316, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_290, __gotots_argument_614, __gotots_argument_615, __gotots_argument_616, __gotots_argument_617);
         }
         const __gotots_receiver_291 = p;
@@ -7339,7 +7357,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_618 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_317, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_618 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_317, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_619 = token;
         const __gotots_argument_620 = PropertyAccessExpression__from_ast.Name(node);
         let linesAfterDot = Printer.$go$private$printer$getLinesBetweenNodes(__gotots_receiver_291, __gotots_argument_618, __gotots_argument_619, __gotots_argument_620);
@@ -7356,7 +7374,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_621 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_318, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_621 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_318, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_622 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_292, __gotots_argument_621, __gotots_argument_622);
     }
@@ -7364,7 +7382,7 @@ export class Printer {
         const __gotots_receiver_192 = p;
         const __gotots_store_217 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             PropertyAssignment__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NodeBase));
-        const __gotots_argument_391 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_217, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_391 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_217, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_192, __gotots_argument_391);
         Printer.$go$private$printer$emitPropertyName(p, PropertyAssignment__from_ast.Name(node));
         Printer.$go$private$printer$writePunctuation(p, ":");
@@ -7378,7 +7396,7 @@ export class Printer {
         const __gotots_receiver_193 = p;
         const __gotots_store_218 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             PropertyAssignment__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value).NodeBase));
-        const __gotots_argument_392 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_218, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_392 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_218, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_393 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_193, __gotots_argument_392, __gotots_argument_393);
     }
@@ -7387,11 +7405,11 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_36 = p;
         const __gotots_store_37 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_64 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_37, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_64 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_37, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_36, __gotots_argument_64);
         const __gotots_receiver_37 = p;
         const __gotots_store_38 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_65 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_65 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_38, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_39 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_argument_66 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NamedMemberBase"));
         const __gotots_argument_67 = true;
@@ -7403,12 +7421,12 @@ export class Printer {
         const __gotots_argument_68: PropertyDeclaration__from_ast["Initializer"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer;
         const __gotots_argument_69 = greatestEnd(Node__from_ast.End(PropertyDeclaration__from_ast.Name(node)), RuntimeSlice.literal<$goInterface$Interface_Method_printer$End_void_to_int | undefined>([new $goInterfaceAdapter$PointerTo_Named_ast$Node((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type), new $goInterfaceAdapter$PointerTo_Named_ast$Node(NamedMemberBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedMemberBase).PostfixToken)]));
         const __gotots_store_40 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_70 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_70 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_40, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitInitializer(__gotots_receiver_38, __gotots_argument_68, __gotots_argument_69, __gotots_argument_70);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_39 = p;
         const __gotots_store_41 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_71 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_71 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_41, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_72 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_39, __gotots_argument_71, __gotots_argument_72);
     }
@@ -7459,14 +7477,14 @@ export class Printer {
         const __gotots_receiver_33 = p;
         const __gotots_store_33 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             PropertySignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_58 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_58 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_33, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_33, __gotots_argument_58);
         const __gotots_receiver_34 = p;
         const __gotots_store_34 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             PropertySignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_59 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_59 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_34, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_35 = PropertySignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value);
-        const __gotots_argument_60 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+        const __gotots_argument_60 = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_35, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
         const __gotots_argument_61 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_34, __gotots_argument_59, __gotots_argument_60, __gotots_argument_61);
         Printer.$go$private$printer$emitPropertyName(p, PropertySignatureDeclaration__from_ast.Name(node));
@@ -7477,7 +7495,7 @@ export class Printer {
         const __gotots_receiver_35 = p;
         const __gotots_store_36 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             PropertySignatureDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_62 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_62 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_36, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_63 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_35, __gotots_argument_62, __gotots_argument_63);
     }
@@ -7497,14 +7515,14 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_20 = p;
         const __gotots_store_16 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_28 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_28 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_16, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_20, __gotots_argument_28);
         Printer.$go$private$printer$emitEntityName(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Left);
         Printer.$go$private$printer$writePunctuation(p, ".");
         Printer.$go$private$printer$emitIdentifierName(p, Node__from_ast.AsIdentifier((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Right));
         const __gotots_receiver_21 = p;
         const __gotots_store_17 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_29 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_29 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_17, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_30 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_21, __gotots_argument_29, __gotots_argument_30);
     }
@@ -7520,7 +7538,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_564 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_290, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_564 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_290, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_264, __gotots_argument_564);
         const __gotots_receiver_265 = p;
         const __gotots_store_291 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -7531,7 +7549,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_565 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_291, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_565 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_291, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_566 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_265, __gotots_argument_565, __gotots_argument_566);
         const __gotots_receiver_266 = p;
@@ -7543,7 +7561,7 @@ export class Printer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     LiteralExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.LiteralExpressionBase).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_567 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_292, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_567 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_292, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_568 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_266, __gotots_argument_567, __gotots_argument_568);
     }
@@ -7553,14 +7571,14 @@ export class Printer {
         const __gotots_receiver_627 = p;
         const __gotots_store_727 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1434 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_727, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1434 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_727, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_627, __gotots_argument_1434);
         Printer.$go$private$printer$writePunctuation(p, "...");
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type);
         const __gotots_receiver_628 = p;
         const __gotots_store_728 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1435 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_728, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1435 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_728, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1436 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_628, __gotots_argument_1435, __gotots_argument_1436);
     }
@@ -7569,7 +7587,7 @@ export class Printer {
         const __gotots_store_511 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 ReturnStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1009 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_511, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1009 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_511, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_461, __gotots_argument_1009);
         const __gotots_receiver_462 = p;
         const __gotots_argument_1010 = KindReturnKeyword$constant__from_ast();
@@ -7577,12 +7595,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     ReturnStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast>).value).StatementBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_1011 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_512, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1011 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_512, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1012 = WriteKindKeyword$constant();
         const __gotots_store_513 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 ReturnStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1013 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_513, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1013 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_513, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_462, __gotots_argument_1010, __gotots_argument_1011, __gotots_argument_1012, __gotots_argument_1013);
         if (!(ReturnStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast>).value).Expression === undefined)) {
             Printer.$go$private$printer$writeSpace(p);
@@ -7593,7 +7611,7 @@ export class Printer {
         const __gotots_store_514 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 ReturnStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReturnStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1014 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_514, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1014 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_514, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1015 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_463, __gotots_argument_1014, __gotots_argument_1015);
     }
@@ -7616,7 +7634,7 @@ export class Printer {
         const __gotots_receiver_389 = p;
         const __gotots_store_427 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_833 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_427, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_833 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_427, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_389, __gotots_argument_833);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceRelational$constant__from_ast());
         Printer.$go$private$printer$writeSpace(p);
@@ -7626,7 +7644,7 @@ export class Printer {
         const __gotots_receiver_390 = p;
         const __gotots_store_428 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_834 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_428, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_834 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_428, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_835 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_390, __gotots_argument_834, __gotots_argument_835);
     }
@@ -7635,12 +7653,12 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_97 = p;
         const __gotots_store_103 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_160 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_103, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_160 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_103, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_97, __gotots_argument_160);
         Printer.$go$private$printer$writeTrailingSemicolon(p);
         const __gotots_receiver_98 = p;
         const __gotots_store_104 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_161 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_104, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_161 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_104, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_162 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_98, __gotots_argument_161, __gotots_argument_162);
     }
@@ -7655,7 +7673,7 @@ export class Printer {
     }
     static $go$private$printer$emitShebangIfNeeded(p: Printer | undefined, node: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void {
         const __gotots_store_279 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_541 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_279, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_541 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_279, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         if (NodeIsSynthesized__from_ast(__gotots_argument_541)) {
             return;
         }
@@ -7678,7 +7696,7 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_194 = p;
         const __gotots_store_219 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_394 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_219, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_394 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_219, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_194, __gotots_argument_394);
         Printer.$go$private$printer$emitPropertyName(p, ShorthandPropertyAssignment__from_ast.Name(node));
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ObjectAssignmentInitializer === undefined)) {
@@ -7689,7 +7707,7 @@ export class Printer {
         }
         const __gotots_receiver_195 = p;
         const __gotots_store_220 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_395 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_220, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_395 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_220, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_396 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_195, __gotots_argument_395, __gotots_argument_396);
     }
@@ -7706,7 +7724,7 @@ export class Printer {
         Printer.$go$private$printer$writeLine(p);
         const __gotots_receiver_202 = p;
         const __gotots_store_228 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_410 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_228, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_410 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_228, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_202, __gotots_argument_410);
         Printer.$go$private$printer$generateAllNames(p, ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements);
         let index = 0;
@@ -7720,12 +7738,12 @@ export class Printer {
             }
             const __gotots_receiver_204 = p;
             const __gotots_store_229 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_411 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_229, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_411 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_229, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_412 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
             state = Printer.$go$private$printer$emitDetachedCommentsBeforeStatementList(__gotots_receiver_204, __gotots_argument_411, __gotots_argument_412);
             const __gotots_receiver_205 = p;
             const __gotots_store_230 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_413 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_230, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_413 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_230, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitHelpers(__gotots_receiver_205, __gotots_argument_413);
             if (((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.IsDeclarationFile) {
                 Printer.$go$private$printer$emitTripleSlashDirectives(p, node);
@@ -7734,7 +7752,7 @@ export class Printer {
         else {
             const __gotots_receiver_206 = p;
             const __gotots_store_231 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_414 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_231, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_414 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_231, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_415 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
             state = Printer.$go$private$printer$emitDetachedCommentsBeforeStatementList(__gotots_receiver_206, __gotots_argument_414, __gotots_argument_415);
         }
@@ -7743,7 +7761,7 @@ export class Printer {
             Printer.$go$private$printer$emitStatement($argument0, $argument1);
         };
         const __gotots_store_232 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_417 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_232, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_417 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_232, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_418 = ((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements;
         const __gotots_argument_419 = LFMultiLine$constant();
         const __gotots_argument_420 = index;
@@ -7751,11 +7769,11 @@ export class Printer {
         Printer.$go$private$printer$emitListRange(__gotots_receiver_207, __gotots_argument_416, __gotots_argument_417, __gotots_argument_418, __gotots_argument_419, __gotots_argument_420, __gotots_argument_421);
         const __gotots_receiver_208 = p;
         const __gotots_store_233 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_422 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_233, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_422 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_233, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_208, __gotots_argument_422);
         const __gotots_receiver_209 = p;
         const __gotots_store_234 = NodeBase__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_423 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_234, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_423 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_234, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_424 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
         const __gotots_argument_425 = state;
         Printer.$go$private$printer$emitDetachedCommentsAfterStatementList(__gotots_receiver_209, __gotots_argument_423, __gotots_argument_424, __gotots_argument_425);
@@ -7860,23 +7878,23 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_196 = p;
         const __gotots_store_221 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_397 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_221, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_397 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_221, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_196, __gotots_argument_397);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression === undefined)) {
             const __gotots_receiver_197 = p;
             const __gotots_argument_398 = KindDotDotDotToken$constant__from_ast();
             const __gotots_store_222 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            const __gotots_argument_399 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_222, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_399 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_222, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_400 = WriteKindPunctuation$constant();
             const __gotots_store_223 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_401 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_223, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_401 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_223, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_197, __gotots_argument_398, __gotots_argument_399, __gotots_argument_400, __gotots_argument_401);
             Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceDisallowComma$constant__from_ast());
         }
         const __gotots_receiver_198 = p;
         const __gotots_store_224 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_402 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_224, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_402 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_224, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_403 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_198, __gotots_argument_402, __gotots_argument_403);
     }
@@ -7886,24 +7904,24 @@ export class Printer {
         const __gotots_receiver_369 = p;
         const __gotots_store_405 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_792 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_405, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_792 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_405, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_369, __gotots_argument_792);
         const __gotots_receiver_370 = p;
         const __gotots_argument_793 = KindDotDotDotToken$constant__from_ast();
         const __gotots_store_406 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-        const __gotots_argument_794 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_406, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_794 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_406, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_795 = WriteKindPunctuation$constant();
         const __gotots_store_407 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_796 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_407, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_796 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_407, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_370, __gotots_argument_793, __gotots_argument_794, __gotots_argument_795, __gotots_argument_796);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceDisallowComma$constant__from_ast());
         const __gotots_receiver_371 = p;
         const __gotots_store_408 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_797 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_408, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_797 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_408, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_798 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_371, __gotots_argument_797, __gotots_argument_798);
     }
@@ -8056,7 +8074,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         StringLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_559 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_287, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_559 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_287, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_261, __gotots_argument_559);
         const __gotots_receiver_262 = p;
         const __gotots_store_288 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -8068,7 +8086,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         StringLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_560 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_288, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_560 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_288, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_561 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_262, __gotots_argument_560, __gotots_argument_561);
         const __gotots_receiver_263 = p;
@@ -8081,7 +8099,7 @@ export class Printer {
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                         StringLiteral__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_562 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_289, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_562 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_289, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_563 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_263, __gotots_argument_562, __gotots_argument_563);
     }
@@ -8091,18 +8109,18 @@ export class Printer {
         const __gotots_receiver_470 = p;
         const __gotots_store_522 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1033 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_522, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1033 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_522, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_470, __gotots_argument_1033);
         const __gotots_receiver_471 = p;
         const __gotots_argument_1034 = KindSwitchKeyword$constant__from_ast();
         const __gotots_store_523 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1035 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_523, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1035 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_523, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1036 = WriteKindKeyword$constant();
         const __gotots_store_524 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1037 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_524, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1037 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_524, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_471, __gotots_argument_1034, __gotots_argument_1035, __gotots_argument_1036, __gotots_argument_1037);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_472 = p;
@@ -8111,7 +8129,7 @@ export class Printer {
         const __gotots_argument_1040 = WriteKindPunctuation$constant();
         const __gotots_store_525 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1041 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_525, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1041 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_525, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_472, __gotots_argument_1038, __gotots_argument_1039, __gotots_argument_1040, __gotots_argument_1041);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
         const __gotots_receiver_473 = p;
@@ -8120,14 +8138,14 @@ export class Printer {
         const __gotots_argument_1044 = WriteKindPunctuation$constant();
         const __gotots_store_526 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1045 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_526, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1045 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_526, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_473, __gotots_argument_1042, __gotots_argument_1043, __gotots_argument_1044, __gotots_argument_1045);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitCaseBlock(p, Node__from_ast.AsCaseBlock((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CaseBlock));
         const __gotots_receiver_474 = p;
         const __gotots_store_527 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1046 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_527, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1046 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_527, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1047 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_474, __gotots_argument_1046, __gotots_argument_1047);
     }
@@ -8141,7 +8159,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             MemberExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_664 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_335, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_664 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_335, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_308, __gotots_argument_664);
         const __gotots_receiver_309 = p;
         const __gotots_argument_665: TaggedTemplateExpression__from_ast["Tag"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Tag;
@@ -8151,7 +8169,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             MemberExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_666 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_336, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_666 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_336, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitCallee(__gotots_receiver_309, __gotots_argument_665, __gotots_argument_666);
         const __gotots_receiver_310 = p;
         const __gotots_store_337 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -8160,7 +8178,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             MemberExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_667 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_337, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_667 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_337, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_668: TaggedTemplateExpression__from_ast["TypeArguments"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_310, __gotots_argument_667, __gotots_argument_668);
         Printer.$go$private$printer$writeSpace(p);
@@ -8172,7 +8190,7 @@ export class Printer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             MemberExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.MemberExpressionBase).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_669 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_338, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_669 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_338, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_670 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_311, __gotots_argument_669, __gotots_argument_670);
     }
@@ -8187,7 +8205,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_778 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_398, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_778 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_398, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_363, __gotots_argument_778);
         Printer.$go$private$printer$emitTemplateHead(p, Node__from_ast.AsTemplateHead((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Head));
         const __gotots_receiver_364 = p;
@@ -8201,7 +8219,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_780 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_399, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_780 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_399, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_781: TemplateExpression__from_ast["TemplateSpans"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TemplateSpans;
         const __gotots_argument_782 = LFTemplateExpressionSpans$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_364, __gotots_argument_779, __gotots_argument_780, __gotots_argument_781, __gotots_argument_782);
@@ -8213,7 +8231,7 @@ export class Printer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_783 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_400, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_783 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_400, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_784 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_365, __gotots_argument_783, __gotots_argument_784);
     }
@@ -8222,16 +8240,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_5 = p;
         const __gotots_store_2 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_4 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_4 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_5, __gotots_argument_4);
         const __gotots_receiver_6 = p;
         const __gotots_store_3 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_5 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_5 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_6 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_6, __gotots_argument_5, __gotots_argument_6);
         const __gotots_receiver_7 = p;
         const __gotots_store_4 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_4, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_8 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_7, __gotots_argument_7, __gotots_argument_8);
     }
@@ -8257,16 +8275,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_8 = p;
         const __gotots_store_5 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_8, __gotots_argument_9);
         const __gotots_receiver_9 = p;
         const __gotots_store_6 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_10 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_10 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_11 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_9, __gotots_argument_10, __gotots_argument_11);
         const __gotots_receiver_10 = p;
         const __gotots_store_7 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_12 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_12 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_13 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_10, __gotots_argument_12, __gotots_argument_13);
     }
@@ -8287,13 +8305,13 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_95 = p;
         const __gotots_store_101 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_157 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_101, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_157 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_101, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_95, __gotots_argument_157);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceComma$constant__from_ast());
         Printer.$go$private$printer$emitTemplateMiddleTail(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Literal);
         const __gotots_receiver_96 = p;
         const __gotots_store_102 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_158 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_102, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_158 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_102, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_159 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_96, __gotots_argument_158, __gotots_argument_159);
     }
@@ -8305,16 +8323,16 @@ export class Printer {
     } | undefined): void {
         const __gotots_receiver_11 = p;
         const __gotots_store_8 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_8, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_11, __gotots_argument_14);
         const __gotots_receiver_12 = p;
         const __gotots_store_9 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_15 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_15 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_9, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_16 = getLiteralTextFlagsNone$constant();
         Printer.$go$private$printer$emitLiteral(__gotots_receiver_12, __gotots_argument_15, __gotots_argument_16);
         const __gotots_receiver_13 = p;
         const __gotots_store_10 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_17 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_17 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_10, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_18 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_13, __gotots_argument_17, __gotots_argument_18);
     }
@@ -8324,7 +8342,7 @@ export class Printer {
         const __gotots_receiver_658 = p;
         const __gotots_store_759 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1493 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_759, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1493 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_759, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_658, __gotots_argument_1493);
         Printer.$go$private$printer$emitTemplateHead(p, Node__from_ast.AsTemplateHead((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Head));
         const __gotots_receiver_659 = p;
@@ -8333,14 +8351,14 @@ export class Printer {
         };
         const __gotots_store_760 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1495 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_760, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1495 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_760, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1496: TemplateLiteralTypeNode__from_ast["TemplateSpans"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TemplateSpans;
         const __gotots_argument_1497 = LFTemplateExpressionSpans$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_659, __gotots_argument_1494, __gotots_argument_1495, __gotots_argument_1496, __gotots_argument_1497);
         const __gotots_receiver_660 = p;
         const __gotots_store_761 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1498 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_761, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1498 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_761, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1499 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_660, __gotots_argument_1498, __gotots_argument_1499);
     }
@@ -8350,14 +8368,14 @@ export class Printer {
         const __gotots_receiver_661 = p;
         const __gotots_store_762 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1500 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_762, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1500 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_762, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_661, __gotots_argument_1500);
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type);
         Printer.$go$private$printer$emitTemplateMiddleTail(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Literal);
         const __gotots_receiver_662 = p;
         const __gotots_store_763 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1501 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_763, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1501 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_763, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1502 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_662, __gotots_argument_1501, __gotots_argument_1502);
     }
@@ -8370,13 +8388,13 @@ export class Printer {
         const __gotots_receiver_641 = p;
         const __gotots_store_741 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1460 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_741, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1460 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_741, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_641, __gotots_argument_1460);
         Printer.$go$private$printer$writeKeyword(p, "this");
         const __gotots_receiver_642 = p;
         const __gotots_store_742 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1461 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_742, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1461 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_742, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1462 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_642, __gotots_argument_1461, __gotots_argument_1462);
     }
@@ -8386,18 +8404,18 @@ export class Printer {
         const __gotots_receiver_478 = p;
         const __gotots_store_531 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1055 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_531, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1055 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_531, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_478, __gotots_argument_1055);
         const __gotots_receiver_479 = p;
         const __gotots_argument_1056 = KindThrowKeyword$constant__from_ast();
         const __gotots_store_532 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1057 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_532, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1057 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_532, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1058 = WriteKindKeyword$constant();
         const __gotots_store_533 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1059 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_533, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1059 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_533, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_479, __gotots_argument_1056, __gotots_argument_1057, __gotots_argument_1058, __gotots_argument_1059);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpressionNoASI(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
@@ -8405,7 +8423,7 @@ export class Printer {
         const __gotots_receiver_480 = p;
         const __gotots_store_534 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1060 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_534, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1060 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_534, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1061 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_480, __gotots_argument_1060, __gotots_argument_1061);
     }
@@ -8646,18 +8664,18 @@ export class Printer {
         const __gotots_receiver_481 = p;
         const __gotots_store_535 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1062 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_535, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1062 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_535, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_481, __gotots_argument_1062);
         const __gotots_receiver_482 = p;
         const __gotots_argument_1063 = KindTryKeyword$constant__from_ast();
         const __gotots_store_536 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1064 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_536, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1064 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_536, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1065 = WriteKindKeyword$constant();
         const __gotots_store_537 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1066 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_537, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1066 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_537, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_482, __gotots_argument_1063, __gotots_argument_1064, __gotots_argument_1065, __gotots_argument_1066);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitBlock(p, Node__from_ast.AsBlock((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TryBlock));
@@ -8665,7 +8683,7 @@ export class Printer {
             const __gotots_receiver_483 = p;
             const __gotots_store_538 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1067 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_538, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1067 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_538, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_1068: TryStatement__from_ast["TryBlock"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TryBlock;
             const __gotots_argument_1069: TryStatement__from_ast["CatchClause"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CatchClause;
             Printer.$go$private$printer$writeLineOrSpace(__gotots_receiver_483, __gotots_argument_1067, __gotots_argument_1068, __gotots_argument_1069);
@@ -8675,7 +8693,7 @@ export class Printer {
             const __gotots_receiver_484 = p;
             const __gotots_store_539 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1070 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_539, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1070 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_539, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_1071 = Coalesce$PointerTo_Named_ast$Node$Named_ast$Node((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CatchClause, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TryBlock);
             const __gotots_argument_1072: TryStatement__from_ast["FinallyBlock"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FinallyBlock;
             Printer.$go$private$printer$writeLineOrSpace(__gotots_receiver_484, __gotots_argument_1070, __gotots_argument_1071, __gotots_argument_1072);
@@ -8685,7 +8703,7 @@ export class Printer {
             const __gotots_argument_1075 = WriteKindKeyword$constant();
             const __gotots_store_540 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_1076 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_540, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1076 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_540, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             Printer.$go$private$printer$emitToken(__gotots_receiver_485, __gotots_argument_1073, __gotots_argument_1074, __gotots_argument_1075, __gotots_argument_1076);
             Printer.$go$private$printer$writeSpace(p);
             Printer.$go$private$printer$emitBlock(p, Node__from_ast.AsBlock((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FinallyBlock));
@@ -8693,7 +8711,7 @@ export class Printer {
         const __gotots_receiver_486 = p;
         const __gotots_store_541 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1077 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_541, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1077 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_541, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1078 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_486, __gotots_argument_1077, __gotots_argument_1078);
     }
@@ -8706,23 +8724,23 @@ export class Printer {
         const __gotots_receiver_618 = p;
         const __gotots_store_717 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1410 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_717, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1410 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_717, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_618, __gotots_argument_1410);
         const __gotots_receiver_619 = p;
         const __gotots_argument_1411 = KindOpenBracketToken$constant__from_ast();
         const __gotots_store_718 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1412 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_718, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1412 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_718, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1413 = WriteKindPunctuation$constant();
         const __gotots_store_719 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1414 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_719, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1414 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_719, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_619, __gotots_argument_1411, __gotots_argument_1412, __gotots_argument_1413, __gotots_argument_1414);
         const __gotots_receiver_620 = p;
         const __gotots_store_720 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1415 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_720, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1415 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_720, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1416 = Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_620, __gotots_argument_1415);
         const __gotots_argument_1417 = LFSingleLineTupleTypeElements$constant();
         const __gotots_argument_1418 = LFMultiLineTupleTypeElements$constant();
@@ -8733,7 +8751,7 @@ export class Printer {
         };
         const __gotots_store_721 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1420 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_721, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1420 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_721, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1421: TupleTypeNode__from_ast["Elements"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Elements;
         const __gotots_argument_1422 = new ListFormat(flags.$value | LFNoSpaceIfEmpty$constant().$value);
         Printer.$go$private$printer$emitList(__gotots_receiver_621, __gotots_argument_1419, __gotots_argument_1420, __gotots_argument_1421, __gotots_argument_1422);
@@ -8743,12 +8761,12 @@ export class Printer {
         const __gotots_argument_1425 = WriteKindPunctuation$constant();
         const __gotots_store_722 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1426 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_722, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1426 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_722, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_622, __gotots_argument_1423, __gotots_argument_1424, __gotots_argument_1425, __gotots_argument_1426);
         const __gotots_receiver_623 = p;
         const __gotots_store_723 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1427 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_723, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1427 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_723, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1428 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_623, __gotots_argument_1427, __gotots_argument_1428);
     }
@@ -8757,15 +8775,15 @@ export class Printer {
         const __gotots_store_576 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1140 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_576, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1140 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_576, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_517, __gotots_argument_1140);
         const __gotots_receiver_518 = p;
         const __gotots_store_577 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1141 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_577, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1141 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_577, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_578 = TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value);
-        const __gotots_argument_1142 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_578, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_1142 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_578, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_1143 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_518, __gotots_argument_1141, __gotots_argument_1142, __gotots_argument_1143);
         Printer.$go$private$printer$writeKeyword(p, "type");
@@ -8775,7 +8793,7 @@ export class Printer {
         const __gotots_store_579 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1144 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_579, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1144 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_579, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1145 = TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value).TypeParameters;
         Printer.$go$private$printer$emitTypeParameters(__gotots_receiver_519, __gotots_argument_1144, __gotots_argument_1145);
         Printer.$go$private$printer$writeSpace(p);
@@ -8787,7 +8805,7 @@ export class Printer {
         const __gotots_store_580 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 TypeAliasDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1146 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_580, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1146 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_580, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1147 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_520, __gotots_argument_1146, __gotots_argument_1147);
     }
@@ -8817,7 +8835,7 @@ export class Printer {
         const __gotots_store_339 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_671 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_339, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_671 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_339, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_312, __gotots_argument_671);
         Printer.$go$private$printer$writePunctuation(p, "<");
         Printer.$go$private$printer$emitTypeNodeOutsideExtends(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Type);
@@ -8827,7 +8845,7 @@ export class Printer {
         const __gotots_store_340 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_672 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_340, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_672 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_340, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_673 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_313, __gotots_argument_672, __gotots_argument_673);
     }
@@ -8877,13 +8895,13 @@ export class Printer {
         const __gotots_store_708 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1392 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_708, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1392 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_708, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_609, __gotots_argument_1392);
         const __gotots_receiver_610 = p;
         const __gotots_store_709 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1393 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_709, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1393 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_709, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$pushNameGenerationScope(__gotots_receiver_610, __gotots_argument_1393);
         Printer.$go$private$printer$generateAllMemberNames(p, TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).Members);
         Printer.$go$private$printer$writePunctuation(p, "{");
@@ -8891,7 +8909,7 @@ export class Printer {
         const __gotots_store_710 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1394 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_710, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1394 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_710, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1395 = Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_611, __gotots_argument_1394);
         const __gotots_argument_1396 = LFSingleLineTypeLiteralMembers$constant();
         const __gotots_argument_1397 = LFMultiLineTypeLiteralMembers$constant();
@@ -8903,7 +8921,7 @@ export class Printer {
         const __gotots_store_711 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1399 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_711, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1399 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_711, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1400 = TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).Members;
         const __gotots_argument_1401 = new ListFormat(flags.$value | LFNoSpaceIfEmpty$constant().$value);
         Printer.$go$private$printer$emitList(__gotots_receiver_612, __gotots_argument_1398, __gotots_argument_1399, __gotots_argument_1400, __gotots_argument_1401);
@@ -8912,13 +8930,13 @@ export class Printer {
         const __gotots_store_712 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1402 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_712, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1402 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_712, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$popNameGenerationScope(__gotots_receiver_613, __gotots_argument_1402);
         const __gotots_receiver_614 = p;
         const __gotots_store_713 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeLiteralNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeLiteralNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1403 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_713, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1403 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_713, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1404 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_614, __gotots_argument_1403, __gotots_argument_1404);
     }
@@ -9105,7 +9123,7 @@ export class Printer {
         const __gotots_store_369 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_719 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_369, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_719 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_369, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_338, __gotots_argument_719);
         const __gotots_receiver_339 = p;
         const __gotots_argument_720 = KindTypeOfKeyword$constant__from_ast();
@@ -9113,12 +9131,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                     UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_721 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_370, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_721 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_370, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_722 = WriteKindKeyword$constant();
         const __gotots_store_371 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_723 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_371, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_723 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_371, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_339, __gotots_argument_720, __gotots_argument_721, __gotots_argument_722, __gotots_argument_723);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceUnary$constant__from_ast());
@@ -9126,7 +9144,7 @@ export class Printer {
         const __gotots_store_372 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_724 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_372, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_724 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_372, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_725 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_340, __gotots_argument_724, __gotots_argument_725);
     }
@@ -9135,7 +9153,7 @@ export class Printer {
         const __gotots_store_743 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1463 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_743, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1463 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_743, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_643, __gotots_argument_1463);
         const __gotots_receiver_644 = p;
         const __gotots_argument_1464 = TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).Operator;
@@ -9143,12 +9161,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                     TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).TypeNodeBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_1465 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_744, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1465 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_744, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1466 = WriteKindKeyword$constant();
         const __gotots_store_745 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1467 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_745, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1467 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_745, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_644, __gotots_argument_1464, __gotots_argument_1465, __gotots_argument_1466, __gotots_argument_1467);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitTypeNode(p, TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).Type, IfElse$Named_ast$TypePrecedence(TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).Operator === KindReadonlyKeyword$constant__from_ast(), TypePrecedencePostfix$constant__from_ast(), TypePrecedenceTypeOperator$constant__from_ast()));
@@ -9156,7 +9174,7 @@ export class Printer {
         const __gotots_store_746 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 TypeOperatorNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeOperatorNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1468 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_746, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1468 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_746, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1469 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_645, __gotots_argument_1468, __gotots_argument_1469);
     }
@@ -9164,14 +9182,14 @@ export class Printer {
         const __gotots_receiver_24 = p;
         const __gotots_store_20 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_34 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_34 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_20, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_24, __gotots_argument_34);
         const __gotots_receiver_25 = p;
         const __gotots_store_21 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_35 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_35 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_21, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_22 = TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value);
-        const __gotots_argument_36 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_22, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_36 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_22, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_37 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_25, __gotots_argument_35, __gotots_argument_36, __gotots_argument_37);
         Printer.$go$private$printer$emitBindingIdentifier(p, Node__from_ast.AsIdentifier(TypeParameterDeclaration__from_ast.Name(node)));
@@ -9190,7 +9208,7 @@ export class Printer {
         const __gotots_receiver_26 = p;
         const __gotots_store_23 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_38 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_38 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_23, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_39 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_26, __gotots_argument_38, __gotots_argument_39);
     }
@@ -9216,7 +9234,7 @@ export class Printer {
         const __gotots_receiver_586 = p;
         const __gotots_store_684 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1356 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_684, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1356 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_684, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_586, __gotots_argument_1356);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AssertsModifier === undefined)) {
             Printer.$go$private$printer$emitTokenNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AssertsModifier);
@@ -9232,7 +9250,7 @@ export class Printer {
         const __gotots_receiver_587 = p;
         const __gotots_store_685 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_1357 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_685, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1357 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_685, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1358 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_587, __gotots_argument_1357, __gotots_argument_1358);
     }
@@ -9260,7 +9278,7 @@ export class Printer {
         const __gotots_store_705 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1387 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_705, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1387 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_705, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_606, __gotots_argument_1387);
         Printer.$go$private$printer$writeKeyword(p, "typeof");
         Printer.$go$private$printer$writeSpace(p);
@@ -9269,14 +9287,14 @@ export class Printer {
         const __gotots_store_706 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1388 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_706, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1388 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_706, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1389 = NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_607, __gotots_argument_1388, __gotots_argument_1389);
         const __gotots_receiver_608 = p;
         const __gotots_store_707 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 NodeWithTypeArgumentsBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeWithTypeArgumentsBase).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1390 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_707, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1390 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_707, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1391 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_608, __gotots_argument_1390, __gotots_argument_1391);
     }
@@ -9286,7 +9304,7 @@ export class Printer {
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 (void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
                     TypeReferenceNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1359 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_686, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1359 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_686, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_588, __gotots_argument_1359);
         Printer.$go$private$printer$emitEntityName(p, TypeReferenceNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).TypeName);
         const __gotots_receiver_589 = p;
@@ -9294,7 +9312,7 @@ export class Printer {
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 (void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
                     TypeReferenceNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1360 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_687, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1360 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_687, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1361 = (void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
             TypeReferenceNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeArguments;
         Printer.$go$private$printer$emitTypeArguments(__gotots_receiver_589, __gotots_argument_1360, __gotots_argument_1361);
@@ -9303,7 +9321,7 @@ export class Printer {
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 (void NodeWithTypeArgumentsBase__from_ast.$storageOf, (void NodeWithTypeArgumentsBase__from_ast.$fromStorage,
                     TypeReferenceNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeReferenceNode__from_ast>).value).NodeWithTypeArgumentsBase)).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1362 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_688, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1362 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_688, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1363 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_590, __gotots_argument_1362, __gotots_argument_1363);
     }
@@ -9312,7 +9330,7 @@ export class Printer {
         const __gotots_store_729 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 UnionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1437 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_729, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1437 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_729, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_629, __gotots_argument_1437);
         const __gotots_receiver_630 = p;
         const __gotots_argument_1438 = ($argument0: Printer | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): void => {
@@ -9321,7 +9339,7 @@ export class Printer {
         const __gotots_store_730 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 UnionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1439 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_730, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1439 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_730, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1440 = (void UnionOrIntersectionTypeNodeBase__from_ast.$storageOf, (void UnionOrIntersectionTypeNodeBase__from_ast.$fromStorage,
             UnionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).UnionOrIntersectionTypeNodeBase)).Types;
         const __gotots_argument_1441 = LFUnionTypeConstituents$constant();
@@ -9330,7 +9348,7 @@ export class Printer {
         const __gotots_store_731 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void TypeNodeBase__from_ast.$storageOf, (void TypeNodeBase__from_ast.$fromStorage,
                 UnionTypeNode__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UnionTypeNode__from_ast>).value).TypeNodeBase)).NodeBase));
-        const __gotots_argument_1442 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_731, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1442 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_731, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1443 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_631, __gotots_argument_1442, __gotots_argument_1443);
     }
@@ -9341,7 +9359,7 @@ export class Printer {
         const __gotots_receiver_99 = p;
         const __gotots_store_105 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_163 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_105, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_163 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_105, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_99, __gotots_argument_163);
         Printer.$go$private$printer$emitBindingName(p, VariableDeclaration__from_ast.Name(node));
         Printer.$go$private$printer$emitPunctuationNode(p, VariableDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).ExclamationToken);
@@ -9351,12 +9369,12 @@ export class Printer {
         const __gotots_argument_165 = greatestEnd(Node__from_ast.End(VariableDeclaration__from_ast.Name(node)), RuntimeSlice.literal<$goInterface$Interface_Method_printer$End_void_to_int | undefined>([new $goInterfaceAdapter$PointerTo_Named_ast$Node(VariableDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).Type), new $goInterfaceAdapter$PointerTo_Named_ast$Node(EmitContext.GetTypeNode((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext, VariableDeclaration__from_ast.Name(node)))]));
         const __gotots_store_106 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_166 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_106, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_166 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_106, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitInitializer(__gotots_receiver_100, __gotots_argument_164, __gotots_argument_165, __gotots_argument_166);
         const __gotots_receiver_101 = p;
         const __gotots_store_107 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).NodeBase));
-        const __gotots_argument_167 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_107, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_167 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_107, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_168 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_101, __gotots_argument_167, __gotots_argument_168);
     }
@@ -9364,7 +9382,7 @@ export class Printer {
         const __gotots_receiver_102 = p;
         const __gotots_store_108 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-        const __gotots_argument_169 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_108, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_169 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_108, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_102, __gotots_argument_169);
         {
             let __gotots_switch_selection_0 = -1;
@@ -9373,7 +9391,7 @@ export class Printer {
                 if (!__gotots_switch_match_0) {
                     const __gotots_store_109 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-                    const __gotots_argument_170 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_109, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_170 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_109, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_switch_match_0 = IsVarLet__from_ast(__gotots_argument_170);
                 }
                 if (__gotots_switch_match_0) {
@@ -9385,7 +9403,7 @@ export class Printer {
                 if (!__gotots_switch_match_1) {
                     const __gotots_store_110 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-                    const __gotots_argument_171 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_110, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_171 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_110, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_switch_match_1 = IsVarConst__from_ast(__gotots_argument_171);
                 }
                 if (__gotots_switch_match_1) {
@@ -9397,7 +9415,7 @@ export class Printer {
                 if (!__gotots_switch_match_2) {
                     const __gotots_store_111 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-                    const __gotots_argument_172 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_111, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_172 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_111, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_switch_match_2 = IsVarUsing__from_ast(__gotots_argument_172);
                 }
                 if (__gotots_switch_match_2) {
@@ -9409,7 +9427,7 @@ export class Printer {
                 if (!__gotots_switch_match_3) {
                     const __gotots_store_112 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-                    const __gotots_argument_173 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_112, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_173 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_112, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_switch_match_3 = IsVarAwaitUsing__from_ast(__gotots_argument_173);
                 }
                 if (__gotots_switch_match_3) {
@@ -9451,14 +9469,14 @@ export class Printer {
         };
         const __gotots_store_113 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-        const __gotots_argument_175 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_113, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_175 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_113, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_176 = VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).Declarations;
         const __gotots_argument_177 = LFVariableDeclarationList$constant();
         Printer.$go$private$printer$emitList(__gotots_receiver_103, __gotots_argument_174, __gotots_argument_175, __gotots_argument_176, __gotots_argument_177);
         const __gotots_receiver_104 = p;
         const __gotots_store_114 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             VariableDeclarationList__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclarationList__from_ast>).value).NodeBase));
-        const __gotots_argument_178 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_114, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_178 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_114, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_179 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_104, __gotots_argument_178, __gotots_argument_179);
     }
@@ -9470,15 +9488,15 @@ export class Printer {
         const __gotots_store_450 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 VariableStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_870 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_450, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_870 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_450, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_409, __gotots_argument_870);
         const __gotots_receiver_410 = p;
         const __gotots_store_451 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 VariableStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_871 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_451, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_871 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_451, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_store_452 = VariableStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value);
-        const __gotots_argument_872 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_452, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_872 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_452, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_873 = false;
         Printer.$go$private$printer$emitModifierList(__gotots_receiver_410, __gotots_argument_871, __gotots_argument_872, __gotots_argument_873);
         Printer.$go$private$printer$emitVariableDeclarationList(p, Node__from_ast.AsVariableDeclarationList(VariableStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value).DeclarationList));
@@ -9487,7 +9505,7 @@ export class Printer {
         const __gotots_store_453 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 VariableStatement__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_874 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_453, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_874 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_453, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_875 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_411, __gotots_argument_874, __gotots_argument_875);
     }
@@ -9498,7 +9516,7 @@ export class Printer {
         const __gotots_store_373 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_726 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_373, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_726 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_373, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_341, __gotots_argument_726);
         const __gotots_receiver_342 = p;
         const __gotots_argument_727 = KindVoidKeyword$constant__from_ast();
@@ -9506,12 +9524,12 @@ export class Printer {
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                     UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase)).NodeDefault));
-        const __gotots_argument_728 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_374, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_728 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_374, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_729 = WriteKindKeyword$constant();
         const __gotots_store_375 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_730 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_375, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_730 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_375, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_342, __gotots_argument_727, __gotots_argument_728, __gotots_argument_729, __gotots_argument_730);
         Printer.$go$private$printer$writeSpace(p);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceUnary$constant__from_ast());
@@ -9519,7 +9537,7 @@ export class Printer {
         const __gotots_store_376 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_731 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_376, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_731 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_376, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_732 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_343, __gotots_argument_731, __gotots_argument_732);
     }
@@ -9536,28 +9554,28 @@ export class Printer {
         const __gotots_receiver_429 = p;
         const __gotots_store_473 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_920 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_473, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_920 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_473, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_429, __gotots_argument_920);
         const __gotots_receiver_430 = p;
         const __gotots_store_474 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_921 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_474, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_921 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_474, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_922: WhileStatement__from_ast["Expression"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression;
         const __gotots_store_475 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_923 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_475, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_923 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_475, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         Printer.$go$private$printer$emitWhileClause(__gotots_receiver_430, __gotots_argument_921, __gotots_argument_922, __gotots_argument_923);
         const __gotots_receiver_431 = p;
         const __gotots_store_476 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_924 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_476, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_924 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_476, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_925 = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_431, __gotots_argument_924, __gotots_argument_925);
         const __gotots_receiver_432 = p;
         const __gotots_store_477 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.IterationStatementBase.StatementBase).NodeBase));
-        const __gotots_argument_926 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_477, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_926 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_477, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_927 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_432, __gotots_argument_926, __gotots_argument_927);
     }
@@ -9567,18 +9585,18 @@ export class Printer {
         const __gotots_receiver_464 = p;
         const __gotots_store_515 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1016 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_515, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1016 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_515, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_464, __gotots_argument_1016);
         const __gotots_receiver_465 = p;
         const __gotots_argument_1017 = KindWithKeyword$constant__from_ast();
         const __gotots_store_516 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-        const __gotots_argument_1018 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_516, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_1018 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_516, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_1019 = WriteKindKeyword$constant();
         const __gotots_store_517 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1020 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_517, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1020 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_517, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let pos = Printer.$go$private$printer$emitToken(__gotots_receiver_465, __gotots_argument_1017, __gotots_argument_1018, __gotots_argument_1019, __gotots_argument_1020);
         Printer.$go$private$printer$writeSpace(p);
         const __gotots_receiver_466 = p;
@@ -9587,7 +9605,7 @@ export class Printer {
         const __gotots_argument_1023 = WriteKindPunctuation$constant();
         const __gotots_store_518 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1024 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_518, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1024 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_518, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_466, __gotots_argument_1021, __gotots_argument_1022, __gotots_argument_1023, __gotots_argument_1024);
         Printer.$go$private$printer$emitExpression(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression, OperatorPrecedenceLowest$constant__from_ast());
         const __gotots_receiver_467 = p;
@@ -9596,18 +9614,18 @@ export class Printer {
         const __gotots_argument_1027 = WriteKindPunctuation$constant();
         const __gotots_store_519 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1028 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_519, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1028 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_519, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_467, __gotots_argument_1025, __gotots_argument_1026, __gotots_argument_1027, __gotots_argument_1028);
         const __gotots_receiver_468 = p;
         const __gotots_store_520 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1029 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_520, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1029 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_520, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1030: WithStatement__from_ast["Statement"] = (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Statement;
         Printer.$go$private$printer$emitEmbeddedStatement(__gotots_receiver_468, __gotots_argument_1029, __gotots_argument_1030);
         const __gotots_receiver_469 = p;
         const __gotots_store_521 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_1031 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_521, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1031 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_521, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1032 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_469, __gotots_argument_1031, __gotots_argument_1032);
     }
@@ -9617,18 +9635,18 @@ export class Printer {
         const __gotots_receiver_366 = p;
         const __gotots_store_401 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_785 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_401, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_785 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_401, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let state = Printer.$go$private$printer$enterNode(__gotots_receiver_366, __gotots_argument_785);
         const __gotots_receiver_367 = p;
         const __gotots_argument_786 = KindYieldKeyword$constant__from_ast();
         const __gotots_store_402 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-        const __gotots_argument_787 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_402, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_argument_787 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_402, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         const __gotots_argument_788 = WriteKindKeyword$constant();
         const __gotots_store_403 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_789 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_403, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_789 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_403, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         Printer.$go$private$printer$emitToken(__gotots_receiver_367, __gotots_argument_786, __gotots_argument_787, __gotots_argument_788, __gotots_argument_789);
         Printer.$go$private$printer$emitPunctuationNode(p, (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AsteriskToken);
         if (!((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Expression === undefined)) {
@@ -9638,7 +9656,7 @@ export class Printer {
         const __gotots_receiver_368 = p;
         const __gotots_store_404 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase));
-        const __gotots_argument_790 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_404, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_790 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_404, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_791 = printerState.$copy(state);
         Printer.$go$private$printer$exitNode(__gotots_receiver_368, __gotots_argument_790, __gotots_argument_791);
     }
@@ -9886,7 +9904,7 @@ export class Printer {
         const __gotots_store_647 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 BinaryExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).ExpressionBase)).NodeBase));
-        const __gotots_argument_1303 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_647, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1303 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_647, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let precedence = GetExpressionPrecedence__from_ast(__gotots_argument_1303);
         leftPrec = precedence;
         rightPrec = precedence;
@@ -10216,7 +10234,7 @@ export class Printer {
                     const __gotots_equal_operand_0 = GetSourceFileOfNode__from_ast(node);
                     const __gotots_receiver_212 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext;
                     const __gotots_store_238 = NodeBase__from_ast.$storageOf((((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_435 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_238, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_435 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_238, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_logical_result_6 = !tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, Node__from_ast.AsSourceFile(EmitContext.MostOriginal(__gotots_receiver_212, __gotots_argument_435)));
                 }
                 if (__gotots_logical_result_6) {
@@ -10633,7 +10651,7 @@ export class Printer {
                     const __gotots_receiver_584 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_677, "NodeFactory");
                     const __gotots_argument_1349 = be;
                     const __gotots_store_678 = BinaryExpression__from_ast.$storageOf(((be ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value);
-                    const __gotots_argument_1350 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_678, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                    const __gotots_argument_1350 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_678, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                     const __gotots_argument_1351 = Printer.$go$private$printer$parenthesizeExpressionForNoAsi(p, BinaryExpression__from_ast.$storageOf(((be ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Left);
                     const __gotots_argument_1352 = BinaryExpression__from_ast.$storageOf(((be ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).Type;
                     const __gotots_argument_1353 = BinaryExpression__from_ast.$storageOf(((be ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value).OperatorToken;
@@ -10697,7 +10715,7 @@ export class Printer {
             const __gotots_receiver_4 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext;
             const __gotots_receiver_3 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).emitContext;
             const __gotots_store_1 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_2 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_3 = EmitContext.MostOriginal(__gotots_receiver_3, __gotots_argument_2);
             const __gotots_binary_operand_0 = EmitContext.EmitFlags(__gotots_receiver_4, __gotots_argument_3);
             const __gotots_binary_operand_1 = EFExternalHelpers$constant();
@@ -10805,7 +10823,7 @@ export class Printer {
         const __gotots_store_656 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1330 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_656, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1330 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_656, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         if (Printer.$go$private$printer$shouldEmitOnSingleLine(__gotots_receiver_581, __gotots_argument_1330)) {
             return true;
         }
@@ -10815,7 +10833,7 @@ export class Printer {
         const __gotots_store_657 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1331 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_657, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1331 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_657, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         if (!NodeIsSynthesized__from_ast(__gotots_argument_1331) && !((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile === undefined) && !RangeIsOnSingleLine(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
             (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -10827,7 +10845,7 @@ export class Printer {
         const __gotots_store_658 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_1332 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_658, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1332 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_658, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_1333 = FirstOrNil$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf(((Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);
         const __gotots_argument_1334 = LFPreserveLines$constant();
         const __gotots_binary_operand_18 = Printer.$go$private$printer$getLeadingLineTerminatorCount(__gotots_receiver_582, __gotots_argument_1332, __gotots_argument_1333, __gotots_argument_1334);
@@ -10838,7 +10856,7 @@ export class Printer {
             const __gotots_store_659 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                     Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).StatementBase)).NodeBase));
-            const __gotots_argument_1335 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_659, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_1335 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_659, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_1336 = LastOrNil$PointerTo_Named_ast$Node(NodeList__from_ast.$storageOf(((Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes);
             const __gotots_argument_1337 = LFPreserveLines$constant();
             const __gotots_argument_1338 = TextRange__from_core.$copy(TextRange__from_core.$fromStorage(NodeList__from_ast.$storageOf(((Block__from_ast.$storageOf(((body ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Block__from_ast>).value).Statements ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Loc));
@@ -11626,11 +11644,11 @@ export function canEmitSimpleArrowHead(parentNode: tsonicTypeScriptRuntime.Locat
     const __gotots_store_664 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase)).NodeDefault));
-    const __gotots_binary_operand_22 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_664, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_binary_operand_22 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_664, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     const __gotots_store_665 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ExpressionBase__from_ast.$storageOf((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExpressionBase).NodeBase)).NodeDefault));
-    const __gotots_binary_operand_23 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_665, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_binary_operand_23 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_665, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     let __gotots_logical_result_21 = __gotots_binary_operand_22 === __gotots_binary_operand_23 && (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
         FunctionLikeWithBodyBase__from_ast.$storageOf((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).TypeParameters === undefined && (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
         FunctionLikeWithBodyBase__from_ast.$storageOf((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).FunctionLikeBase)).Type === undefined;
@@ -11649,7 +11667,7 @@ export function canEmitSimpleArrowHead(parentNode: tsonicTypeScriptRuntime.Locat
     let __gotots_logical_result_22 = __gotots_logical_result_21 && !NodeList__from_ast.HasTrailingComma(parameters);
     if (__gotots_logical_result_22) {
         const __gotots_store_668 = ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-        __gotots_logical_result_22 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_668, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)) === undefined;
+        __gotots_logical_result_22 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_668, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf)) === undefined;
     }
     return __gotots_logical_result_22 && ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).DotDotDotToken === undefined && ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).QuestionToken === undefined && ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Type === undefined && ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).Initializer === undefined && IsIdentifier__from_ast(ParameterDeclaration__from_ast.Name(parameter));
 }

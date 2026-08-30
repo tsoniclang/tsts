@@ -18,6 +18,24 @@ import { goUint64 } from "@gotots/runtime/integer.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goArraySlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class Vendor {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -381,7 +399,7 @@ export class CPUInfo {
     FeatureSet(): RuntimeSlice<gostring> {
         const __gotots_argument_0 = 0;
         const __gotots_store_2 = CPUInfo.$storageOf(this);
-        const __gotots_argument_1 = flagSet.$go$private$cpuid$nEnabled(tsonicTypeScriptRuntime.projectLocation<GoArray<uint64, 4>, flagSet>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "featureSet"), ($go$storage: GoArray<uint64, 4>): flagSet => {
+        const __gotots_argument_1 = flagSet.$go$private$cpuid$nEnabled(new $ProjectedPropertyLocation(__gotots_store_2, "featureSet", ($go$storage: GoArray<uint64, 4>): flagSet => {
             return new flagSet($go$storage);
         }, ($go$value: flagSet): GoArray<uint64, 4> => {
             return $go$value.$value;
@@ -411,7 +429,7 @@ export function Detect(): void {
     if (!($state.detectArmFlag === undefined)) {
         safe = !(($state.detectArmFlag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<bool>).value;
     }
-    addInfo(tsonicTypeScriptRuntime.projectLocation<CPUInfo$Storage, CPUInfo>(tsonicTypeScriptRuntime.propertyLocation($state, "CPU"), CPUInfo.$fromStorage, CPUInfo.$storageOf), safe);
+    addInfo(new $ProjectedPropertyLocation($state, "CPU", CPUInfo.$fromStorage, CPUInfo.$storageOf), safe);
     if (!($state.displayFeats === undefined) &&
         (($state.displayFeats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<bool>).value) {
         fmt__from_gostdlib.Println(RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("cpu features:"), new GoInterfaceAdapter(strings__from_gostdlib.Join(CPUInfo.$fromStorage($state.CPU).FeatureSet(), ","))]));
@@ -429,7 +447,7 @@ export function Detect(): void {
                     UNKNOWN$int) as int))) {
                 const __gotots_store_1 = (void CPUInfo.$storageOf, (void CPUInfo.$fromStorage,
                     $state.CPU));
-                flagSet.$go$private$cpuid$unset(tsonicTypeScriptRuntime.projectLocation<GoArray<uint64, 4>, flagSet>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "featureSet"), ($go$storage: GoArray<uint64, 4>): flagSet => {
+                flagSet.$go$private$cpuid$unset(new $ProjectedPropertyLocation(__gotots_store_1, "featureSet", ($go$storage: GoArray<uint64, 4>): flagSet => {
                     return new flagSet($go$storage);
                 }, ($go$value: flagSet): GoArray<uint64, 4> => {
                     return $go$value.$value;

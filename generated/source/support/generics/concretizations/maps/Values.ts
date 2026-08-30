@@ -24,10 +24,10 @@ export function Values$MapOf_Named_tspath$Path_To_PointerTo_Named_ast$SourceFile
         return $argument0;
     }, $argument0);
 }
-export function Values$MapOf_Named_tspath$Path_To_PointerTo_Named_compiler$redirectsFile$Named_tspath$Path$PointerTo_Named_compiler$redirectsFile($argument0: GoMapValue<Path__from_tspath, redirectsFile__from_compiler | undefined>): iter.Seq<redirectsFile__from_compiler | undefined> {
-    return generic_maps_kernel.MapsValuesKernel<GoMapValue<Path__from_tspath, redirectsFile__from_compiler | undefined>, Path__from_tspath, redirectsFile__from_compiler | undefined>(($argument0: GoMapValue<Path__from_tspath, redirectsFile__from_compiler | undefined>): GoMapValue<Path__from_tspath, redirectsFile__from_compiler | undefined> => {
+export function Values$MapOf_Named_tspath$Path_To_PointerTo_Named_compiler$redirectsFile$Named_tspath$Path$PointerTo_Named_compiler$redirectsFile($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>): iter.Seq<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined> {
+    return generic_maps_kernel.MapsValuesKernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>, Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>(($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined> => {
         return $argument0;
-    }, ($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
     }, $argument0);
 }

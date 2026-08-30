@@ -29,30 +29,18 @@ export function OrderedMap$Set$Interface_void$SliceOf_string($argument0: tsonicT
         return RuntimeSlice.nil<gostring>();
     }, $argument1, $argument2);
 }
-export function OrderedMap$Set$Named_project$WatcherID$PointerTo_Named_lsproto$FileSystemWatcher($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<WatcherID__from_project, {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined>> | undefined, $argument1: WatcherID__from_project, $argument2: {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined): void {
-    return OrderedMap__from_collections.Set$kernel<WatcherID__from_project, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>($argument0, ($argument0: WatcherID__from_project): WatcherID__from_project => {
+export function OrderedMap$Set$Named_project$WatcherID$PointerTo_Named_lsproto$FileSystemWatcher($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>> | undefined, $argument1: WatcherID__from_project, $argument2: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): void {
+    return OrderedMap__from_collections.Set$kernel<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>($argument0, ($argument0: WatcherID__from_project): WatcherID__from_project => {
         return $argument0;
     }, ($argument0: gostring): WatcherID__from_project => {
         return new WatcherID__from_project($argument0);
-    }, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): GoMapValue<WatcherID__from_project, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined> => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): GoMapValue<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined> => {
         return $goMap$MapOf_Named_project$WatcherID_To_PointerTo_Named_lsproto$FileSystemWatcher.make(0, []);
     }, ($argument0: WatcherID__from_project): gostring => {
         return $argument0.$value;
     }, (): WatcherID__from_project => {
         return new WatcherID__from_project("");
-    }, (): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return void 0;
     }, $argument1, $argument2);
 }
@@ -71,30 +59,18 @@ export function OrderedMap$Set$Named_tspath$Path$Named_tspath$Path($argument0: t
         return new Path__from_tspath("");
     }, $argument1, $argument2);
 }
-export function OrderedMap$Set$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined>> | undefined, $argument1: Path__from_tspath, $argument2: {
-    value: Project__from_project;
-} | undefined): void {
-    return OrderedMap__from_collections.Set$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
+export function OrderedMap$Set$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined, $argument1: Path__from_tspath, $argument2: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): void {
+    return OrderedMap__from_collections.Set$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): GoMapValue<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined> => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> => {
         return $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Project.make(0, []);
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;
     }, (): Path__from_tspath => {
         return new Path__from_tspath("");
-    }, (): {
-        value: Project__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return void 0;
     }, $argument1, $argument2);
 }

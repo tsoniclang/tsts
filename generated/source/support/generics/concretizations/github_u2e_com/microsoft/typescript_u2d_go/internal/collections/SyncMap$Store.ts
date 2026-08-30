@@ -22,8 +22,8 @@ import { typeRefDirectiveResolutionCacheKey as typeRefDirectiveResolutionCacheKe
 import { Entries as Entries__from_vfs } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/vfs/vfs.js";
 import { $goInterfaceAdapter$Named___go_module$typeRefDirectiveResolutionCacheKey, $goInterfaceAdapter$Named_incremental$FileEmitKind, $goInterfaceAdapter$Named_ls$KeywordCompletionFilters, $goInterfaceAdapter$Named_time$Duration, $goInterfaceAdapter$Named_time$Time, $goInterfaceAdapter$Named_tspath$Path, $goInterfaceAdapter$Named_vfs$Entries, $goInterfaceAdapter$PointerTo_Named___go_module$ResolvedTypeReferenceDirective, $goInterfaceAdapter$PointerTo_Named_ata$CachedTyping, $goInterfaceAdapter$PointerTo_Named_collections$SetOf_Named_tspath$Path, $goInterfaceAdapter$PointerTo_Named_execute$cachedSourceFile, $goInterfaceAdapter$PointerTo_Named_incremental$DiagnosticsOrBuildInfoDiagnosticsWithFileName, $goInterfaceAdapter$PointerTo_Named_incremental$FileInfo, $goInterfaceAdapter$PointerTo_Named_incremental$emitSignature, $goInterfaceAdapter$PointerTo_Named_incremental$emitUpdate, $goInterfaceAdapter$PointerTo_Named_symlinks$KnownDirectoryLink, $goInterfaceAdapter$PointerTo_Named_tsoptions$ParsedCommandLine, $goInterfaceAdapter$PointerTo_Named_tsoptions$SourceOutputAndProjectReference, $goInterfaceAdapter$SliceOf_PointerTo_Named_lsproto$CompletionItem, $goInterfaceAdapter$string, $goInterfaceAdapter$bool as GoInterfaceAdapter } from "../../../../../../../interface-adapters.js";
 import * as named_time from "@gotots/gostdlib/internal/facets/named-time.js";
-export function SyncMap$Store$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<typeRefDirectiveResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>> | undefined, $argument1: typeRefDirectiveResolutionCacheKey__from___go_module, $argument2: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined): void {
-    return SyncMap__from_collections.Store$kernel<typeRefDirectiveResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined): GoInterface | undefined => {
+export function SyncMap$Store$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<typeRefDirectiveResolutionCacheKey__from___go_module, ResolvedTypeReferenceDirective__from___go_module | undefined>> | undefined, $argument1: typeRefDirectiveResolutionCacheKey__from___go_module, $argument2: ResolvedTypeReferenceDirective__from___go_module | undefined): void {
+    return SyncMap__from_collections.Store$kernel<typeRefDirectiveResolutionCacheKey__from___go_module, ResolvedTypeReferenceDirective__from___go_module | undefined>($argument0, ($argument0: ResolvedTypeReferenceDirective__from___go_module | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named___go_module$ResolvedTypeReferenceDirective($argument0);
     }, ($argument0: typeRefDirectiveResolutionCacheKey__from___go_module): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named___go_module$typeRefDirectiveResolutionCacheKey(typeRefDirectiveResolutionCacheKey__from___go_module.$copy($argument0));
@@ -161,16 +161,8 @@ export function SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$Parsed
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
     }, $argument1, $argument2);
 }
-export function SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
-    value: SourceOutputAndProjectReference__from_tsoptions;
-} | undefined>> | undefined, $argument1: Path__from_tspath, $argument2: {
-    value: SourceOutputAndProjectReference__from_tsoptions;
-} | undefined): void {
-    return SyncMap__from_collections.Store$kernel<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>($argument0, ($argument0: {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined): GoInterface | undefined => {
+export function SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>> | undefined, $argument1: Path__from_tspath, $argument2: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined): void {
+    return SyncMap__from_collections.Store$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0);
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);

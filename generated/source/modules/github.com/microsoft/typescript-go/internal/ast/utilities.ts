@@ -45,6 +45,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAddress } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function GetNodeId(node: tsonicTypeScriptRuntime.Location<Node> | undefined): NodeId {
     let id = atomic__from_gostdlib.Uint64.Load(Node.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node>).value).id);
     if (id === 0n) {
@@ -74,7 +92,7 @@ export function GetSymbolTable(data: tsonicTypeScriptRuntime.Location<SymbolTabl
 }
 export function GetMembers(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol> | undefined): SymbolTable {
     const __gotots_store_6 = Symbol.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol>).value);
-    const __gotots_argument_13 = tsonicTypeScriptRuntime.projectLocation<GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>, SymbolTable>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "Members"), ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
+    const __gotots_argument_13 = new $ProjectedPropertyLocation(__gotots_store_6, "Members", ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
         return new SymbolTable($go$storage);
     }, ($go$value: SymbolTable): GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined> => {
         return $go$value.$value;
@@ -83,7 +101,7 @@ export function GetMembers(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol>
 }
 export function GetExports(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol> | undefined): SymbolTable {
     const __gotots_store_4 = Symbol.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol>).value);
-    const __gotots_argument_11 = tsonicTypeScriptRuntime.projectLocation<GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>, SymbolTable>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "Exports"), ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
+    const __gotots_argument_11 = new $ProjectedPropertyLocation(__gotots_store_4, "Exports", ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
         return new SymbolTable($go$storage);
     }, ($go$value: SymbolTable): GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined> => {
         return $go$value.$value;
@@ -92,7 +110,7 @@ export function GetExports(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol>
 }
 export function GetLocals(container: tsonicTypeScriptRuntime.Location<Node> | undefined): SymbolTable {
     const __gotots_store_5 = LocalsContainerBase.$storageOf(((Node.LocalsContainerData(container) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LocalsContainerBase>).value);
-    const __gotots_argument_12 = tsonicTypeScriptRuntime.projectLocation<GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>, SymbolTable>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "Locals"), ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
+    const __gotots_argument_12 = new $ProjectedPropertyLocation(__gotots_store_5, "Locals", ($go$storage: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined>): SymbolTable => {
         return new SymbolTable($go$storage);
     }, ($go$value: SymbolTable): GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol> | undefined> => {
         return $go$value.$value;
@@ -3149,7 +3167,7 @@ export function IsParseTreeNode(node: tsonicTypeScriptRuntime.Location<Node> | u
 }
 export function GetNodeAtPosition(file: tsonicTypeScriptRuntime.Location<SourceFile> | undefined, position: int, includeJSDoc: bool): tsonicTypeScriptRuntime.Location<Node> | undefined {
     const __gotots_store_1 = NodeBase.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase);
-    let current: tsonicTypeScriptRuntime.Location<Node> | undefined = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault.$fromStorage, NodeDefault.$storageOf));
+    let current: tsonicTypeScriptRuntime.Location<Node> | undefined = NodeDefault.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault.$fromStorage, NodeDefault.$storageOf));
     for (;;) {
         let child: tsonicTypeScriptRuntime.Location<Node> | undefined = void 0;
         if (includeJSDoc) {
@@ -3213,7 +3231,7 @@ export function findImportOrRequire(text: gostring, start: int): [
 }
 export function ForEachDynamicImportOrRequireCall(file: tsonicTypeScriptRuntime.Location<SourceFile> | undefined, includeTypeSpaceImports: bool, requireStringLiteralLikeArgument: bool, cb: (($0: tsonicTypeScriptRuntime.Location<Node> | undefined, $1: tsonicTypeScriptRuntime.Location<Node> | undefined) => bool) | undefined): bool {
     const __gotots_store_0 = NodeBase.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase);
-    const __gotots_argument_0 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault.$fromStorage, NodeDefault.$storageOf));
+    const __gotots_argument_0 = NodeDefault.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault.$fromStorage, NodeDefault.$storageOf));
     let isJavaScriptFile = IsInJSFile(__gotots_argument_0);
     const __gotots_results_0 = findImportOrRequire(SourceFile.Text(file), 0);
     let lastIndex = __gotots_results_0[0];
@@ -3451,7 +3469,7 @@ export function IsExclusivelyTypeOnlyImportOrExport(node: tsonicTypeScriptRuntim
                 if (!(importClause === undefined)) {
                     const __gotots_store_2 = (void NodeDefault.$storageOf, (void NodeDefault.$fromStorage,
                         NodeBase.$storageOf((Node.AsImportClause(importClause) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-                    return Node.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Node"), Node.$fromStorage, Node.$storageOf));
+                    return Node.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_2, "Node", Node.$fromStorage, Node.$storageOf));
                 }
             }
             break;
@@ -3462,7 +3480,7 @@ export function IsExclusivelyTypeOnlyImportOrExport(node: tsonicTypeScriptRuntim
                 if (!(importClause === undefined)) {
                     const __gotots_store_3 = (void NodeDefault.$storageOf, (void NodeDefault.$fromStorage,
                         NodeBase.$storageOf((Node.AsImportClause(importClause) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-                    return Node.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Node"), Node.$fromStorage, Node.$storageOf));
+                    return Node.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_3, "Node", Node.$fromStorage, Node.$storageOf));
                 }
             }
             break;

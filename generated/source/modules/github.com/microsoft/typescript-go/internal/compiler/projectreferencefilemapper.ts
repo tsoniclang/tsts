@@ -27,18 +27,10 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 export class projectReferenceFileMapper {
     declare private readonly $goType: void;
-    public constructor(public opts: ProgramOptions, public host: ResolutionHost__from___go_module | undefined, public loader: fileLoader | undefined, public configToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>, public referencesInConfigFile: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public sourceToProjectReference: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>, public outputDtsToProjectReference: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>, public realpathDtsToSource: SyncMap__from_collections<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>) {
+    public constructor(public opts: ProgramOptions, public host: ResolutionHost__from___go_module | undefined, public loader: fileLoader | undefined, public configToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined>, public referencesInConfigFile: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public sourceToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>, public outputDtsToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>, public realpathDtsToSource: SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>) {
     }
     static $copy($source: projectReferenceFileMapper): projectReferenceFileMapper {
-        return new projectReferenceFileMapper(ProgramOptions.$copy($source.opts), $source.host, $source.loader, $source.configToProjectReference, $source.referencesInConfigFile, $source.sourceToProjectReference, $source.outputDtsToProjectReference, SyncMap__from_collections.$copy<Path__from_tspath, {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined>($source.realpathDtsToSource));
+        return new projectReferenceFileMapper(ProgramOptions.$copy($source.opts), $source.host, $source.loader, $source.configToProjectReference, $source.referencesInConfigFile, $source.sourceToProjectReference, $source.outputDtsToProjectReference, SyncMap__from_collections.$copy<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>($source.realpathDtsToSource));
     }
     declare private readonly then?: never;
     static $go$private$compiler$getCompilerOptionsForFile(mapper: {
@@ -57,41 +49,33 @@ export class projectReferenceFileMapper {
             const __gotots_receiver_1 = mapper;
             const __gotots_receiver_0 = file;
             const __gotots_argument_0 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_0).Path();
-            let source: {
-                value: SourceOutputAndProjectReference__from_tsoptions;
-            } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(__gotots_receiver_1, __gotots_argument_0);
+            let source: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(__gotots_receiver_1, __gotots_argument_0);
             if (source === undefined) {
                 source = projectReferenceFileMapper.$go$private$compiler$getSourceToDtsIfSymlink(mapper, file);
             }
             if (!(source === undefined)) {
-                return (source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source;
+                return ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source;
             }
         }
         else {
             const __gotots_receiver_3 = mapper;
             const __gotots_receiver_2 = file;
             const __gotots_argument_1 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_2).Path();
-            let output: {
-                value: SourceOutputAndProjectReference__from_tsoptions;
-            } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromSource(__gotots_receiver_3, __gotots_argument_1);
-            if (!(output === undefined) && (output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutputDts !== "") {
-                return (output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutputDts;
+            let output: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromSource(__gotots_receiver_3, __gotots_argument_1);
+            if (!(output === undefined) && ((output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.OutputDts !== "") {
+                return ((output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.OutputDts;
             }
         }
         return "";
     }
     static $go$private$compiler$getProjectReferenceFromOutputDts(mapper: {
         value: projectReferenceFileMapper;
-    } | undefined, path: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, path: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         return (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.outputDtsToProjectReference.lookup(path);
     }
     static $go$private$compiler$getProjectReferenceFromSource(mapper: {
         value: projectReferenceFileMapper;
-    } | undefined, path: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, path: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         return (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceToProjectReference.lookup(path);
     }
     static $go$private$compiler$getRedirectForResolution(mapper: {
@@ -102,23 +86,17 @@ export class projectReferenceFileMapper {
     ] {
         const __gotots_receiver_9 = file;
         let path = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_9).Path();
-        let output: {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromSource(mapper, path);
+        let output: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromSource(mapper, path);
         if (!(output === undefined)) {
-            return [(output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Resolved, (output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source];
+            return [((output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Resolved, ((output ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source];
         }
-        let resultFromDts: {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(mapper, path);
+        let resultFromDts: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(mapper, path);
         if (!(resultFromDts === undefined)) {
-            return [(resultFromDts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Resolved, (resultFromDts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source];
+            return [((resultFromDts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Resolved, ((resultFromDts ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source];
         }
-        let realpathDtsToSource: {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined = projectReferenceFileMapper.$go$private$compiler$getSourceToDtsIfSymlink(mapper, file);
+        let realpathDtsToSource: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getSourceToDtsIfSymlink(mapper, file);
         if (!(realpathDtsToSource === undefined)) {
-            return [(realpathDtsToSource ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Resolved, (realpathDtsToSource ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source];
+            return [((realpathDtsToSource ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Resolved, ((realpathDtsToSource ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source];
         }
         const __gotots_results_2 = void 0;
         const __gotots_receiver_10 = file;
@@ -157,16 +135,12 @@ export class projectReferenceFileMapper {
     }
     static $go$private$compiler$getSourceToDtsIfSymlink(mapper: {
         value: projectReferenceFileMapper;
-    } | undefined, file: HasFileName__from_ast | undefined): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, file: HasFileName__from_ast | undefined): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         const __gotots_receiver_4 = file;
         let path = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_4).Path();
         const __gotots_store_1 = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_results_1 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "realpathDtsToSource"), path);
-        let realpathDtsToSource: {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined = __gotots_results_1[0];
+        let realpathDtsToSource: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = __gotots_results_1[0];
         let ok = __gotots_results_1[1];
         if (ok) {
             return realpathDtsToSource;
@@ -190,9 +164,7 @@ export class projectReferenceFileMapper {
                     SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "realpathDtsToSource"), path, void 0);
                 }
                 else {
-                    let realpathDtsToSource__shadow_1: {
-                        value: SourceOutputAndProjectReference__from_tsoptions;
-                    } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(mapper, realDeclarationPath);
+                    let realpathDtsToSource__shadow_1: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts(mapper, realDeclarationPath);
                     if (!(realpathDtsToSource__shadow_1 === undefined)) {
                         const __gotots_store_4 = (mapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                         SyncMap$Store$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "realpathDtsToSource"), path, realpathDtsToSource__shadow_1);

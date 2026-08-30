@@ -510,9 +510,7 @@ export class BuildTask {
                         buildInfoRootInfoReader = BuildInfo__from_incremental.GetBuildInfoRootInfoReader(buildInfo, GetDirectoryPath__from_tspath(GetNormalizedAbsolutePath__from_tspath(buildInfoPath, (orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparePathsOptions.CurrentDirectory)), ComparePathsOptions__from_tspath.$copy((orchestrator ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.comparePathsOptions));
                     }
                     const __gotots_results_1 = BuildInfoRootInfoReader__from_incremental.GetBuildInfoFileInfo(buildInfoRootInfoReader, inputPath);
-                    let buildInfoFileInfo: {
-                        value: BuildInfoFileInfo__from_incremental;
-                    } | undefined = __gotots_results_1[0];
+                    let buildInfoFileInfo: tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined = __gotots_results_1[0];
                     let resolvedInputPath = __gotots_results_1[1];
                     {
                         let fileInfo: {

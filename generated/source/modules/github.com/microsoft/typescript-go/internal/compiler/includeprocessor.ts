@@ -101,7 +101,7 @@ export class includeProcessor {
         }
         let file: HasFileName__from_ast | undefined = void 0;
         let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = void 0;
-        let redirectsFile__shadow_1: redirectsFile | undefined = (program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles.redirectFilesByPath.lookup(filePath);
+        let redirectsFile__shadow_1: tsonicTypeScriptRuntime.Location<redirectsFile> | undefined = (program ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processedFiles.redirectFilesByPath.lookup(filePath);
         if (!(redirectsFile__shadow_1 === undefined)) {
             file = new $goInterfaceAdapter$PointerTo_Named_compiler$redirectsFile(redirectsFile__shadow_1);
         }
@@ -130,7 +130,7 @@ export class includeProcessor {
             }
         }
         if (!(redirectsFile__shadow_1 === undefined)) {
-            let targetFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Program.GetSourceFileByPath(program, (redirectsFile__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).target);
+            let targetFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Program.GetSourceFileByPath(program, ((redirectsFile__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<redirectsFile>).value.target);
             const __gotots_argument_10 = result;
             const __gotots_argument_8 = $state__diagnostics.File_redirects_to_file_0;
             const __gotots_callee_1 = toFileName;
@@ -246,7 +246,7 @@ export class includeProcessor {
                     continue;
                 }
                 const __gotots_range_value_3 = __gotots_range_value_2[0];
-                let resolutions: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined> = __gotots_range_value_3;
+                let resolutions: ModeAwareCache__from___go_module<ResolvedModule__from___go_module | undefined> = __gotots_range_value_3;
                 const __gotots_range_2 = resolutions.$value;
                 const __gotots_range_keys_1 = __gotots_range_2.keys();
                 for (const __gotots_range_value_4 of __gotots_range_keys_1) {
@@ -255,8 +255,8 @@ export class includeProcessor {
                         continue;
                     }
                     const __gotots_range_value_6 = __gotots_range_value_5[0];
-                    let resolvedModule: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_range_value_6;
-                    const __gotots_range_3 = ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolutionDiagnostics;
+                    let resolvedModule: ResolvedModule__from___go_module | undefined = __gotots_range_value_6;
+                    const __gotots_range_3 = (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolutionDiagnostics;
                     for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_3.length; __gotots_range_index_1++) {
                         const __gotots_range_value_7 = __gotots_range_3.get(__gotots_range_index_1);
                         let diag: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined = __gotots_range_value_7;
@@ -272,7 +272,7 @@ export class includeProcessor {
                     continue;
                 }
                 const __gotots_range_value_10 = __gotots_range_value_9[0];
-                let typeResolutions: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined> = __gotots_range_value_10;
+                let typeResolutions: ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined> = __gotots_range_value_10;
                 const __gotots_range_5 = typeResolutions.$value;
                 const __gotots_range_keys_3 = __gotots_range_5.keys();
                 for (const __gotots_range_value_11 of __gotots_range_keys_3) {
@@ -281,8 +281,8 @@ export class includeProcessor {
                         continue;
                     }
                     const __gotots_range_value_13 = __gotots_range_value_12[0];
-                    let resolvedTypeRef: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined = __gotots_range_value_13;
-                    const __gotots_range_6 = ((resolvedTypeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolutionDiagnostics;
+                    let resolvedTypeRef: ResolvedTypeReferenceDirective__from___go_module | undefined = __gotots_range_value_13;
+                    const __gotots_range_6 = (resolvedTypeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolutionDiagnostics;
                     for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_6.length; __gotots_range_index_2++) {
                         const __gotots_range_value_14 = __gotots_range_6.get(__gotots_range_index_2);
                         let diag: tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined = __gotots_range_value_14;

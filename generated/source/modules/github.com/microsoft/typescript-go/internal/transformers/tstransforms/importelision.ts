@@ -13,6 +13,24 @@ import { $goInterfaceAdapter$string as GoInterfaceAdapter } from "../../../../..
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class ImportElisionTransformer {
     declare private readonly $goType: void;
     public constructor(public Transformer: Transformer__from_transformers, public compilerOptions: {
@@ -62,7 +80,7 @@ export class ImportElisionTransformer {
         const __gotots_receiver_4 = tx;
         const __gotots_store_25 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_25, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let __gotots_logical_result_1 = ImportElisionTransformer.$go$private$tstransforms$shouldEmitAliasDeclaration(__gotots_receiver_4, __gotots_argument_14);
         if (!__gotots_logical_result_1) {
             let __gotots_logical_result_0 = !IsExternalModule__from_ast((tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentSourceFile);
@@ -70,7 +88,7 @@ export class ImportElisionTransformer {
                 const __gotots_receiver_5 = tx;
                 const __gotots_store_26 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                const __gotots_argument_15 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_15 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_26, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 __gotots_logical_result_0 = ImportElisionTransformer.$go$private$tstransforms$isTopLevelValueImportEqualsWithEntityName(__gotots_receiver_5, __gotots_argument_15);
             }
             __gotots_logical_result_1 = (__gotots_logical_result_0);

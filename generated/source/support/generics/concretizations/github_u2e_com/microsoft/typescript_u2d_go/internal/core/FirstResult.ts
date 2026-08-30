@@ -14,11 +14,11 @@ import { FirstResult$kernel } from "../../../../../../../../modules/github.com/m
 export function FirstResult$MapOf_Named_tspath$Path_To_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string($argument0: GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> {
     return FirstResult$kernel<GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>>($argument0, $argument1);
 }
-export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$RegistryBucket($argument0: GoMapValue<Path__from_tspath, RegistryBucket__from_autoimport | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, RegistryBucket__from_autoimport | undefined> {
-    return FirstResult$kernel<GoMapValue<Path__from_tspath, RegistryBucket__from_autoimport | undefined>>($argument0, $argument1);
+export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$RegistryBucket($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined> {
+    return FirstResult$kernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>>($argument0, $argument1);
 }
-export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$directory($argument0: GoMapValue<Path__from_tspath, directory__from_autoimport | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, directory__from_autoimport | undefined> {
-    return FirstResult$kernel<GoMapValue<Path__from_tspath, directory__from_autoimport | undefined>>($argument0, $argument1);
+export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$directory($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined> {
+    return FirstResult$kernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>>($argument0, $argument1);
 }
 export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_string($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined> {
     return FirstResult$kernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined>>($argument0, $argument1);
@@ -26,8 +26,8 @@ export function FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_collectio
 export function FirstResult$Named_tspath$Path($argument0: Path__from_tspath, $argument1: RuntimeSlice<GoInterface | undefined>): Path__from_tspath {
     return FirstResult$kernel<Path__from_tspath>($argument0, $argument1);
 }
-export function FirstResult$PointerTo_Named_autoimport$directory($argument0: directory__from_autoimport | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): directory__from_autoimport | undefined {
-    return FirstResult$kernel<directory__from_autoimport | undefined>($argument0, $argument1);
+export function FirstResult$PointerTo_Named_autoimport$directory($argument0: tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined {
+    return FirstResult$kernel<tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>($argument0, $argument1);
 }
 export function FirstResult$PointerTo_Named_checker$Checker($argument0: {
     value: Checker__from_checker;
@@ -38,11 +38,11 @@ export function FirstResult$PointerTo_Named_checker$Checker($argument0: {
         value: Checker__from_checker;
     } | undefined>($argument0, $argument1);
 }
-export function FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket($argument0: MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined {
-    return FirstResult$kernel<MapEntry__from_dirty<Path__from_tspath, RegistryBucket__from_autoimport | undefined> | undefined>($argument0, $argument1);
+export function FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket($argument0: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>> | undefined {
+    return FirstResult$kernel<tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined>> | undefined>($argument0, $argument1);
 }
-export function FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$directory($argument0: MapEntry__from_dirty<Path__from_tspath, directory__from_autoimport | undefined> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): MapEntry__from_dirty<Path__from_tspath, directory__from_autoimport | undefined> | undefined {
-    return FirstResult$kernel<MapEntry__from_dirty<Path__from_tspath, directory__from_autoimport | undefined> | undefined>($argument0, $argument1);
+export function FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$directory($argument0: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>> | undefined, $argument1: RuntimeSlice<GoInterface | undefined>): tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>> | undefined {
+    return FirstResult$kernel<tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>> | undefined>($argument0, $argument1);
 }
 export function FirstResult$SliceOf_PointerTo_Named_ast$Node($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, $argument1: RuntimeSlice<GoInterface | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     return FirstResult$kernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>($argument0, $argument1);

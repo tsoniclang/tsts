@@ -11,6 +11,24 @@ import { KindSyntaxList$constant } from "./kind_generated.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class NodeVisitor {
     declare private readonly $goType: void;
     public constructor(public Visit: (($0: tsonicTypeScriptRuntime.Location<Node> | undefined) => tsonicTypeScriptRuntime.Location<Node> | undefined) | undefined, public Factory: tsonicTypeScriptRuntime.Location<NodeFactory> | undefined, public Hooks: NodeVisitorHooks) {
@@ -163,7 +181,7 @@ export class NodeVisitor {
     } | undefined, node: tsonicTypeScriptRuntime.Location<SourceFile> | undefined): tsonicTypeScriptRuntime.Location<SourceFile> | undefined {
         const __gotots_receiver_1 = v;
         const __gotots_store_0 = NodeBase.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile>).value.NodeBase);
-        const __gotots_argument_24 = NodeDefault.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault.$fromStorage, NodeDefault.$storageOf));
+        const __gotots_argument_24 = NodeDefault.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault.$fromStorage, NodeDefault.$storageOf));
         return Node.AsSourceFile(NodeVisitor.VisitNode(__gotots_receiver_1, __gotots_argument_24));
     }
     static $go$private$ast$liftToBlock(v: {

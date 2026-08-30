@@ -581,8 +581,8 @@ export class TypingsInstaller {
         value: Resolver__from___go_module;
     } | undefined, packageName: gostring): gostring {
         const __gotots_results_16 = Resolver__from___go_module.ResolveModuleName(resolver, packageName, CombinePaths__from_tspath((ti ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation, RuntimeSlice.literal<gostring>(["index.d.ts"])), ModuleKindNone$constant__from_core(), void 0);
-        let result: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_16[0];
-        return ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+        let result: ResolvedModule__from___go_module | undefined = __gotots_results_16[0];
+        return (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
     }
 }
 export function NewTypingsInstaller(options: TypingsInstallerOptions | undefined, host: TypingsInstallerHost | undefined): {

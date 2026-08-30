@@ -195,7 +195,7 @@ export class Watcher {
         value: Program__from_incremental;
     } | undefined, public extendedConfigCache: tsonicTypeScriptRuntime.Location<ExtendedConfigCache__from_tsc> | undefined, public configModified: bool, public configHasErrors: bool, public configFilePaths: RuntimeSlice<gostring>, public sourceFileCache: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
         value: cachedSourceFile;
-    } | undefined>> | undefined, public backend: WatchBackend | undefined, public watchedDirs: GoMapValue<gostring, watchedDir | undefined>, public seenFiles: tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined, public configMtimes: GoMapValue<gostring, time__from_gostdlib.Time>, public doCycleCh: GoChannel<GoEmptyStruct> | undefined, public debugLog: $goInterface$Interface_Method_io$Write_SliceOf_byte_to_int_Named_error | undefined, public changedMu: sync__from_gostdlib.Mutex, public changedPaths: GoMapValue<gostring, EventKind__from_fswatch>, public changedOverflow: bool) {
+    } | undefined>> | undefined, public backend: WatchBackend | undefined, public watchedDirs: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<watchedDir> | undefined>, public seenFiles: tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined, public configMtimes: GoMapValue<gostring, time__from_gostdlib.Time>, public doCycleCh: GoChannel<GoEmptyStruct> | undefined, public debugLog: $goInterface$Interface_Method_io$Write_SliceOf_byte_to_int_Named_error | undefined, public changedMu: sync__from_gostdlib.Mutex, public changedPaths: GoMapValue<gostring, EventKind__from_fswatch>, public changedOverflow: bool) {
     }
     declare private readonly then?: never;
     static DoCycle(w: Watcher | undefined): void {
@@ -308,8 +308,8 @@ export class Watcher {
             const __gotots_range_value_8 = __gotots_range_value_6;
             const __gotots_range_value_9 = __gotots_range_value_7[0];
             let dir = __gotots_range_value_8;
-            let wd: watchedDir | undefined = __gotots_range_value_9;
-            dirs = dirs.append(void 0, [(wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closer]);
+            let wd: tsonicTypeScriptRuntime.Location<watchedDir> | undefined = __gotots_range_value_9;
+            dirs = dirs.append(void 0, [((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.closer]);
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.delete(dir);
         }
         sync__from_gostdlib.Mutex.Unlock((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).mu);
@@ -449,7 +449,7 @@ export class Watcher {
         return Watcher.$go$private$execute$resolveDesiredDirs(w, resolvedDirs);
     }
     static $go$private$execute$createDirWatch(w: Watcher | undefined, dir: gostring, recursive: bool): void {
-        let entry: watchedDir | undefined = new watchedDir(void 0, recursive);
+        let entry: tsonicTypeScriptRuntime.Location<watchedDir> | undefined = tsonicTypeScriptRuntime.location<watchedDir>(new watchedDir(void 0, recursive));
         let cb: (($0: RuntimeSlice<Event__from_fswatch$Storage>, $1: $goInterface$Interface_Method_Error_void_to_string | undefined) => void) | undefined = (events: RuntimeSlice<Event__from_fswatch$Storage>, err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined): void => {
             let __gotots_logical_result_1 = !(err__shadow_1 === undefined);
             if (__gotots_logical_result_1) {
@@ -480,7 +480,7 @@ export class Watcher {
             }
             return;
         }
-        (entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closer = watch;
+        ((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.closer = watch;
         (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.store(dir, entry);
     }
     static $go$private$execute$doBuild(w: Watcher | undefined): void {
@@ -639,7 +639,7 @@ export class Watcher {
             }
         }
     }
-    static $go$private$execute$handleWatchTerminated(w: Watcher | undefined, dir: gostring, identity: watchedDir | undefined): void {
+    static $go$private$execute$handleWatchTerminated(w: Watcher | undefined, dir: gostring, identity: tsonicTypeScriptRuntime.Location<watchedDir> | undefined): void {
         if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog === undefined)) {
             const __gotots_argument_70 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog;
             const __gotots_argument_71 = "[watch] watch terminated: %s\n";
@@ -650,13 +650,11 @@ export class Watcher {
         sync__from_gostdlib.Mutex.Lock((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).mu);
         {
             const __gotots_results_9 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.lookupOk(dir);
-            let wd: watchedDir | undefined = __gotots_results_9[0];
+            let wd: tsonicTypeScriptRuntime.Location<watchedDir> | undefined = __gotots_results_9[0];
             let ok = __gotots_results_9[1];
             if (ok &&
-                wd
-                    ===
-                        identity) {
-                staleCloser = (wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closer;
+                tsonicTypeScriptRuntime.sameLocation(wd, identity)) {
+                staleCloser = ((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.closer;
                 (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.delete(dir);
             }
         }
@@ -879,8 +877,8 @@ export class Watcher {
             return;
         }
         let desiredDirs: GoMapValue<gostring, bool> = Watcher.$go$private$execute$computeDesiredWatches(w, seenFilePaths);
-        DiffMapsFunc$string$PointerTo_Named_execute$watchedDir$bool((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs, desiredDirs, (wd: watchedDir | undefined, recursive: bool): bool => {
-            return (wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).recursive === recursive;
+        DiffMapsFunc$string$PointerTo_Named_execute$watchedDir$bool((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs, desiredDirs, (wd: tsonicTypeScriptRuntime.Location<watchedDir> | undefined, recursive: bool): bool => {
+            return ((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.recursive === recursive;
         }, (dir: gostring, recursive: bool): void => {
             if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog === undefined)) {
                 const __gotots_argument_32 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog;
@@ -889,24 +887,24 @@ export class Watcher {
                 provider_fmt_writer.FprintfDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_32), __gotots_argument_33, __gotots_argument_34);
             }
             Watcher.$go$private$execute$createDirWatch(w, dir, recursive);
-        }, (dir: gostring, wd: watchedDir | undefined): void => {
+        }, (dir: gostring, wd: tsonicTypeScriptRuntime.Location<watchedDir> | undefined): void => {
             if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog === undefined)) {
                 const __gotots_argument_35 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog;
                 const __gotots_argument_36 = "[watch] closing stale dir watch: %s\n";
                 const __gotots_argument_37 = RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(dir)]);
                 provider_fmt_writer.FprintfDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_35), __gotots_argument_36, __gotots_argument_37);
             }
-            const __gotots_receiver_24 = (wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closer;
+            const __gotots_receiver_24 = ((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.closer;
             goInterfaceNonNil<$goInterface$Interface_Method_io$Close_void_to_Named_error>(__gotots_receiver_24).Close();
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.delete(dir);
-        }, (dir: gostring, wd: watchedDir | undefined, recursive: bool): void => {
+        }, (dir: gostring, wd: tsonicTypeScriptRuntime.Location<watchedDir> | undefined, recursive: bool): void => {
             if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog === undefined)) {
                 const __gotots_argument_38 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).debugLog;
                 const __gotots_argument_39 = "[watch] recreating dir watch %s (recursive %v\u00E2\u0086\u0092%v)\n";
-                const __gotots_argument_40 = RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(dir), new $goInterfaceAdapter$bool((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).recursive), new $goInterfaceAdapter$bool(recursive)]);
+                const __gotots_argument_40 = RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(dir), new $goInterfaceAdapter$bool(((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.recursive), new $goInterfaceAdapter$bool(recursive)]);
                 provider_fmt_writer.FprintfDirect<$goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract>(GoProviderProfileBridge.$to(__gotots_argument_38), __gotots_argument_39, __gotots_argument_40);
             }
-            const __gotots_receiver_25 = (wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closer;
+            const __gotots_receiver_25 = ((wd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<watchedDir>).value.closer;
             goInterfaceNonNil<$goInterface$Interface_Method_io$Close_void_to_Named_error>(__gotots_receiver_25).Close();
             (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchedDirs.delete(dir);
             Watcher.$go$private$execute$createDirWatch(w, dir, recursive);

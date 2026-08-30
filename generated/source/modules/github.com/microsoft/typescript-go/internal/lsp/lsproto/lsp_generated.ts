@@ -24,6 +24,24 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class ImplementationParams {
     declare private readonly $goType: void;
     public constructor(public TextDocument: TextDocumentIdentifier, public Position: Position, public WorkDoneToken: tsonicTypeScriptRuntime.Location<IntegerOrString> | undefined, public PartialResultToken: tsonicTypeScriptRuntime.Location<IntegerOrString> | undefined) {
@@ -275,7 +293,7 @@ export class Location implements GoContainerStoredValue<Location$Storage> {
                     {
                         const __gotots_argument_307 = dec;
                         const __gotots_store_102 = Location.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Location>).value);
-                        const __gotots_argument_308 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.projectLocation<gostring, DocumentUri>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_102, "Uri"), ($go$storage: gostring): DocumentUri => {
+                        const __gotots_argument_308 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentUri(new $ProjectedPropertyLocation(__gotots_store_102, "Uri", ($go$storage: gostring): DocumentUri => {
                             return new DocumentUri($go$storage);
                         }, ($go$value: DocumentUri): gostring => {
                             return $go$value.$value;
@@ -293,7 +311,7 @@ export class Location implements GoContainerStoredValue<Location$Storage> {
                     {
                         const __gotots_argument_310 = dec;
                         const __gotots_store_103 = Location.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Location>).value);
-                        const __gotots_argument_311 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(tsonicTypeScriptRuntime.projectLocation<Range$Storage, Range>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_103, "Range"), Range.$fromStorage, Range.$storageOf));
+                        const __gotots_argument_311 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Range(new $ProjectedPropertyLocation(__gotots_store_103, "Range", Range.$fromStorage, Range.$storageOf));
                         const __gotots_argument_312 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_310, __gotots_argument_311, __gotots_argument_312);
                         if (!(err__shadow_1 === undefined)) {
@@ -11431,14 +11449,10 @@ export class TextEdit {
 }
 export class DidChangeWatchedFilesParams {
     declare private readonly $goType: void;
-    public constructor(public Changes: RuntimeSlice<{
-        value: FileEvent;
-    } | undefined>) {
+    public constructor(public Changes: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileEvent> | undefined>) {
     }
     static $zero(): DidChangeWatchedFilesParams {
-        return new DidChangeWatchedFilesParams(RuntimeSlice.nil<{
-            value: FileEvent;
-        } | undefined>());
+        return new DidChangeWatchedFilesParams(RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileEvent> | undefined>());
     }
     static $copy($source: DidChangeWatchedFilesParams): DidChangeWatchedFilesParams {
         return new DidChangeWatchedFilesParams($source.Changes);
@@ -11521,14 +11535,10 @@ export class DidChangeWatchedFilesParams {
 }
 export class DidChangeWatchedFilesRegistrationOptions {
     declare private readonly $goType: void;
-    public constructor(public Watchers: RuntimeSlice<{
-        value: FileSystemWatcher;
-    } | undefined>) {
+    public constructor(public Watchers: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher> | undefined>) {
     }
     static $zero(): DidChangeWatchedFilesRegistrationOptions {
-        return new DidChangeWatchedFilesRegistrationOptions(RuntimeSlice.nil<{
-            value: FileSystemWatcher;
-        } | undefined>());
+        return new DidChangeWatchedFilesRegistrationOptions(RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileSystemWatcher> | undefined>());
     }
     static $copy($source: DidChangeWatchedFilesRegistrationOptions): DidChangeWatchedFilesRegistrationOptions {
         return new DidChangeWatchedFilesRegistrationOptions($source.Watchers);
@@ -14741,7 +14751,7 @@ export class SymbolInformation {
                     {
                         const __gotots_argument_3061 = dec;
                         const __gotots_store_1004 = SymbolInformation.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SymbolInformation>).value);
-                        const __gotots_argument_3062 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(tsonicTypeScriptRuntime.projectLocation<Location$Storage, Location>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1004, "Location"), Location.$fromStorage, Location.$storageOf));
+                        const __gotots_argument_3062 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Location(new $ProjectedPropertyLocation(__gotots_store_1004, "Location", Location.$fromStorage, Location.$storageOf));
                         const __gotots_argument_3063 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_3061, __gotots_argument_3062, __gotots_argument_3063);
                         if (!(err__shadow_1 === undefined)) {
@@ -20111,18 +20121,18 @@ export class Range implements GoContainerStoredValue<Range$Storage> {
     static Compare(s: tsonicTypeScriptRuntime.Location<Range> | undefined, other: tsonicTypeScriptRuntime.Location<Range> | undefined): int {
         {
             const __gotots_store_954 = Range.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-            const __gotots_receiver_33 = tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_954, "Start"), Position.$fromStorage, Position.$storageOf);
+            const __gotots_receiver_33 = new $ProjectedPropertyLocation(__gotots_store_954, "Start", Position.$fromStorage, Position.$storageOf);
             const __gotots_store_955 = Range.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-            const __gotots_argument_2917 = tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_955, "Start"), Position.$fromStorage, Position.$storageOf);
+            const __gotots_argument_2917 = new $ProjectedPropertyLocation(__gotots_store_955, "Start", Position.$fromStorage, Position.$storageOf);
             let c = Position.Compare(__gotots_receiver_33, __gotots_argument_2917);
             if (c !== 0) {
                 return c;
             }
         }
         const __gotots_store_956 = Range.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-        const __gotots_receiver_34 = tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_956, "End"), Position.$fromStorage, Position.$storageOf);
+        const __gotots_receiver_34 = new $ProjectedPropertyLocation(__gotots_store_956, "End", Position.$fromStorage, Position.$storageOf);
         const __gotots_store_957 = Range.$storageOf(((other ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-        const __gotots_argument_2918 = tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_957, "End"), Position.$fromStorage, Position.$storageOf);
+        const __gotots_argument_2918 = new $ProjectedPropertyLocation(__gotots_store_957, "End", Position.$fromStorage, Position.$storageOf);
         return Position.Compare(__gotots_receiver_34, __gotots_argument_2918);
     }
     static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<Range> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
@@ -20161,7 +20171,7 @@ export class Range implements GoContainerStoredValue<Range$Storage> {
                     {
                         const __gotots_argument_353 = dec;
                         const __gotots_store_117 = Range.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-                        const __gotots_argument_354 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_117, "Start"), Position.$fromStorage, Position.$storageOf));
+                        const __gotots_argument_354 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(new $ProjectedPropertyLocation(__gotots_store_117, "Start", Position.$fromStorage, Position.$storageOf));
                         const __gotots_argument_355 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_353, __gotots_argument_354, __gotots_argument_355);
                         if (!(err__shadow_1 === undefined)) {
@@ -20175,7 +20185,7 @@ export class Range implements GoContainerStoredValue<Range$Storage> {
                     {
                         const __gotots_argument_356 = dec;
                         const __gotots_store_118 = Range.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Range>).value);
-                        const __gotots_argument_357 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(tsonicTypeScriptRuntime.projectLocation<Position$Storage, Position>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_118, "End"), Position.$fromStorage, Position.$storageOf));
+                        const __gotots_argument_357 = new $goInterfaceAdapter$PointerTo_Named_lsproto$Position(new $ProjectedPropertyLocation(__gotots_store_118, "End", Position.$fromStorage, Position.$storageOf));
                         const __gotots_argument_358 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_356, __gotots_argument_357, __gotots_argument_358);
                         if (!(err__shadow_1 === undefined)) {
@@ -24358,7 +24368,7 @@ export class PreviousResultId {
                     {
                         const __gotots_argument_3286 = dec;
                         const __gotots_store_1078 = PreviousResultId.$storageOf(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PreviousResultId>).value);
-                        const __gotots_argument_3287 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.projectLocation<gostring, DocumentUri>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1078, "Uri"), ($go$storage: gostring): DocumentUri => {
+                        const __gotots_argument_3287 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentUri(new $ProjectedPropertyLocation(__gotots_store_1078, "Uri", ($go$storage: gostring): DocumentUri => {
                             return new DocumentUri($go$storage);
                         }, ($go$value: DocumentUri): gostring => {
                             return $go$value.$value;
@@ -27605,9 +27615,7 @@ export class FileEvent {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: {
-        value: FileEvent;
-    } | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<FileEvent> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingUri: uint = 1;
         const missingType: uint = 2;
         const _missingLast: uint = 4;
@@ -27642,7 +27650,7 @@ export class FileEvent {
                     missing = missing & ~missingUri;
                     {
                         const __gotots_argument_1866 = dec;
-                        const __gotots_store_610 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_610 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileEvent>).value;
                         const __gotots_argument_1867 = new $goInterfaceAdapter$PointerTo_Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_610, "Uri"));
                         const __gotots_argument_1868 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1866, __gotots_argument_1867, __gotots_argument_1868);
@@ -27656,7 +27664,7 @@ export class FileEvent {
                     missing = missing & ~missingType;
                     {
                         const __gotots_argument_1869 = dec;
-                        const __gotots_store_611 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_611 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileEvent>).value;
                         const __gotots_argument_1870 = new $goInterfaceAdapter$PointerTo_Named_lsproto$FileChangeType(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_611, "Type"));
                         const __gotots_argument_1871 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_1869, __gotots_argument_1870, __gotots_argument_1871);
@@ -27715,9 +27723,7 @@ export class FileSystemWatcher {
         return $hash;
     }
     declare private readonly then?: never;
-    static UnmarshalJSONFrom(s: {
-        value: FileSystemWatcher;
-    } | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static UnmarshalJSONFrom(s: tsonicTypeScriptRuntime.Location<FileSystemWatcher> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const missingGlobPattern: uint = 1;
         const _missingLast: uint = 2;
         let missing = 1;
@@ -27751,7 +27757,7 @@ export class FileSystemWatcher {
                     missing = missing & ~missingGlobPattern;
                     {
                         const __gotots_argument_2581 = dec;
-                        const __gotots_store_844 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_844 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher>).value;
                         const __gotots_argument_2582 = new $goInterfaceAdapter$PointerTo_Named_lsproto$PatternOrRelativePattern(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_844, "GlobPattern"));
                         const __gotots_argument_2583 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2581, __gotots_argument_2582, __gotots_argument_2583);
@@ -27767,7 +27773,7 @@ export class FileSystemWatcher {
                     }
                     {
                         const __gotots_argument_2584 = dec;
-                        const __gotots_store_845 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_845 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher>).value;
                         const __gotots_argument_2585 = new $goInterfaceAdapter$PointerTo_PointerTo_Named_lsproto$WatchKind(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_845, "Kind"));
                         const __gotots_argument_2586 = RuntimeSlice.nil<Options__from_jsonopts | undefined>();
                         let err__shadow_1: $goInterface$Interface_Method_Error_void_to_string | undefined = UnmarshalDecode__from_json__package_1(__gotots_argument_2584, __gotots_argument_2585, __gotots_argument_2586);

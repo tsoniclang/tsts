@@ -307,11 +307,9 @@ export function GetEachFileNameOfModule(importingFileName: gostring, importedFil
     let referenceRedirect = "";
     const __gotots_receiver_15 = host;
     const __gotots_argument_28 = importedPath;
-    let outputAndReference: {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined = goInterfaceNonNil<ModuleSpecifierGenerationHost>(__gotots_receiver_15).GetProjectReferenceFromSource(__gotots_argument_28);
-    if (!(outputAndReference === undefined) && (outputAndReference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutputDts !== "") {
-        referenceRedirect = (outputAndReference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.OutputDts;
+    let outputAndReference: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = goInterfaceNonNil<ModuleSpecifierGenerationHost>(__gotots_receiver_15).GetProjectReferenceFromSource(__gotots_argument_28);
+    if (!(outputAndReference === undefined) && ((outputAndReference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.OutputDts !== "") {
+        referenceRedirect = ((outputAndReference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.OutputDts;
     }
     const __gotots_receiver_16 = host;
     const __gotots_argument_29 = importedPath;
@@ -522,10 +520,10 @@ export function computeModuleSpecifiers(modulePaths: RuntimeSlice<ModulePath__fr
             const __gotots_receiver_8 = host;
             const __gotots_argument_16 = importingSourceFile;
             const __gotots_argument_17 = importSpecifier;
-            let resolvedModule: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = goInterfaceNonNil<ModuleSpecifierGenerationHost>(__gotots_receiver_8).GetResolvedModuleFromModuleSpecifier(__gotots_argument_16, __gotots_argument_17);
+            let resolvedModule: ResolvedModule__from___go_module | undefined = goInterfaceNonNil<ModuleSpecifierGenerationHost>(__gotots_receiver_8).GetResolvedModuleFromModuleSpecifier(__gotots_argument_16, __gotots_argument_17);
             let __gotots_logical_result_0 = ResolvedModule__from___go_module.IsResolved(resolvedModule);
             if (__gotots_logical_result_0) {
-                const __gotots_argument_18 = ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+                const __gotots_argument_18 = (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
                 const __gotots_receiver_9 = host;
                 const __gotots_argument_19 = goInterfaceNonNil<ModuleSpecifierGenerationHost>(__gotots_receiver_9).GetCurrentDirectory();
                 const __gotots_argument_20 = info.UseCaseSensitiveFileNames;

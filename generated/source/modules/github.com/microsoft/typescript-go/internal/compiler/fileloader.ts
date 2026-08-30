@@ -53,9 +53,27 @@ import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class libResolution {
     declare private readonly $goType: void;
-    public constructor(public libraryName: gostring, public resolution: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined, public trace: RuntimeSlice<DiagAndArgs__from___go_module$Storage>) {
+    public constructor(public libraryName: gostring, public resolution: ResolvedModule__from___go_module | undefined, public trace: RuntimeSlice<DiagAndArgs__from___go_module$Storage>) {
     }
     static $copy($source: libResolution): libResolution {
         return new libResolution($source.libraryName, $source.resolution, $source.trace);
@@ -95,20 +113,14 @@ export class fileLoader {
         value: Resolver__from___go_module;
     } | undefined, public defaultLibraryPath: gostring, public comparePathsOptions: ComparePathsOptions__from_tspath, public supportedExtensions: RuntimeSlice<RuntimeSlice<gostring>>, public supportedExtensionsWithJsonIfResolveJsonModule: RuntimeSlice<RuntimeSlice<gostring>>, public filesParser: {
         value: filesParser;
-    } | undefined, public rootTasks: RuntimeSlice<{
-        value: parseTask;
-    } | undefined>, public totalFileCount: atomic__from_gostdlib.Int32, public libFileCount: atomic__from_gostdlib.Int32, public factoryMu: sync__from_gostdlib.Mutex, public factory: NodeFactory__from_ast, public projectReferenceFileMapper: {
+    } | undefined, public rootTasks: RuntimeSlice<tsonicTypeScriptRuntime.Location<parseTask> | undefined>, public totalFileCount: atomic__from_gostdlib.Int32, public libFileCount: atomic__from_gostdlib.Int32, public factoryMu: sync__from_gostdlib.Mutex, public factory: NodeFactory__from_ast, public projectReferenceFileMapper: {
         value: projectReferenceFileMapper;
-    } | undefined, public dtsDirectories: Set__from_collections<Path__from_tspath>, public pathForLibFileCache: SyncMap__from_collections<gostring, {
-        value: LibFile;
-    } | undefined>, public pathForLibFileResolutions: SyncMap__from_collections<Path__from_tspath, {
+    } | undefined, public dtsDirectories: Set__from_collections<Path__from_tspath>, public pathForLibFileCache: SyncMap__from_collections<gostring, tsonicTypeScriptRuntime.Location<LibFile> | undefined>, public pathForLibFileResolutions: SyncMap__from_collections<Path__from_tspath, {
         value: libResolution;
     } | undefined>) {
     }
     static $copy($source: fileLoader): fileLoader {
-        return new fileLoader(ProgramOptions.$copy($source.opts), $source.resolver, $source.defaultLibraryPath, ComparePathsOptions__from_tspath.$copy($source.comparePathsOptions), $source.supportedExtensions, $source.supportedExtensionsWithJsonIfResolveJsonModule, $source.filesParser, $source.rootTasks, named_sync_atomic.SyncAtomicInt32Operations.$copy($source.totalFileCount), named_sync_atomic.SyncAtomicInt32Operations.$copy($source.libFileCount), named_sync.SyncMutexOperations.$copy($source.factoryMu), NodeFactory__from_ast.$copy($source.factory), $source.projectReferenceFileMapper, Set__from_collections.$copy<Path__from_tspath>($source.dtsDirectories), SyncMap__from_collections.$copy<gostring, {
-            value: LibFile;
-        } | undefined>($source.pathForLibFileCache), SyncMap__from_collections.$copy<Path__from_tspath, {
+        return new fileLoader(ProgramOptions.$copy($source.opts), $source.resolver, $source.defaultLibraryPath, ComparePathsOptions__from_tspath.$copy($source.comparePathsOptions), $source.supportedExtensions, $source.supportedExtensionsWithJsonIfResolveJsonModule, $source.filesParser, $source.rootTasks, named_sync_atomic.SyncAtomicInt32Operations.$copy($source.totalFileCount), named_sync_atomic.SyncAtomicInt32Operations.$copy($source.libFileCount), named_sync.SyncMutexOperations.$copy($source.factoryMu), NodeFactory__from_ast.$copy($source.factory), $source.projectReferenceFileMapper, Set__from_collections.$copy<Path__from_tspath>($source.dtsDirectories), SyncMap__from_collections.$copy<gostring, tsonicTypeScriptRuntime.Location<LibFile> | undefined>($source.pathForLibFileCache), SyncMap__from_collections.$copy<Path__from_tspath, {
             value: libResolution;
         } | undefined>($source.pathForLibFileResolutions));
     }
@@ -127,20 +139,16 @@ export class fileLoader {
         }
         let containingFileName = CombinePaths__from_tspath(containingDirectory, RuntimeSlice.literal<gostring>([InferredTypesContainingFile$string__from___go_module]));
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks.append(void 0, [
-            { value: new parseTask(containingFileName, new Path__from_tspath(""), void 0, void 0, void 0, RuntimeSlice.nil<{
-                    value: parseTask;
-                } | undefined>(), false, false, true, void 0, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
-                    value: processingDiagnostic;
-                } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
-                    value: FileIncludeReason;
-                } | undefined>()) },
+            tsonicTypeScriptRuntime.location<parseTask>(new parseTask(containingFileName, new Path__from_tspath(""), void 0, void 0, void 0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<parseTask> | undefined>(), false, false, true, void 0, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
+                value: processingDiagnostic;
+            } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
+                value: FileIncludeReason;
+            } | undefined>())),
         ]);
     }
     static $go$private$compiler$addProjectReferenceTasks(p: fileLoader | undefined, singleThreaded: bool): void {
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper =
-            { value: new projectReferenceFileMapper(ProgramOptions.$copy((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts), (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host, void 0, GoMap.nil(), $goMap$MapOf_Named_tspath$Path_To_SliceOf_Named_tspath$Path.nil(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.nil(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.nil(), SyncMap__from_collections.$zero<Path__from_tspath, {
-                    value: SourceOutputAndProjectReference__from_tsoptions;
-                } | undefined>()) };
+            { value: new projectReferenceFileMapper(ProgramOptions.$copy((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts), (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host, void 0, GoMap.nil(), $goMap$MapOf_Named_tspath$Path_To_SliceOf_Named_tspath$Path.nil(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.nil(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.nil(), SyncMap__from_collections.$zero<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>()) };
         let projectReferences = ParsedCommandLine__from_tsoptions.ResolvedProjectReferencePaths((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config);
         if (projectReferences.length === 0) {
             return;
@@ -151,9 +159,7 @@ export class fileLoader {
         let rootTasks = createProjectReferenceParseTasks(projectReferences);
         projectReferenceParser.$go$private$compiler$parse(parser, rootTasks);
     }
-    static $go$private$compiler$addRootFileTask(p: fileLoader | undefined, fileName: gostring, libFile: {
-        value: LibFile;
-    } | undefined, includeReason: {
+    static $go$private$compiler$addRootFileTask(p: fileLoader | undefined, fileName: gostring, libFile: tsonicTypeScriptRuntime.Location<LibFile> | undefined, includeReason: {
         value: FileIncludeReason;
     } | undefined): void {
         const __gotots_receiver_5 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
@@ -166,18 +172,14 @@ export class fileLoader {
         const __gotots_results_1 = fileLoader.$go$private$compiler$getSourceFileFromReference(p, absPath, fileName, containingFile, includeReason);
         let resolvedFile = __gotots_results_1[0];
         let diagnostic: sourceFileFromReferenceDiagnostic | undefined = __gotots_results_1[1];
-        let rootTask: {
-            value: parseTask;
-        } | undefined = { value: new parseTask(resolvedFile, new Path__from_tspath(""), void 0, libFile, void 0, RuntimeSlice.nil<{
-                value: parseTask;
-            } | undefined>(), false, false, false, includeReason, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
-                value: processingDiagnostic;
-            } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
-                value: FileIncludeReason;
-            } | undefined>()) };
+        let rootTask: tsonicTypeScriptRuntime.Location<parseTask> | undefined = tsonicTypeScriptRuntime.location<parseTask>(new parseTask(resolvedFile, new Path__from_tspath(""), void 0, libFile, void 0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<parseTask> | undefined>(), false, false, false, includeReason, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
+            value: processingDiagnostic;
+        } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
+            value: FileIncludeReason;
+        } | undefined>()));
         if (!(diagnostic === undefined)) {
-            (rootTask ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath = absPath;
-            (rootTask ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics = RuntimeSlice.literal<{
+            ((rootTask ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.normalizedFilePath = absPath;
+            ((rootTask ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.processingDiagnostics = RuntimeSlice.literal<{
                 value: processingDiagnostic;
             } | undefined>([
                 { value: new processingDiagnostic(processingDiagnosticKindExplainingFileInclude$constant(), new $goInterfaceAdapter$PointerTo_Named_compiler$includeExplainingDiagnostic({ value: new includeExplainingDiagnostic(new Path__from_tspath(""), includeReason, (diagnostic ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).message, (diagnostic ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).args) })) },
@@ -185,9 +187,7 @@ export class fileLoader {
         }
         (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks.append(void 0, [rootTask]);
     }
-    static $go$private$compiler$addRootTask(p: fileLoader | undefined, fileName: gostring, libFile: {
-        value: LibFile;
-    } | undefined, includeReason: {
+    static $go$private$compiler$addRootTask(p: fileLoader | undefined, fileName: gostring, libFile: tsonicTypeScriptRuntime.Location<LibFile> | undefined, includeReason: {
         value: FileIncludeReason;
     } | undefined): void {
         const __gotots_argument_5 = fileName;
@@ -196,13 +196,11 @@ export class fileLoader {
         let absPath = GetNormalizedAbsolutePath__from_tspath(__gotots_argument_5, __gotots_argument_6);
         if (Tristate_IsTrue__from_core((ParsedCommandLine__from_tsoptions.CompilerOptions((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AllowNonTsExtensions) || HasExtension__from_tspath(absPath)) {
             (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).rootTasks.append(void 0, [
-                { value: new parseTask(absPath, new Path__from_tspath(""), void 0, libFile, void 0, RuntimeSlice.nil<{
-                        value: parseTask;
-                    } | undefined>(), false, false, false, includeReason, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
-                        value: processingDiagnostic;
-                    } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
-                        value: FileIncludeReason;
-                    } | undefined>()) },
+                tsonicTypeScriptRuntime.location<parseTask>(new parseTask(absPath, new Path__from_tspath(""), void 0, libFile, void 0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<parseTask> | undefined>(), false, false, false, includeReason, PackageId__from___go_module.$zero(), SourceFileMetaData__from_ast.$zero(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil()), RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(), RuntimeSlice.nil<{
+                    value: processingDiagnostic;
+                } | undefined>(), void 0, void 0, false, false, void 0, RuntimeSlice.nil<{
+                    value: FileIncludeReason;
+                } | undefined>())),
             ]);
         }
     }
@@ -224,7 +222,7 @@ export class fileLoader {
                     let importDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewImportDeclaration(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "factory"), void 0, void 0, externalHelpersModuleReference, void 0);
                     Node__from_ast.$storageOf(((externalHelpersModuleReference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent = importDecl;
                     const __gotots_store_6 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    Node__from_ast.$storageOf(((importDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    Node__from_ast.$storageOf(((importDecl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_return_0 = externalHelpersModuleReference;
                     break __gotots_return_block_0;
                 }
@@ -379,9 +377,7 @@ export class fileLoader {
         let impliedNodeFormat = GetImpliedNodeFormatForFile__from_ast(fileName, packageJsonType);
         return new SourceFileMetaData__from_ast(packageJsonType, packageJsonDirectory, impliedNodeFormat);
     }
-    static $go$private$compiler$parseSourceFile(p: fileLoader | undefined, t: {
-        value: parseTask;
-    } | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
+    static $go$private$compiler$parseSourceFile(p: fileLoader | undefined, t: tsonicTypeScriptRuntime.Location<parseTask> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         let __gotots_return_0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = void 0;
@@ -389,21 +385,21 @@ export class fileLoader {
             try {
                 __gotots_return_block_0: {
                     if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
-                        const __gotots_callee_0: (() => void) | undefined = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseParse$constant__from_tracing(), "createSourceFile", $goMap$MapOf_string_To_Interface_void.make(1, [["path", new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath)]]), true);
+                        const __gotots_callee_0: (() => void) | undefined = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseParse$constant__from_tracing(), "createSourceFile", $goMap$MapOf_string_To_Interface_void.make(1, [["path", new $goInterfaceAdapter$string(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.normalizedFilePath)]]), true);
                         const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_0);
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             __gotots_deferred_1 === undefined ? (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                         });
                     }
-                    let path = fileLoader.$go$private$compiler$toPath(p, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath);
+                    let path = fileLoader.$go$private$compiler$toPath(p, ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.normalizedFilePath);
                     let options: {
                         value: CompilerOptions__from_core;
                     } | undefined = projectReferenceFileMapper.$go$private$compiler$getCompilerOptionsForFile((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper, new $goInterfaceAdapter$PointerTo_Named_compiler$parseTask(t));
                     const __gotots_receiver_22 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Host;
                     const __gotots_argument_17 = SourceFileParseOptions__from_ast.$fromStorage({
-                        FileName: (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath,
+                        FileName: ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.normalizedFilePath,
                         Path: path.$value,
-                        ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(GetExternalModuleIndicatorOptions__from_ast((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.normalizedFilePath, options, SourceFileMetaData__from_ast.$copy((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.metadata)))
+                        ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions__from_ast.$storageOf(GetExternalModuleIndicatorOptions__from_ast(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.normalizedFilePath, options, SourceFileMetaData__from_ast.$copy(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.metadata)))
                     });
                     let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = goInterfaceNonNil<CompilerHost>(__gotots_receiver_22).GetSourceFile(__gotots_argument_17);
                     __gotots_return_0 = sourceFile;
@@ -440,15 +436,11 @@ export class fileLoader {
         }
         return __gotots_return_0;
     }
-    static $go$private$compiler$pathForLibFile(p: fileLoader | undefined, name: gostring): {
-        value: LibFile;
-    } | undefined {
+    static $go$private$compiler$pathForLibFile(p: fileLoader | undefined, name: gostring): tsonicTypeScriptRuntime.Location<LibFile> | undefined {
         {
             const __gotots_store_0 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             const __gotots_results_2 = SyncMap$Load$string$PointerTo_Named_compiler$LibFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "pathForLibFileCache"), name);
-            let cached: {
-                value: LibFile;
-            } | undefined = __gotots_results_2[0];
+            let cached: tsonicTypeScriptRuntime.Location<LibFile> | undefined = __gotots_results_2[0];
             let ok = __gotots_results_2[1];
             if (ok) {
                 return cached;
@@ -464,32 +456,30 @@ export class fileLoader {
             const __gotots_argument_4 = name;
             let resolveFrom = getInferredLibraryNameResolveFrom(__gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
             const __gotots_results_3 = fileLoader.$go$private$compiler$resolveLibrary(p, libraryName, resolveFrom);
-            let resolution: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_3[0];
+            let resolution: ResolvedModule__from___go_module | undefined = __gotots_results_3[0];
             let trace = __gotots_results_3[1];
             if (ResolvedModule__from___go_module.IsResolved(resolution)) {
-                path = ((resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+                path = (resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
                 replaced = true;
             }
             const __gotots_store_1 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_compiler$libResolution(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "pathForLibFileResolutions"), fileLoader.$go$private$compiler$toPath(p, resolveFrom), { value: new libResolution(libraryName, resolution, trace) });
         }
         const __gotots_store_2 = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        const __gotots_results_4 = SyncMap$LoadOrStore$string$PointerTo_Named_compiler$LibFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "pathForLibFileCache"), name, { value: new LibFile(name, path, replaced) });
-        let libPath: {
-            value: LibFile;
-        } | undefined = __gotots_results_4[0];
+        const __gotots_results_4 = SyncMap$LoadOrStore$string$PointerTo_Named_compiler$LibFile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "pathForLibFileCache"), name, tsonicTypeScriptRuntime.location<LibFile>(new LibFile(name, path, replaced)));
+        let libPath: tsonicTypeScriptRuntime.Location<LibFile> | undefined = __gotots_results_4[0];
         return libPath;
     }
     static $go$private$compiler$resolveAutomaticTypeDirectives(p: fileLoader | undefined, containingFileName: gostring): [
         RuntimeSlice<resolvedRef__from_compiler$Storage>,
-        ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>,
+        ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined>,
         RuntimeSlice<DiagAndArgs__from___go_module$Storage>,
         RuntimeSlice<{
             value: processingDiagnostic;
         } | undefined>
     ] {
         let toParse: RuntimeSlice<resolvedRef__from_compiler$Storage> = RuntimeSlice.nil<resolvedRef__from_compiler$Storage>();
-        let typeResolutionsInFile: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil());
+        let typeResolutionsInFile: ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.nil());
         let typeResolutionsTrace: RuntimeSlice<DiagAndArgs__from___go_module$Storage> = RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>();
         let pDiagnostics: RuntimeSlice<{
             value: processingDiagnostic;
@@ -510,7 +500,7 @@ export class fileLoader {
                 let name = __gotots_range_value_11;
                 let resolutionMode = ResolutionModeNone$constant__from_core();
                 const __gotots_results_11 = Resolver__from___go_module.ResolveTypeReferenceDirective((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver, name, containingFileName, resolutionMode, void 0);
-                let resolved: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined = __gotots_results_11[0];
+                let resolved: ResolvedTypeReferenceDirective__from___go_module | undefined = __gotots_results_11[0];
                 let trace = __gotots_results_11[1];
                 let traceDone: (() => void) | undefined;
                 if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
@@ -558,11 +548,11 @@ export class fileLoader {
                         __gotots_slice_build_21 = __gotots_slice_build_20.$withLength(__gotots_slice_build_22);
                         __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void resolvedRef.$storageOf, (void resolvedRef.$fromStorage,
                             {
-                                fileName: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName,
-                                increaseDepth: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.IsExternalLibraryImport,
+                                fileName: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName,
+                                increaseDepth: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport,
                                 elideOnDepth: false,
-                                includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindAutomaticTypeDirectiveFile$int), new $goInterfaceAdapter$PointerTo_Named_compiler$automaticTypeDirectiveFileData({ value: new automaticTypeDirectiveFileData(name, PackageId__from___go_module.$copy(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.PackageId)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
-                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.PackageId))
+                                includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindAutomaticTypeDirectiveFile$int), new $goInterfaceAdapter$PointerTo_Named_compiler$automaticTypeDirectiveFileData({ value: new automaticTypeDirectiveFileData(name, PackageId__from___go_module.$copy((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
+                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId))
                             })));
                     }
                     else {
@@ -572,11 +562,11 @@ export class fileLoader {
                         }
                         __gotots_slice_build_21.set(__gotots_slice_build_20.length + 0, (void resolvedRef.$storageOf, (void resolvedRef.$fromStorage,
                             {
-                                fileName: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName,
-                                increaseDepth: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.IsExternalLibraryImport,
+                                fileName: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName,
+                                increaseDepth: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport,
                                 elideOnDepth: false,
-                                includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindAutomaticTypeDirectiveFile$int), new $goInterfaceAdapter$PointerTo_Named_compiler$automaticTypeDirectiveFileData({ value: new automaticTypeDirectiveFileData(name, PackageId__from___go_module.$copy(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.PackageId)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
-                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.PackageId))
+                                includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindAutomaticTypeDirectiveFile$int), new $goInterfaceAdapter$PointerTo_Named_compiler$automaticTypeDirectiveFileData({ value: new automaticTypeDirectiveFileData(name, PackageId__from___go_module.$copy((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
+                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId))
                             })));
                         for (let __gotots_slice_build_23 = __gotots_slice_build_22; __gotots_slice_build_23 < __gotots_slice_build_21.capacity; __gotots_slice_build_23++) {
                             __gotots_slice_build_21.$initialize(__gotots_slice_build_23, resolvedRef.$zeroStorage());
@@ -597,23 +587,21 @@ export class fileLoader {
         }
         return [toParse, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics];
     }
-    static $go$private$compiler$resolveImportsAndModuleAugmentations(p: fileLoader | undefined, t: {
-        value: parseTask;
-    } | undefined): void {
+    static $go$private$compiler$resolveImportsAndModuleAugmentations(p: fileLoader | undefined, t: tsonicTypeScriptRuntime.Location<parseTask> | undefined): void {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
             try {
                 __gotots_return_block_0: {
                     if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
-                        const __gotots_callee_1: (() => void) | undefined = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "resolveModuleNamesWorker", $goMap$MapOf_string_To_Interface_void.make(1, [["containingFileName", new $goInterfaceAdapter$string(SourceFile__from_ast.FileName((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file))]]), false);
+                        const __gotots_callee_1: (() => void) | undefined = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "resolveModuleNamesWorker", $goMap$MapOf_string_To_Interface_void.make(1, [["containingFileName", new $goInterfaceAdapter$string(SourceFile__from_ast.FileName(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.file))]]), false);
                         const __gotots_deferred_1 = DeferredCallableRegistry.resolve(__gotots_callee_1);
                         __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                             __gotots_deferred_1 === undefined ? (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                         });
                     }
-                    let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file;
-                    let meta = SourceFileMetaData__from_ast.$copy((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.metadata);
+                    let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.file;
+                    let meta = SourceFileMetaData__from_ast.$copy(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.metadata);
                     let moduleNames = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(0, SourceFile__from_ast.Imports(file).length + ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ModuleAugmentations.length + 2, void 0);
                     let isJavaScriptFile = IsSourceFileJS__from_ast(file);
                     let isExternalModuleFile = IsExternalModule__from_ast(file);
@@ -627,7 +615,7 @@ export class fileLoader {
                         if (Tristate_IsTrue__from_core((optionsForFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ImportHelpers)) {
                             let specifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = fileLoader.$go$private$compiler$createSyntheticImport(p, externalHelpersModuleNameText$string, file);
                             moduleNames = moduleNames.append(void 0, [specifier]);
-                            (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.importHelpersImportSpecifier = specifier;
+                            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.importHelpersImportSpecifier = specifier;
                         }
                     }
                     if (((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind === ScriptKindJSX$constant__from_core() || ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind === ScriptKindTSX$constant__from_core()) {
@@ -635,8 +623,8 @@ export class fileLoader {
                         if (jsxImport !== "") {
                             let specifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = fileLoader.$go$private$compiler$createSyntheticImport(p, jsxImport, file);
                             moduleNames = moduleNames.append(void 0, [specifier]);
-                            (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.jsxRuntimeImportSpecifier =
-                                { value: new jsxRuntimeImportSpecifier(jsxImport, specifier) };
+                            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.jsxRuntimeImportSpecifier =
+                                tsonicTypeScriptRuntime.location<jsxRuntimeImportSpecifier>(new jsxRuntimeImportSpecifier(jsxImport, specifier));
                         }
                     }
                     let importsStart = moduleNames.length;
@@ -650,7 +638,7 @@ export class fileLoader {
                         }
                     }
                     if (moduleNames.length !== 0) {
-                        let resolutionsInFile: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.make(moduleNames.length, []));
+                        let resolutionsInFile: ModeAwareCache__from___go_module<ResolvedModule__from___go_module | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedModule.make(moduleNames.length, []));
                         let resolutionsTrace = RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>();
                         const __gotots_range_6 = moduleNames;
                         for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
@@ -664,7 +652,7 @@ export class fileLoader {
                             }
                             let mode = getModeForUsageLocation(SourceFile__from_ast.FileName(file), SourceFileMetaData__from_ast.$copy(meta), entry, optionsForFile);
                             const __gotots_results_10 = Resolver__from___go_module.ResolveModuleName((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver, moduleName, fileName, mode, new $goInterfaceAdapter$PointerTo_Named_tsoptions$ParsedCommandLine(redirect));
-                            let resolvedModule: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_10[0];
+                            let resolvedModule: ResolvedModule__from___go_module | undefined = __gotots_results_10[0];
                             let trace = __gotots_results_10[1];
                             resolutionsInFile.$value.store(ModeAwareCacheKey__from___go_module.$fromStorage({
                                 Name: moduleName,
@@ -703,8 +691,8 @@ export class fileLoader {
                             if (!ResolvedModule__from___go_module.IsResolved(resolvedModule)) {
                                 continue;
                             }
-                            let resolvedFileName = ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
-                            let isFromNodeModulesSearch = ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.IsExternalLibraryImport;
+                            let resolvedFileName = (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
+                            let isFromNodeModulesSearch = (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport;
                             let isJsFile = !FileExtensionIsOneOf__from_tspath(resolvedFileName, $state__tspath.SupportedTSExtensionsWithJsonFlat) && projectReferenceFileMapper.$go$private$compiler$getRedirectParsedCommandLineForResolution((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectReferenceFileMapper, NewHasFileName__from_ast(resolvedFileName, fileLoader.$go$private$compiler$toPath(p, resolvedFileName))) === undefined;
                             let isJsFileFromNodeModules = isFromNodeModulesSearch && isJsFile && strings__from_gostdlib.Contains(resolvedFileName, "/node_modules/");
                             let importIndex = index - importsStart;
@@ -712,15 +700,15 @@ export class fileLoader {
                             if (shouldAddFile) {
                                 parseTask.$go$private$compiler$addSubTask(t, resolvedRef.$fromStorage({
                                     fileName: resolvedFileName,
-                                    increaseDepth: ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.IsExternalLibraryImport,
+                                    increaseDepth: (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport,
                                     elideOnDepth: isJsFileFromNodeModules,
-                                    includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindImport$int), new $goInterfaceAdapter$PointerTo_Named_compiler$referencedFileData({ value: new referencedFileData((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, importIndex, IfElse$PointerTo_Named_ast$Node(importIndex < 0, entry, void 0)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
-                                    packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy(((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.PackageId))
+                                    includeReason: { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindImport$int), new $goInterfaceAdapter$PointerTo_Named_compiler$referencedFileData({ value: new referencedFileData(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.path, importIndex, IfElse$PointerTo_Named_ast$Node(importIndex < 0, entry, void 0)) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) },
+                                    packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId))
                                 }), void 0);
                             }
                         }
-                        (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolutionsInFile = resolutionsInFile;
-                        (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.resolutionsTrace = resolutionsTrace;
+                        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.resolutionsInFile = resolutionsInFile;
+                        ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.resolutionsTrace = resolutionsTrace;
                     }
                 }
             }
@@ -754,13 +742,13 @@ export class fileLoader {
         }
     }
     static $go$private$compiler$resolveLibrary(p: fileLoader | undefined, libraryName: gostring, resolveFrom: gostring): [
-        tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined,
+        ResolvedModule__from___go_module | undefined,
         RuntimeSlice<DiagAndArgs__from___go_module$Storage>
     ] {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         let __gotots_return_0: [
-            tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined,
+            ResolvedModule__from___go_module | undefined,
             RuntimeSlice<DiagAndArgs__from___go_module$Storage>
         ] = [void 0, RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>()];
         try {
@@ -842,15 +830,13 @@ export class fileLoader {
                 packageId: PackageId__from___go_module.$zeroStorage()
             }), void 0];
     }
-    static $go$private$compiler$resolveTypeReferenceDirectives(p: fileLoader | undefined, t: {
-        value: parseTask;
-    } | undefined): void {
+    static $go$private$compiler$resolveTypeReferenceDirectives(p: fileLoader | undefined, t: tsonicTypeScriptRuntime.Location<parseTask> | undefined): void {
         const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
             try {
                 __gotots_return_block_0: {
-                    let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.file;
+                    let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.file;
                     if (((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.TypeReferenceDirectives.length === 0) {
                         break __gotots_return_block_0;
                     }
@@ -861,8 +847,8 @@ export class fileLoader {
                             __gotots_deferred_1 === undefined ? (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))() : __gotots_deferred_1($go$recovery);
                         });
                     }
-                    let meta = SourceFileMetaData__from_ast.$copy((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.metadata);
-                    let typeResolutionsInFile: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.make(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.TypeReferenceDirectives.length, []));
+                    let meta = SourceFileMetaData__from_ast.$copy(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.metadata);
+                    let typeResolutionsInFile: ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined> = new ModeAwareCache__from___go_module($goMap$MapOf_Named___go_module$ModeAwareCacheKey_To_PointerTo_Named___go_module$ResolvedTypeReferenceDirective.make(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.TypeReferenceDirectives.length, []));
                     let typeResolutionsTrace = RuntimeSlice.nil<DiagAndArgs__from___go_module$Storage>();
                     const __gotots_range_4 = ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.TypeReferenceDirectives;
                     for (let __gotots_range_index_4 = 0; __gotots_range_index_4 < __gotots_range_4.length; __gotots_range_index_4++) {
@@ -877,11 +863,11 @@ export class fileLoader {
                         let fileName = __gotots_results_7[1];
                         let resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, SourceFileMetaData__from_ast.$copy(meta), GetCompilerOptionsWithRedirect__from___go_module(ParsedCommandLine__from_tsoptions.CompilerOptions((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Config), new $goInterfaceAdapter$PointerTo_Named_tsoptions$ParsedCommandLine(redirect)));
                         const __gotots_results_8 = Resolver__from___go_module.ResolveTypeReferenceDirective((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolver, (ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FileName, fileName, resolutionMode, new $goInterfaceAdapter$PointerTo_Named_tsoptions$ParsedCommandLine(redirect));
-                        let resolved: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined = __gotots_results_8[0];
+                        let resolved: ResolvedTypeReferenceDirective__from___go_module | undefined = __gotots_results_8[0];
                         let trace = __gotots_results_8[1];
                         let traceDone: (() => void) | undefined;
                         if (!((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing === undefined)) {
-                            traceDone = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "processTypeReferenceDirective", $goMap$MapOf_string_To_Interface_void.make(4, [["directive", new $goInterfaceAdapter$string((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FileName)], ["hasResolved", new $goInterfaceAdapter$bool(ResolvedTypeReferenceDirective__from___go_module.IsResolved(resolved))], ["refKind", new GoInterfaceAdapter(2)], ["refPath", new $goInterfaceAdapter$string((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path.$value)]]), false);
+                            traceDone = Tracing__from_tracing.Push((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).opts.Tracing, PhaseProgram$constant__from_tracing(), "processTypeReferenceDirective", $goMap$MapOf_string_To_Interface_void.make(4, [["directive", new $goInterfaceAdapter$string((ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FileName)], ["hasResolved", new $goInterfaceAdapter$bool(ResolvedTypeReferenceDirective__from___go_module.IsResolved(resolved))], ["refKind", new GoInterfaceAdapter(2)], ["refPath", new $goInterfaceAdapter$string(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.path.$value)]]), false);
                         }
                         typeResolutionsInFile.$value.store(ModeAwareCacheKey__from___go_module.$fromStorage({
                             Name: (ref ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FileName,
@@ -889,7 +875,7 @@ export class fileLoader {
                         }), resolved);
                         let includeReason: {
                             value: FileIncludeReason;
-                        } | undefined = { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindTypeReferenceDirective$int), new $goInterfaceAdapter$PointerTo_Named_compiler$referencedFileData({ value: new referencedFileData((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, index, void 0) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) };
+                        } | undefined = { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindTypeReferenceDirective$int), new $goInterfaceAdapter$PointerTo_Named_compiler$referencedFileData({ value: new referencedFileData(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.path, index, void 0) }), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) };
                         const __gotots_slice_build_0 = typeResolutionsTrace;
                         const __gotots_slice_build_1 = trace;
                         let __gotots_slice_build_2 = __gotots_slice_build_1;
@@ -922,15 +908,15 @@ export class fileLoader {
                         typeResolutionsTrace = __gotots_slice_build_3;
                         if (ResolvedTypeReferenceDirective__from___go_module.IsResolved(resolved)) {
                             parseTask.$go$private$compiler$addSubTask(t, resolvedRef.$fromStorage({
-                                fileName: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName,
-                                increaseDepth: ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.IsExternalLibraryImport,
+                                fileName: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName,
+                                increaseDepth: (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport,
                                 elideOnDepth: false,
                                 includeReason: includeReason,
-                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy(((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.PackageId))
+                                packageId: PackageId__from___go_module.$storageOf(PackageId__from___go_module.$copy((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId))
                             }), void 0);
                         }
                         else {
-                            (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.processingDiagnostics.append(void 0, [
+                            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.processingDiagnostics = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.processingDiagnostics.append(void 0, [
                                 { value: new processingDiagnostic(processingDiagnosticKindUnknownReference$constant(), new $goInterfaceAdapter$PointerTo_Named_compiler$FileIncludeReason(includeReason)) },
                             ]);
                         }
@@ -939,8 +925,8 @@ export class fileLoader {
                             (__gotots_callee_1 ?? GoPanic.raiseRuntime("call of nil function"))();
                         }
                     }
-                    (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeResolutionsInFile = typeResolutionsInFile;
-                    (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typeResolutionsTrace = typeResolutionsTrace;
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.typeResolutionsInFile = typeResolutionsInFile;
+                    ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseTask>).value.typeResolutionsTrace = typeResolutionsTrace;
                 }
             }
             catch (__gotots_caught_0) {
@@ -1010,11 +996,11 @@ export class redirectsFile {
     public constructor(public index: int, public fileName: gostring, public path: Path__from_tspath, public target: Path__from_tspath) {
     }
     declare private readonly then?: never;
-    static FileName(r: redirectsFile | undefined): gostring {
-        return (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).fileName;
+    static FileName(r: tsonicTypeScriptRuntime.Location<redirectsFile> | undefined): gostring {
+        return ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<redirectsFile>).value.fileName;
     }
-    static Path(r: redirectsFile | undefined): Path__from_tspath {
-        return (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).path;
+    static Path(r: tsonicTypeScriptRuntime.Location<redirectsFile> | undefined): Path__from_tspath {
+        return ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<redirectsFile>).value.path;
     }
 }
 export class DuplicateSourceFile {
@@ -1044,13 +1030,9 @@ export class processedFiles {
         value: DuplicateSourceFile;
     } | undefined>, public filesByPath: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, public projectReferenceFileMapper: {
         value: projectReferenceFileMapper;
-    } | undefined, public missingFiles: RuntimeSlice<gostring>, public resolvedModules: GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>>, public typeResolutionsInFile: GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>>, public sourceFileMetaDatas: GoMapValue<Path__from_tspath, SourceFileMetaData__from_ast>, public jsxRuntimeImportSpecifiers: GoMapValue<Path__from_tspath, {
-        value: jsxRuntimeImportSpecifier;
-    } | undefined>, public importHelpersImportSpecifiers: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public libFiles: GoMapValue<Path__from_tspath, {
-        value: LibFile;
-    } | undefined>, public sourceFilesFoundSearchingNodeModules: Set__from_collections<Path__from_tspath>, public includeProcessor: {
+    } | undefined, public missingFiles: RuntimeSlice<gostring>, public resolvedModules: GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<ResolvedModule__from___go_module | undefined>>, public typeResolutionsInFile: GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined>>, public sourceFileMetaDatas: GoMapValue<Path__from_tspath, SourceFileMetaData__from_ast>, public jsxRuntimeImportSpecifiers: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<jsxRuntimeImportSpecifier> | undefined>, public importHelpersImportSpecifiers: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public libFiles: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<LibFile> | undefined>, public sourceFilesFoundSearchingNodeModules: Set__from_collections<Path__from_tspath>, public includeProcessor: {
         value: includeProcessor;
-    } | undefined, public outputFileToProjectReferenceSource: GoMapValue<Path__from_tspath, gostring>, public redirectTargetsMap: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public redirectFilesByPath: GoMapValue<Path__from_tspath, redirectsFile | undefined>, public finishedProcessing: bool) {
+    } | undefined, public outputFileToProjectReferenceSource: GoMapValue<Path__from_tspath, gostring>, public redirectTargetsMap: GoMapValue<Path__from_tspath, RuntimeSlice<gostring>>, public redirectFilesByPath: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<redirectsFile> | undefined>, public finishedProcessing: bool) {
     }
     static $zero(): processedFiles {
         return new processedFiles(void 0, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>(), RuntimeSlice.nil<{
@@ -1118,13 +1100,9 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
                 const __gotots_field_4 = new ComparePathsOptions__from_tspath(__gotots_field_0, __gotots_field_1);
                 let loader = new fileLoader(__gotots_field_2, void 0, __gotots_field_3, __gotots_field_4, supportedExtensions, supportedExtensionsWithJsonIfResolveJsonModule, { value: new filesParser(NewWorkGroup__from_core(singleThreaded), SyncMap__from_collections.$zero<Path__from_tspath, {
                         value: parseTaskData;
-                    } | undefined>(), maxNodeModuleJsDepth) }, RuntimeSlice.make<{
-                    value: parseTask;
-                } | undefined>(0, rootFiles.length + (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lib.length, void 0), named_sync_atomic.SyncAtomicInt32Operations.$zero(), named_sync_atomic.SyncAtomicInt32Operations.$zero(), named_sync.SyncMutexOperations.$zero(), NodeFactory__from_ast.$zero(), void 0, Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
+                    } | undefined>(), maxNodeModuleJsDepth) }, RuntimeSlice.make<tsonicTypeScriptRuntime.Location<parseTask> | undefined>(0, rootFiles.length + (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lib.length, void 0), named_sync_atomic.SyncAtomicInt32Operations.$zero(), named_sync_atomic.SyncAtomicInt32Operations.$zero(), named_sync.SyncMutexOperations.$zero(), NodeFactory__from_ast.$zero(), void 0, Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
                     return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
-                }), SyncMap__from_collections.$zero<gostring, {
-                    value: LibFile;
-                } | undefined>(), SyncMap__from_collections.$zero<Path__from_tspath, {
+                }), SyncMap__from_collections.$zero<gostring, tsonicTypeScriptRuntime.Location<LibFile> | undefined>(), SyncMap__from_collections.$zero<Path__from_tspath, {
                     value: libResolution;
                 } | undefined>());
                 fileLoader.$go$private$compiler$addProjectReferenceTasks(loader, singleThreaded);
@@ -1147,10 +1125,8 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
                 if (rootFiles.length > 0 && Tristate_IsFalseOrUnknown__from_core((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NoLib)) {
                     if ((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lib.isNil()) {
                         let name = GetDefaultLibFileName__from_tsoptions(compilerOptions);
-                        let libFile: {
-                            value: LibFile;
-                        } | undefined = fileLoader.$go$private$compiler$pathForLibFile(loader, name);
-                        fileLoader.$go$private$compiler$addRootTask(loader, (libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, libFile, { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindLibFile$int), void 0, void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) });
+                        let libFile: tsonicTypeScriptRuntime.Location<LibFile> | undefined = fileLoader.$go$private$compiler$pathForLibFile(loader, name);
+                        fileLoader.$go$private$compiler$addRootTask(loader, ((libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LibFile>).value.path, libFile, { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindLibFile$int), void 0, void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) });
                     }
                     else {
                         const __gotots_range_1: CompilerOptions__from_core["Lib"] = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Lib;
@@ -1164,10 +1140,8 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
                                 let name = __gotots_results_0[0];
                                 let ok = __gotots_results_0[1];
                                 if (ok) {
-                                    let libFile: {
-                                        value: LibFile;
-                                    } | undefined = fileLoader.$go$private$compiler$pathForLibFile(loader, name);
-                                    fileLoader.$go$private$compiler$addRootTask(loader, (libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.path, libFile, { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindLibFile$int), new GoInterfaceAdapter(index), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) });
+                                    let libFile: tsonicTypeScriptRuntime.Location<LibFile> | undefined = fileLoader.$go$private$compiler$pathForLibFile(loader, name);
+                                    fileLoader.$go$private$compiler$addRootTask(loader, ((libFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<LibFile>).value.path, libFile, { value: new FileIncludeReason(new fileIncludeKind(fileIncludeKindLibFile$int), new GoInterfaceAdapter(index), void 0, named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero()) });
                                 }
                             }
                         }

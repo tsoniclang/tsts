@@ -14,6 +14,24 @@ import { FormattingContext } from "./context.js";
 import { TextRangeWithKind } from "./scanner.js";
 import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type anyOptionSelector<T> = (($0: FormatCodeSettings__from_lsutil) => T) | undefined;
 export function semicolonOption(options: FormatCodeSettings__from_lsutil): SemicolonPreference__from_lsutil {
     return options.Semicolons;
@@ -699,7 +717,7 @@ export function isSemicolonDeletionContext(context: FormattingContext | undefine
         if (tsonicTypeScriptRuntime.sameLocation((context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nextTokenParent, (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).currentTokenParent)) {
             const __gotots_argument_5 = (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nextTokenParent;
             const __gotots_store_0 = NodeBase__from_ast.$storageOf((((context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_6 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_7 = (context ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).SourceFile;
             nextRealToken = FindNextToken__from_astnav(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7);
         }

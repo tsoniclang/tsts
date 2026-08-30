@@ -24,6 +24,24 @@ import * as sync__from_gostdlib from "@gotots/gostdlib/sync.js";
 import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function $initialize(): void {
     $state.ErrUnknownName = void 0;
     $state.allMarshalerTypes = RuntimeSlice.nil<reflect__from_gostdlib.Type | undefined>();
@@ -90,7 +108,7 @@ export function $initialize(): void {
         $state.errChangingWhitespace = GoProviderInterfaceBridge.$from(errors__from_gostdlib.New("cannot change whitespace formatting within a MarshalEncode call"));
     }
     {
-        $state.__go_export = __go_export__from_jsontext.$storageOf(exporter__from_jsontext.$fromStorage($state__jsontext.Internal).Export(tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf)));
+        $state.__go_export = __go_export__from_jsontext.$storageOf(exporter__from_jsontext.$fromStorage($state__jsontext.Internal).Export(new $ProjectedPropertyLocation($state__internal, "AllowInternalUse", NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf)));
     }
     {
         const __gotots_field_0 = (): GoInterface | undefined => {

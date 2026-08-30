@@ -1,4 +1,3 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { SyncMap$Storage as SyncMap__from_collections$Storage } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/collections/package.js";
 import type { $goInterface$Interface_void as GoInterface } from "../../../../../../support/interface-contracts.js";
 import type { bool, int, uint32 } from "@gotots/runtime/scalars.js";
@@ -11,6 +10,24 @@ import * as sync__from_gostdlib from "@gotots/gostdlib/sync.js";
 import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type refCountCacheEntry$Storage<V> = {
     mu: sync__from_gostdlib.Mutex;
     value: GoStorage<V>;
@@ -200,11 +217,7 @@ export class RefCountCache<K, V, AcquireArgs> {
                     const __gotots_store_0 = RefCountCache.$storageOf((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
                     const __gotots_results_0 = SyncMap__from_collections.Load$kernel<K, {
                         value: refCountCacheEntry<V>;
-                    } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-                        value: refCountCacheEntry<V>;
-                    } | undefined>, SyncMap__from_collections<K, {
-                        value: refCountCacheEntry<V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
+                    } | undefined>(new $ProjectedPropertyLocation(__gotots_store_0, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
                     let entry: {
                         value: refCountCacheEntry<V>;
                     } | undefined = __gotots_results_0[0];
@@ -224,11 +237,7 @@ export class RefCountCache<K, V, AcquireArgs> {
                         const __gotots_store_2 = RefCountCache.$storageOf((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
                         SyncMap__from_collections.Delete$kernel<K, {
                             value: refCountCacheEntry<V>;
-                        } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-                            value: refCountCacheEntry<V>;
-                        } | undefined>, SyncMap__from_collections<K, {
-                            value: refCountCacheEntry<V>;
-                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$T0_to_Interface_void, $go$copy$T0_to_T0(identity));
+                        } | undefined>(new $ProjectedPropertyLocation(__gotots_store_2, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$T0_to_Interface_void, $go$copy$T0_to_T0(identity));
                     }
                 }
             }
@@ -281,11 +290,7 @@ export class RefCountCache<K, V, AcquireArgs> {
                     const __gotots_store_3 = RefCountCache.$storageOf((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
                     const __gotots_results_1 = SyncMap__from_collections.Load$kernel<K, {
                         value: refCountCacheEntry<V>;
-                    } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-                        value: refCountCacheEntry<V>;
-                    } | undefined>, SyncMap__from_collections<K, {
-                        value: refCountCacheEntry<V>;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
+                    } | undefined>(new $ProjectedPropertyLocation(__gotots_store_3, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(identity));
                     let entry: {
                         value: refCountCacheEntry<V>;
                     } | undefined = __gotots_results_1[0];
@@ -374,11 +379,7 @@ export class RefCountCache<K, V, AcquireArgs> {
         const __gotots_store_5 = RefCountCache.$storageOf((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
         const __gotots_results_3 = SyncMap__from_collections.LoadOrStore$kernel<K, {
             value: refCountCacheEntry<V>;
-        } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-            value: refCountCacheEntry<V>;
-        } | undefined>, SyncMap__from_collections<K, {
-            value: refCountCacheEntry<V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_project$refCountCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(key), entry);
+        } | undefined>(new $ProjectedPropertyLocation(__gotots_store_5, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_project$refCountCacheEntryOf_T1_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_project$refCountCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_project$refCountCacheEntryOf_T1, $go$copy$T0_to_T0(key), entry);
         let existing: {
             value: refCountCacheEntry<V>;
         } | undefined = __gotots_results_3[0];

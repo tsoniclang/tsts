@@ -72,9 +72,7 @@ export class watchRegistry {
     declare private readonly then?: never;
     static Acquire(r: {
         value: watchRegistry;
-    } | undefined, watcher: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined, id: WatcherID): bool {
+    } | undefined, watcher: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, id: WatcherID): bool {
         let isNew: bool = false;
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
@@ -266,9 +264,7 @@ export class watchRegistry {
     }
     static Release(r: {
         value: watchRegistry;
-    } | undefined, watcher: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): [
+    } | undefined, watcher: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): [
         WatcherID,
         bool
     ] {
@@ -401,48 +397,44 @@ export class PatternsAndIgnored implements GoStoredValue<PatternsAndIgnored$Stor
     }
     declare private readonly then?: never;
 }
-export function toFileSystemWatcherKey(w: {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined): fileSystemWatcherKey {
-    let kind: tsonicTypeScriptRuntime.Location<WatchKind__from_lsproto> | undefined = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Kind;
+export function toFileSystemWatcherKey(w: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): fileSystemWatcherKey {
+    let kind: tsonicTypeScriptRuntime.Location<WatchKind__from_lsproto> | undefined = ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.Kind;
     if (kind === undefined) {
         kind =
             tsonicTypeScriptRuntime.location<WatchKind__from_lsproto>(7);
     }
     let pattern = "";
-    if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.Pattern === undefined)) {
+    if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.Pattern === undefined)) {
         pattern =
-            (((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value;
+            ((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value;
     }
-    else if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern === undefined)) {
+    else if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern === undefined)) {
         let base = "";
-        if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI === undefined)) {
-            base = ((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<URI__from_lsproto>).value.$value;
+        if (!((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI === undefined)) {
+            base = (((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<URI__from_lsproto>).value.$value;
         }
-        else if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.WorkspaceFolder === undefined)) {
+        else if (!((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.WorkspaceFolder === undefined)) {
             const __gotots_argument_2 = new GoInterfaceAdapter("workspace folder-based relative patterns not implemented");
             GoPanic.raise(__gotots_argument_2 === undefined ? GoPanicNilValue.create() : __gotots_argument_2);
         }
-        pattern = base + "/" + ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Pattern;
+        pattern = base + "/" + (((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Pattern;
     }
     return new fileSystemWatcherKey(pattern, ((kind ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<WatchKind__from_lsproto>).value);
 }
-export function fileSystemWatcherGlobString(w: {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined): gostring {
-    if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.Pattern === undefined)) {
-        return (((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value;
+export function fileSystemWatcherGlobString(w: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): gostring {
+    if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.Pattern === undefined)) {
+        return ((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value;
     }
-    if (!((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern === undefined)) {
+    if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern === undefined)) {
         let base = "";
-        if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI === undefined)) {
-            base = ((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<URI__from_lsproto>).value.$value;
+        if (!((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI === undefined)) {
+            base = (((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.URI ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<URI__from_lsproto>).value.$value;
         }
-        else if (!(((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.WorkspaceFolder === undefined)) {
+        else if (!((((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.BaseUri.WorkspaceFolder === undefined)) {
             const __gotots_argument_0 = new GoInterfaceAdapter("workspace folder-based relative patterns not implemented");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }
-        return base + "/" + ((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Pattern;
+        return base + "/" + (((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.RelativePattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Pattern;
     }
     return "";
 }
@@ -461,12 +453,8 @@ export type WatchedFiles$Storage<T> = {
     mu: sync__from_gostdlib.RWMutex;
     input: GoStorage<T>;
     computeWatchersOnce: sync__from_gostdlib.Once;
-    workspaceWatchers: RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>;
-    outsideWorkspaceWatchers: RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>;
+    workspaceWatchers: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>;
+    outsideWorkspaceWatchers: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>;
     ignored: GoMapValue<gostring, GoEmptyStruct>;
     id: uint64;
 };
@@ -599,32 +587,24 @@ export class WatchedFiles<T> {
                                     let ignored: GoMapValue<gostring, GoEmptyStruct> = PatternsAndIgnored.$storageOf(result).ignored;
                                     WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).ignored = ignored;
                                     let changed = false;
-                                    if (!EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string(WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).workspaceWatchers, globs, (a: {
-                                        value: FileSystemWatcher__from_lsproto;
-                                    } | undefined, b: gostring): bool => {
-                                        return (((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value
+                                    if (!EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string(WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).workspaceWatchers, globs, (a: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, b: gostring): bool => {
+                                        return ((((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto>).value.GlobPattern.Pattern ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<gostring>).value
                                             === b;
                                     })) {
-                                        WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).workspaceWatchers = Map$string$PointerTo_Named_lsproto$FileSystemWatcher(globs, (glob: gostring): {
-                                            value: FileSystemWatcher__from_lsproto;
-                                        } | undefined => {
+                                        WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).workspaceWatchers = Map$string$PointerTo_Named_lsproto$FileSystemWatcher(globs, (glob: gostring): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
                                             const glob$location = tsonicTypeScriptRuntime.boundLocation({}, () => glob, glob$next => glob = glob$next);
                                             const __gotots_field_0 = new PatternOrRelativePattern__from_lsproto(glob$location, void 0);
                                             const __gotots_store_0 = WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
                                             const __gotots_field_1 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "watchKind");
-                                            return { value: new FileSystemWatcher__from_lsproto(__gotots_field_0, __gotots_field_1) };
+                                            return tsonicTypeScriptRuntime.location<FileSystemWatcher__from_lsproto>(new FileSystemWatcher__from_lsproto(__gotots_field_0, __gotots_field_1));
                                         });
                                         changed = true;
                                     }
                                     let dirsOutside = Compact$SliceOf_string$string(Sorted$string(Values$SliceOf_string$string(PatternsAndIgnored.$storageOf(result).directoriesOutsideWorkspace)));
-                                    if (!EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string(WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).outsideWorkspaceWatchers, dirsOutside, (a: {
-                                        value: FileSystemWatcher__from_lsproto;
-                                    } | undefined, b: gostring): bool => {
+                                    if (!EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string(WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).outsideWorkspaceWatchers, dirsOutside, (a: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, b: gostring): bool => {
                                         return fileSystemWatcherGlobString(a) === recursiveDirectoryGlobPattern(b, WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).hasRelativePatternCapability);
                                     })) {
-                                        WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).outsideWorkspaceWatchers = Map$string$PointerTo_Named_lsproto$FileSystemWatcher(dirsOutside, (dir: gostring): {
-                                            value: FileSystemWatcher__from_lsproto;
-                                        } | undefined => {
+                                        WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).outsideWorkspaceWatchers = Map$string$PointerTo_Named_lsproto$FileSystemWatcher(dirsOutside, (dir: gostring): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
                                             return newRecursiveDirectoryWatcher(dir, WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).watchKind, WatchedFiles.$storageOf((w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).hasRelativePatternCapability);
                                         });
                                         changed = true;
@@ -713,29 +693,17 @@ export function NewWatchedFiles$kernel<T>($go$to_storage$T0_to_T0: ($0: T) => Go
             mu: named_sync.SyncRWMutexOperations.$zero(),
             input: $go$to_storage$T0_to_T0($go$zero$void_to_T0()),
             computeWatchersOnce: named_sync.SyncOnceOperations.$zero(),
-            workspaceWatchers: RuntimeSlice.nil<{
-                value: FileSystemWatcher__from_lsproto;
-            } | undefined>(),
-            outsideWorkspaceWatchers: RuntimeSlice.nil<{
-                value: FileSystemWatcher__from_lsproto;
-            } | undefined>(),
+            workspaceWatchers: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>(),
+            outsideWorkspaceWatchers: RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>(),
             ignored: GoMap.nil()
         }) };
 }
 export class Watchers {
     declare private readonly $goType: void;
-    public constructor(public WatcherID: WatcherID, public WorkspaceWatchers: RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>, public OutsideWorkspaceWatchers: RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>, public IgnoredPaths: GoMapValue<gostring, GoEmptyStruct>) {
+    public constructor(public WatcherID: WatcherID, public WorkspaceWatchers: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>, public OutsideWorkspaceWatchers: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>, public IgnoredPaths: GoMapValue<gostring, GoEmptyStruct>) {
     }
     static $zero(): Watchers {
-        return new Watchers(new WatcherID(""), RuntimeSlice.nil<{
-            value: FileSystemWatcher__from_lsproto;
-        } | undefined>(), RuntimeSlice.nil<{
-            value: FileSystemWatcher__from_lsproto;
-        } | undefined>(), GoMap.nil());
+        return new Watchers(new WatcherID(""), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>(), RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>(), GoMap.nil());
     }
     declare private readonly then?: never;
 }
@@ -914,16 +882,14 @@ export function recursiveDirectoryGlobPattern(directory: gostring, useRelativePa
     }
     return getRecursiveGlobPattern(directory);
 }
-export function newRecursiveDirectoryWatcher(directory: gostring, kind: WatchKind__from_lsproto, useRelativePattern: bool): {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined {
+export function newRecursiveDirectoryWatcher(directory: gostring, kind: WatchKind__from_lsproto, useRelativePattern: bool): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined {
     const kind$location = tsonicTypeScriptRuntime.boundLocation({}, () => kind, kind$next => kind = kind$next);
     if (useRelativePattern) {
         let baseUri = new URI__from_lsproto(FileNameToDocumentURI__from_lsconv(directory).$value);
         const baseUri$location = tsonicTypeScriptRuntime.boundLocation({}, () => baseUri, baseUri$next => baseUri = baseUri$next);
-        return { value: new FileSystemWatcher__from_lsproto(new PatternOrRelativePattern__from_lsproto(void 0, { value: new RelativePattern__from_lsproto(new WorkspaceFolderOrURI__from_lsproto(void 0, baseUri$location), "**/*") }), kind$location) };
+        return tsonicTypeScriptRuntime.location<FileSystemWatcher__from_lsproto>(new FileSystemWatcher__from_lsproto(new PatternOrRelativePattern__from_lsproto(void 0, { value: new RelativePattern__from_lsproto(new WorkspaceFolderOrURI__from_lsproto(void 0, baseUri$location), "**/*") }), kind$location));
     }
     let glob = getRecursiveGlobPattern(directory);
     const glob$location2 = tsonicTypeScriptRuntime.boundLocation({}, () => glob, glob$next2 => glob = glob$next2);
-    return { value: new FileSystemWatcher__from_lsproto(new PatternOrRelativePattern__from_lsproto(glob$location2, void 0), kind$location) };
+    return tsonicTypeScriptRuntime.location<FileSystemWatcher__from_lsproto>(new FileSystemWatcher__from_lsproto(new PatternOrRelativePattern__from_lsproto(glob$location2, void 0), kind$location));
 }

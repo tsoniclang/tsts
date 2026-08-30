@@ -266,15 +266,15 @@ export function SortFunc$SliceOf_PointerTo_Named_autoimport$FixAndExport$Pointer
         return BigInt.asIntN(64, goNumberToBigInt(__gotots_callee_10($providerArgument0, $providerArgument1)));
     });
 }
-export function SortFunc$SliceOf_PointerTo_Named_compiler$redirectsFile$PointerTo_Named_compiler$redirectsFile($argument0: RuntimeSlice<redirectsFile__from_compiler | undefined>, $argument1: (($0: redirectsFile__from_compiler | undefined, $1: redirectsFile__from_compiler | undefined) => int) | undefined): void {
+export function SortFunc$SliceOf_PointerTo_Named_compiler$redirectsFile$PointerTo_Named_compiler$redirectsFile($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined, $1: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined) => int) | undefined): void {
     const __gotots_callee_15 = $argument1;
-    return generic_slices_kernel.SlicesSortFuncKernel<RuntimeSlice<redirectsFile__from_compiler | undefined>, redirectsFile__from_compiler | undefined, redirectsFile__from_compiler | undefined>(($argument0: RuntimeSlice<redirectsFile__from_compiler | undefined>): RuntimeSlice<redirectsFile__from_compiler | undefined> => {
+    return generic_slices_kernel.SlicesSortFuncKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined> => {
         return $argument0;
-    }, ($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
-    }, ($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
-    }, ($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
     }, $argument0, __gotots_callee_15 === undefined ? undefined : ($providerArgument0, $providerArgument1) => {
         return BigInt.asIntN(64, goNumberToBigInt(__gotots_callee_15($providerArgument0, $providerArgument1)));
@@ -476,43 +476,15 @@ export function SortFunc$SliceOf_PointerTo_Named_lsproto$FoldingRange$PointerTo_
         return BigInt.asIntN(64, goNumberToBigInt(__gotots_callee_21($providerArgument0, $providerArgument1)));
     });
 }
-export function SortFunc$SliceOf_PointerTo_Named_project$Project$PointerTo_Named_project$Project($argument0: RuntimeSlice<{
-    value: Project__from_project;
-} | undefined>, $argument1: (($0: {
-    value: Project__from_project;
-} | undefined, $1: {
-    value: Project__from_project;
-} | undefined) => int) | undefined): void {
+export function SortFunc$SliceOf_PointerTo_Named_project$Project$PointerTo_Named_project$Project($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, $1: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => int) | undefined): void {
     const __gotots_callee_11 = $argument1;
-    return generic_slices_kernel.SlicesSortFuncKernel<RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>, {
-        value: Project__from_project;
-    } | undefined, {
-        value: Project__from_project;
-    } | undefined>(($argument0: RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>): RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined> => {
+    return generic_slices_kernel.SlicesSortFuncKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, $argument0, __gotots_callee_11 === undefined ? undefined : ($providerArgument0, $providerArgument1) => {
         return BigInt.asIntN(64, goNumberToBigInt(__gotots_callee_11($providerArgument0, $providerArgument1)));

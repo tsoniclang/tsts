@@ -281,40 +281,18 @@ export function MapNonNil$int$PointerTo_Named_ast$Node($argument0: RuntimeSlice<
         return void 0;
     }, $argument0, $argument1);
 }
-export function MapNonNil$string$PointerTo_Named_project$Project($argument0: RuntimeSlice<gostring>, $argument1: (($0: gostring) => {
-    value: Project__from_project;
-} | undefined) | undefined): RuntimeSlice<{
-    value: Project__from_project;
-} | undefined> {
-    return MapNonNil$kernel<gostring, {
-        value: Project__from_project;
-    } | undefined>(($argument0: {
-        value: Project__from_project;
-    } | undefined, $argument1: {
-        value: Project__from_project;
-    } | undefined): bool => {
-        return !($argument0
-            ===
-                $argument1);
+export function MapNonNil$string$PointerTo_Named_project$Project($argument0: RuntimeSlice<gostring>, $argument1: (($0: gostring) => tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> {
+    return MapNonNil$kernel<gostring, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): bool => {
+        return !tsonicTypeScriptRuntime.sameLocation($argument0, $argument1);
     }, ($argument0: gostring): gostring => {
         return $argument0;
     }, ($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: Project__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return void 0;
     }, $argument0, $argument1);
 }

@@ -48,10 +48,10 @@ export class aliasResolver {
     declare private readonly $goType: void;
     public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public host: RegistryCloneHost | undefined, public moduleResolver: {
         value: Resolver__from___go_module;
-    } | undefined, public rootFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, public symlinks: GoMapValue<Path__from_tspath, pathAndFileName>, public onFailedAmbientModuleLookup: (($0: HasFileName__from_ast | undefined, $1: gostring) => void) | undefined, public resolvedModules: SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined>) {
+    } | undefined, public rootFiles: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, public symlinks: GoMapValue<Path__from_tspath, pathAndFileName>, public onFailedAmbientModuleLookup: (($0: HasFileName__from_ast | undefined, $1: gostring) => void) | undefined, public resolvedModules: SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined>) {
     }
     static $copy($source: aliasResolver): aliasResolver {
-        return new aliasResolver($source.toPath, $source.host, $source.moduleResolver, $source.rootFiles, $source.symlinks, $source.onFailedAmbientModuleLookup, SyncMap__from_collections.$copy<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined>($source.resolvedModules));
+        return new aliasResolver($source.toPath, $source.host, $source.moduleResolver, $source.rootFiles, $source.symlinks, $source.onFailedAmbientModuleLookup, SyncMap__from_collections.$copy<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined>($source.resolvedModules));
     }
     declare private readonly then?: never;
     static BindSourceFiles(r: {
@@ -152,18 +152,14 @@ export class aliasResolver {
     }
     static GetProjectReferenceFromOutputDts(r: {
         value: aliasResolver;
-    } | undefined, path: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, path: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         const __gotots_argument_10 = new GoInterfaceAdapter("unimplemented");
         GoPanic.raise(__gotots_argument_10 === undefined ? GoPanicNilValue.create() : __gotots_argument_10);
         GoPanic.raiseRuntime("unreachable Go function end");
     }
     static GetProjectReferenceFromSource(r: {
         value: aliasResolver;
-    } | undefined, path: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, path: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         const __gotots_argument_11 = new GoInterfaceAdapter("unimplemented");
         GoPanic.raise(__gotots_argument_11 === undefined ? GoPanicNilValue.create() : __gotots_argument_11);
         GoPanic.raiseRuntime("unreachable Go function end");
@@ -184,21 +180,21 @@ export class aliasResolver {
     }
     static GetResolvedModule(r: {
         value: aliasResolver;
-    } | undefined, currentSourceFile: HasFileName__from_ast | undefined, moduleReference: gostring, mode: ModuleKind__from_core): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined {
+    } | undefined, currentSourceFile: HasFileName__from_ast | undefined, moduleReference: gostring, mode: ModuleKind__from_core): ResolvedModule__from___go_module | undefined {
         const __gotots_store_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
         const __gotots_receiver_3 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "resolvedModules");
         const __gotots_receiver_2 = currentSourceFile;
         const __gotots_argument_14 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_2).Path();
-        const __gotots_struct_0 = SyncMap__from_collections.$zero<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>();
-        const __gotots_argument_15 = tsonicTypeScriptRuntime.location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>>(__gotots_struct_0);
+        const __gotots_struct_0 = SyncMap__from_collections.$zero<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>();
+        const __gotots_argument_15 = tsonicTypeScriptRuntime.location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>>(__gotots_struct_0);
         const __gotots_results_0 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_collections$SyncMapOf_Named___go_module$ModeAwareCacheKey_And_PointerTo_Named___go_module$ResolvedModule(__gotots_receiver_3, __gotots_argument_14, __gotots_argument_15);
-        let cache: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined = __gotots_results_0[0];
+        let cache: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined = __gotots_results_0[0];
         {
             const __gotots_results_1 = SyncMap$Load$Named___go_module$ModeAwareCacheKey$PointerTo_Named___go_module$ResolvedModule(cache, ModeAwareCacheKey__from___go_module.$fromStorage({
                 Name: moduleReference,
                 Mode: mode
             }));
-            let resolved__shadow_1: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_1[0];
+            let resolved__shadow_1: ResolvedModule__from___go_module | undefined = __gotots_results_1[0];
             let ok = __gotots_results_1[1];
             if (ok) {
                 return resolved__shadow_1;
@@ -211,7 +207,7 @@ export class aliasResolver {
         const __gotots_argument_18 = mode;
         const __gotots_argument_19 = void 0;
         const __gotots_results_2 = Resolver__from___go_module.ResolveModuleName(__gotots_receiver_5, __gotots_argument_16, __gotots_argument_17, __gotots_argument_18, __gotots_argument_19);
-        let resolved: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_2[0];
+        let resolved: ResolvedModule__from___go_module | undefined = __gotots_results_2[0];
         const __gotots_results_3 = SyncMap$LoadOrStore$Named___go_module$ModeAwareCacheKey$PointerTo_Named___go_module$ResolvedModule(cache, ModeAwareCacheKey__from___go_module.$fromStorage({
             Name: moduleReference,
             Mode: mode
@@ -227,14 +223,14 @@ export class aliasResolver {
     }
     static GetResolvedModuleFromModuleSpecifier(r: {
         value: aliasResolver;
-    } | undefined, file: HasFileName__from_ast | undefined, moduleSpecifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined {
+    } | undefined, file: HasFileName__from_ast | undefined, moduleSpecifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ResolvedModule__from___go_module | undefined {
         const __gotots_argument_22 = new GoInterfaceAdapter("unimplemented");
         GoPanic.raise(__gotots_argument_22 === undefined ? GoPanicNilValue.create() : __gotots_argument_22);
         GoPanic.raiseRuntime("unreachable Go function end");
     }
     static GetResolvedModules(r: {
         value: aliasResolver;
-    } | undefined): GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> {
+    } | undefined): GoMapValue<Path__from_tspath, ModeAwareCache__from___go_module<ResolvedModule__from___go_module | undefined>> {
         return $goMap$MapOf_Named_tspath$Path_To_Named___go_module$ModeAwareCacheOf_PointerTo_Named___go_module$ResolvedModule.nil();
     }
     static GetSourceFile(r: {
@@ -322,6 +318,6 @@ export function newAliasResolver(rootFiles: RuntimeSlice<tsonicTypeScriptRuntime
 } | undefined {
     let r: {
         value: aliasResolver;
-    } | undefined = { value: new aliasResolver(toPath, host, moduleResolver, rootFiles, symlinks__shadow_1, onFailedAmbientModuleLookup, SyncMap__from_collections.$zero<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined>()) };
+    } | undefined = { value: new aliasResolver(toPath, host, moduleResolver, rootFiles, symlinks__shadow_1, onFailedAmbientModuleLookup, SyncMap__from_collections.$zero<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined>()) };
     return r;
 }

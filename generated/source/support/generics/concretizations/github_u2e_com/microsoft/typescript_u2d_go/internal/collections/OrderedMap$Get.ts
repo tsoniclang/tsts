@@ -15,21 +15,11 @@ export function OrderedMap$Get$Named_tspath$Path$Named_tspath$Path($argument0: t
         return $argument0;
     }, $argument1);
 }
-export function OrderedMap$Get$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined>> | undefined, $argument1: Path__from_tspath): [
-    {
-        value: Project__from_project;
-    } | undefined,
+export function OrderedMap$Get$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined, $argument1: Path__from_tspath): [
+    tsonicTypeScriptRuntime.Location<Project__from_project> | undefined,
     bool
 ] {
-    return OrderedMap__from_collections.Get$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    return OrderedMap__from_collections.Get$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, $argument1);
 }

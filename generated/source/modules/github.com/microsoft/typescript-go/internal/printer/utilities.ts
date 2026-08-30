@@ -29,6 +29,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class getLiteralTextFlags {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -520,7 +538,7 @@ export function getContainingNodeArray(node: tsonicTypeScriptRuntime.Location<No
                     let modifiers: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = Node__from_ast.Modifiers(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Parent);
                     if (!(modifiers === undefined)) {
                         const __gotots_store_1 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                        return tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                        return new $ProjectedPropertyLocation(__gotots_store_1, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                     }
                 }
             }
@@ -643,7 +661,7 @@ export function getContainingNodeArray(node: tsonicTypeScriptRuntime.Location<No
             let modifiers: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = Node__from_ast.Modifiers(parent);
             if (!(modifiers === undefined)) {
                 const __gotots_store_2 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                return tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                return new $ProjectedPropertyLocation(__gotots_store_2, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
             }
         }
     }
@@ -698,7 +716,7 @@ export function tryGetEnd(node: GoInterface | undefined): [
             let v: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = __gotots_type_switch_0.$go$value;
             if (!(v === undefined)) {
                 const __gotots_store_0 = ModifierList__from_ast.$storageOf(((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_results_2 = NodeList__from_ast.End(tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
+                const __gotots_results_2 = NodeList__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_0, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf));
                 const __gotots_results_3 = true;
                 return [__gotots_results_2, __gotots_results_3];
             }

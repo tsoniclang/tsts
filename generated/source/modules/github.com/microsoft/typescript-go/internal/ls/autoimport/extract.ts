@@ -490,9 +490,9 @@ export class exportExtractor {
             if (IsExternalModuleNameRelative__from_tspath(name)) {
                 {
                     const __gotots_results_0 = Resolver__from___go_module.ResolveModuleName((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).moduleResolver, name, SourceFile__from_ast.FileName(file), ModuleKindCommonJS$constant__from_core(), void 0);
-                    let resolved: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = __gotots_results_0[0];
+                    let resolved: ResolvedModule__from___go_module | undefined = __gotots_results_0[0];
                     if (ResolvedModule__from___go_module.IsResolved(resolved)) {
-                        moduleFileName = ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+                        moduleFileName = (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
                         const __gotots_callee_0 = ((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolExtractor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).toPath;
                         const __gotots_argument_0 = moduleFileName;
                         moduleID__shadow_1 = new ModuleID((__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0).$value);

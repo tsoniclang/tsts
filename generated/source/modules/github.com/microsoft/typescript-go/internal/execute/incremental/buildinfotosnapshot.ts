@@ -121,9 +121,7 @@ export class toSnapshot {
             const __gotots_range_value_1 = __gotots_range_index_1;
             const __gotots_range_value_2 = __gotots_range_1.get(__gotots_range_index_1);
             let index = __gotots_range_value_1;
-            let buildInfoFileInfo: {
-                value: BuildInfoFileInfo;
-            } | undefined = __gotots_range_value_2;
+            let buildInfoFileInfo: tsonicTypeScriptRuntime.Location<BuildInfoFileInfo> | undefined = __gotots_range_value_2;
             let path = toSnapshot.$go$private$incremental$toFilePath(t, new BuildInfoFileId(index + 1));
             let info: {
                 value: FileInfo;

@@ -37,12 +37,10 @@ export interface EmitHost extends GoInterfaceValue {
     GetPackageJsonInfo($argument0: gostring): {
         value: InfoCacheEntry__from_packagejson;
     } | undefined;
-    GetProjectReferenceFromSource($argument0: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined;
+    GetProjectReferenceFromSource($argument0: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined;
     GetRedirectTargets($argument0: Path__from_tspath): RuntimeSlice<gostring>;
     GetResolutionModeOverride($argument0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ModuleKind__from_core;
-    GetResolvedModuleFromModuleSpecifier($argument0: HasFileName__from_ast | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined;
+    GetResolvedModuleFromModuleSpecifier($argument0: HasFileName__from_ast | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ResolvedModule__from___go_module | undefined;
     GetSourceFileFromReference($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, $argument1: {
         value: FileReference__from_ast;
     } | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined;
@@ -150,9 +148,7 @@ export class emitHost {
     }
     static GetProjectReferenceFromSource(host: {
         value: emitHost;
-    } | undefined, path: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined {
+    } | undefined, path: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined {
         return Program.GetProjectReferenceFromSource((host ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program, path);
     }
     static GetRedirectTargets(host: {
@@ -169,7 +165,7 @@ export class emitHost {
     }
     static GetResolvedModuleFromModuleSpecifier(host: {
         value: emitHost;
-    } | undefined, file: HasFileName__from_ast | undefined, moduleSpecifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined {
+    } | undefined, file: HasFileName__from_ast | undefined, moduleSpecifier: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ResolvedModule__from___go_module | undefined {
         return Program.GetResolvedModuleFromModuleSpecifier((host ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.program, file, moduleSpecifier);
     }
     static GetSourceFileFromReference(host: {

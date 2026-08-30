@@ -12,6 +12,24 @@ import { $goInterfaceAdapter$PointerTo_Named_printer$NodeFactory as GoInterfaceA
 import { createNotNullCondition } from "./utilities.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class optionalChainTransformer {
     declare private readonly $goType: void;
     public constructor(public Transformer: Transformer__from_transformers) {
@@ -62,7 +80,7 @@ export class optionalChainTransformer {
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_2 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_3 = captureThisArg;
             const __gotots_argument_4 = false;
             return optionalChainTransformer.$go$private$estransforms$visitOptionalExpression(__gotots_receiver_2, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
@@ -93,7 +111,7 @@ export class optionalChainTransformer {
                                 (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                                     (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                         CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     EmitContext__from_printer.SetOriginal(__gotots_receiver_3, __gotots_argument_5, __gotots_argument_6);
                     return res;
                 }
@@ -117,7 +135,7 @@ export class optionalChainTransformer {
                     (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             CallExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_11, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_4, __gotots_argument_7);
     }
     static $go$private$estransforms$visitDeleteExpression(ch: optionalChainTransformer | undefined, node: {
@@ -132,7 +150,7 @@ export class optionalChainTransformer {
         const __gotots_store_57 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void ExpressionBase__from_ast.$storageOf, (void ExpressionBase__from_ast.$fromStorage,
                 UnaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.UnaryExpressionBase).ExpressionBase)).NodeBase));
-        const __gotots_argument_43 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_57, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_43 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_57, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_12, __gotots_argument_43);
     }
     static $go$private$estransforms$visitNonOptionalExpression(ch: optionalChainTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, captureThisArg: bool, isDelete: bool): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -350,7 +368,7 @@ export class optionalChainTransformer {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         ParenthesizedExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParenthesizedExpression__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_47 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_63, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_47 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_63, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             EmitContext__from_printer.SetOriginal(__gotots_receiver_14, __gotots_argument_46, __gotots_argument_47);
             return res;
         }
@@ -419,7 +437,7 @@ export class optionalChainTransformer {
                                 (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                     (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                         ElementAccessExpression__from_ast.$storageOf(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase)).NodeDefault));
-            const __gotots_argument_53 = ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_77, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression;
+            const __gotots_argument_53 = ElementAccessExpression__from_ast.$storageOf(((Node__from_ast.AsElementAccessExpression(new $ProjectedPropertyLocation(__gotots_store_77, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).ArgumentExpression;
             const __gotots_argument_57 = NodeVisitor__from_ast.VisitNode(__gotots_receiver_16, __gotots_argument_53);
             const __gotots_argument_58 = (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                 (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,

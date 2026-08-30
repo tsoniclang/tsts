@@ -26,6 +26,24 @@ import * as sync__from_gostdlib from "@gotots/gostdlib/sync.js";
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function isNamedExpression(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     if (node === undefined) {
         return false;
@@ -769,13 +787,13 @@ export function convertEntryToCallSite(entry: ReferenceEntry | undefined): callS
     let ancestor: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, isValidCallHierarchyDeclaration);
     if (ancestor === undefined) {
         const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        ancestor = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        ancestor = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     let start = SkipTrivia__from_scanner(SourceFile__from_ast.Text(sourceFile), Node__from_ast.Pos(node));
     const __gotots_field_0 = ancestor;
     const __gotots_field_1 = NewTextRange__from_core(start, Node__from_ast.End(node));
     const __gotots_store_1 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    const __gotots_field_2 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_field_2 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     return new callSite(__gotots_field_0, __gotots_field_1, __gotots_field_2);
 }
 export function getCallSiteGroupKey(site: callSite | undefined): NodeId__from_ast {
@@ -979,7 +997,7 @@ export class callSiteCollector {
                 const __gotots_field_3 = decl;
                 const __gotots_field_4 = TextRange__from_core.$copy(textRange);
                 const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                const __gotots_field_5 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_field_5 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_1 = new callSite(__gotots_field_3, __gotots_field_4, __gotots_field_5);
                 (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).callSites = __gotots_argument_0.append(void 0, [__gotots_argument_1]);
                 break;
@@ -994,7 +1012,7 @@ export class callSiteCollector {
                     const __gotots_field_6 = d;
                     const __gotots_field_7 = TextRange__from_core.$copy(textRange);
                     const __gotots_store_3 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_field_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_field_8 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     const __gotots_argument_3 = new callSite(__gotots_field_6, __gotots_field_7, __gotots_field_8);
                     (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).callSites = __gotots_argument_2.append(void 0, [__gotots_argument_3]);
                 }

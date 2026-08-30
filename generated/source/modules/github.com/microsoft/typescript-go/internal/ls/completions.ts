@@ -57,6 +57,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class CompletionItem {
     declare private readonly $goType: void;
     public constructor(public CompletionItem: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined, public Symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined) {
@@ -129,7 +147,7 @@ export class completionDataData {
     declare private readonly $goType: void;
     public constructor(public symbols: RuntimeSlice<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public autoImports: RuntimeSlice<{
         value: FixAndExport__from_autoimport;
-    } | undefined>, public completionKind: CompletionKind, public isInSnippetScope: bool, public propertyAccessToConvert: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public isNewIdentifierLocation: bool, public location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public keywordFilters: KeywordCompletionFilters, public literals: RuntimeSlice<literalValue | undefined>, public symbolToOriginInfoMap: GoMapValue<int, symbolOriginInfo | undefined>, public symbolToSortTextMap: GoMapValue<SymbolId__from_ast, SortText>, public recommendedCompletion: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, public previousToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public jsxInitializer: jsxInitializer, public insideJSDocTagTypeExpression: bool, public isTypeOnlyLocation: bool, public isJsxIdentifierExpected: bool, public isRightOfOpenTag: bool, public isRightOfDotOrQuestionDot: bool, public importStatementCompletion: tsonicTypeScriptRuntime.Location<importStatementCompletionInfo> | undefined, public hasUnresolvedAutoImports: bool, public defaultCommitCharacters: RuntimeSlice<gostring>) {
+    } | undefined>, public completionKind: CompletionKind, public isInSnippetScope: bool, public propertyAccessToConvert: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public isNewIdentifierLocation: bool, public location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public keywordFilters: KeywordCompletionFilters, public literals: RuntimeSlice<literalValue | undefined>, public symbolToOriginInfoMap: GoMapValue<int, tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined>, public symbolToSortTextMap: GoMapValue<SymbolId__from_ast, SortText>, public recommendedCompletion: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, public previousToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public jsxInitializer: jsxInitializer, public insideJSDocTagTypeExpression: bool, public isTypeOnlyLocation: bool, public isJsxIdentifierExpected: bool, public isRightOfOpenTag: bool, public isRightOfDotOrQuestionDot: bool, public importStatementCompletion: tsonicTypeScriptRuntime.Location<importStatementCompletionInfo> | undefined, public hasUnresolvedAutoImports: bool, public defaultCommitCharacters: RuntimeSlice<gostring>) {
     }
     static $copy($source: completionDataData): completionDataData {
         return new completionDataData($source.symbols, $source.autoImports, $source.completionKind, $source.isInSnippetScope, $source.propertyAccessToConvert, $source.isNewIdentifierLocation, $source.location, $source.keywordFilters, $source.literals, $source.symbolToOriginInfoMap, $source.symbolToSortTextMap, $source.recommendedCompletion, $source.previousToken, $source.contextToken, jsxInitializer.$copy($source.jsxInitializer), $source.insideJSDocTagTypeExpression, $source.isTypeOnlyLocation, $source.isJsxIdentifierExpected, $source.isRightOfOpenTag, $source.isRightOfDotOrQuestionDot, $source.importStatementCompletion, $source.hasUnresolvedAutoImports, $source.defaultCommitCharacters);
@@ -387,16 +405,16 @@ export class symbolOriginInfo {
     public constructor(public kind: symbolOriginInfoKind, public isDefaultExport: bool, public isFromPackageJson: bool, public fileName: gostring, public data: $goInterface$Interface_void | undefined) {
     }
     declare private readonly then?: never;
-    static $go$private$ls$asObjectLiteralMethod(s: symbolOriginInfo | undefined): tsonicTypeScriptRuntime.Location<symbolOriginInfoObjectLiteralMethod> | undefined {
+    static $go$private$ls$asObjectLiteralMethod(s: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): tsonicTypeScriptRuntime.Location<symbolOriginInfoObjectLiteralMethod> | undefined {
         return (($value: $goInterface$Interface_void | undefined): tsonicTypeScriptRuntime.Location<symbolOriginInfoObjectLiteralMethod> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_ls$symbolOriginInfoObjectLiteralMethod.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
-        })((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).data);
+        })(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.data);
     }
-    static $go$private$ls$symbolName(origin: symbolOriginInfo | undefined): gostring {
-        const __gotots_type_switch_1: $goInterface$Interface_void | undefined = (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).data;
+    static $go$private$ls$symbolName(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): gostring {
+        const __gotots_type_switch_1: $goInterface$Interface_void | undefined = ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.data;
         switch (true) {
             case $goInterfaceAdapter$PointerTo_Named_ls$symbolOriginInfoComputedPropertyName.$is(__gotots_type_switch_1): {
                 return ((($value: $goInterface$Interface_void | undefined): {
@@ -406,11 +424,11 @@ export class symbolOriginInfo {
                         return GoPanic.raiseRuntime("runtime error: interface conversion failed");
                     }
                     return $value.$go$value;
-                })((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).data) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbolName;
+                })(((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.data) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbolName;
                 break;
             }
             default: {
-                const __gotots_argument_17 = new GoInterfaceAdapter(fmt__from_gostdlib.Sprintf("symbolOriginInfo: unknown data type for symbolName(): %T", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([(origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).data])));
+                const __gotots_argument_17 = new GoInterfaceAdapter(fmt__from_gostdlib.Sprintf("symbolOriginInfo: unknown data type for symbolName(): %T", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.data])));
                 GoPanic.raise(__gotots_argument_17 === undefined ? GoPanicNilValue.create() : __gotots_argument_17);
                 break;
             }
@@ -675,7 +693,7 @@ export function getLineEndOfPosition(file: tsonicTypeScriptRuntime.Location<Sour
     if (line + 1 >= lineStarts.length) {
         const __gotots_store_8 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        lastCharPos = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        lastCharPos = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_8, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     }
     else {
         lastCharPos = lineStarts.get(line + 1) - 1;
@@ -741,7 +759,7 @@ export function shouldIncludeSymbol(__go_symbol: tsonicTypeScriptRuntime.Locatio
     let symbolOrigin: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = SkipAlias__from_checker(__go_symbol, typeChecker);
     const __gotots_store_7 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    if (!(((Node__from_ast.AsSourceFile(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ExternalModuleIndicator === undefined) && !((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AllowUmdGlobalAccess === TSTrue$constant__from_core()) && !tsonicTypeScriptRuntime.sameLocation(__go_symbol, symbolOrigin) && (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbolToSortTextMap.lookup(GetSymbolId__from_ast(__go_symbol)).$value === SortTextGlobalsOrKeywords$constant().$value && !(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent === undefined) && IsExternalModuleSymbol__from_checker(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent)) {
+    if (!(((Node__from_ast.AsSourceFile(new $ProjectedPropertyLocation(__gotots_store_7, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ExternalModuleIndicator === undefined) && !((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AllowUmdGlobalAccess === TSTrue$constant__from_core()) && !tsonicTypeScriptRuntime.sameLocation(__go_symbol, symbolOrigin) && (data ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symbolToSortTextMap.lookup(GetSymbolId__from_ast(__go_symbol)).$value === SortTextGlobalsOrKeywords$constant().$value && !(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent === undefined) && IsExternalModuleSymbol__from_checker(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).Parent)) {
         return false;
     }
     allFlags = (allFlags | Symbol__from_ast.CombinedLocalAndExportSymbolFlags(symbolOrigin)) >>> 0;
@@ -758,7 +776,7 @@ export function shouldIncludeSymbol(__go_symbol: tsonicTypeScriptRuntime.Locatio
     }
     return !((allFlags & SymbolFlagsValue$constant__from_ast()) >>> 0 === 0);
 }
-export function getCompletionEntryDisplayNameForSymbol(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, origin: symbolOriginInfo | undefined, completionKind: CompletionKind, isJsxIdentifierExpected: bool): [
+export function getCompletionEntryDisplayNameForSymbol(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined, completionKind: CompletionKind, isJsxIdentifierExpected: bool): [
     gostring,
     bool
 ] {
@@ -824,66 +842,66 @@ export function getCompletionEntryDisplayNameForSymbol(__go_symbol: tsonicTypeSc
         }
     }
 }
-export function originIsIgnore(origin: symbolOriginInfo | undefined): bool {
+export function originIsIgnore(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindIgnore$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindIgnore$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIncludesSymbolName(origin: symbolOriginInfo | undefined): bool {
+export function originIncludesSymbolName(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return originIsComputedPropertyName(origin);
 }
-export function originIsComputedPropertyName(origin: symbolOriginInfo | undefined): bool {
+export function originIsComputedPropertyName(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindComputedPropertyName$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindComputedPropertyName$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsObjectLiteralMethod(origin: symbolOriginInfo | undefined): bool {
+export function originIsObjectLiteralMethod(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindObjectLiteralMethod$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindObjectLiteralMethod$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsThisTypeNode(origin: symbolOriginInfo | undefined): bool {
+export function originIsThisTypeNode(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindThisType$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindThisType$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsTypeOnlyAlias(origin: symbolOriginInfo | undefined): bool {
+export function originIsTypeOnlyAlias(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindTypeOnlyAlias$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindTypeOnlyAlias$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsSymbolMember(origin: symbolOriginInfo | undefined): bool {
+export function originIsSymbolMember(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindSymbolMember$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindSymbolMember$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsNullableMember(origin: symbolOriginInfo | undefined): bool {
+export function originIsNullableMember(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindNullable$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindNullable$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function originIsPromise(origin: symbolOriginInfo | undefined): bool {
+export function originIsPromise(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): bool {
     return !(origin === undefined) && !(((void symbolOriginInfoKind,
-        (origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).kind.$value & symbolOriginInfoKindPromise$constant().$value) as int)
+        ((origin ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<symbolOriginInfo>).value.kind.$value & symbolOriginInfoKindPromise$constant().$value) as int)
         ===
             ((void symbolOriginInfoKind,
                 0) as int));
 }
-export function getSourceFromOrigin(origin: symbolOriginInfo | undefined): gostring {
+export function getSourceFromOrigin(origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined): gostring {
     if (originIsThisTypeNode(origin)) {
         return "ThisProperty/";
     }
@@ -1479,7 +1497,7 @@ export function getKeywordCompletions(keywordFilter: KeywordCompletionFilters, f
         keywordFilter.$value + KeywordCompletionFiltersLast$constant().$value) as int)
         + 1);
     {
-        const __gotots_results_1 = SyncMap$Load$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>, SyncMap__from_collections<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>>(tsonicTypeScriptRuntime.propertyLocation($state, "keywordCompletionsCache"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), index);
+        const __gotots_results_1 = SyncMap$Load$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(new $ProjectedPropertyLocation($state, "keywordCompletionsCache", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), index);
         let cached = __gotots_results_1[0];
         let ok = __gotots_results_1[1];
         if (ok) {
@@ -1489,12 +1507,12 @@ export function getKeywordCompletions(keywordFilter: KeywordCompletionFilters, f
     let result = Filter$PointerTo_Named_lsproto$CompletionItem(getTypescriptKeywordCompletions(keywordFilter), (ci: tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined): bool => {
         return !isTypeScriptOnlyKeyword(StringToToken__from_scanner(((ci ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto>).value.Label));
     });
-    SyncMap$Store$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>, SyncMap__from_collections<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>>(tsonicTypeScriptRuntime.propertyLocation($state, "keywordCompletionsCache"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), index, result);
+    SyncMap$Store$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(new $ProjectedPropertyLocation($state, "keywordCompletionsCache", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), index, result);
     return cloneItems(result);
 }
 export function getTypescriptKeywordCompletions(keywordFilter: KeywordCompletionFilters): RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined> {
     {
-        const __gotots_results_4 = SyncMap$Load$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>, SyncMap__from_collections<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>>(tsonicTypeScriptRuntime.propertyLocation($state, "keywordCompletionsCache"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), keywordFilter);
+        const __gotots_results_4 = SyncMap$Load$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(new $ProjectedPropertyLocation($state, "keywordCompletionsCache", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), keywordFilter);
         let cached = __gotots_results_4[0];
         let ok = __gotots_results_4[1];
         if (ok) {
@@ -1550,7 +1568,7 @@ export function getTypescriptKeywordCompletions(keywordFilter: KeywordCompletion
         }
     };
     let result = Filter$PointerTo_Named_lsproto$CompletionItem(__gotots_argument_13, __gotots_argument_14);
-    SyncMap$Store$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>, SyncMap__from_collections<KeywordCompletionFilters, RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>>>(tsonicTypeScriptRuntime.propertyLocation($state, "keywordCompletionsCache"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), keywordFilter, result);
+    SyncMap$Store$Named_ls$KeywordCompletionFilters$SliceOf_PointerTo_Named_lsproto$CompletionItem(new $ProjectedPropertyLocation($state, "keywordCompletionsCache", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), keywordFilter, result);
     return result;
 }
 export function isTypeScriptOnlyKeyword(kind: Kind__from_ast): bool {
@@ -1854,7 +1872,7 @@ export function isProbablyGlobalType(t: tsonicTypeScriptRuntime.Location<Type__f
         const __gotots_receiver_0 = typeChecker;
         const __gotots_argument_6 = selfSymbol;
         const __gotots_store_4 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_7 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_4, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_2 =
             tsonicTypeScriptRuntime.sameLocation(Checker__from_checker.GetTypeOfSymbolAtLocation(__gotots_receiver_0, __gotots_argument_6, __gotots_argument_7), t);
     }
@@ -1867,7 +1885,7 @@ export function isProbablyGlobalType(t: tsonicTypeScriptRuntime.Location<Type__f
         const __gotots_receiver_1 = typeChecker;
         const __gotots_argument_8 = globalSymbol;
         const __gotots_store_5 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_9 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_3 =
             tsonicTypeScriptRuntime.sameLocation(Checker__from_checker.GetTypeOfSymbolAtLocation(__gotots_receiver_1, __gotots_argument_8, __gotots_argument_9), t);
     }
@@ -1880,7 +1898,7 @@ export function isProbablyGlobalType(t: tsonicTypeScriptRuntime.Location<Type__f
         const __gotots_receiver_2 = typeChecker;
         const __gotots_argument_10 = globalThisSymbol;
         const __gotots_store_6 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_11 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_11 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_4 =
             tsonicTypeScriptRuntime.sameLocation(Checker__from_checker.GetTypeOfSymbolAtLocation(__gotots_receiver_2, __gotots_argument_10, __gotots_argument_11), t);
     }
@@ -2652,7 +2670,7 @@ export class detailsData {
 }
 export class symbolDetails {
     declare private readonly $goType: void;
-    public constructor(public __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, public location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public origin: symbolOriginInfo | undefined, public previousToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public jsxInitializer: jsxInitializer, public isTypeOnlyLocation: bool) {
+    public constructor(public __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined, public location: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public origin: tsonicTypeScriptRuntime.Location<symbolOriginInfo> | undefined, public previousToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public contextToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, public jsxInitializer: jsxInitializer, public isTypeOnlyLocation: bool) {
     }
     declare private readonly then?: never;
 }
@@ -3057,7 +3075,7 @@ export function getJSDocParameterNameCompletions(tag: {
             const __gotots_equal_operand_0 = t;
             const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 JSDocTagBase__from_ast.$storageOf((tag ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocTagBase).NodeBase));
-            return !tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf))) && IsJSDocParameterTag__from_ast(t) && IsIdentifier__from_ast(Node__from_ast.Name(t)) && Node__from_ast.Text(Node__from_ast.Name(t)) === name;
+            return !tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf))) && IsJSDocParameterTag__from_ast(t) && IsIdentifier__from_ast(Node__from_ast.Name(t)) && Node__from_ast.Text(Node__from_ast.Name(t)) === name;
         }) || nameThusFar !== "" && !strings__from_gostdlib.HasPrefix(name, nameThusFar)) {
             return void 0;
         }

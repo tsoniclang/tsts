@@ -35,6 +35,24 @@ import { goNumberIntegerRemainder } from "@gotots/runtime/integer.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function findEnclosingNode(r: TextRange__from_core, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
     let find: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) | undefined;
     find = (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined => {
@@ -61,7 +79,7 @@ export function findEnclosingNode(r: TextRange__from_core, sourceFile: tsonicTyp
     };
     const __gotots_callee_5 = find;
     const __gotots_store_5 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    const __gotots_argument_11 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_11 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     return (__gotots_callee_5 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_11);
 }
 export function getScanStartPosition(enclosingNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, originalRange: TextRange__from_core, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): int {
@@ -599,7 +617,7 @@ export class formatSpanWorker {
             if (Node__from_ast.End(child) < (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).originalRange.Pos()) {
                 const __gotots_receiver_0 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).formattingScanner;
                 const __gotots_store_0 = Node__from_ast.$storageOf(((child ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value);
-                const __gotots_argument_3 = tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
+                const __gotots_argument_3 = new $ProjectedPropertyLocation(__gotots_store_0, "Loc", TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
                 formattingScanner.$go$private$format$skipToEndOf(__gotots_receiver_0, __gotots_argument_3);
             }
             return inheritedIndentation;
@@ -616,7 +634,7 @@ export class formatSpanWorker {
                 if (TextRange__from_core.$fromStorage(TextRangeWithKind.$storageOf(tokenInfo__shadow_1.token).Loc).Pos() > childStartPos) {
                     const __gotots_receiver_1 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).formattingScanner;
                     const __gotots_store_1 = Node__from_ast.$storageOf(((child ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value);
-                    const __gotots_argument_4 = tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
+                    const __gotots_argument_4 = new $ProjectedPropertyLocation(__gotots_store_1, "Loc", TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
                     formattingScanner.$go$private$format$skipToStartOf(__gotots_receiver_1, __gotots_argument_4);
                 }
                 break;
@@ -659,7 +677,7 @@ export class formatSpanWorker {
             if (NodeList__from_ast.End(nodes) < (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).originalRange.Pos() && (NodeList__from_ast.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.length === 0 || (Node__from_ast.$storageOf(((NodeList__from_ast.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value).Nodes.get(0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Flags & NodeFlagsReparsed$constant__from_ast()) >>> 0 === 0)) {
                 const __gotots_receiver_2 = (w ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).formattingScanner;
                 const __gotots_store_2 = NodeList__from_ast.$storageOf(((nodes ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeList__from_ast>).value);
-                const __gotots_argument_5 = tsonicTypeScriptRuntime.projectLocation<TextRange__from_core$Storage, TextRange__from_core>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Loc"), TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
+                const __gotots_argument_5 = new $ProjectedPropertyLocation(__gotots_store_2, "Loc", TextRange__from_core.$fromStorage, TextRange__from_core.$storageOf);
                 formattingScanner.$go$private$format$skipToEndOf(__gotots_receiver_2, __gotots_argument_5);
             }
             return;

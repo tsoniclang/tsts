@@ -28,6 +28,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export const importFixID$string: gostring = "fixMissingImport";
 export class fixInfo {
     declare private readonly $goType: void;
@@ -627,7 +645,7 @@ export function getSymbolNamesToImport(sourceFile: tsonicTypeScriptRuntime.Locat
         tsonicTypeScriptRuntime.sameLocation(Node__from_ast.TagName(parent), symbolToken) && jsxModeNeedsExplicitImport((compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx)) {
         const __gotots_receiver_3 = ch;
         const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_1 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let jsxNamespace = Checker__from_checker.GetJsxNamespace(__gotots_receiver_3, __gotots_argument_1);
         if (needsJsxNamespaceFix(jsxNamespace, symbolToken, ch)) {
             let result = RuntimeSlice.nil<symbolNameInfo$Storage>();

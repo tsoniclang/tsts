@@ -94,38 +94,16 @@ export function EqualFunc$SliceOf_PointerTo_Named_ast$Node$SliceOf_PointerTo_Nam
         return $argument0;
     }, $argument0, $argument1, $argument2);
 }
-export function EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string($argument0: RuntimeSlice<{
-    value: FileSystemWatcher__from_lsproto;
-} | undefined>, $argument1: RuntimeSlice<gostring>, $argument2: (($0: {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined, $1: gostring) => bool) | undefined): bool {
-    return generic_slices_kernel.SlicesEqualFuncKernel<RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>, RuntimeSlice<gostring>, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined, gostring, gostring>(($argument0: RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>): RuntimeSlice<{
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined> => {
+export function EqualFunc$SliceOf_PointerTo_Named_lsproto$FileSystemWatcher$SliceOf_string$PointerTo_Named_lsproto$FileSystemWatcher$string($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>, $argument1: RuntimeSlice<gostring>, $argument2: (($0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, $1: gostring) => bool) | undefined): bool {
+    return generic_slices_kernel.SlicesEqualFuncKernel<RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>, RuntimeSlice<gostring>, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined, gostring, gostring>(($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined> => {
         return $argument0;
     }, ($argument0: RuntimeSlice<gostring>): RuntimeSlice<gostring> => {
         return $argument0;
-    }, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return $argument0;
     }, ($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return $argument0;
     }, ($argument0: gostring): gostring => {
         return $argument0;

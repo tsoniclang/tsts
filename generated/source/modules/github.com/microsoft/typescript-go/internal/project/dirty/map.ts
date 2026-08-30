@@ -9,6 +9,24 @@ import * as generic_maps_kernel from "@gotots/gostdlib/internal/facets/generic-m
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type MapEntry$Storage<K, V> = {
     m: {
         value: Map<K, V>;
@@ -26,31 +44,31 @@ export class MapEntry<K, V> {
         return new MapEntry<K, V>($source);
     }
     declare private readonly then?: never;
-    static Change$kernel<K, V>(e: MapEntry<K, V> | undefined, $go$constraint_method$dirty$Clone$T1_to_T1: ($0: V) => V, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, apply: (($0: V) => void) | undefined): void {
+    static Change$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined, $go$constraint_method$dirty$Clone$T1_to_T1: ($0: V) => V, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, apply: (($0: V) => void) | undefined): void {
         if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete) {
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete) {
             const __gotots_argument_0 = new GoInterfaceAdapter("tried to change a deleted entry");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }
         if (!(void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).dirty) {
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).dirty) {
             (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$constraint_method$dirty$Clone$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).value))));
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).value = $go$to_storage$T1_to_T1($go$copy$T1_to_T1($go$constraint_method$dirty$Clone$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).value))));
             (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).dirty = true;
-            Map.$storageOf((MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).key), e);
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).dirty = true;
+            Map.$storageOf((MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).key), e);
         }
         const __gotots_callee_0 = apply;
         const __gotots_argument_1 = $go$copy$T1_to_T1($go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).value));
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).value));
         (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_1);
     }
-    static ChangeIf$kernel<K, V>(e: MapEntry<K, V> | undefined, $go$constraint_method$dirty$Clone$T1_to_T1: ($0: V) => V, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$zero$void_to_T1: () => V, cond: (($0: V) => bool) | undefined, apply: (($0: V) => void) | undefined): bool {
+    static ChangeIf$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined, $go$constraint_method$dirty$Clone$T1_to_T1: ($0: V) => V, $go$copy$T1_to_T1: ($0: V) => V, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$zero$void_to_T1: () => V, cond: (($0: V) => bool) | undefined, apply: (($0: V) => void) | undefined): bool {
         const __gotots_callee_3 = cond;
-        const __gotots_store_0 = MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-        const __gotots_argument_5 = mapEntry.Value$kernel<K, V>(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<K, V>, mapEntry<K, V>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "mapEntry"), mapEntry.$fromStorage, mapEntry.$storageOf), $go$copy$T1_to_T1, $go$from_storage$T1_to_T1, $go$zero$void_to_T1);
+        const __gotots_store_0 = MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value);
+        const __gotots_argument_5 = mapEntry.Value$kernel<K, V>(new $ProjectedPropertyLocation(__gotots_store_0, "mapEntry", mapEntry.$fromStorage, mapEntry.$storageOf), $go$copy$T1_to_T1, $go$from_storage$T1_to_T1, $go$zero$void_to_T1);
         const __gotots_argument_6 = $go$copy$T1_to_T1(__gotots_argument_5);
         if ((__gotots_callee_3 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_6)) {
             MapEntry.Change$kernel<K, V>(e, $go$constraint_method$dirty$Clone$T1_to_T1, $go$copy$T1_to_T1, $go$from_storage$T1_to_T1, $go$from_storage$T0_to_T0, $go$to_storage$T1_to_T1, apply);
@@ -58,35 +76,35 @@ export class MapEntry<K, V> {
         }
         return false;
     }
-    static Delete$kernel<K, V>(e: MapEntry<K, V> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K): void {
+    static Delete$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K): void {
         if (!(void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).dirty) {
-            Map.$storageOf((MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).key), e);
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).dirty) {
+            Map.$storageOf((MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).key), e);
         }
         (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete = true;
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete = true;
     }
-    static Replace$kernel<K, V>(e: MapEntry<K, V> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, newValue: V): void {
+    static Replace$kernel<K, V>(e: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, newValue: V): void {
         if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete) {
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete) {
             const __gotots_argument_7 = new GoInterfaceAdapter("tried to change a deleted entry");
             GoPanic.raise(__gotots_argument_7 === undefined ? GoPanicNilValue.create() : __gotots_argument_7);
         }
         if (!(void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).dirty) {
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).dirty) {
             (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).dirty = true;
-            Map.$storageOf((MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).key), e);
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).dirty = true;
+            Map.$storageOf((MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
+                MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).key), e);
         }
         (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-            MapEntry.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).value = $go$to_storage$T1_to_T1(newValue);
+            MapEntry.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).value = $go$to_storage$T1_to_T1(newValue);
     }
 }
 export type Map$Storage<K, V> = {
     base: GoMapValue<K, V>;
-    dirty: GoMapValue<K, MapEntry<K, V> | undefined>;
+    dirty: GoMapValue<K, tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined>;
 };
 export class Map<K, V> {
     declare private readonly $goType: void;
@@ -108,7 +126,7 @@ export class Map<K, V> {
     static Add$kernel<K, V>(m: {
         value: Map<K, V>;
     } | undefined, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$to_storage$T0_to_T0: ($0: K) => GoStorage<K>, $go$zero$void_to_T1: () => V, key: K, value: V): void {
-        Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store(key, MapEntry.$fromStorage<K, V>({
+        Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.store(key, tsonicTypeScriptRuntime.location<MapEntry<K, V>>(MapEntry.$fromStorage<K, V>({
             m: m,
             mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
                 {
@@ -118,11 +136,11 @@ export class Map<K, V> {
                     original: $go$to_storage$T1_to_T1($go$zero$void_to_T1()),
                     __go_delete: false
                 }))
-        }));
+        })));
     }
     static Clear$kernel<K, V>(m: {
         value: Map<K, V>;
-    } | undefined, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: V) => GoMapValue<K, V>, $go$map_construct$PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1: ($0: MapEntry<K, V> | undefined) => GoMapValue<K, MapEntry<K, V> | undefined>, $go$zero$void_to_T1: () => V): void {
+    } | undefined, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: V) => GoMapValue<K, V>, $go$map_construct$PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1: ($0: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined) => GoMapValue<K, tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined>, $go$zero$void_to_T1: () => V): void {
         Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty = $go$map_construct$PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1(void 0);
         Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).base = $go$map_construct$T1_to_MapOf_T0_To_T1($go$zero$void_to_T1());
     }
@@ -136,7 +154,7 @@ export class Map<K, V> {
     }
     static Finalize$kernel<K, V>(m: {
         value: Map<K, V>;
-    } | undefined, $go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1: ($0: GoMapValue<K, V>) => GoMapValue<K, V>, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$length$MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_int: ($0: GoMapValue<K, MapEntry<K, V> | undefined>) => int, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: V) => GoMapValue<K, V>, $go$map_construct$T1_int_to_MapOf_T0_To_T1: ($0: V, $1: int) => GoMapValue<K, V>, $go$zero$void_to_MapOf_T0_To_T1: () => GoMapValue<K, V>, $go$zero$void_to_T1: () => V): [
+    } | undefined, $go$convert$MapOf_T0_To_T1_to_MapOf_T0_To_T1: ($0: GoMapValue<K, V>) => GoMapValue<K, V>, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T1_to_T1: ($0: GoStorage<V>) => V, $go$length$MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_int: ($0: GoMapValue<K, tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined>) => int, $go$map_construct$T1_to_MapOf_T0_To_T1: ($0: V) => GoMapValue<K, V>, $go$map_construct$T1_int_to_MapOf_T0_To_T1: ($0: V, $1: int) => GoMapValue<K, V>, $go$zero$void_to_MapOf_T0_To_T1: () => GoMapValue<K, V>, $go$zero$void_to_T1: () => V): [
         GoMapValue<K, V>,
         bool
     ] {
@@ -161,14 +179,14 @@ export class Map<K, V> {
             const __gotots_range_value_2 = $go$copy$T0_to_T0(__gotots_range_value_0);
             const __gotots_range_value_3 = __gotots_range_value_1[0];
             let key: K = __gotots_range_value_2;
-            let entry: MapEntry<K, V> | undefined = __gotots_range_value_3;
+            let entry: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined = __gotots_range_value_3;
             if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete) {
+                MapEntry.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete) {
                 result.delete(key);
             }
             else {
                 result.store(key, $go$from_storage$T1_to_T1((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                    MapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).value));
+                    MapEntry.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).value));
             }
         }
         return [result, true];
@@ -176,16 +194,16 @@ export class Map<K, V> {
     static Get$kernel<K, V>(m: {
         value: Map<K, V>;
     } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$to_storage$T0_to_T0: ($0: K) => GoStorage<K>, key: K): [
-        MapEntry<K, V> | undefined,
+        tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined,
         bool
     ] {
         {
             const __gotots_results_0 = Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty.lookupOk(key);
-            let entry: MapEntry<K, V> | undefined = __gotots_results_0[0];
+            let entry: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined = __gotots_results_0[0];
             let ok__shadow_1 = __gotots_results_0[1];
             if (ok__shadow_1) {
                 if ((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                    MapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete) {
+                    MapEntry.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete) {
                     return [void 0, false];
                 }
                 return [entry, true];
@@ -197,7 +215,8 @@ export class Map<K, V> {
         if (!ok) {
             return [void 0, false];
         }
-        return [MapEntry.$fromStorage<K, V>({
+        return [
+            tsonicTypeScriptRuntime.location<MapEntry<K, V>>(MapEntry.$fromStorage<K, V>({
                 m: m,
                 mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
                     {
@@ -207,11 +226,11 @@ export class Map<K, V> {
                         dirty: false,
                         __go_delete: false
                     }))
-            }), true];
+            })), true];
     }
     static Range$kernel<K, V>(m: {
         value: Map<K, V>;
-    } | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct) => GoMapValue<K, GoEmptyStruct>, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$to_storage$T0_to_T0: ($0: K) => GoStorage<K>, fn: (($0: MapEntry<K, V> | undefined) => bool) | undefined): void {
+    } | undefined, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct) => GoMapValue<K, GoEmptyStruct>, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$to_storage$T0_to_T0: ($0: K) => GoStorage<K>, fn: (($0: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined) => bool) | undefined): void {
         let seenInDirty: GoMapValue<K, GoEmptyStruct> = $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void(GoEmptyStruct.$zero());
         const __gotots_range_1 = Map.$storageOf((m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value).dirty;
         const __gotots_range_keys_1 = __gotots_range_1.keys();
@@ -221,11 +240,11 @@ export class Map<K, V> {
                 continue;
             }
             const __gotots_range_value_6 = __gotots_range_value_5[0];
-            let entry: MapEntry<K, V> | undefined = __gotots_range_value_6;
+            let entry: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined = __gotots_range_value_6;
             seenInDirty.store($go$from_storage$T0_to_T0((void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).key), new GoEmptyStruct);
+                MapEntry.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).key), new GoEmptyStruct);
             let __gotots_logical_result_0 = !(void mapEntry.$storageOf, (void mapEntry.$fromStorage,
-                MapEntry.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).mapEntry)).__go_delete;
+                MapEntry.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry<K, V>>).value).mapEntry)).__go_delete;
             if (__gotots_logical_result_0) {
                 const __gotots_callee_1 = fn;
                 const __gotots_argument_2 = entry;
@@ -254,7 +273,7 @@ export class Map<K, V> {
                 }
             }
             const __gotots_callee_2 = fn;
-            const __gotots_argument_3 = MapEntry.$fromStorage<K, V>({
+            const __gotots_argument_3 = tsonicTypeScriptRuntime.location<MapEntry<K, V>>(MapEntry.$fromStorage<K, V>({
                 m: m,
                 mapEntry: (void mapEntry.$storageOf, (void mapEntry.$fromStorage,
                     {
@@ -264,7 +283,7 @@ export class Map<K, V> {
                         dirty: false,
                         __go_delete: false
                     }))
-            });
+            }));
             if (!(__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_3)) {
                 break;
             }
@@ -275,7 +294,7 @@ export class Map<K, V> {
     } | undefined, $go$copy$T1_to_T1: ($0: V) => V, $go$copy$T0_to_T0: ($0: K) => K, $go$from_storage$T0_to_T0: ($0: GoStorage<K>) => K, $go$to_storage$T1_to_T1: ($0: V) => GoStorage<V>, $go$to_storage$T0_to_T0: ($0: K) => GoStorage<K>, key: K): bool {
         {
             const __gotots_results_3 = Map.Get$kernel<K, V>(m, $go$copy$T1_to_T1, $go$copy$T0_to_T0, $go$to_storage$T1_to_T1, $go$to_storage$T0_to_T0, $go$copy$T0_to_T0(key));
-            let entry: MapEntry<K, V> | undefined = __gotots_results_3[0];
+            let entry: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined = __gotots_results_3[0];
             let ok = __gotots_results_3[1];
             if (ok) {
                 MapEntry.Delete$kernel<K, V>(entry, $go$from_storage$T0_to_T0);
@@ -285,7 +304,7 @@ export class Map<K, V> {
         return false;
     }
 }
-export function NewMap$kernel<K, V>($go$map_construct$PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1: ($0: MapEntry<K, V> | undefined) => GoMapValue<K, MapEntry<K, V> | undefined>, base: GoMapValue<K, V>): {
+export function NewMap$kernel<K, V>($go$map_construct$PointerTo_Named_dirty$MapEntryOf_T0_And_T1_to_MapOf_T0_To_PointerTo_Named_dirty$MapEntryOf_T0_And_T1: ($0: tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined) => GoMapValue<K, tsonicTypeScriptRuntime.Location<MapEntry<K, V>> | undefined>, base: GoMapValue<K, V>): {
     value: Map<K, V>;
 } | undefined {
     return { value: Map.$fromStorage<K, V>({

@@ -99,57 +99,49 @@ export function $goInterface$Interface_Method_dirty$Clone_void_to_Named_dirty$Cl
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket extends GoInterfaceValue {
-    Clone(): RegistryBucket__from_autoimport | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_autoimport$RegistryBucket]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory extends GoInterfaceValue {
-    Clone(): directory__from_autoimport | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_autoimport$directory]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$Project extends GoInterfaceValue {
-    Clone(): {
-        value: Project__from_project;
-    } | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$Project$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_project$Project]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$Project$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$Project {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$Project$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry extends GoInterfaceValue {
-    Clone(): {
-        value: configFileEntry__from_project;
-    } | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_project$configFileEntry]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames extends GoInterfaceValue {
-    Clone(): configFileNames__from_project | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_project$configFileNames]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile extends GoInterfaceValue {
-    Clone(): {
-        value: diskFile__from_project;
-    } | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_project$diskFile]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile {
     return value !== undefined && value.$go$implements($goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile$contract);
 }
 export interface $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$realpathAliasSet extends GoInterfaceValue {
-    Clone(): {
-        value: realpathAliasSet__from_project;
-    } | undefined;
+    Clone(): tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined;
 }
 export const $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$realpathAliasSet$contract: readonly object[] = Object.freeze([$goInterfaceMethod$Clone$void_to_PointerTo_Named_project$realpathAliasSet]);
 export function $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$realpathAliasSet$is(value: GoInterfaceValue | undefined): value is $goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$realpathAliasSet {

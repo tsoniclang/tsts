@@ -76,6 +76,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAddress, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class CompositeSymbolIdentity {
     declare private readonly $goType: void;
     public constructor(public isConstructorNode: bool, public symbolId: SymbolId__from_ast, public nodeId: NodeId__from_ast) {
@@ -626,7 +644,7 @@ export class NodeBuilderImpl {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_29 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_29 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_61, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_30 = void 0;
             let newTypeVariable: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_14, __gotots_argument_29, __gotots_argument_30);
             const __gotots_store_62 = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ctx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -976,7 +994,7 @@ export class NodeBuilderImpl {
                                     (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                         (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                             Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                const __gotots_argument_51 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_93, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_51 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_93, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_52 = void 0;
                 newTypeVariable = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_21, __gotots_argument_51, __gotots_argument_52);
                 templateType = Checker.$go$private$checker$instantiateType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, Checker.$go$private$checker$getTemplateTypeFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target), newTypeMapper(RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([Checker.$go$private$checker$getTypeParameterFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target), Checker.$go$private$checker$getModifiersTypeFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, target)]), RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([typeParameter, newConstraintParam])));
@@ -999,7 +1017,7 @@ export class NodeBuilderImpl {
                                 (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_53 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_53 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_94, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_54 = void 0;
             newTypeVariable = NodeFactory__from_ast.NewTypeReferenceNode(__gotots_receiver_22, __gotots_argument_53, __gotots_argument_54);
             appropriateConstraintTypeNode = newTypeVariable;
@@ -1010,7 +1028,7 @@ export class NodeBuilderImpl {
         const __gotots_receiver_23 = b;
         const __gotots_store_95 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             TypeNodeBase__from_ast.$storageOf(((mapped ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.declaration ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_95, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_95, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_56 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
         const __gotots_argument_57 = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<Type> | undefined>([Checker.$go$private$checker$getTypeParameterFromMappedType((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch, t)]);
         const __gotots_argument_58 = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>();
@@ -1420,7 +1438,7 @@ export class NodeBuilderImpl {
                                 }
                                 const __gotots_receiver_32: NodeBuilderImpl["ch"] = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ch;
                                 const __gotots_store_112 = NodeBase__from_ast.$storageOf((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                                const __gotots_argument_97 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_112, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                                const __gotots_argument_97 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_112, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                 let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker.$go$private$checker$getSymbolOfDeclaration(__gotots_receiver_32, __gotots_argument_97);
                                 if (!(__go_symbol === undefined)) {
                                     const __gotots_callee_23 = add;
@@ -3115,9 +3133,7 @@ export class NodeBuilderImpl {
             declare private readonly then?: never;
         }
         class $goMap$MapOf_string_To_SliceOf_Named_seenName extends GoMapValue<gostring, RuntimeSlice<seenName$Storage>> {
-            private constructor(private readonly zeroValue: RuntimeSlice<seenName$Storage>, private readonly values: Map<gostring, [
-                RuntimeSlice<seenName$Storage>
-            ]> | undefined) {
+            private constructor(private readonly zeroValue: RuntimeSlice<seenName$Storage>, private readonly values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined) {
                 super();
             }
             private static $zeroValue(): RuntimeSlice<seenName$Storage> {
@@ -3133,56 +3149,45 @@ export class NodeBuilderImpl {
                 gostring,
                 RuntimeSlice<seenName$Storage>
             ][]): $goMap$MapOf_string_To_SliceOf_Named_seenName {
-                const result: $goMap$MapOf_string_To_SliceOf_Named_seenName = new $goMap$MapOf_string_To_SliceOf_Named_seenName($goMap$MapOf_string_To_SliceOf_Named_seenName.$zeroValue(), new Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]>);
+                const result: $goMap$MapOf_string_To_SliceOf_Named_seenName = new $goMap$MapOf_string_To_SliceOf_Named_seenName($goMap$MapOf_string_To_SliceOf_Named_seenName.$zeroValue(), new Map<gostring, RuntimeSlice<seenName$Storage>>);
                 for (const entry of entries) {
                     result.store(entry[0], entry[1]);
                 }
                 return result;
             }
             lookup(key: gostring): RuntimeSlice<seenName$Storage> {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (values === undefined) {
                     return $goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(this.zeroValue);
                 }
-                const entry: [
-                    RuntimeSlice<seenName$Storage>
-                ] | undefined = values.get(key);
-                return $goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(entry === undefined ? this.zeroValue : entry[0]);
+                const storedValue: RuntimeSlice<seenName$Storage> | undefined = values.get(key);
+                return $goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(storedValue === undefined ? this.zeroValue : storedValue);
             }
             lookupOk(key: gostring): [
                 RuntimeSlice<seenName$Storage>,
                 boolean
             ] {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (values === undefined) {
                     return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(this.zeroValue), false];
                 }
-                const entry: [
-                    RuntimeSlice<seenName$Storage>
-                ] | undefined = values.get(key);
-                if (entry === undefined) {
-                    return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(this.zeroValue), false];
+                const storedValue: RuntimeSlice<seenName$Storage> | undefined = values.get(key);
+                if (storedValue === undefined) {
+                    if (!values.has(key)) {
+                        return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(this.zeroValue), false];
+                    }
+                    return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(this.zeroValue), true];
                 }
-                return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(entry[0]), true];
+                return [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(storedValue), true];
             }
             store(key: gostring, value: RuntimeSlice<seenName$Storage>): void {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (values === undefined)
                     GoPanic.raiseRuntime("assignment to entry in nil map");
-                values.set(key, [$goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(value)]);
+                values.set(key, $goMap$MapOf_string_To_SliceOf_Named_seenName.$copyValue(value));
             }
             delete(key: gostring): void {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (!(values === undefined))
                     values.delete(key);
             }
@@ -3193,16 +3198,12 @@ export class NodeBuilderImpl {
                 return this.values === undefined;
             }
             clear(): void {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (!(values === undefined))
                     values.clear();
             }
             keys(): gostring[] {
-                const values: Map<gostring, [
-                    RuntimeSlice<seenName$Storage>
-                ]> | undefined = this.values;
+                const values: Map<gostring, RuntimeSlice<seenName$Storage>> | undefined = this.values;
                 if (values === undefined) {
                     return [];
                 }
@@ -4009,7 +4010,7 @@ export class NodeBuilderImpl {
                                     const __gotots_receiver_65 = b;
                                     const __gotots_store_130 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                                         TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-                                    const __gotots_argument_147 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_130, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                                    const __gotots_argument_147 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_130, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                     const __gotots_argument_149 = NodeBuilderImpl.$go$private$checker$reuseNode(__gotots_receiver_65, __gotots_argument_147);
                                     res = __gotots_argument_148.append(void 0, [__gotots_argument_149]);
                                 }
@@ -4078,7 +4079,7 @@ export class NodeBuilderImpl {
                                                 const __gotots_receiver_66 = b;
                                                 const __gotots_store_132 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                                                     TypeParameterDeclaration__from_ast.$storageOf(((tp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).NodeBase));
-                                                const __gotots_argument_150 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_132, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                                                const __gotots_argument_150 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_132, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                                 const __gotots_argument_152 = NodeBuilderImpl.$go$private$checker$reuseNode(__gotots_receiver_66, __gotots_argument_150);
                                                 res = __gotots_argument_151.append(void 0, [__gotots_argument_152]);
                                             }
@@ -5475,7 +5476,7 @@ export class NodeBuilderImpl {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((name ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_25 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_53, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_25 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_53, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_26 = constraintNode;
         const __gotots_argument_27 = void 0;
         const __gotots_argument_28 = defaultParameterDeclarationNode;
@@ -6309,7 +6310,7 @@ export class NodeBuilderImpl {
                 const __gotots_field_1 = new SymbolId__from_ast(0n);
                 const __gotots_store_45 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_45, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_16 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_45, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_field_2 = GetNodeId__from_ast(__gotots_argument_16);
                 id = new CompositeSymbolIdentity(__gotots_field_0, __gotots_field_1, __gotots_field_2);
             }

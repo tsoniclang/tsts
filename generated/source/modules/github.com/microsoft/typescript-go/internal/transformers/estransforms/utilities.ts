@@ -12,6 +12,24 @@ import { assignmentTargetContainsSuperProperty, isUpdateExpression } from "./asy
 import * as named_iter from "@gotots/gostdlib/internal/facets/named-iter.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function convertClassDeclarationToClassExpression(emitContext: {
     value: EmitContext__from_printer;
 } | undefined, node: {
@@ -33,7 +51,7 @@ export function convertClassDeclarationToClassExpression(emitContext: {
     const __gotots_argument_104 = updated;
     const __gotots_store_56 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-    const __gotots_argument_105 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_56, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_105 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_56, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.SetOriginal(__gotots_receiver_26, __gotots_argument_104, __gotots_argument_105);
     Node__from_ast.$storageOf(((updated ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
         (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
@@ -312,7 +330,7 @@ export class superAccessState {
                         (void UpdateExpressionBase__from_ast.$storageOf, (void UpdateExpressionBase__from_ast.$fromStorage,
                             (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                 CallExpression__from_ast.$storageOf(((call ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CallExpression__from_ast>).value).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_16 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_10, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_5, __gotots_argument_16);
         }
         const __gotots_store_11 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).factory ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;

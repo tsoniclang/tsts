@@ -64,9 +64,7 @@ export class NodeHandle {
     }
     declare private readonly then?: never;
 }
-export function ProjectHandle(p: {
-    value: Project__from_project;
-} | undefined): ProjectID {
+export function ProjectHandle(p: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): ProjectID {
     return new ProjectID(Project__from_project.ID(p).$value);
 }
 export function SymbolHandle(__go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): SymbolID {
@@ -553,7 +551,7 @@ export class ProjectFileChanges {
 }
 export class SnapshotChanges {
     declare private readonly $goType: void;
-    public constructor(public ChangedProjects: GoMapValue<ProjectID, ProjectFileChanges | undefined>, public RemovedProjects: RuntimeSlice<gostring>) {
+    public constructor(public ChangedProjects: GoMapValue<ProjectID, tsonicTypeScriptRuntime.Location<ProjectFileChanges> | undefined>, public RemovedProjects: RuntimeSlice<gostring>) {
     }
     static $zero(): SnapshotChanges {
         return new SnapshotChanges(GoMap.nil(), RuntimeSlice.nil<gostring>());
@@ -698,12 +696,10 @@ export class ProjectResponse {
     }
     declare private readonly then?: never;
 }
-export function NewProjectResponse(p: {
-    value: Project__from_project;
-} | undefined): {
+export function NewProjectResponse(p: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): {
     value: ProjectResponse;
 } | undefined {
-    return { value: new ProjectResponse(ProjectHandle(p), Project__from_project.Name(p), ParsedCommandLine__from_tsoptions.FileNames((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CommandLine), ParsedCommandLine__from_tsoptions.CompilerOptions((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.CommandLine)) };
+    return { value: new ProjectResponse(ProjectHandle(p), Project__from_project.Name(p), ParsedCommandLine__from_tsoptions.FileNames(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project__from_project>).value.CommandLine), ParsedCommandLine__from_tsoptions.CompilerOptions(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project__from_project>).value.CommandLine)) };
 }
 export class GetSymbolAtPositionParams {
     declare private readonly $goType: void;

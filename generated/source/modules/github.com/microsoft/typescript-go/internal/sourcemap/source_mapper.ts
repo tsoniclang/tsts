@@ -61,20 +61,20 @@ export class DocumentPositionMapper {
     public constructor(public useCaseSensitiveFileNames: bool, public sourceFileAbsolutePaths: RuntimeSlice<gostring>, public sourceToSourceIndexMap: GoMapValue<gostring, SourceIndex>, public generatedAbsoluteFilePath: gostring, public generatedMappings: RuntimeSlice<MappedPosition | undefined>, public sourceMappings: GoMapValue<SourceIndex, RuntimeSlice<MappedPosition | undefined>>) {
     }
     declare private readonly then?: never;
-    static GetGeneratedPosition(d: DocumentPositionMapper | undefined, loc: DocumentPosition | undefined): DocumentPosition | undefined {
+    static GetGeneratedPosition(d: tsonicTypeScriptRuntime.Location<DocumentPositionMapper> | undefined, loc: DocumentPosition | undefined): DocumentPosition | undefined {
         if (d === undefined) {
             return void 0;
         }
-        const __gotots_results_13 = (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceToSourceIndexMap.lookupOk(GetCanonicalFileName__from_tspath((loc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileName, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).useCaseSensitiveFileNames));
+        const __gotots_results_13 = ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.sourceToSourceIndexMap.lookupOk(GetCanonicalFileName__from_tspath((loc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).FileName, ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.useCaseSensitiveFileNames));
         let sourceIndex = __gotots_results_13[0];
         let ok = __gotots_results_13[1];
         if (!ok) {
             return void 0;
         }
-        if (sourceIndex.$value < 0 || sourceIndex.$value >= (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceMappings.length()) {
+        if (sourceIndex.$value < 0 || sourceIndex.$value >= ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.sourceMappings.length()) {
             return void 0;
         }
-        let sourceMappings = (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceMappings.lookup(sourceIndex);
+        let sourceMappings = ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.sourceMappings.lookup(sourceIndex);
         const __gotots_results_14 = BinarySearchFunc$SliceOf_PointerTo_Named_sourcemap$MappedPosition$PointerTo_Named_sourcemap$MappedPosition$int(sourceMappings, (loc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Pos, (m: MappedPosition | undefined, pos: int): int => {
             return (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourcePosition - pos;
         });
@@ -86,32 +86,32 @@ export class DocumentPositionMapper {
         if (!((mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceIndex.$value === sourceIndex.$value)) {
             return void 0;
         }
-        return new DocumentPosition((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedAbsoluteFilePath, (mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedPosition);
+        return new DocumentPosition(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.generatedAbsoluteFilePath, (mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedPosition);
     }
-    static GetSourcePosition(d: DocumentPositionMapper | undefined, loc: DocumentPosition | undefined): DocumentPosition | undefined {
+    static GetSourcePosition(d: tsonicTypeScriptRuntime.Location<DocumentPositionMapper> | undefined, loc: DocumentPosition | undefined): DocumentPosition | undefined {
         if (d === undefined) {
             return void 0;
         }
-        if ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedMappings.length === 0) {
+        if (((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.generatedMappings.length === 0) {
             return void 0;
         }
-        const __gotots_results_0 = BinarySearchFunc$SliceOf_PointerTo_Named_sourcemap$MappedPosition$PointerTo_Named_sourcemap$MappedPosition$int((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedMappings, (loc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Pos, (m: MappedPosition | undefined, pos: int): int => {
+        const __gotots_results_0 = BinarySearchFunc$SliceOf_PointerTo_Named_sourcemap$MappedPosition$PointerTo_Named_sourcemap$MappedPosition$int(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.generatedMappings, (loc ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Pos, (m: MappedPosition | undefined, pos: int): int => {
             return (m ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedPosition - pos;
         });
         let targetIndex = __gotots_results_0[0];
-        if (targetIndex < 0 || targetIndex >= (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedMappings.length) {
+        if (targetIndex < 0 || targetIndex >= ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.generatedMappings.length) {
             return void 0;
         }
-        let mapping: MappedPosition | undefined = (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedMappings.get(targetIndex);
+        let mapping: MappedPosition | undefined = ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.generatedMappings.get(targetIndex);
         if (!MappedPosition.$go$private$sourcemap$isSourceMappedPosition(mapping)) {
             return void 0;
         }
-        return new DocumentPosition((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceFileAbsolutePaths.get((mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceIndex.$value), (mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourcePosition);
+        return new DocumentPosition(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DocumentPositionMapper>).value.sourceFileAbsolutePaths.get((mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceIndex.$value), (mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourcePosition);
     }
 }
 export function createDocumentPositionMapper(host: Host | undefined, sourceMap: {
     value: RawSourceMap;
-} | undefined, mapPath: gostring): DocumentPositionMapper | undefined {
+} | undefined, mapPath: gostring): tsonicTypeScriptRuntime.Location<DocumentPositionMapper> | undefined {
     let mapDirectory = GetDirectoryPath__from_tspath(mapPath);
     let sourceRoot = "";
     if ((sourceMap ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.SourceRoot !== "") {
@@ -231,7 +231,7 @@ export function createDocumentPositionMapper(host: Host | undefined, sourceMap: 
     generatedMappings = DeduplicateSorted$PointerTo_Named_sourcemap$MappedPosition(generatedMappings, (a: MappedPosition | undefined, b: MappedPosition | undefined): bool => {
         return (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedPosition === (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).generatedPosition && (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceIndex.$value === (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceIndex.$value && (a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourcePosition === (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourcePosition;
     });
-    return new DocumentPositionMapper(useCaseSensitiveFileNames, sourceFileAbsolutePaths, sourceToSourceIndexMap, generatedAbsoluteFilePath, generatedMappings, sourceMappings);
+    return tsonicTypeScriptRuntime.location<DocumentPositionMapper>(new DocumentPositionMapper(useCaseSensitiveFileNames, sourceFileAbsolutePaths, sourceToSourceIndexMap, generatedAbsoluteFilePath, generatedMappings, sourceMappings));
 }
 export class DocumentPosition {
     declare private readonly $goType: void;
@@ -239,7 +239,7 @@ export class DocumentPosition {
     }
     declare private readonly then?: never;
 }
-export function GetDocumentPositionMapper(host: Host | undefined, generatedFileName: gostring): DocumentPositionMapper | undefined {
+export function GetDocumentPositionMapper(host: Host | undefined, generatedFileName: gostring): tsonicTypeScriptRuntime.Location<DocumentPositionMapper> | undefined {
     let mapFileName = tryGetSourceMappingURL(host, generatedFileName);
     if (mapFileName !== "") {
         {
@@ -304,7 +304,7 @@ export function GetDocumentPositionMapper(host: Host | undefined, generatedFileN
     }
     return void 0;
 }
-export function convertDocumentToSourceMapper(host: Host | undefined, contents: gostring, mapFileName: gostring): DocumentPositionMapper | undefined {
+export function convertDocumentToSourceMapper(host: Host | undefined, contents: gostring, mapFileName: gostring): tsonicTypeScriptRuntime.Location<DocumentPositionMapper> | undefined {
     let sourceMap: {
         value: RawSourceMap;
     } | undefined = tryParseRawSourceMap(contents);

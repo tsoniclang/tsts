@@ -26,6 +26,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class organizeImportsComparerSettings {
     declare private readonly $goType: void;
     public constructor(public moduleSpecifierComparer: (($0: gostring, $1: gostring) => int) | undefined, public namedImportComparer: (($0: gostring, $1: gostring) => int) | undefined, public typeOrder: OrganizeImportsTypeOrder__from_lsutil) {
@@ -193,7 +211,7 @@ export function removeUnusedImports(oldImports: RuntimeSlice<tsonicTypeScriptRun
         value: CompilerOptions__from_core;
     } | undefined = Program__from_compiler.Options(program);
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    const __gotots_binary_operand_0 = Node__from_ast.SubtreeFacts(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
+    const __gotots_binary_operand_0 = Node__from_ast.SubtreeFacts(NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
     const __gotots_binary_operand_1 = SubtreeContainsJsx$constant__from_ast();
     let jsxElementsPresent = !(((__gotots_binary_operand_0 & __gotots_binary_operand_1) >>> 0) === 0);
     let jsxModeNeedsExplicitImport__shadow_1 = (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx === JsxEmitReact$constant__from_core() || (compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Jsx === JsxEmitReactNative$constant__from_core();
@@ -705,7 +723,7 @@ export function getCategorizedImports(importDecls: RuntimeSlice<tsonicTypeScript
         let group: importGroup | undefined = regularImports;
         const __gotots_store_10 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf((clause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-        if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
+        if (Node__from_ast.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_10, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
             group = typeOnlyImports;
         }
         let name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ImportClause__from_ast.Name(clause);
@@ -949,7 +967,7 @@ export function coalesceExportsWorker(exportGroup: RuntimeSlice<tsonicTypeScript
                     let __gotots_logical_result_0 = !(sourceFile === undefined);
                     if (__gotots_logical_result_0) {
                         const __gotots_store_8 = NodeBase__from_ast.$storageOf((namedExports ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                        const __gotots_argument_39 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_8, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                         __gotots_logical_result_0 = !NodeIsSynthesized__from_ast(__gotots_argument_39);
                     }
                     if (__gotots_logical_result_0 && !RangeIsOnSingleLine__from_printer(TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,

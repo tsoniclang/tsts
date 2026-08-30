@@ -9,6 +9,24 @@ import { flatMapChildren$PointerTo_Named_ast$Node } from "../../../../../../supp
 import { getChildrenFromNonJSDocNode } from "./utilities.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function getIfElseKeywords(ifStatement: tsonicTypeScriptRuntime.Location<IfStatement__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> {
     for (; IsIfStatement__from_ast((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
         (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
@@ -25,7 +43,7 @@ export function getIfElseKeywords(ifStatement: tsonicTypeScriptRuntime.Location<
         const __gotots_store_1 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((ifStatement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
+        if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
             break;
         }
         ifStatement = parentingIf;
@@ -35,7 +53,7 @@ export function getIfElseKeywords(ifStatement: tsonicTypeScriptRuntime.Location<
         const __gotots_store_2 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             (void StatementBase__from_ast.$storageOf, (void StatementBase__from_ast.$fromStorage,
                 IfStatement__from_ast.$storageOf(((ifStatement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<IfStatement__from_ast>).value).StatementBase)).NodeBase));
-        const __gotots_argument_3 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_3 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_4 = sourceFile;
         let children = getChildrenFromNonJSDocNode(__gotots_argument_3, __gotots_argument_4);
         if (children.length > 0 && Node__from_ast.$storageOf(((children.get(0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind === KindIfKeyword$constant__from_ast()) {
@@ -256,7 +274,7 @@ export function getSwitchCaseDefaultOccurrences(node: tsonicTypeScriptRuntime.Lo
             if (__gotots_logical_result_0) {
                 const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     StatementBase__from_ast.$storageOf((switchStatement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                const __gotots_argument_0 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_0 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_argument_1 = statement;
                 __gotots_logical_result_0 = ownsBreakOrContinueStatement(__gotots_argument_0, __gotots_argument_1);
             }

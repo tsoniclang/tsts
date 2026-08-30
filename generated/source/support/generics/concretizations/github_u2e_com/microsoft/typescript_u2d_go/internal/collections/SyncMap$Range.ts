@@ -84,27 +84,13 @@ export function SyncMap$Range$Named_tspath$Path$Named_incremental$FileEmitKind($
         return 0;
     }, $argument1);
 }
-export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
-    value: failedAmbientModuleLookupSource__from_autoimport;
-} | undefined>> | undefined, $argument1: (($0: Path__from_tspath, $1: {
-    value: failedAmbientModuleLookupSource__from_autoimport;
-} | undefined) => bool) | undefined): void {
-    return SyncMap__from_collections.Range$kernel<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource__from_autoimport;
-    } | undefined>($argument0, ($argument0: {
-        value: failedAmbientModuleLookupSource__from_autoimport;
-    } | undefined): {
-        value: failedAmbientModuleLookupSource__from_autoimport;
-    } | undefined => {
+export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined>> | undefined, $argument1: (($0: Path__from_tspath, $1: tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined) => bool) | undefined): void {
+    return SyncMap__from_collections.Range$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined): tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: failedAmbientModuleLookupSource__from_autoimport;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: failedAmbientModuleLookupSource__from_autoimport;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_autoimport$failedAmbientModuleLookupSource.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
@@ -119,9 +105,7 @@ export function SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$faile
         })($argument0);
     }, (): Path__from_tspath => {
         return new Path__from_tspath("");
-    }, (): {
-        value: failedAmbientModuleLookupSource__from_autoimport;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource__from_autoimport> | undefined => {
         return void 0;
     }, $argument1);
 }

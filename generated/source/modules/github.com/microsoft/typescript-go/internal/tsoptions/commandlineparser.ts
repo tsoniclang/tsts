@@ -44,6 +44,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringDecodeRune, goStringEncodeRune, goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class commandLineParser {
     declare private readonly $goType: void;
     public constructor(public workerDiagnostics: ParseCommandLineWorkerDiagnostics | undefined, public optionsMap: NameMap | undefined, public fs: FS__from_vfs | undefined, public currentDirectory: gostring, public options: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<gostring, GoInterface | undefined>> | undefined, public fileNames: RuntimeSlice<gostring>, public errors: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>) {
@@ -414,7 +432,7 @@ export function ParseBuildCommandLine(commandLine: RuntimeSlice<gostring>, host:
         let key = __gotots_range_value_0;
         let value: GoInterface | undefined = __gotots_range_value_1;
         let buildOption: tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined = NameMap.Get($state.BuildNameMap, key);
-        if (tsonicTypeScriptRuntime.sameLocation(buildOption, tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), CommandLineOption.$fromStorage, CommandLineOption.$storageOf))
+        if (tsonicTypeScriptRuntime.sameLocation(buildOption, new $ProjectedPropertyLocation($state, "TscBuildOption", CommandLineOption.$fromStorage, CommandLineOption.$storageOf))
             ||
                 tsonicTypeScriptRuntime.sameLocation(buildOption, NameMap.Get($state.CompilerNameMap, key))) {
             ParseCompilerOptions(key, value, compilerOptions);

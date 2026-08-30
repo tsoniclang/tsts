@@ -29,6 +29,24 @@ import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { goInterfaceEqual, goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function marshalInlinedFallbackAll(enc: tsonicTypeScriptRuntime.Location<Encoder__from_jsontext> | undefined, va: addressableValue, mo: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined, f: tsonicTypeScriptRuntime.Location<structField> | undefined, insertUnquotedName: (($0: RuntimeSlice<uint8>) => bool) | undefined): GoInterface | undefined {
     const __gotots_defers_0: (($go$recovery: GoRecovery) => void)[] = [];
     let __gotots_panic_0: GoPanic | undefined = undefined;
@@ -75,7 +93,7 @@ export function marshalInlinedFallbackAll(enc: tsonicTypeScriptRuntime.Location<
                     });
                     let xd: tsonicTypeScriptRuntime.Location<decoderState__from_jsontext> | undefined = __go_export__from_jsontext.$fromStorage($state.__go_export).Decoder(dec);
                     const __gotots_store_0 = Struct__from_jsonopts.$storageOf(((xd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<decoderState__from_jsontext>).value.Struct);
-                    Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(7n));
+                    Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_0, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(7n));
                     const __gotots_results_1 = Decoder__from_jsontext.ReadToken(dec);
                     let tok = __gotots_results_1[0];
                     let err: GoInterface | undefined = __gotots_results_1[1];
@@ -171,7 +189,7 @@ export function marshalInlinedFallbackAll(enc: tsonicTypeScriptRuntime.Location<
                         }
                         const __gotots_argument_5 = __gotots_conversion_1;
                         const __gotots_store_1 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                        const __gotots_argument_6 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+                        const __gotots_argument_6 = new $ProjectedPropertyLocation(__gotots_store_1, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                         const __gotots_results_5 = AppendQuote__from_jsonwire(__gotots_argument_4, __gotots_argument_5, __gotots_argument_6);
                         let b = __gotots_results_5[0];
                         let err: GoInterface | undefined = __gotots_results_5[1];

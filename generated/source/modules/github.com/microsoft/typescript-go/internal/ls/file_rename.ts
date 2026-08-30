@@ -73,9 +73,9 @@ export function getSourceFileToImport(program: {
     value: Program__from_compiler;
 } | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, importLiteral: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, oldToNew: pathUpdater): toImport | undefined {
     {
-        let resolved: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = Program__from_compiler.GetResolvedModuleFromModuleSpecifier(program, new GoInterfaceAdapter(sourceFile), importLiteral);
-        if (!(resolved === undefined) && ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName !== "") {
-            let oldFileName = ((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+        let resolved: ResolvedModule__from___go_module | undefined = Program__from_compiler.GetResolvedModuleFromModuleSpecifier(program, new GoInterfaceAdapter(sourceFile), importLiteral);
+        if (!(resolved === undefined) && (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName !== "") {
+            let oldFileName = (resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
             {
                 const __gotots_callee_2 = oldToNew.$value;
                 const __gotots_argument_3 = oldFileName;

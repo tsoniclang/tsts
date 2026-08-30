@@ -35,18 +35,8 @@ export function Identity$PointerTo_Named_collections$SyncMapOf_Named_tspath$Path
         return $argument0;
     }, $argument0);
 }
-export function Identity$PointerTo_Named_project$Project($argument0: {
-    value: Project__from_project;
-} | undefined): {
-    value: Project__from_project;
-} | undefined {
-    return Identity$kernel__from_core<{
-        value: Project__from_project;
-    } | undefined>(($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+export function Identity$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined {
+    return Identity$kernel__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, $argument0);
 }

@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { SyncMap$Storage as SyncMap__from_collections$Storage } from "../../../../../../../packages/github.com/microsoft/typescript-go/internal/collections/package.js";
 import type { $goInterface$Interface_void as GoInterface } from "../../../../../../../support/interface-contracts.js";
 import type { bool, uint32 } from "@gotots/runtime/scalars.js";
@@ -9,6 +9,24 @@ import * as recovery_sync from "@gotots/gostdlib/internal/facets/recovery-sync.j
 import * as sync__from_gostdlib from "@gotots/gostdlib/sync.js";
 import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type parseCacheEntry$Storage<V> = {
     value: GoStorage<V>;
     mu: sync__from_gostdlib.Mutex;
@@ -78,11 +96,7 @@ export class parseCache<K, V> {
         const __gotots_store_2 = parseCache.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseCache<K, V>>).value);
         SyncMap__from_collections.Delete$kernel<K, {
             value: parseCacheEntry<V>;
-        } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-            value: parseCacheEntry<V>;
-        } | undefined>, SyncMap__from_collections<K, {
-            value: parseCacheEntry<V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$T0_to_Interface_void, key);
+        } | undefined>(new $ProjectedPropertyLocation(__gotots_store_2, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$T0_to_Interface_void, key);
     }
     static $go$private$build$loadOrStore$kernel<K, V>(c: tsonicTypeScriptRuntime.Location<parseCache<K, V>> | undefined, $go$binary_not_equal$T1_T1_to_bool: ($0: V, $1: V) => bool, $go$copy$T0_to_T0: ($0: K) => K, $go$copy$PointerTo_Named_build$parseCacheEntryOf_T1_to_PointerTo_Named_build$parseCacheEntryOf_T1: ($0: {
         value: parseCacheEntry<V>;
@@ -116,11 +130,7 @@ export class parseCache<K, V> {
                         const __gotots_store_0 = parseCache.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseCache<K, V>>).value);
                         const __gotots_results_0 = SyncMap__from_collections.LoadOrStore$kernel<K, {
                             value: parseCacheEntry<V>;
-                        } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-                            value: parseCacheEntry<V>;
-                        } | undefined>, SyncMap__from_collections<K, {
-                            value: parseCacheEntry<V>;
-                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_build$parseCacheEntryOf_T1_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_build$parseCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$copy$T0_to_T0(key), newEntry);
+                        } | undefined>(new $ProjectedPropertyLocation(__gotots_store_0, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$copy$PointerTo_Named_build$parseCacheEntryOf_T1_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$interface_adapt$PointerTo_Named_build$parseCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, $go$interface_assert$Interface_void_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$zero$void_to_PointerTo_Named_build$parseCacheEntryOf_T1, $go$copy$T0_to_T0(key), newEntry);
                         let entry: {
                             value: parseCacheEntry<V>;
                         } | undefined = __gotots_results_0[0];
@@ -191,11 +201,7 @@ export class parseCache<K, V> {
         const __gotots_store_1 = parseCache.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<parseCache<K, V>>).value);
         SyncMap__from_collections.Store$kernel<K, {
             value: parseCacheEntry<V>;
-        } | undefined>(tsonicTypeScriptRuntime.projectLocation<SyncMap__from_collections$Storage<K, {
-            value: parseCacheEntry<V>;
-        } | undefined>, SyncMap__from_collections<K, {
-            value: parseCacheEntry<V>;
-        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "entries"), SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$PointerTo_Named_build$parseCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, key, { value: parseCacheEntry.$fromStorage<V>({
+        } | undefined>(new $ProjectedPropertyLocation(__gotots_store_1, "entries", SyncMap__from_collections.$fromStorage, SyncMap__from_collections.$storageOf), $go$interface_adapt$PointerTo_Named_build$parseCacheEntryOf_T1_to_Interface_void, $go$interface_adapt$T0_to_Interface_void, key, { value: parseCacheEntry.$fromStorage<V>({
                 value: $go$to_storage$T1_to_T1(value),
                 mu: named_sync.SyncMutexOperations.$zero()
             }) });

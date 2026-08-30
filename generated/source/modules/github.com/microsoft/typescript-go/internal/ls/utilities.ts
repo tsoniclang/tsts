@@ -41,6 +41,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function IsInString(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, position__shadow_1: int, previousToken: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
     if (!(previousToken === undefined) && IsStringTextContainingNode__from_ast(previousToken)) {
         let start = GetStartOfNode__from_astnav(previousToken, sourceFile, false);
@@ -86,7 +104,7 @@ export function getLocalSymbolForExportSpecifier(referenceLocation: tsonicTypeSc
         {
             const __gotots_receiver_0 = ch;
             const __gotots_store_3 = NodeBase__from_ast.$storageOf((exportSpecifier ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-            const __gotots_argument_4 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_4 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker__from_checker.GetExportSpecifierLocalTargetSymbol(__gotots_receiver_0, __gotots_argument_4);
             if (!(__go_symbol === undefined)) {
                 return __go_symbol;
@@ -1406,10 +1424,10 @@ export function getReferenceAtPosition(sourceFile: tsonicTypeScriptRuntime.Locat
         } | undefined = findReferenceInPosition(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.TypeReferenceDirectives, position__shadow_1);
         if (!(typeReferenceDirective === undefined)) {
             {
-                let reference: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined = Program__from_compiler.GetResolvedTypeReferenceDirectiveFromTypeReferenceDirective(program, typeReferenceDirective, sourceFile);
+                let reference: ResolvedTypeReferenceDirective__from___go_module | undefined = Program__from_compiler.GetResolvedTypeReferenceDirectiveFromTypeReferenceDirective(program, typeReferenceDirective, sourceFile);
                 if (!(reference === undefined)) {
                     {
-                        let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Program__from_compiler.GetSourceFile(program, ((reference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName);
+                        let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Program__from_compiler.GetSourceFile(program, (reference ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName);
                         if (!(file === undefined)) {
                             return new refInfo(file, SourceFile__from_ast.FileName(file), typeReferenceDirective, false);
                         }
@@ -1441,10 +1459,10 @@ export function getReferenceAtPosition(sourceFile: tsonicTypeScriptRuntime.Locat
         return void 0;
     }
     {
-        let resolution: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = Program__from_compiler.GetResolvedModuleFromModuleSpecifier(program, new GoInterfaceAdapter(sourceFile), node);
+        let resolution: ResolvedModule__from___go_module | undefined = Program__from_compiler.GetResolvedModuleFromModuleSpecifier(program, new GoInterfaceAdapter(sourceFile), node);
         if (!(resolution === undefined)) {
-            let verifiedFileName = ((resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
-            let fileName = ((resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName;
+            let verifiedFileName = (resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
+            let fileName = (resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
             if (fileName === "") {
                 fileName = ResolvePath__from_tspath(GetDirectoryPath__from_tspath(SourceFile__from_ast.FileName(sourceFile)), RuntimeSlice.literal<gostring>([Node__from_ast.Text(node)]));
             }

@@ -38,6 +38,24 @@ import { SourceMapEmitResult, WriteFileData } from "./program.js";
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type EmitOnly = uint8;
 export function EmitAll$constant(): EmitOnly {
     return 0;
@@ -391,7 +409,7 @@ export class emitter {
         }
         const __gotots_receiver_18 = printer_;
         const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_23 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_24 = sourceFile;
         const __gotots_argument_25 = (e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).writer;
         const __gotots_argument_26 = sourceMapGenerator;
@@ -641,7 +659,7 @@ export function getScriptTransformers(emitContext: {
     let __gotots_logical_result_3 = !Tristate_IsTrue__from_core((options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.VerbatimModuleSyntax);
     if (__gotots_logical_result_3) {
         const __gotots_store_8 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_40 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_8, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         __gotots_logical_result_3 = !IsInJSFile__from_ast(__gotots_argument_40);
     }
     let importElisionEnabled = __gotots_logical_result_3;
@@ -712,9 +730,7 @@ export function getSourceRoot(mapOptions: {
 }
 export interface SourceFileMayBeEmittedHost extends GoInterfaceValue {
     GetCurrentDirectory(): gostring;
-    GetProjectReferenceFromSource($argument0: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined;
+    GetProjectReferenceFromSource($argument0: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined;
     IsSourceFileFromExternalLibrary($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): bool;
     Options(): {
         value: CompilerOptions__from_core;

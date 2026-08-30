@@ -39,6 +39,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class NodeOptions {
     declare private readonly $goType: void;
     public constructor(public Prefix: gostring, public Suffix: gostring, public indentation: tsonicTypeScriptRuntime.Location<int> | undefined, public delta: tsonicTypeScriptRuntime.Location<int> | undefined, public LeadingTriviaOption: LeadingTriviaOption, public TrailingTriviaOption: TrailingTriviaOption, public joiner: gostring) {
@@ -784,7 +802,7 @@ export class Tracker {
         const __gotots_binary_operand_0 = Node__from_ast.End(node);
         const __gotots_store_2 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
             NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-        const __gotots_binary_operand_1 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+        const __gotots_binary_operand_1 = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_2, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
         if (__gotots_binary_operand_0 === __gotots_binary_operand_1 && IsStatement__from_ast(node)) {
             options.Prefix = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).newLine + options.Prefix;
         }

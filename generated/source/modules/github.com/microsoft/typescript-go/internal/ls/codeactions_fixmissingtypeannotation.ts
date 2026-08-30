@@ -34,6 +34,24 @@ import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export const fixMissingTypeAnnotationOnExportsFixID$string: gostring = "fixMissingTypeAnnotationOnExports";
 export class typePrintMode {
     declare private readonly $goType: void;
@@ -736,7 +754,7 @@ export class isolatedDeclarationsFixer {
                     let enclosingDecl__shadow_1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, IsDeclaration__from_ast);
                     if (enclosingDecl__shadow_1 === undefined) {
                         const __gotots_store_1 = NodeBase__from_ast.$storageOf((((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                        enclosingDecl__shadow_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                        enclosingDecl__shadow_1 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     }
                     let flags__shadow_1 = $state.declarationEmitNodeBuilderFlags;
                     if (!((Type__from_checker.Flags(TypePredicate__from_checker.Type(typePredicate)) & TypeFlagsUniqueESSymbol$constant__from_checker()) >>> 0 === 0)) {
@@ -771,7 +789,7 @@ export class isolatedDeclarationsFixer {
         let enclosingDecl: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = FindAncestor__from_ast(node, IsDeclaration__from_ast);
         if (enclosingDecl === undefined) {
             const __gotots_store_2 = NodeBase__from_ast.$storageOf((((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            enclosingDecl = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            enclosingDecl = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         let flags = ($state.declarationEmitNodeBuilderFlags | isolatedDeclarationsFixer.$go$private$ls$getExtraFlags(f, node, t)) >>> 0;
         if (IsParameterDeclaration__from_ast(node) && Checker__from_checker.RequiresAddingImplicitUndefined((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).checker, node)) {
@@ -908,7 +926,7 @@ export class isolatedDeclarationsFixer {
                 const __gotots_receiver_5 = factory;
                 const __gotots_argument_15 = Node__from_ast.AsVariableStatement(enclosingVarStmt);
                 const __gotots_store_3 = VariableStatement__from_ast.$storageOf(((Node__from_ast.AsVariableStatement(enclosingVarStmt) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value);
-                const __gotots_argument_16 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                const __gotots_argument_16 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_3, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                 const __gotots_argument_17 = NodeFactory__from_ast.UpdateVariableDeclarationList(factory, declList, NodeFactory__from_ast.NewNodeList(factory, remainingDecls), (void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                     (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                         (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -999,7 +1017,7 @@ export class isolatedDeclarationsFixer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_4, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_21 = isConstAssertion;
         let isInConstContext = !(FindAncestor__from_ast(__gotots_argument_20, __gotots_argument_21) === undefined);
         if (!isInConstContext) {
@@ -1017,7 +1035,7 @@ export class isolatedDeclarationsFixer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_23 = name;
         const __gotots_argument_24 = isInConstContext;
         const __gotots_argument_25 = (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> => {
@@ -1054,7 +1072,7 @@ export class isolatedDeclarationsFixer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_30 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_30 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_31 = isConstAssertion;
         let isInConstContext = !(FindAncestor__from_ast(__gotots_argument_30, __gotots_argument_31) === undefined);
         if (name === "") {
@@ -1069,7 +1087,7 @@ export class isolatedDeclarationsFixer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PrimaryExpressionBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PrimaryExpressionBase).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_33 = name;
         const __gotots_argument_34 = isInConstContext;
         const __gotots_argument_35 = (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined> => {

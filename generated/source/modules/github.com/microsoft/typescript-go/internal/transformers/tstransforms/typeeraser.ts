@@ -10,6 +10,24 @@ import { Concat$SliceOf_PointerTo_Named_ast$Node$PointerTo_Named_ast$Node } from
 import { getInnermostModuleDeclarationFromDottedModule } from "./runtimesyntax.js";
 import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class TypeEraserTransformer {
     declare private readonly $goType: void;
     public constructor(public Transformer: Transformer__from_transformers, public compilerOptions: {
@@ -448,7 +466,7 @@ export class TypeEraserTransformer {
                             const __gotots_store_75 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                             const __gotots_receiver_23 = Transformer__from_transformers.Visitor(__gotots_store_75.Transformer);
                             const __gotots_store_76 = FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value);
-                            const __gotots_argument_82 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                            const __gotots_argument_82 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_76, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                             const __gotots_argument_84 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_23, __gotots_argument_82);
                             const __gotots_argument_85 = (void BodyBase__from_ast.$storageOf, (void BodyBase__from_ast.$fromStorage,
                                 (void FunctionLikeWithBodyBase__from_ast.$storageOf, (void FunctionLikeWithBodyBase__from_ast.$fromStorage,
@@ -538,7 +556,7 @@ export class TypeEraserTransformer {
                                 const __gotots_store_93 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                                 const __gotots_argument_111 = Transformer__from_transformers.EmitContext(__gotots_store_93.Transformer);
                                 const __gotots_store_94 = ParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-                                const __gotots_argument_112 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_94, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                                const __gotots_argument_112 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_94, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                                 const __gotots_argument_113 = ModifierFlagsParameterPropertyModifier$constant__from_ast();
                                 modifiers = ExtractModifiers__from_transformers(__gotots_argument_111, __gotots_argument_112, __gotots_argument_113);
                             }
@@ -762,7 +780,7 @@ export class TypeEraserTransformer {
                             } | undefined = Node__from_ast.AsImportClause(node);
                             const __gotots_store_138 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                                 NodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-                            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_138, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
+                            if (Node__from_ast.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_138, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf))) {
                                 __gotots_return_0 = void 0;
                                 break __gotots_return_block_0;
                             }

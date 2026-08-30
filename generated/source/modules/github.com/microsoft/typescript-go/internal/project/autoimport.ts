@@ -67,9 +67,7 @@ export class autoImportBuilderFS {
     } | undefined, fileName: gostring, path: Path__from_tspath): FileHandle | undefined {
         {
             const __gotots_results_1 = ((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays.lookupOk(path);
-            let overlay: {
-                value: Overlay;
-            } | undefined = __gotots_results_1[0];
+            let overlay: tsonicTypeScriptRuntime.Location<Overlay> | undefined = __gotots_results_1[0];
             let ok__shadow_1 = __gotots_results_1[1];
             if (ok__shadow_1) {
                 return new $goInterfaceAdapter$PointerTo_Named_project$Overlay(overlay);
@@ -77,11 +75,7 @@ export class autoImportBuilderFS {
         }
         {
             const __gotots_results_2 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile(((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path);
-            let diskFile__shadow_1: {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: diskFile;
-                } | undefined>;
-            } | undefined = __gotots_results_2[0];
+            let diskFile__shadow_1: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_2[0];
             let ok__shadow_1 = __gotots_results_2[1];
             if (ok__shadow_1) {
                 return snapshotFSBuilder.$go$private$project$reloadEntryIfNeeded((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotFSBuilder, diskFile__shadow_1);
@@ -192,13 +186,11 @@ export class autoImportRegistryCloneHost {
             value: Program__from_compiler;
         } | undefined
     ] {
-        let project: {
-            value: Project;
-        } | undefined = ProjectCollection.GetDefaultProject((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectCollection, path);
+        let project: tsonicTypeScriptRuntime.Location<Project> | undefined = ProjectCollection.GetDefaultProject((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectCollection, path);
         if (project === undefined) {
             return [new Path__from_tspath(""), void 0];
         }
-        return [(project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath, Project.GetProgram(project)];
+        return [((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.configFilePath, Project.GetProgram(project)];
     }
     static GetPackageJson(a: {
         value: autoImportRegistryCloneHost;
@@ -244,9 +236,7 @@ export class autoImportRegistryCloneHost {
     } | undefined, projectPath: Path__from_tspath): {
         value: Program__from_compiler;
     } | undefined {
-        let project: {
-            value: Project;
-        } | undefined = ProjectCollection.GetProjectByPath((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectCollection, projectPath);
+        let project: tsonicTypeScriptRuntime.Location<Project> | undefined = ProjectCollection.GetProjectByPath((a ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectCollection, projectPath);
         if (project === undefined) {
             return void 0;
         }

@@ -39,6 +39,24 @@ import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type JSXLinks$Storage = {
     importRef: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined;
 };
@@ -928,7 +946,7 @@ export class EmitResolver {
                                     (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                                         (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                             ElementAccessExpression__from_ast.$storageOf(((expression ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ElementAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                    const __gotots_argument_57 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_57 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_30, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (!IsParseTreeNode__from_ast(__gotots_argument_57)) {
                         __gotots_return_0 = "";
                         break __gotots_return_block_0;
@@ -2038,14 +2056,14 @@ export class EmitResolver {
                 __gotots_return_block_0: {
                     const __gotots_store_34 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_64 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_64 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_34, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (!IsParseTreeNode__from_ast(__gotots_argument_64)) {
                         __gotots_return_0 = false;
                         break __gotots_return_block_0;
                     }
                     const __gotots_store_35 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_65 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_65 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_35, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = GetSourceFileOfNode__from_ast(__gotots_argument_65);
                     if (DeclarationBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.DeclarationBase).Symbol === undefined) {
                         __gotots_return_0 = false;
@@ -2054,7 +2072,7 @@ export class EmitResolver {
                     const __gotots_receiver_41 = r;
                     const __gotots_store_36 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((decl ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_66 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_66 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_36, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let importTarget: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = EmitResolver.GetExternalModuleFileFromDeclaration(__gotots_receiver_41, __gotots_argument_66);
                     if (importTarget === undefined) {
                         __gotots_return_0 = false;
@@ -2618,17 +2636,17 @@ export class EmitResolver {
                     const __gotots_store_38 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     const __gotots_receiver_53 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "declarationFileLinks");
                     const __gotots_store_39 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_67 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_67 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_39, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     if (DeclarationFileLinks.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$DeclarationFileLinks(__gotots_receiver_53, __gotots_argument_67) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationFileLinks>).value).aliasesMarked) {
                         break __gotots_return_block_0;
                     }
                     const __gotots_store_40 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
                     const __gotots_receiver_54 = tsonicTypeScriptRuntime.propertyLocation(__gotots_store_40, "declarationFileLinks");
                     const __gotots_store_41 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_68 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_68 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_41, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     DeclarationFileLinks.$storageOf(((LinkStore$Get$PointerTo_Named_ast$Node$Named_checker$DeclarationFileLinks(__gotots_receiver_54, __gotots_argument_68) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<DeclarationFileLinks>).value).aliasesMarked = true;
                     const __gotots_store_42 = NodeBase__from_ast.$storageOf(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), new Visitor__from_ast((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.aliasMarkingVisitor));
+                    Node__from_ast.ForEachChild(NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_42, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), new Visitor__from_ast((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.aliasMarkingVisitor));
                 }
             }
             catch (__gotots_caught_1) {
@@ -3100,7 +3118,7 @@ export class EmitResolver {
                 if (!(container === undefined)) {
                     const __gotots_receiver_2 = c;
                     const __gotots_store_6 = NodeBase__from_ast.$storageOf(((container ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-                    const __gotots_argument_17 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_17 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let fileSymbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = Checker.$go$private$checker$getSymbolOfDeclaration(__gotots_receiver_2, __gotots_argument_17);
                     Checker.$go$private$checker$resolveExternalModuleSymbol(c, fileSymbol, false);
                 }

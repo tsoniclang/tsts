@@ -1,10 +1,28 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Node$Storage as Node__from_ast$Storage } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { NodeBuilderContext } from "./nodebuilderimpl.js";
 import type { bool } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { FunctionLikeBase as FunctionLikeBase__from_ast, IsPrivateIdentifier as IsPrivateIdentifier__from_ast, KindMethodSignature$constant as KindMethodSignature$constant__from_ast, KindPropertySignature$constant as KindPropertySignature$constant__from_ast, MethodSignatureDeclaration as MethodSignatureDeclaration__from_ast, NodeBase as NodeBase__from_ast, NodeDefault as NodeDefault__from_ast, NodeFactory as NodeFactory__from_ast, Node as Node__from_ast, PropertySignatureDeclaration as PropertySignatureDeclaration__from_ast, Symbol as Symbol__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function isExpanding(ctx: {
     value: NodeBuilderContext;
 } | undefined): bool {
@@ -28,7 +46,7 @@ export function typeElementsToClassElements(f: tsonicTypeScriptRuntime.Location<
                 const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         PropertySignatureDeclaration__from_ast.$storageOf(((ps ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).NodeBase)).NodeDefault));
-                const __gotots_argument_2 = Node__from_ast.QuestionToken(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_argument_2 = Node__from_ast.QuestionToken(new $ProjectedPropertyLocation(__gotots_store_0, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_argument_3 = PropertySignatureDeclaration__from_ast.$storageOf(((ps ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value).Type;
                 const __gotots_argument_4 = void 0;
                 __gotots_store_1.set(__gotots_store_2, NodeFactory__from_ast.NewPropertyDeclaration(__gotots_receiver_0, __gotots_argument_0, __gotots_argument_1, __gotots_argument_2, __gotots_argument_3, __gotots_argument_4));
@@ -45,7 +63,7 @@ export function typeElementsToClassElements(f: tsonicTypeScriptRuntime.Location<
                 const __gotots_store_3 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                     (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         MethodSignatureDeclaration__from_ast.$storageOf(((ms ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).NodeBase)).NodeDefault));
-                const __gotots_argument_8 = Node__from_ast.QuestionToken(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+                const __gotots_argument_8 = Node__from_ast.QuestionToken(new $ProjectedPropertyLocation(__gotots_store_3, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
                 const __gotots_argument_9 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,
                     MethodSignatureDeclaration__from_ast.$storageOf(((ms ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value).FunctionLikeBase)).TypeParameters;
                 const __gotots_argument_10 = (void FunctionLikeBase__from_ast.$storageOf, (void FunctionLikeBase__from_ast.$fromStorage,

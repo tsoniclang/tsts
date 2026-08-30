@@ -67,7 +67,7 @@ export function $initialize(): void {
     $state.allCommitCharacters = RuntimeSlice.nil<gostring>();
     $state.allKeywordCompletions = void 0;
     $state.canHaveTypeAnnotationKinds = GoMap.nil<Kind__from_ast, bool>(false);
-    $state.codeFixProviders = RuntimeSlice.nil<CodeFixProvider | undefined>();
+    $state.codeFixProviders = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined>();
     $state.declarationEmitNodeBuilderFlags = 0;
     $state.emptyCommitCharacters = RuntimeSlice.nil<gostring>();
     $state.fixClassIncorrectlyImplementsInterfaceErrorCodes = RuntimeSlice.nil<int32>();
@@ -106,7 +106,8 @@ export function $initialize(): void {
         $state.declarationEmitNodeBuilderFlags = 531469;
     }
     {
-        $state.IsolatedDeclarationsFixProvider = new CodeFixProvider($state.isolatedDeclarationsFixErrorCodes, getIsolatedDeclarationsCodeActions, RuntimeSlice.literal<gostring>([fixMissingTypeAnnotationOnExportsFixID$string]), getAllIsolatedDeclarationsCodeActions);
+        $state.IsolatedDeclarationsFixProvider =
+            tsonicTypeScriptRuntime.location<CodeFixProvider>(new CodeFixProvider($state.isolatedDeclarationsFixErrorCodes, getIsolatedDeclarationsCodeActions, RuntimeSlice.literal<gostring>([fixMissingTypeAnnotationOnExportsFixID$string]), getAllIsolatedDeclarationsCodeActions));
     }
     {
         $state.importFixErrorCodes = RuntimeSlice.literal<int32>([Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Did_you_mean_1), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Did_you_mean_the_instance_member_this_0), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Did_you_mean_the_static_member_1_0), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_namespace_0), Message__from_diagnostics.Code($state__diagnostics.X_0_refers_to_a_UMD_global_but_the_current_file_is_a_module_Consider_adding_an_import_instead), Message__from_diagnostics.Code($state__diagnostics.X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here), Message__from_diagnostics.Code($state__diagnostics.No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer), Message__from_diagnostics.Code($state__diagnostics.X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig), Message__from_diagnostics.Code($state__diagnostics.Cannot_find_namespace_0_Did_you_mean_1), Message__from_diagnostics.Code($state__diagnostics.Cannot_extend_an_interface_0_Did_you_mean_implements), Message__from_diagnostics.Code($state__diagnostics.This_JSX_tag_requires_0_to_be_in_scope_but_it_could_not_be_found)]);
@@ -115,13 +116,15 @@ export function $initialize(): void {
         $state.ErrNeedsAutoImports = GoProviderInterfaceBridge.$from(errors__from_gostdlib.New("completion list needs auto imports"));
     }
     {
-        $state.FixClassIncorrectlyImplementsInterfaceProvider = new CodeFixProvider($state.fixClassIncorrectlyImplementsInterfaceErrorCodes, getCodeActionsToFixClassIncorrectlyImplementsInterface, RuntimeSlice.literal<gostring>([fixClassIncorrectlyImplementsInterfaceFixID$string]), getAllCodeActionsToFixClassIncorrectlyImplementsInterface);
+        $state.FixClassIncorrectlyImplementsInterfaceProvider =
+            tsonicTypeScriptRuntime.location<CodeFixProvider>(new CodeFixProvider($state.fixClassIncorrectlyImplementsInterfaceErrorCodes, getCodeActionsToFixClassIncorrectlyImplementsInterface, RuntimeSlice.literal<gostring>([fixClassIncorrectlyImplementsInterfaceFixID$string]), getAllCodeActionsToFixClassIncorrectlyImplementsInterface));
     }
     {
-        $state.ImportFixProvider = new CodeFixProvider($state.importFixErrorCodes, getImportCodeActions, RuntimeSlice.literal<gostring>([importFixID$string]), getAllImportCodeActions);
+        $state.ImportFixProvider =
+            tsonicTypeScriptRuntime.location<CodeFixProvider>(new CodeFixProvider($state.importFixErrorCodes, getImportCodeActions, RuntimeSlice.literal<gostring>([importFixID$string]), getAllImportCodeActions));
     }
     {
-        $state.codeFixProviders = RuntimeSlice.literal<CodeFixProvider | undefined>([$state.ImportFixProvider, $state.IsolatedDeclarationsFixProvider, $state.FixClassIncorrectlyImplementsInterfaceProvider]);
+        $state.codeFixProviders = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined>([$state.ImportFixProvider, $state.IsolatedDeclarationsFixProvider, $state.FixClassIncorrectlyImplementsInterfaceProvider]);
     }
     {
         $state.TriggerCharacters = RuntimeSlice.literal<gostring>([".", "\"", "'", "`", "/", "@", "<", "#", " "]);

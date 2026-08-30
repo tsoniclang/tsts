@@ -217,13 +217,11 @@ export class projectReferenceDtsFakingVfs {
     static $go$private$compiler$fileExistsIfProjectReferenceDts(fs: {
         value: projectReferenceDtsFakingVfs;
     } | undefined, file: gostring): Tristate__from_core {
-        let source: {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectReferenceFileMapper, projectReferenceDtsFakingVfs.$go$private$compiler$toPath(fs, file));
+        let source: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = projectReferenceFileMapper.$go$private$compiler$getProjectReferenceFromOutputDts((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectReferenceFileMapper, projectReferenceDtsFakingVfs.$go$private$compiler$toPath(fs, file));
         if (!(source === undefined)) {
             const __gotots_receiver_15 = ((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectReferenceFileMapper ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.opts.Host;
             const __gotots_receiver_16 = goInterfaceNonNil<CompilerHost>(__gotots_receiver_15).FS();
-            const __gotots_argument_22: SourceOutputAndProjectReference__from_tsoptions["Source"] = (source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source;
+            const __gotots_argument_22 = ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source;
             const __gotots_argument_23 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_16).FileExists(__gotots_argument_22);
             const __gotots_argument_24 = TSTrue$constant__from_core();
             const __gotots_argument_25 = TSFalse$constant__from_core();

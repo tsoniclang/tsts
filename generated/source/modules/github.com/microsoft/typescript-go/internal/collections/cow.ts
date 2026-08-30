@@ -1,9 +1,27 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { GoMapValue } from "@gotots/runtime/map.js";
 import type { bool } from "@gotots/runtime/scalars.js";
 import * as generic_maps_kernel from "@gotots/gostdlib/internal/facets/generic-maps-kernel.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type CopyOnWriteMap$Storage<K, V> = {
     m: GoMapValue<K, V>;
     owned: bool;
@@ -97,7 +115,7 @@ export class CopyOnWriteSet<K> {
     declare private readonly then?: never;
     static Add$kernel<K>(c: tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>> | undefined, $go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void: ($0: GoMapValue<K, GoEmptyStruct>) => GoMapValue<K, GoEmptyStruct>, $go$copy$T0_to_T0: ($0: K) => K, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void: ($0: GoEmptyStruct) => GoMapValue<K, GoEmptyStruct>, k: K): void {
         const __gotots_store_1 = CopyOnWriteSet.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>>).value);
-        CopyOnWriteMap.Set$kernel<K, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap$Storage<K, GoEmptyStruct>, CopyOnWriteMap<K, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "m"), CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf), $go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, ($argument0: GoEmptyStruct): GoEmptyStruct => {
+        CopyOnWriteMap.Set$kernel<K, GoEmptyStruct>(new $ProjectedPropertyLocation(__gotots_store_1, "m", CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf), $go$convert$MapOf_T0_To_Struct_void_to_MapOf_T0_To_Struct_void, ($argument0: GoEmptyStruct): GoEmptyStruct => {
             return (void GoEmptyStruct.$copy,
                 $argument0);
         }, $go$copy$T0_to_T0, $go$map_construct$Struct_void_to_MapOf_T0_To_Struct_void, (): GoEmptyStruct => {
@@ -106,11 +124,11 @@ export class CopyOnWriteSet<K> {
     }
     static EnterScope<K>(c: tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>> | undefined): (() => void) | undefined {
         const __gotots_store_2 = CopyOnWriteSet.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>>).value);
-        return CopyOnWriteMap.EnterScope<K, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap$Storage<K, GoEmptyStruct>, CopyOnWriteMap<K, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "m"), CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf));
+        return CopyOnWriteMap.EnterScope<K, GoEmptyStruct>(new $ProjectedPropertyLocation(__gotots_store_2, "m", CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf));
     }
     static Has$kernel<K>(c: tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>> | undefined, k: K): bool {
         const __gotots_store_0 = CopyOnWriteSet.$storageOf(((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<CopyOnWriteSet<K>>).value);
-        const __gotots_results_1 = CopyOnWriteMap.Get$kernel<K, GoEmptyStruct>(tsonicTypeScriptRuntime.projectLocation<CopyOnWriteMap$Storage<K, GoEmptyStruct>, CopyOnWriteMap<K, GoEmptyStruct>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "m"), CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
+        const __gotots_results_1 = CopyOnWriteMap.Get$kernel<K, GoEmptyStruct>(new $ProjectedPropertyLocation(__gotots_store_0, "m", CopyOnWriteMap.$fromStorage, CopyOnWriteMap.$storageOf), ($argument0: GoEmptyStruct): GoEmptyStruct => {
             return (void GoEmptyStruct.$copy,
                 $argument0);
         }, k);

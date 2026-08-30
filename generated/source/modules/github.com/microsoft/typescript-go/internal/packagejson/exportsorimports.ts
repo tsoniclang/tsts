@@ -16,6 +16,24 @@ import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { goStringIndex } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type objectKind = int8;
 export function objectKindUnknown$constant(): objectKind {
     return 0;
@@ -89,7 +107,7 @@ export class ExportsOrImports implements GoContainerStoredValue<ExportsOrImports
     declare private readonly then?: never;
     static UnmarshalJSONFrom(e: tsonicTypeScriptRuntime.Location<ExportsOrImports> | undefined, dec: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined): $goInterface$Interface_Method_Error_void_to_string | undefined {
         const __gotots_store_0 = ExportsOrImports.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ExportsOrImports>).value);
-        const __gotots_argument_2 = tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "JSONValue"), JSONValue.$fromStorage, JSONValue.$storageOf);
+        const __gotots_argument_2 = new $ProjectedPropertyLocation(__gotots_store_0, "JSONValue", JSONValue.$fromStorage, JSONValue.$storageOf);
         const __gotots_argument_3 = dec;
         return unmarshalJSONValueV2$Named_packagejson$ExportsOrImports(__gotots_argument_2, __gotots_argument_3);
     }

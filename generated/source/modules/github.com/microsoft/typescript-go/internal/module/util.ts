@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { SourceFile as SourceFile__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { Message as Message__from_diagnostics } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/diagnostics/package.js";
 import type { Version$Storage as Version__from_semver$Storage } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/semver/package.js";
@@ -13,6 +13,24 @@ import { moveToNextDirectorySeparatorIfAvailable } from "./resolver.js";
 import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export const InferredTypesContainingFile$string: gostring = "__inferred type names__.ts";
 export function IsApplicableVersionedTypesKey(key: gostring): bool {
     if (!strings__from_gostdlib.HasPrefix(key, "types@")) {
@@ -24,7 +42,7 @@ export function IsApplicableVersionedTypesKey(key: gostring): bool {
     if (!ok) {
         return false;
     }
-    return VersionRange__from_semver.Test(range_, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), Version__from_semver.$fromStorage, Version__from_semver.$storageOf));
+    return VersionRange__from_semver.Test(range_, new $ProjectedPropertyLocation($state, "typeScriptVersion", Version__from_semver.$fromStorage, Version__from_semver.$storageOf));
 }
 export function ParseNodeModuleFromPath(resolved__shadow_1: gostring, isFolder: bool): gostring {
     let path = NormalizePath__from_tspath(resolved__shadow_1);
@@ -121,7 +139,7 @@ export function ComparePatternKeys(a: gostring, b: gostring): int {
 }
 export function GetResolutionDiagnostic(options: {
     value: CompilerOptions__from_core;
-} | undefined, resolvedModule: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
+} | undefined, resolvedModule: ResolvedModule | undefined, file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): {
     value: Message__from_diagnostics;
 } | undefined {
     let needJsx: (() => {
@@ -164,7 +182,7 @@ export function GetResolutionDiagnostic(options: {
         }
         return $state__diagnostics.Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set;
     };
-    switch (((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.Extension) {
+    switch ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Extension) {
         case ExtensionTs$string__from_tspath:
         case ExtensionDts$string__from_tspath:
         case ExtensionMts$string__from_tspath:

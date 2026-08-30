@@ -14,9 +14,7 @@ export interface EmitHost extends GoInterfaceValue {
     GetCurrentDirectory(): gostring;
     GetEmitModuleFormatOfFile($argument0: HasFileName__from_ast | undefined): ModuleKind__from_core;
     GetEmitResolver(): EmitResolver | undefined;
-    GetProjectReferenceFromSource($argument0: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined;
+    GetProjectReferenceFromSource($argument0: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined;
     IsEmitBlocked($argument0: gostring): bool;
     IsSourceFileFromExternalLibrary($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): bool;
     Options(): {

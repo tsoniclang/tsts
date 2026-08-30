@@ -54,19 +54,17 @@ export class snapshotData {
     declare private readonly $goType: void;
     public constructor(public snapshot: {
         value: Snapshot__from_project;
-    } | undefined, public refCount: int, public symbolRegistry: GoMapValue<SymbolID, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public symbolRegistryMu: sync__from_gostdlib.RWMutex, public typeRegistry: GoMapValue<TypeID, tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>, public typeRegistryMu: sync__from_gostdlib.RWMutex, public signatureRegistry: GoMapValue<SignatureID, tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, public signatureNextID: uint64, public signatureRegistryMu: sync__from_gostdlib.RWMutex, public nodeTablesByPath: GoMapValue<Path__from_tspath, NodeIndexTable__from_encoder | undefined>, public nodeTablesByPathMu: sync__from_gostdlib.RWMutex) {
+    } | undefined, public refCount: int, public symbolRegistry: GoMapValue<SymbolID, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>, public symbolRegistryMu: sync__from_gostdlib.RWMutex, public typeRegistry: GoMapValue<TypeID, tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>, public typeRegistryMu: sync__from_gostdlib.RWMutex, public signatureRegistry: GoMapValue<SignatureID, tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined>, public signatureNextID: uint64, public signatureRegistryMu: sync__from_gostdlib.RWMutex, public nodeTablesByPath: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder> | undefined>, public nodeTablesByPathMu: sync__from_gostdlib.RWMutex) {
     }
     declare private readonly then?: never;
-    static $go$private$api$getProgram(sd: snapshotData | undefined, projectHandle: ProjectID): [
+    static $go$private$api$getProgram(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, projectHandle: ProjectID): [
         {
             value: Program__from_compiler;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         let projectName = parseProjectHandle(projectHandle);
-        let proj: {
-            value: Project__from_project;
-        } | undefined = ProjectCollection__from_project.GetProjectByPath(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection, projectName);
+        let proj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined = ProjectCollection__from_project.GetProjectByPath((((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection, projectName);
         if (proj === undefined) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: project %s not found", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_tspath$Path(projectName)])))];
         }
@@ -78,37 +76,37 @@ export class snapshotData {
         }
         return [program, void 0];
     }
-    static $go$private$api$nodeHandleFrom(sd: snapshotData | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): NodeHandle {
+    static $go$private$api$nodeHandleFrom(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): NodeHandle {
         let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = GetSourceFileOfNode__from_ast(node);
         let path = SourceFile__from_ast.Path(sourceFile);
-        sync__from_gostdlib.RWMutex.RLock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-        let table: NodeIndexTable__from_encoder | undefined = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.lookup(path);
-        sync__from_gostdlib.RWMutex.RUnlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
+        sync__from_gostdlib.RWMutex.RLock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+        let table: tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder> | undefined = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.lookup(path);
+        sync__from_gostdlib.RWMutex.RUnlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
         if (table === undefined) {
-            let newTable: NodeIndexTable__from_encoder | undefined = BuildNodeIndexTable__from_encoder(sourceFile);
-            sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-            if ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.lookup(path) === undefined) {
-                (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.store(path, newTable);
+            let newTable: tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder> | undefined = BuildNodeIndexTable__from_encoder(sourceFile);
+            sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+            if (((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.lookup(path) === undefined) {
+                ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.store(path, newTable);
             }
-            table = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.lookup(path);
-            sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
+            table = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.lookup(path);
+            sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
         }
         let idx = NodeIndexTable__from_encoder.GetIndex(table, node);
         return new NodeHandle(fmt__from_gostdlib.Sprintf("%d.%d.%s", RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$uint32(idx), new $goInterfaceAdapter$Named_ast$Kind(Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind), new $goInterfaceAdapter$Named_tspath$Path(path)])));
     }
-    static $go$private$api$registerSignature(sd: snapshotData | undefined, sig: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined): {
+    static $go$private$api$registerSignature(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, sig: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined): {
         value: SignatureResponse;
     } | undefined {
         if (sig === undefined) {
             return void 0;
         }
-        sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistryMu);
-        const __gotots_store_10 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
+        sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistryMu);
+        const __gotots_store_10 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value;
         __gotots_store_10.signatureNextID = goUint64(__gotots_store_10.signatureNextID + 1n);
-        let id = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureNextID;
+        let id = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureNextID;
         let handle = SignatureHandle(id);
-        (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistry.store(handle, sig);
-        sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistryMu);
+        ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistry.store(handle, sig);
+        sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistryMu);
         let resp: {
             value: SignatureResponse;
         } | undefined = { value: new SignatureResponse(handle, Signature__from_checker.Flags(sig), new NodeHandle(""), RuntimeSlice.nil<TypeID>(), RuntimeSlice.nil<uint64>(), new SymbolID(0n), new SignatureID(0n)) };
@@ -124,9 +122,9 @@ export class snapshotData {
                 let i = __gotots_range_value_42;
                 let tp: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = __gotots_range_value_43;
                 (resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameters.set(i, TypeHandle(tp));
-                sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
-                (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameters.get(i), tp);
-                sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
+                sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
+                ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeParameters.get(i), tp);
+                sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
             }
         }
         if (Signature__from_checker.Parameters(sig).length > 0) {
@@ -139,16 +137,16 @@ export class snapshotData {
                 let i = __gotots_range_value_44;
                 let param: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __gotots_range_value_45;
                 (resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Parameters.set(i, SymbolHandle(param).$value);
-                sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
-                (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistry.store(new SymbolID((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Parameters.get(i)), param);
-                sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
+                sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
+                ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistry.store(new SymbolID((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Parameters.get(i)), param);
+                sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
             }
         }
         if (!(Signature__from_checker.ThisParameter(sig) === undefined)) {
             (resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisParameter = SymbolHandle(Signature__from_checker.ThisParameter(sig));
-            sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
-            (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisParameter, Signature__from_checker.ThisParameter(sig));
-            sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
+            sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
+            ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ThisParameter, Signature__from_checker.ThisParameter(sig));
+            sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
         }
         if (!(Signature__from_checker.Target(sig) === undefined)) {
             let targetResp: {
@@ -160,7 +158,7 @@ export class snapshotData {
         }
         return resp;
     }
-    static $go$private$api$registerSymbol(sd: snapshotData | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): {
+    static $go$private$api$registerSymbol(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined): {
         value: SymbolResponse;
     } | undefined {
         if (__go_symbol === undefined) {
@@ -180,22 +178,22 @@ export class snapshotData {
         if (!(Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration === undefined)) {
             (resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ValueDeclaration = snapshotData.$go$private$api$nodeHandleFrom(sd, Symbol__from_ast.$storageOf(((__go_symbol ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Symbol__from_ast>).value).ValueDeclaration);
         }
-        sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
-        (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Id, __go_symbol);
-        sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
+        sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
+        ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistry.store((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Id, __go_symbol);
+        sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
         return resp;
     }
-    static $go$private$api$registerType(sd: snapshotData | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined): tsonicTypeScriptRuntime.Location<TypeResponse> | undefined {
+    static $go$private$api$registerType(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined): tsonicTypeScriptRuntime.Location<TypeResponse> | undefined {
         if (t === undefined) {
             return void 0;
         }
         let resp: tsonicTypeScriptRuntime.Location<TypeResponse> | undefined = newTypeData(t);
-        sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
-        (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistry.store(((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeResponse>).value.Id, t);
-        sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
+        sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
+        ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistry.store(((resp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeResponse>).value.Id, t);
+        sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
         return resp;
     }
-    static $go$private$api$resolveNodeHandle(sd: snapshotData | undefined, program: {
+    static $go$private$api$resolveNodeHandle(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, program: {
         value: Program__from_compiler;
     } | undefined, handle: NodeHandle): [
         tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined,
@@ -222,18 +220,18 @@ export class snapshotData {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: invalid node handle %q: %w", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$NodeHandle(handle), err])))];
         }
         let path = new Path__from_tspath(goStringSlice(s, secondDot + 1));
-        sync__from_gostdlib.RWMutex.RLock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-        let table: NodeIndexTable__from_encoder | undefined = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.lookup(path);
-        sync__from_gostdlib.RWMutex.RUnlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-        if (!(table === undefined) && idx < BigInt.asUintN(64, goNumberToBigInt((table ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes.length))) {
-            let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (table ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes.get(idx);
+        sync__from_gostdlib.RWMutex.RLock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+        let table: tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder> | undefined = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.lookup(path);
+        sync__from_gostdlib.RWMutex.RUnlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+        if (!(table === undefined) && idx < BigInt.asUintN(64, goNumberToBigInt(((table ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder>).value.Nodes.length))) {
+            let node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = ((table ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder>).value.Nodes.get(idx);
             if (!(node === undefined)) {
                 return [node, void 0];
             }
         }
         return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: node handle %q could not be resolved (file may not be loaded)", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$NodeHandle(handle)])))];
     }
-    static $go$private$api$resolveSignatureHandle(sd: snapshotData | undefined, handle: SignatureID): [
+    static $go$private$api$resolveSignatureHandle(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, handle: SignatureID): [
         tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -242,17 +240,17 @@ export class snapshotData {
                 0n) as bigint)) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: empty signature handle", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError])))];
         }
-        sync__from_gostdlib.RWMutex.RLock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistryMu);
-        const __gotots_results_229 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistry.lookupOk(handle);
+        sync__from_gostdlib.RWMutex.RLock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistryMu);
+        const __gotots_results_229 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistry.lookupOk(handle);
         let sig: tsonicTypeScriptRuntime.Location<Signature__from_checker> | undefined = __gotots_results_229[0];
         let ok = __gotots_results_229[1];
-        sync__from_gostdlib.RWMutex.RUnlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).signatureRegistryMu);
+        sync__from_gostdlib.RWMutex.RUnlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.signatureRegistryMu);
         if (!ok) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: signature handle %d not found in snapshot registry", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$SignatureID(handle)])))];
         }
         return [sig, void 0];
     }
-    static $go$private$api$resolveSymbolHandle(sd: snapshotData | undefined, handle: SymbolID): [
+    static $go$private$api$resolveSymbolHandle(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, handle: SymbolID): [
         tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -261,28 +259,28 @@ export class snapshotData {
                 0n) as bigint)) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: empty symbol handle", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError])))];
         }
-        sync__from_gostdlib.RWMutex.RLock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
-        const __gotots_results_223 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistry.lookupOk(handle);
+        sync__from_gostdlib.RWMutex.RLock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
+        const __gotots_results_223 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistry.lookupOk(handle);
         let __go_symbol: tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined = __gotots_results_223[0];
         let ok = __gotots_results_223[1];
-        sync__from_gostdlib.RWMutex.RUnlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).symbolRegistryMu);
+        sync__from_gostdlib.RWMutex.RUnlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.symbolRegistryMu);
         if (!ok) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: symbol handle %d not found in snapshot registry", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$SymbolID(handle)])))];
         }
         return [__go_symbol, void 0];
     }
-    static $go$private$api$resolveTypeHandle(sd: snapshotData | undefined, handle: TypeID): [
+    static $go$private$api$resolveTypeHandle(sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, handle: TypeID): [
         tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         if (handle === 0) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: empty type handle", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError])))];
         }
-        sync__from_gostdlib.RWMutex.RLock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
-        const __gotots_results_224 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistry.lookupOk(handle);
+        sync__from_gostdlib.RWMutex.RLock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
+        const __gotots_results_224 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistry.lookupOk(handle);
         let t: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined = __gotots_results_224[0];
         let ok = __gotots_results_224[1];
-        sync__from_gostdlib.RWMutex.RUnlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typeRegistryMu);
+        sync__from_gostdlib.RWMutex.RUnlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.typeRegistryMu);
         if (!ok) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: type handle %d not found in snapshot registry", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$TypeID(handle)])))];
         }
@@ -293,26 +291,24 @@ export class Session {
     declare private readonly $goType: void;
     public constructor(public id: gostring, public projectSession: {
         value: Session__from_project;
-    } | undefined, public useBinaryResponses: bool, public snapshots: GoMapValue<SnapshotID, snapshotData | undefined>, public snapshotsMu: sync__from_gostdlib.RWMutex, public latestSnapshot: SnapshotID, public cpuProfiler: CPUProfiler__from_pprof) {
+    } | undefined, public useBinaryResponses: bool, public snapshots: GoMapValue<SnapshotID, tsonicTypeScriptRuntime.Location<snapshotData> | undefined>, public snapshotsMu: sync__from_gostdlib.RWMutex, public latestSnapshot: SnapshotID, public cpuProfiler: CPUProfiler__from_pprof) {
     }
     static $copy($source: Session): Session {
         return new Session($source.id, $source.projectSession, $source.useBinaryResponses, $source.snapshots, named_sync.SyncRWMutexOperations.$copy($source.snapshotsMu), $source.latestSnapshot, CPUProfiler__from_pprof.$copy($source.cpuProfiler));
     }
     declare private readonly then?: never;
-    static Close(s: {
-        value: Session;
-    } | undefined): void {
+    static Close(s: tsonicTypeScriptRuntime.Location<Session> | undefined): void {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
             try {
                 __gotots_return_block_0: {
-                    sync__from_gostdlib.RWMutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-                    const __gotots_receiver_0: Session["snapshotsMu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu;
+                    sync__from_gostdlib.RWMutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+                    const __gotots_receiver_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncRWMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
-                    const __gotots_range_0: Session["snapshots"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots;
+                    const __gotots_range_0 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots;
                     const __gotots_range_keys_0 = __gotots_range_0.keys();
                     for (const __gotots_range_value_0 of __gotots_range_keys_0) {
                         const __gotots_range_value_1 = __gotots_range_0.lookupOk(__gotots_range_value_0);
@@ -321,7 +317,7 @@ export class Session {
                         }
                         const __gotots_range_value_2 = __gotots_range_value_0;
                         let handle = __gotots_range_value_2;
-                        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.delete(handle);
+                        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.delete(handle);
                     }
                 }
             }
@@ -353,20 +349,16 @@ export class Session {
             throw __gotots_panic_0;
         }
     }
-    static HandleNotification(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, method: gostring, params: Value__from_jsontext): $goInterface$Interface_Method_Error_void_to_string | undefined {
+    static HandleNotification(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, method: gostring, params: Value__from_jsontext): $goInterface$Interface_Method_Error_void_to_string | undefined {
         return void 0;
     }
-    static HandleRequest(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, method: gostring, params: Value__from_jsontext): [
+    static HandleRequest(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, method: gostring, params: Value__from_jsontext): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         switch (method) {
             case "echo": {
-                if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses) {
+                if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses) {
                     return [new $goInterfaceAdapter$Named_api$RawBinary(new RawBinary(params.$value)), void 0];
                 }
                 return [new $goInterfaceAdapter$Named_jsontext$Value(params), void 0];
@@ -1278,37 +1270,31 @@ export class Session {
             }
         }
     }
-    static ID(s: {
-        value: Session;
-    } | undefined): gostring {
-        return (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.id;
+    static ID(s: tsonicTypeScriptRuntime.Location<Session> | undefined): gostring {
+        return ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.id;
     }
-    static $go$private$api$getSnapshotData(s: {
-        value: Session;
-    } | undefined, handle: SnapshotID): [
-        snapshotData | undefined,
+    static $go$private$api$getSnapshotData(s: tsonicTypeScriptRuntime.Location<Session> | undefined, handle: SnapshotID): [
+        tsonicTypeScriptRuntime.Location<snapshotData> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        sync__from_gostdlib.RWMutex.RLock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-        const __gotots_results_217 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.lookupOk(handle);
-        let sd: snapshotData | undefined = __gotots_results_217[0];
+        sync__from_gostdlib.RWMutex.RLock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+        const __gotots_results_217 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.lookupOk(handle);
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_217[0];
         let ok = __gotots_results_217[1];
-        sync__from_gostdlib.RWMutex.RUnlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+        sync__from_gostdlib.RWMutex.RUnlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
         if (!ok) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: snapshot %d not found", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$SnapshotID(handle)])))];
         }
         return [sd, void 0];
     }
-    static $go$private$api$handleGetAliasSymbolOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetAliasSymbolOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_126 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetTypePropertyParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_126[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_126[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_126[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -1324,9 +1310,7 @@ export class Session {
         }
         return [snapshotData.$go$private$api$registerSymbol(sd, TypeAlias__from_checker.Symbol(Type__from_checker.Alias(t))), void 0];
     }
-    static $go$private$api$handleGetAliasTypeArgumentsOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetAliasTypeArgumentsOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1337,9 +1321,7 @@ export class Session {
             return TypeAlias__from_checker.TypeArguments(Type__from_checker.Alias(t));
         });
     }
-    static $go$private$api$handleGetBaseTypeOfLiteralType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetBaseTypeOfLiteralTypeParams> | undefined): [
+    static $go$private$api$handleGetBaseTypeOfLiteralType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetBaseTypeOfLiteralTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1409,9 +1391,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetBaseTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetBaseTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1419,9 +1399,7 @@ export class Session {
             return SubstitutionType__from_checker.BaseType(Type__from_checker.AsSubstitutionType(t));
         });
     }
-    static $go$private$api$handleGetBaseTypes(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
+    static $go$private$api$handleGetBaseTypes(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1500,9 +1478,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetCheckTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetCheckTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1510,16 +1486,14 @@ export class Session {
             return ConditionalType__from_checker.CheckType(Type__from_checker.AsConditionalType(t));
         });
     }
-    static $go$private$api$handleGetCompletionsAtPosition(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetCompletionsAtPositionParams> | undefined): [
+    static $go$private$api$handleGetCompletionsAtPosition(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetCompletionsAtPositionParams> | undefined): [
         {
             value: CompletionInfoResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_213 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetCompletionsAtPositionParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_213[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_213[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_213[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -1580,16 +1554,14 @@ export class Session {
         return [
             { value: new CompletionInfoResponse((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsIncomplete, entries) }, void 0];
     }
-    static $go$private$api$handleGetConfigFileParsingDiagnostics(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetProjectDiagnosticsParams> | undefined): [
+    static $go$private$api$handleGetConfigFileParsingDiagnostics(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetProjectDiagnosticsParams> | undefined): [
         RuntimeSlice<{
             value: DiagnosticResponse;
         } | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_199 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetProjectDiagnosticsParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_199[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_199[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_199[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -1609,9 +1581,7 @@ export class Session {
         let diags = Program__from_compiler.GetConfigFileParsingDiagnostics(program);
         return [NewDiagnosticResponses(diags), void 0];
     }
-    static $go$private$api$handleGetConstraintOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetConstraintOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1619,9 +1589,7 @@ export class Session {
             return SubstitutionType__from_checker.SubstConstraint(Type__from_checker.AsSubstitutionType(t));
         });
     }
-    static $go$private$api$handleGetConstraintOfTypeParameter(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
+    static $go$private$api$handleGetConstraintOfTypeParameter(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1691,9 +1659,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetContextualType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetContextualTypeParams> | undefined): [
+    static $go$private$api$handleGetContextualType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetContextualTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1767,9 +1733,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetDeclarationDiagnostics(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
+    static $go$private$api$handleGetDeclarationDiagnostics(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
         RuntimeSlice<{
             value: DiagnosticResponse;
         } | undefined>,
@@ -1777,7 +1741,7 @@ export class Session {
     ] {
         ctx = WithCheckerLifetime__from_core(ctx, CheckerLifetimeDiagnostics$constant__from_core());
         const __gotots_results_196 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDiagnosticsParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_196[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_196[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_196[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -1805,9 +1769,7 @@ export class Session {
         let diags = Program__from_compiler.GetDeclarationDiagnostics(program, ctx, sourceFile);
         return [NewDiagnosticResponses(diags), void 0];
     }
-    static $go$private$api$handleGetDeclaredTypeOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetDeclaredTypeOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1881,39 +1843,33 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetDefaultProjectForFile(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDefaultProjectForFileParams> | undefined): [
+    static $go$private$api$handleGetDefaultProjectForFile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDefaultProjectForFileParams> | undefined): [
         {
             value: ProjectResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_86 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDefaultProjectForFileParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_86[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_86[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_86[1];
         if (!(err === undefined)) {
             return [void 0, err];
         }
         let uri = ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDefaultProjectForFileParams>).value.File.ToURI();
-        let proj: {
-            value: Project__from_project;
-        } | undefined = Snapshot__from_project.GetDefaultProject((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot, uri);
+        let proj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined = Snapshot__from_project.GetDefaultProject(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot, uri);
         if (proj === undefined) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: no project found for file %v", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$DocumentIdentifier(DocumentIdentifier.$copy(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDefaultProjectForFileParams>).value.File))])))];
         }
         return [NewProjectResponse(proj), void 0];
     }
-    static $go$private$api$handleGetExportSymbolOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetExportSymbolOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetExportSymbolOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetExportSymbolOfSymbolParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_112 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetExportSymbolOfSymbolParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_112[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_112[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_112[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -1929,16 +1885,14 @@ export class Session {
         }
         return [snapshotData.$go$private$api$registerSymbol(sd, __go_symbol), void 0];
     }
-    static $go$private$api$handleGetExportsOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetExportsOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetExportsOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetExportsOfSymbolParams> | undefined): [
         RuntimeSlice<{
             value: SymbolResponse;
         } | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_110 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetExportsOfSymbolParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_110[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_110[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_110[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -1974,9 +1928,7 @@ export class Session {
         }
         return [results, void 0];
     }
-    static $go$private$api$handleGetExtendsTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetExtendsTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1984,9 +1936,7 @@ export class Session {
             return ConditionalType__from_checker.ExtendsType(Type__from_checker.AsConditionalType(t));
         });
     }
-    static $go$private$api$handleGetFreshTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetFreshTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -1997,9 +1947,7 @@ export class Session {
             return LiteralType__from_checker.FreshType(Type__from_checker.AsLiteralType(t));
         });
     }
-    static $go$private$api$handleGetIndexInfosOfType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
+    static $go$private$api$handleGetIndexInfosOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
         RuntimeSlice<{
             value: IndexInfoResponse;
         } | undefined>,
@@ -2095,9 +2043,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetIndexTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetIndexTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2105,9 +2051,7 @@ export class Session {
             return IndexedAccessType__from_checker.IndexType(Type__from_checker.AsIndexedAccessType(t));
         });
     }
-    static $go$private$api$handleGetIntrinsicType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetIntrinsicTypeParams> | undefined, getter: (($0: {
+    static $go$private$api$handleGetIntrinsicType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetIntrinsicTypeParams> | undefined, getter: (($0: {
         value: Checker__from_checker;
     } | undefined) => tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
@@ -2174,9 +2118,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetLocalTypeParametersOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetLocalTypeParametersOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2184,16 +2126,14 @@ export class Session {
             return InterfaceType__from_checker.LocalTypeParameters(Type__from_checker.AsInterfaceType(t));
         });
     }
-    static $go$private$api$handleGetMembersOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetMembersOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetMembersOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetMembersOfSymbolParams> | undefined): [
         RuntimeSlice<{
             value: SymbolResponse;
         } | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_108 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetMembersOfSymbolParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_108[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_108[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_108[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -2229,9 +2169,7 @@ export class Session {
         }
         return [results, void 0];
     }
-    static $go$private$api$handleGetNonNullableType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetNonNullableTypeParams> | undefined): [
+    static $go$private$api$handleGetNonNullableType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetNonNullableTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2301,9 +2239,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetObjectTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetObjectTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2311,9 +2247,7 @@ export class Session {
             return IndexedAccessType__from_checker.ObjectType(Type__from_checker.AsIndexedAccessType(t));
         });
     }
-    static $go$private$api$handleGetOuterTypeParametersOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetOuterTypeParametersOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2321,9 +2255,7 @@ export class Session {
             return InterfaceType__from_checker.OuterTypeParameters(Type__from_checker.AsInterfaceType(t));
         });
     }
-    static $go$private$api$handleGetParameterType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetParameterTypeParams> | undefined): [
+    static $go$private$api$handleGetParameterType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetParameterTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2397,16 +2329,14 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetParentOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetParentOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetParentOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetParentOfSymbolParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_106 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetParentOfSymbolParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_106[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_106[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_106[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -2423,9 +2353,7 @@ export class Session {
         }
         return [snapshotData.$go$private$api$registerSymbol(sd, parent), void 0];
     }
-    static $go$private$api$handleGetPropertiesOfType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
+    static $go$private$api$handleGetPropertiesOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
         RuntimeSlice<{
             value: SymbolResponse;
         } | undefined>,
@@ -2518,14 +2446,12 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetReferencedSymbolsForNode(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetReferencedSymbolsForNodeParams> | undefined): [
+    static $go$private$api$handleGetReferencedSymbolsForNode(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetReferencedSymbolsForNodeParams> | undefined): [
         RuntimeSlice<ReferencedSymbolEntry__from_api$Storage>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_205 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetReferencedSymbolsForNodeParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_205[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_205[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_205[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<ReferencedSymbolEntry__from_api$Storage>(), err];
@@ -2609,9 +2535,7 @@ export class Session {
         }
         return [result, void 0];
     }
-    static $go$private$api$handleGetReferencesToSymbolInFile(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetReferencesToSymbolInFileParams> | undefined): [
+    static $go$private$api$handleGetReferencesToSymbolInFile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetReferencesToSymbolInFileParams> | undefined): [
         RuntimeSlice<gostring>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2696,9 +2620,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetRegularTypeOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetRegularTypeOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2709,9 +2631,7 @@ export class Session {
             return LiteralType__from_checker.RegularType(Type__from_checker.AsLiteralType(t));
         });
     }
-    static $go$private$api$handleGetResolvedSignature(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetResolvedSignatureParams> | undefined): [
+    static $go$private$api$handleGetResolvedSignature(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetResolvedSignatureParams> | undefined): [
         {
             value: SignatureResponse;
         } | undefined,
@@ -2785,9 +2705,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetRestTypeOfSignature(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
+    static $go$private$api$handleGetRestTypeOfSignature(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2857,9 +2775,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetReturnTypeOfSignature(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
+    static $go$private$api$handleGetReturnTypeOfSignature(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -2929,9 +2845,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSemanticDiagnostics(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
+    static $go$private$api$handleGetSemanticDiagnostics(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
         RuntimeSlice<{
             value: DiagnosticResponse;
         } | undefined>,
@@ -2939,7 +2853,7 @@ export class Session {
     ] {
         ctx = WithCheckerLifetime__from_core(ctx, CheckerLifetimeDiagnostics$constant__from_core());
         const __gotots_results_190 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDiagnosticsParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_190[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_190[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_190[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -2967,9 +2881,7 @@ export class Session {
         let diags = Program__from_compiler.GetSemanticDiagnostics(program, ctx, sourceFile);
         return [NewDiagnosticResponses(diags), void 0];
     }
-    static $go$private$api$handleGetShorthandAssignmentValueSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationParams> | undefined): [
+    static $go$private$api$handleGetShorthandAssignmentValueSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
@@ -3047,14 +2959,12 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSignatureUsages(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSignatureUsagesParams> | undefined): [
+    static $go$private$api$handleGetSignatureUsages(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSignatureUsagesParams> | undefined): [
         RuntimeSlice<SignatureUsageResponse__from_api$Storage>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_209 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetSignatureUsagesParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_209[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_209[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_209[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<SignatureUsageResponse__from_api$Storage>(), err];
@@ -3124,9 +3034,7 @@ export class Session {
         }
         return [result, void 0];
     }
-    static $go$private$api$handleGetSignaturesOfType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSignaturesOfTypeParams> | undefined): [
+    static $go$private$api$handleGetSignaturesOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSignaturesOfTypeParams> | undefined): [
         RuntimeSlice<{
             value: SignatureResponse;
         } | undefined>,
@@ -3213,14 +3121,12 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSourceFile(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSourceFileParams> | undefined): [
+    static $go$private$api$handleGetSourceFile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSourceFileParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_87 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetSourceFileParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_87[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_87[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_87[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -3235,22 +3141,22 @@ export class Session {
         }
         let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = Program__from_compiler.GetSourceFile(program, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetSourceFileParams>).value.File.ToFileName());
         if (sourceFile === undefined) {
-            if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses) {
+            if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses) {
                 return [new $goInterfaceAdapter$Named_api$RawBinary(new RawBinary(RuntimeSlice.nil<uint8>())), void 0];
             }
             return [void 0, void 0];
         }
         const __gotots_results_89 = EncodeSourceFile__from_encoder(sourceFile);
         let data = __gotots_results_89[0];
-        let nodeTable: NodeIndexTable__from_encoder | undefined = __gotots_results_89[1];
+        let nodeTable: tsonicTypeScriptRuntime.Location<NodeIndexTable__from_encoder> | undefined = __gotots_results_89[1];
         err = __gotots_results_89[2];
         if (!(err === undefined)) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("failed to encode source file: %w", RuntimeSlice.literal<GoInterface | undefined>([err])))];
         }
-        sync__from_gostdlib.RWMutex.Lock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-        (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPath.store(SourceFile__from_ast.Path(sourceFile), nodeTable);
-        sync__from_gostdlib.RWMutex.Unlock((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeTablesByPathMu);
-        if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses) {
+        sync__from_gostdlib.RWMutex.Lock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+        ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPath.store(SourceFile__from_ast.Path(sourceFile), nodeTable);
+        sync__from_gostdlib.RWMutex.Unlock(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.nodeTablesByPathMu);
+        if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses) {
             return [new $goInterfaceAdapter$Named_api$RawBinary(new RawBinary(data)), void 0];
         }
         const __gotots_conversion_0 = base64__from_gostdlib.state.StdEncoding;
@@ -3266,9 +3172,7 @@ export class Session {
         const __gotots_results_91 = void 0;
         return [__gotots_results_90, __gotots_results_91];
     }
-    static $go$private$api$handleGetSuggestionDiagnostics(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
+    static $go$private$api$handleGetSuggestionDiagnostics(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
         RuntimeSlice<{
             value: DiagnosticResponse;
         } | undefined>,
@@ -3276,7 +3180,7 @@ export class Session {
     ] {
         ctx = WithCheckerLifetime__from_core(ctx, CheckerLifetimeDiagnostics$constant__from_core());
         const __gotots_results_193 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDiagnosticsParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_193[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_193[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_193[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -3304,9 +3208,7 @@ export class Session {
         let diags = Program__from_compiler.GetSuggestionDiagnostics(program, ctx, sourceFile);
         return [NewDiagnosticResponses(diags), void 0];
     }
-    static $go$private$api$handleGetSymbolAtLocation(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolAtLocationParams> | undefined): [
+    static $go$private$api$handleGetSymbolAtLocation(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolAtLocationParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
@@ -3384,9 +3286,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSymbolAtPosition(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolAtPositionParams> | undefined): [
+    static $go$private$api$handleGetSymbolAtPosition(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolAtPositionParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
@@ -3466,16 +3366,14 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSymbolOfType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolOfTypeParams> | undefined): [
+    static $go$private$api$handleGetSymbolOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolOfTypeParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_114 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetSymbolOfTypeParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_114[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_114[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_114[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -3492,9 +3390,7 @@ export class Session {
         }
         return [snapshotData.$go$private$api$registerSymbol(sd, __go_symbol), void 0];
     }
-    static $go$private$api$handleGetSymbolsAtLocations(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolsAtLocationsParams> | undefined): [
+    static $go$private$api$handleGetSymbolsAtLocations(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolsAtLocationsParams> | undefined): [
         RuntimeSlice<{
             value: SymbolResponse;
         } | undefined>,
@@ -3586,9 +3482,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSymbolsAtPositions(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolsAtPositionsParams> | undefined): [
+    static $go$private$api$handleGetSymbolsAtPositions(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetSymbolsAtPositionsParams> | undefined): [
         RuntimeSlice<{
             value: SymbolResponse;
         } | undefined>,
@@ -3682,9 +3576,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetSyntacticDiagnostics(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
+    static $go$private$api$handleGetSyntacticDiagnostics(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetDiagnosticsParams> | undefined): [
         RuntimeSlice<{
             value: DiagnosticResponse;
         } | undefined>,
@@ -3692,7 +3584,7 @@ export class Session {
     ] {
         ctx = WithCheckerLifetime__from_core(ctx, CheckerLifetimeDiagnostics$constant__from_core());
         const __gotots_results_187 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetDiagnosticsParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_187[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_187[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_187[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<{
@@ -3720,9 +3612,7 @@ export class Session {
         let diags = Program__from_compiler.GetSyntacticDiagnostics(program, ctx, sourceFile);
         return [NewDiagnosticResponses(diags), void 0];
     }
-    static $go$private$api$handleGetTargetOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetTargetOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -3730,9 +3620,7 @@ export class Session {
             return Type__from_checker.Target($argument0);
         });
     }
-    static $go$private$api$handleGetTypeArguments(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
+    static $go$private$api$handleGetTypeArguments(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerTypeParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -3811,9 +3699,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeAtLocation(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationParams> | undefined): [
+    static $go$private$api$handleGetTypeAtLocation(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -3887,9 +3773,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeAtLocations(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationsParams> | undefined): [
+    static $go$private$api$handleGetTypeAtLocations(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtLocationsParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -3969,9 +3853,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeAtPosition(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtPositionParams> | undefined): [
+    static $go$private$api$handleGetTypeAtPosition(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeAtPositionParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4047,9 +3929,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeFromTypeNode(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeFromTypeNodeParams> | undefined): [
+    static $go$private$api$handleGetTypeFromTypeNode(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeFromTypeNodeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4123,9 +4003,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeOfSymbol(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolParams> | undefined): [
+    static $go$private$api$handleGetTypeOfSymbol(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4199,9 +4077,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeOfSymbolAtLocation(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolAtLocationParams> | undefined): [
+    static $go$private$api$handleGetTypeOfSymbolAtLocation(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypeOfSymbolAtLocationParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4286,9 +4162,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypeParametersOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetTypeParametersOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4296,9 +4170,7 @@ export class Session {
             return InterfaceType__from_checker.TypeParameters(Type__from_checker.AsInterfaceType(t));
         });
     }
-    static $go$private$api$handleGetTypePredicateOfSignature(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
+    static $go$private$api$handleGetTypePredicateOfSignature(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<CheckerSignatureParams> | undefined): [
         {
             value: TypePredicateResponse;
         } | undefined,
@@ -4380,9 +4252,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypesAtPositions(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypesAtPositionsParams> | undefined): [
+    static $go$private$api$handleGetTypesAtPositions(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypesAtPositionsParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4464,9 +4334,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypesOfSymbols(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypesOfSymbolsParams> | undefined): [
+    static $go$private$api$handleGetTypesOfSymbols(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypesOfSymbolsParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4546,9 +4414,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleGetTypesOfType(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
+    static $go$private$api$handleGetTypesOfType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4556,9 +4422,7 @@ export class Session {
             return Type__from_checker.Types($argument0);
         });
     }
-    static $go$private$api$handleGetWidenedType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetWidenedTypeParams> | undefined): [
+    static $go$private$api$handleGetWidenedType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetWidenedTypeParams> | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4628,23 +4492,19 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleInitialize(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined): [
+    static $go$private$api$handleInitialize(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined): [
         {
             value: InitializeResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_receiver_1 = Session__from_project.FS((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
+        const __gotots_receiver_1 = Session__from_project.FS(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
         const __gotots_field_0 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_1).UseCaseSensitiveFileNames();
-        const __gotots_results_81 = { value: new InitializeResponse(__gotots_field_0, Session__from_project.GetCurrentDirectory((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession)) };
+        const __gotots_results_81 = { value: new InitializeResponse(__gotots_field_0, Session__from_project.GetCurrentDirectory(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession)) };
         const __gotots_results_82 = void 0;
         return [__gotots_results_81, __gotots_results_82];
     }
-    static $go$private$api$handleIsArrayLikeType(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<IsArrayLikeTypeParams> | undefined): [
+    static $go$private$api$handleIsArrayLikeType(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<IsArrayLikeTypeParams> | undefined): [
         bool,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4709,9 +4569,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleIsContextSensitive(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetContextualTypeParams> | undefined): [
+    static $go$private$api$handleIsContextSensitive(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<GetContextualTypeParams> | undefined): [
         bool,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4780,9 +4638,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleIsTypeAssignableTo(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<IsTypeAssignableToParams> | undefined): [
+    static $go$private$api$handleIsTypeAssignableTo(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<IsTypeAssignableToParams> | undefined): [
         bool,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4854,16 +4710,14 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleParseConfigFile(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ParseConfigFileParams> | undefined): [
+    static $go$private$api$handleParseConfigFile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ParseConfigFileParams> | undefined): [
         {
             value: ConfigFileResponse;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        let configFileName = ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParseConfigFileParams>).value.File.ToAbsoluteFileName(Session__from_project.GetCurrentDirectory((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession));
-        const __gotots_receiver_2 = Session__from_project.FS((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
+        let configFileName = ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParseConfigFileParams>).value.File.ToAbsoluteFileName(Session__from_project.GetCurrentDirectory(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession));
+        const __gotots_receiver_2 = Session__from_project.FS(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
         const __gotots_argument_0 = configFileName;
         const __gotots_results_85 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_2).ReadFile(__gotots_argument_0);
         let configFileContent = __gotots_results_85[0];
@@ -4875,13 +4729,11 @@ export class Session {
         let tsConfigSourceFile: {
             value: TsConfigSourceFile__from_tsoptions;
         } | undefined = NewTsconfigSourceFileFromFilePath__from_tsoptions(configFileName, Session.$go$private$api$toPath(s, configFileName), configFileContent);
-        let parsedCommandLine: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined = ParseJsonSourceFileConfigFileContent__from_tsoptions(tsConfigSourceFile, new $goInterfaceAdapter$PointerTo_Named_project$Session((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession), configDir, void 0, void 0, configFileName, RuntimeSlice.nil<gostring>(), RuntimeSlice.nil<FileExtensionInfo__from_tsoptions$Storage>(), void 0);
+        let parsedCommandLine: tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions> | undefined = ParseJsonSourceFileConfigFileContent__from_tsoptions(tsConfigSourceFile, new $goInterfaceAdapter$PointerTo_Named_project$Session(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession), configDir, void 0, void 0, configFileName, RuntimeSlice.nil<gostring>(), RuntimeSlice.nil<FileExtensionInfo__from_tsoptions$Storage>(), void 0);
         return [
             { value: new ConfigFileResponse(ParsedCommandLine__from_tsoptions.FileNames(parsedCommandLine), ParsedCommandLine__from_tsoptions.CompilerOptions(parsedCommandLine)) }, void 0];
     }
-    static $go$private$api$handlePrintNode(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<PrintNodeParams> | undefined): [
+    static $go$private$api$handlePrintNode(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<PrintNodeParams> | undefined): [
         gostring,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4912,9 +4764,7 @@ export class Session {
         let p: Printer__from_printer | undefined = NewPrinter__from_printer(new PrinterOptions__from_printer(false, 0, false, 0, false, false, false, false, false, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrintNodeParams>).value.NeverAsciiEscape, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrintNodeParams>).value.PreserveSourceNewlines, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PrintNodeParams>).value.TerminateUnterminatedLiterals), new PrintHandlers__from_printer(void 0, void 0, void 0, void 0, void 0, void 0, void 0), void 0);
         return [Printer__from_printer.Emit(p, node, void 0), void 0];
     }
-    static $go$private$api$handleRelease(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ReleaseParams> | undefined): [
+    static $go$private$api$handleRelease(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ReleaseParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -4923,24 +4773,22 @@ export class Session {
                 0n) as bigint)) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: empty handle", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError])))];
         }
-        sync__from_gostdlib.RWMutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-        let sd: snapshotData | undefined = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.lookup(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReleaseParams>).value.Snapshot);
+        sync__from_gostdlib.RWMutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.lookup(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReleaseParams>).value.Snapshot);
         if (sd === undefined) {
-            sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+            sync__from_gostdlib.RWMutex.Unlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: snapshot %d not found", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_api$SnapshotID(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReleaseParams>).value.Snapshot)])))];
         }
-        const __gotots_store_0 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
+        const __gotots_store_0 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value;
         __gotots_store_0.refCount = __gotots_store_0.refCount - 1;
-        if ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).refCount <= 0) {
-            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.delete(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReleaseParams>).value.Snapshot);
-            Snapshot__from_project.Deref((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
+        if (((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.refCount <= 0) {
+            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.delete(((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ReleaseParams>).value.Snapshot);
+            Snapshot__from_project.Deref(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
         }
-        sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+        sync__from_gostdlib.RWMutex.Unlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
         return [new $goInterfaceAdapter$bool(true), void 0];
     }
-    static $go$private$api$handleResolveName(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ResolveNameParams> | undefined): [
+    static $go$private$api$handleResolveName(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ResolveNameParams> | undefined): [
         {
             value: SymbolResponse;
         } | undefined,
@@ -5027,9 +4875,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleSaveHeapProfile(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ProfileParams> | undefined): [
+    static $go$private$api$handleSaveHeapProfile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ProfileParams> | undefined): [
         {
             value: ProfileResult;
         } | undefined,
@@ -5047,9 +4893,7 @@ export class Session {
         return [
             { value: new ProfileResult(filePath) }, void 0];
     }
-    static $go$private$api$handleSignatureToSignatureDeclaration(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<SignatureToSignatureDeclarationParams> | undefined): [
+    static $go$private$api$handleSignatureToSignatureDeclaration(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<SignatureToSignatureDeclarationParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -5106,7 +4950,7 @@ export class Session {
                         __gotots_return_0 = [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("failed to encode signature declaration: %w", RuntimeSlice.literal<GoInterface | undefined>([err])))];
                         break __gotots_return_block_1;
                     }
-                    if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses) {
+                    if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses) {
                         __gotots_return_0 = [new $goInterfaceAdapter$Named_api$RawBinary(new RawBinary(data)), void 0];
                         break __gotots_return_block_1;
                     }
@@ -5154,9 +4998,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleStartCPUProfile(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ProfileParams> | undefined): [
+    static $go$private$api$handleStartCPUProfile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<ProfileParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -5164,7 +5006,7 @@ export class Session {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: dir is required", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError])))];
         }
         {
-            const __gotots_store_2 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+            const __gotots_store_2 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value;
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = CPUProfiler__from_pprof.StartCPUProfile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "cpuProfiler"), ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ProfileParams>).value.Dir);
             if (!(err === undefined)) {
                 return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: failed to start CPU profile: %w", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, err])))];
@@ -5172,15 +5014,13 @@ export class Session {
         }
         return [void 0, void 0];
     }
-    static $go$private$api$handleStopCPUProfile(s: {
-        value: Session;
-    } | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined): [
+    static $go$private$api$handleStopCPUProfile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, $0: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined): [
         {
             value: ProfileResult;
         } | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
-        const __gotots_store_3 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_3 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value;
         const __gotots_results_201 = CPUProfiler__from_pprof.StopCPUProfile(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "cpuProfiler"));
         let filePath = __gotots_results_201[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_201[1];
@@ -5190,9 +5030,7 @@ export class Session {
         return [
             { value: new ProfileResult(filePath) }, void 0];
     }
-    static $go$private$api$handleTypeToString(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<TypeToTypeNodeParams> | undefined): [
+    static $go$private$api$handleTypeToString(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<TypeToTypeNodeParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -5273,9 +5111,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleTypeToTypeNode(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<TypeToTypeNodeParams> | undefined): [
+    static $go$private$api$handleTypeToTypeNode(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<TypeToTypeNodeParams> | undefined): [
         GoInterface | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
@@ -5332,7 +5168,7 @@ export class Session {
                         __gotots_return_0 = [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("failed to encode type node: %w", RuntimeSlice.literal<GoInterface | undefined>([err])))];
                         break __gotots_return_block_1;
                     }
-                    if ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses) {
+                    if (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses) {
                         __gotots_return_0 = [new $goInterfaceAdapter$Named_api$RawBinary(new RawBinary(data)), void 0];
                         break __gotots_return_block_1;
                     }
@@ -5380,9 +5216,7 @@ export class Session {
         }
         return __gotots_return_0;
     }
-    static $go$private$api$handleUpdateSnapshot(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<UpdateSnapshotParams> | undefined): [
+    static $go$private$api$handleUpdateSnapshot(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, params: tsonicTypeScriptRuntime.Location<UpdateSnapshotParams> | undefined): [
         {
             value: UpdateSnapshotResponse;
         } | undefined,
@@ -5394,35 +5228,36 @@ export class Session {
         let fileChanges = Session.$go$private$api$toFileChangeSummary(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UpdateSnapshotParams>).value.FileChanges);
         if (((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UpdateSnapshotParams>).value.OpenProject !== "") {
             let configFileName = Session.$go$private$api$toAbsoluteFileName(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<UpdateSnapshotParams>).value.OpenProject);
-            const __gotots_results_83 = Session__from_project.APIOpenProject((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession, ctx, configFileName, FileChangeSummary__from_project.$copy(fileChanges));
+            const __gotots_results_83 = Session__from_project.APIOpenProject(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession, ctx, configFileName, FileChangeSummary__from_project.$copy(fileChanges));
             let newSnapshot: {
                 value: Snapshot__from_project;
             } | undefined = __gotots_results_83[1];
             let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_83[2];
             if (!(err === undefined)) {
-                Snapshot__from_project.Deref(newSnapshot, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
+                Snapshot__from_project.Deref(newSnapshot, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
                 return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: failed to load project: %w", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, err])))];
             }
             snapshot = newSnapshot;
         }
         else {
-            snapshot = Session__from_project.APIUpdateWithFileChanges((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession, ctx, FileChangeSummary__from_project.$copy(fileChanges));
+            snapshot = Session__from_project.APIUpdateWithFileChanges(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession, ctx, FileChangeSummary__from_project.$copy(fileChanges));
         }
         let handle = snapshotHandle(snapshot);
-        sync__from_gostdlib.RWMutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-        const __gotots_results_84 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.lookupOk(handle);
-        let sd: snapshotData | undefined = __gotots_results_84[0];
+        sync__from_gostdlib.RWMutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+        const __gotots_results_84 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.lookupOk(handle);
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_84[0];
         let exists = __gotots_results_84[1];
         if (exists) {
-            Snapshot__from_project.Deref(snapshot, (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
-            const __gotots_store_1 = (sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
+            Snapshot__from_project.Deref(snapshot, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
+            const __gotots_store_1 = ((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value;
             __gotots_store_1.refCount = __gotots_store_1.refCount + 1;
         }
         else {
-            sd = new snapshotData(snapshot, 1, $goMap$MapOf_Named_api$SymbolID_To_PointerTo_Named_ast$Symbol.make(0, []), named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_api$TypeID_To_PointerTo_Named_checker$Type.make(0, []), named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_api$SignatureID_To_PointerTo_Named_checker$Signature.make(0, []), 0n, named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_encoder$NodeIndexTable.make(0, []), named_sync.SyncRWMutexOperations.$zero());
-            (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.store(handle, sd);
+            sd =
+                tsonicTypeScriptRuntime.location<snapshotData>(new snapshotData(snapshot, 1, $goMap$MapOf_Named_api$SymbolID_To_PointerTo_Named_ast$Symbol.make(0, []), named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_api$TypeID_To_PointerTo_Named_checker$Type.make(0, []), named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_api$SignatureID_To_PointerTo_Named_checker$Signature.make(0, []), 0n, named_sync.SyncRWMutexOperations.$zero(), $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_encoder$NodeIndexTable.make(0, []), named_sync.SyncRWMutexOperations.$zero()));
+            ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.store(handle, sd);
         }
-        sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+        sync__from_gostdlib.RWMutex.Unlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
         let projects = ProjectCollection__from_project.Projects((snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
         let projectResponses = RuntimeSlice.make<{
             value: ProjectResponse;
@@ -5432,27 +5267,23 @@ export class Session {
             const __gotots_range_value_3 = __gotots_range_index_0;
             const __gotots_range_value_4 = __gotots_range_1.get(__gotots_range_index_0);
             let i = __gotots_range_value_3;
-            let proj: {
-                value: Project__from_project;
-            } | undefined = __gotots_range_value_4;
+            let proj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined = __gotots_range_value_4;
             projectResponses.set(i, NewProjectResponse(proj));
         }
         let changes: SnapshotChanges | undefined = void 0;
-        sync__from_gostdlib.RWMutex.RLock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-        let prevSD: snapshotData | undefined = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshots.lookup((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.latestSnapshot);
-        sync__from_gostdlib.RWMutex.RUnlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+        sync__from_gostdlib.RWMutex.RLock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+        let prevSD: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshots.lookup(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.latestSnapshot);
+        sync__from_gostdlib.RWMutex.RUnlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
         if (!(prevSD === undefined)) {
-            changes = computeSnapshotChanges((prevSD ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot, snapshot);
+            changes = computeSnapshotChanges(((prevSD ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot, snapshot);
         }
-        sync__from_gostdlib.RWMutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
-        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.latestSnapshot = handle;
-        sync__from_gostdlib.RWMutex.Unlock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.snapshotsMu);
+        sync__from_gostdlib.RWMutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
+        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.latestSnapshot = handle;
+        sync__from_gostdlib.RWMutex.Unlock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.snapshotsMu);
         return [
             { value: new UpdateSnapshotResponse(handle, projectResponses, changes) }, void 0];
     }
-    static $go$private$api$resolveOptionalSourceFile(s: {
-        value: Session;
-    } | undefined, program: {
+    static $go$private$api$resolveOptionalSourceFile(s: tsonicTypeScriptRuntime.Location<Session> | undefined, program: {
         value: Program__from_compiler;
     } | undefined, file: tsonicTypeScriptRuntime.Location<DocumentIdentifier> | undefined): [
         tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined,
@@ -5467,14 +5298,12 @@ export class Session {
         }
         return [sourceFile, void 0];
     }
-    static $go$private$api$resolveTypeArrayProperty(s: {
-        value: Session;
-    } | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined, getter: (($0: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>) | undefined): [
+    static $go$private$api$resolveTypeArrayProperty(s: tsonicTypeScriptRuntime.Location<Session> | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined, getter: (($0: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined>) | undefined): [
         RuntimeSlice<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_227 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetTypePropertyParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_227[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_227[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_227[1];
         if (!(err === undefined)) {
             return [RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<TypeResponse> | undefined>(), err];
@@ -5502,14 +5331,12 @@ export class Session {
         }
         return [results, void 0];
     }
-    static $go$private$api$resolveTypeProperty(s: {
-        value: Session;
-    } | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined, getter: (($0: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) => tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) | undefined): [
+    static $go$private$api$resolveTypeProperty(s: tsonicTypeScriptRuntime.Location<Session> | undefined, params: tsonicTypeScriptRuntime.Location<GetTypePropertyParams> | undefined, getter: (($0: tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) => tsonicTypeScriptRuntime.Location<Type__from_checker> | undefined) | undefined): [
         tsonicTypeScriptRuntime.Location<TypeResponse> | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_225 = Session.$go$private$api$getSnapshotData(s, ((params ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<GetTypePropertyParams>).value.Snapshot);
-        let sd: snapshotData | undefined = __gotots_results_225[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_225[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_225[1];
         if (!(err === undefined)) {
             return [void 0, err];
@@ -5528,14 +5355,12 @@ export class Session {
         }
         return [snapshotData.$go$private$api$registerType(sd, result), void 0];
     }
-    static $go$private$api$setupChecker(s: {
-        value: Session;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, snapshot: SnapshotID, projectHandle: ProjectID): [
+    static $go$private$api$setupChecker(s: tsonicTypeScriptRuntime.Location<Session> | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, snapshot: SnapshotID, projectHandle: ProjectID): [
         checkerSetup,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         const __gotots_results_218 = Session.$go$private$api$getSnapshotData(s, snapshot);
-        let sd: snapshotData | undefined = __gotots_results_218[0];
+        let sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined = __gotots_results_218[0];
         let err: $goInterface$Interface_Method_Error_void_to_string | undefined = __gotots_results_218[1];
         if (!(err === undefined)) {
             return [new checkerSetup(void 0, void 0, void 0, void 0), err];
@@ -5555,31 +5380,23 @@ export class Session {
         let done: (() => void) | undefined = __gotots_results_220[1];
         return [new checkerSetup(sd, program, c, done), void 0];
     }
-    static $go$private$api$setupLanguageService(s: {
-        value: Session;
-    } | undefined, sd: snapshotData | undefined, program: {
+    static $go$private$api$setupLanguageService(s: tsonicTypeScriptRuntime.Location<Session> | undefined, sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, program: {
         value: Program__from_compiler;
     } | undefined, projectHandle: ProjectID, activeFile: gostring): [
         LanguageService__from_ls | undefined,
         $goInterface$Interface_Method_Error_void_to_string | undefined
     ] {
         let projectName = parseProjectHandle(projectHandle);
-        let proj: {
-            value: Project__from_project;
-        } | undefined = ProjectCollection__from_project.GetProjectByPath(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection, projectName);
+        let proj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined = ProjectCollection__from_project.GetProjectByPath((((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection, projectName);
         if (proj === undefined) {
             return [void 0, GoProviderInterfaceBridge.$from(fmt__from_gostdlib.Errorf("%w: project %s not found", RuntimeSlice.literal<GoInterface | undefined>([$state.ErrClientError, new $goInterfaceAdapter$Named_tspath$Path(projectName)])))];
         }
-        return [NewLanguageService__from_ls(Project__from_project.ConfigFilePath(proj), program, new $goInterfaceAdapter$PointerTo_Named_project$Snapshot((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).snapshot), activeFile), void 0];
+        return [NewLanguageService__from_ls(Project__from_project.ConfigFilePath(proj), program, new $goInterfaceAdapter$PointerTo_Named_project$Snapshot(((sd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<snapshotData>).value.snapshot), activeFile), void 0];
     }
-    static $go$private$api$toAbsoluteFileName(s: {
-        value: Session;
-    } | undefined, fileName: gostring): gostring {
-        return GetNormalizedAbsolutePath__from_tspath(fileName, Session__from_project.GetCurrentDirectory((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession));
+    static $go$private$api$toAbsoluteFileName(s: tsonicTypeScriptRuntime.Location<Session> | undefined, fileName: gostring): gostring {
+        return GetNormalizedAbsolutePath__from_tspath(fileName, Session__from_project.GetCurrentDirectory(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession));
     }
-    static $go$private$api$toFileChangeSummary(s: {
-        value: Session;
-    } | undefined, changes: tsonicTypeScriptRuntime.Location<APIFileChanges> | undefined): FileChangeSummary__from_project {
+    static $go$private$api$toFileChangeSummary(s: tsonicTypeScriptRuntime.Location<Session> | undefined, changes: tsonicTypeScriptRuntime.Location<APIFileChanges> | undefined): FileChangeSummary__from_project {
         if (changes === undefined) {
             return new FileChangeSummary__from_project(new DocumentUri__from_lsproto(""), new DocumentUri__from_lsproto(""), Set__from_collections.$zero<DocumentUri__from_lsproto>((): GoMapValue<DocumentUri__from_lsproto, GoEmptyStruct> => {
                 return $goMap$MapOf_Named_lsproto$DocumentUri_To_Struct_void.nil();
@@ -5635,12 +5452,10 @@ export class Session {
         }
         return FileChangeSummary__from_project.$copy(summary);
     }
-    static $go$private$api$toPath(s: {
-        value: Session;
-    } | undefined, fileName: gostring): Path__from_tspath {
+    static $go$private$api$toPath(s: tsonicTypeScriptRuntime.Location<Session> | undefined, fileName: gostring): Path__from_tspath {
         const __gotots_argument_2 = fileName;
-        const __gotots_argument_3 = Session__from_project.GetCurrentDirectory((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
-        const __gotots_receiver_7 = Session__from_project.FS((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projectSession);
+        const __gotots_argument_3 = Session__from_project.GetCurrentDirectory(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
+        const __gotots_receiver_7 = Session__from_project.FS(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.projectSession);
         const __gotots_argument_4 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).UseCaseSensitiveFileNames();
         return ToPath__from_tspath(__gotots_argument_2, __gotots_argument_3, __gotots_argument_4);
     }
@@ -5653,15 +5468,11 @@ export class SessionOptions {
 }
 export function NewSession(projectSession: {
     value: Session__from_project;
-} | undefined, options: SessionOptions | undefined): {
-    value: Session;
-} | undefined {
+} | undefined, options: SessionOptions | undefined): tsonicTypeScriptRuntime.Location<Session> | undefined {
     let id = atomic__from_gostdlib.Uint64.Add($state.sessionIDCounter, 1n);
-    let s: {
-        value: Session;
-    } | undefined = { value: new Session(formatSessionID(id), projectSession, false, GoMap.make(0, []), named_sync.SyncRWMutexOperations.$zero(), new SnapshotID(0n), CPUProfiler__from_pprof.$zero()) };
+    let s: tsonicTypeScriptRuntime.Location<Session> | undefined = tsonicTypeScriptRuntime.location<Session>(new Session(formatSessionID(id), projectSession, false, GoMap.make(0, []), named_sync.SyncRWMutexOperations.$zero(), new SnapshotID(0n), CPUProfiler__from_pprof.$zero()));
     if (!(options === undefined)) {
-        (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.useBinaryResponses = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).UseBinaryResponses;
+        ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Session>).value.useBinaryResponses = (options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).UseBinaryResponses;
     }
     return s;
 }
@@ -5672,7 +5483,7 @@ export function snapshotHandle(snapshot: {
 }
 export class checkerSetup {
     declare private readonly $goType: void;
-    public constructor(public sd: snapshotData | undefined, public program: {
+    public constructor(public sd: tsonicTypeScriptRuntime.Location<snapshotData> | undefined, public program: {
         value: Program__from_compiler;
     } | undefined, public checker: {
         value: Checker__from_checker;
@@ -5685,26 +5496,14 @@ export function computeSnapshotChanges(prev: {
 } | undefined, next: {
     value: Snapshot__from_project;
 } | undefined): SnapshotChanges | undefined {
-    let prevProjects: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((prev ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
-    let nextProjects: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((next ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
+    let prevProjects: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((prev ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
+    let nextProjects: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined = ProjectCollection__from_project.ProjectsByPath((next ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
     let changes = SnapshotChanges.$zero();
-    DiffOrderedMaps$Named_tspath$Path$PointerTo_Named_project$Project(prevProjects, nextProjects, ($0: Path__from_tspath, $1: {
-        value: Project__from_project;
-    } | undefined): void => {
-    }, ($0: Path__from_tspath, oldProj: {
-        value: Project__from_project;
-    } | undefined): void => {
+    DiffOrderedMaps$Named_tspath$Path$PointerTo_Named_project$Project(prevProjects, nextProjects, ($0: Path__from_tspath, $1: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): void => {
+    }, ($0: Path__from_tspath, oldProj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): void => {
         changes.RemovedProjects = changes.RemovedProjects.append(((void ProjectID,
             "") as string), [ProjectHandle(oldProj).$value]);
-    }, ($0: Path__from_tspath, oldProj: {
-        value: Project__from_project;
-    } | undefined, newProj: {
-        value: Project__from_project;
-    } | undefined): void => {
+    }, ($0: Path__from_tspath, oldProj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, newProj: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): void => {
         if (Project__from_project.GetProgram(oldProj)
             ===
                 Project__from_project.GetProgram(newProj)) {
@@ -5728,6 +5527,7 @@ export function computeSnapshotChanges(prev: {
             }
         }
         let projectChanges = ProjectFileChanges.$zero();
+        const projectChanges$location = tsonicTypeScriptRuntime.boundLocation({}, () => projectChanges, projectChanges$next => projectChanges = projectChanges$next);
         DiffMaps$Named_tspath$Path$PointerTo_Named_ast$SourceFile(oldFiles, newFiles, void 0, (path: Path__from_tspath, $1: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): void => {
             projectChanges.DeletedFiles = projectChanges.DeletedFiles.append(((void Path__from_tspath,
                 "") as string), [path.$value]);
@@ -5739,7 +5539,7 @@ export function computeSnapshotChanges(prev: {
             if (changes.ChangedProjects.isNil()) {
                 changes.ChangedProjects = $goMap$MapOf_Named_api$ProjectID_To_PointerTo_Named_api$ProjectFileChanges.make(0, []);
             }
-            changes.ChangedProjects.store(ProjectHandle(newProj), projectChanges);
+            changes.ChangedProjects.store(ProjectHandle(newProj), projectChanges$location);
         }
     });
     return changes;

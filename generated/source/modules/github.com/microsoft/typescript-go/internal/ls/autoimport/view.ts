@@ -59,6 +59,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class View {
     declare private readonly $goType: void;
     public constructor(public registry: {
@@ -584,22 +602,22 @@ export class View {
     static Search(v: View | undefined, query: gostring, kind: QueryKind): RuntimeSlice<{
         value: Export;
     } | undefined> {
-        let searchFn: (($0: RegistryBucket | undefined) => RuntimeSlice<{
+        let searchFn: (($0: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined) => RuntimeSlice<{
             value: Export;
-        } | undefined>) | undefined = (bucket: RegistryBucket | undefined): RuntimeSlice<{
+        } | undefined>) | undefined = (bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): RuntimeSlice<{
             value: Export;
         } | undefined> => {
             switch (kind.$value) {
                 case 0: {
-                    return Index$SearchWordPrefix$PointerTo_Named_autoimport$Export((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, query);
+                    return Index$SearchWordPrefix$PointerTo_Named_autoimport$Export(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, query);
                     break;
                 }
                 case 1: {
-                    return Index$Find$PointerTo_Named_autoimport$Export((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, query, true);
+                    return Index$Find$PointerTo_Named_autoimport$Export(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, query, true);
                     break;
                 }
                 case 2: {
-                    return Index$Find$PointerTo_Named_autoimport$Export((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, query, false);
+                    return Index$Find$PointerTo_Named_autoimport$Export(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, query, false);
                     break;
                 }
                 default: {
@@ -614,12 +632,12 @@ export class View {
     static SearchByExportID(v: View | undefined, id: ExportID): RuntimeSlice<{
         value: Export;
     } | undefined> {
-        let search: (($0: RegistryBucket | undefined) => RuntimeSlice<{
+        let search: (($0: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined) => RuntimeSlice<{
             value: Export;
-        } | undefined>) | undefined = (bucket: RegistryBucket | undefined): RuntimeSlice<{
+        } | undefined>) | undefined = (bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): RuntimeSlice<{
             value: Export;
         } | undefined> => {
-            return Filter$PointerTo_Named_autoimport$Export(Index.$storageOf(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, (e: {
+            return Filter$PointerTo_Named_autoimport$Export(Index.$storageOf((((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries, (e: {
                 value: Export;
             } | undefined): bool => {
                 return ExportID.$equal((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExportID, id);
@@ -878,7 +896,7 @@ export class View {
         }
         return __gotots_return_0;
     }
-    static $go$private$autoimport$search(v: View | undefined, searchFn: (($0: RegistryBucket | undefined) => RuntimeSlice<{
+    static $go$private$autoimport$search(v: View | undefined, searchFn: (($0: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined) => RuntimeSlice<{
         value: Export;
     } | undefined>) | undefined): RuntimeSlice<{
         value: Export;
@@ -888,7 +906,7 @@ export class View {
         } | undefined>();
         {
             const __gotots_results_3 = ((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).registry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projects.lookupOk((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectKey);
-            let bucket: RegistryBucket | undefined = __gotots_results_3[0];
+            let bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_results_3[0];
             let ok = __gotots_results_3[1];
             if (ok) {
                 const __gotots_callee_0 = searchFn;
@@ -917,13 +935,13 @@ export class View {
             let stop: bool = false;
             {
                 const __gotots_results_4 = ((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).registry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.directories.lookupOk(dirPath);
-                let dir: directory | undefined = __gotots_results_4[0];
+                let dir: tsonicTypeScriptRuntime.Location<directory> | undefined = __gotots_results_4[0];
                 let ok = __gotots_results_4[1];
                 if (ok) {
                     {
                         let pj: {
                             value: InfoCacheEntry__from_packagejson;
-                        } | undefined = (dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson;
+                        } | undefined = ((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson;
                         if (InfoCacheEntry__from_packagejson.Exists(pj) && ((pj ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Parseable) {
                             if (allowedPackages === undefined) {
                                 allowedPackages =
@@ -941,10 +959,10 @@ export class View {
         if (!(allowedPackages === undefined)) {
             {
                 const __gotots_results_5 = ((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).registry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projects.lookupOk((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projectKey);
-                let bucket: RegistryBucket | undefined = __gotots_results_5[0];
+                let bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_results_5[0];
                 let ok = __gotots_results_5[1];
                 if (ok) {
-                    allowedPackages = Set$UnionedWith$string(allowedPackages, (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedPackageNames);
+                    allowedPackages = Set$UnionedWith$string(allowedPackages, ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.ResolvedPackageNames);
                 }
             }
         }
@@ -959,7 +977,7 @@ export class View {
             let stop: bool = false;
             {
                 const __gotots_results_6 = ((v ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).registry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModules.lookupOk(dirPath);
-                let nodeModulesBucket: RegistryBucket | undefined = __gotots_results_6[0];
+                let nodeModulesBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_results_6[0];
                 let ok = __gotots_results_6[1];
                 if (ok) {
                     const __gotots_callee_1 = searchFn;
@@ -980,7 +998,7 @@ export class View {
                         }
                         results = results.append(void 0, [e]);
                     }
-                    const __gotots_range_7 = (nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles;
+                    const __gotots_range_7 = ((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles;
                     const __gotots_range_keys_1 = __gotots_range_7.keys();
                     for (const __gotots_range_value_10 of __gotots_range_keys_1) {
                         const __gotots_range_value_11 = __gotots_range_7.lookupOk(__gotots_range_value_10);
@@ -1061,7 +1079,7 @@ export class View {
             let namedBindings: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = (importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NamedBindings;
             const __gotots_store_0 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            if (Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) && !(importKind === ImportKindNamed$constant__from_lsproto() && !(namedBindings === undefined))) {
+            if (Node__from_ast.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_0, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf)) && !(importKind === ImportKindNamed$constant__from_lsproto() && !(namedBindings === undefined))) {
                 continue;
             }
             if (importKind === ImportKindDefault$constant__from_lsproto() && (!(ImportClause__from_ast.Name(importClause) === undefined) || addAsTypeOnly === AddAsTypeOnlyRequired$constant__from_lsproto() && !(namedBindings === undefined))) {
@@ -1075,7 +1093,7 @@ export class View {
             } | undefined = { value: new Fix({ value: new AutoImportFix__from_lsproto(AutoImportFixKindAddToExisting$constant__from_lsproto(), Export.Name(__go_export), importKind, false, addAsTypeOnly, existingImport.$storageOf(existingImport__shadow_1).moduleSpecifier, existingImport.$storageOf(existingImport__shadow_1).index | 0, void 0, "") }, 0, false, "", void 0) };
             const __gotots_store_1 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 NodeBase__from_ast.$storageOf((importClause ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase).NodeDefault));
-            let isTypeOnly = Node__from_ast.IsTypeOnly(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            let isTypeOnly = Node__from_ast.IsTypeOnly(new $ProjectedPropertyLocation(__gotots_store_1, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             if ((!(addAsTypeOnly === AddAsTypeOnlyNotAllowed$constant__from_lsproto()) && isTypeOnly) || (addAsTypeOnly === AddAsTypeOnlyNotAllowed$constant__from_lsproto() && !isTypeOnly)) {
                 return fix;
             }

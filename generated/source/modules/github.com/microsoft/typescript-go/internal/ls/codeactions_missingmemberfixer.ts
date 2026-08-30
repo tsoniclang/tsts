@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { ArrowFunction as ArrowFunction__from_ast, FunctionExpression as FunctionExpression__from_ast, Kind as Kind__from_ast, MethodDeclaration as MethodDeclaration__from_ast, ModifierList as ModifierList__from_ast, ModifiersBase$Storage as ModifiersBase__from_ast$Storage, SourceFile as SourceFile__from_ast } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import type { IndexInfo as IndexInfo__from_checker } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/checker/package.js";
 import type { CompilerOptions as CompilerOptions__from_core } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/core/package.js";
@@ -32,6 +32,24 @@ import { GoMap } from "@gotots/runtime/map.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class preserveOptionalFlags {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -272,7 +290,7 @@ export class missingMemberFixer {
                     const __gotots_receiver_3 = ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory;
                     const __gotots_argument_6 = typeParameter;
                     const __gotots_store_0 = TypeParameterDeclaration__from_ast.$storageOf(((typeParameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value);
-                    const __gotots_argument_7 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                    const __gotots_argument_7 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_0, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                     const __gotots_argument_8 = TypeParameterDeclaration__from_ast.Name(typeParameter);
                     const __gotots_argument_9 = constraint;
                     const __gotots_argument_10 = TypeParameterDeclaration__from_ast.$storageOf(((typeParameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value).Expression;
@@ -304,7 +322,7 @@ export class missingMemberFixer {
                 const __gotots_receiver_4 = ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changeTracker ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).NodeFactory;
                 const __gotots_argument_14 = parameter;
                 const __gotots_store_1 = ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-                const __gotots_argument_15 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+                const __gotots_argument_15 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_1, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
                 const __gotots_argument_16 = ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).DotDotDotToken;
                 const __gotots_argument_17 = ParameterDeclaration__from_ast.Name(parameter);
                 const __gotots_argument_18 = IfElse$PointerTo_Named_ast$Node(isJS, void 0, ParameterDeclaration__from_ast.$storageOf(((parameter ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).QuestionToken);

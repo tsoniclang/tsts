@@ -1,3 +1,4 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Kind as Kind__from_ast } from "../../../../modules/github.com/microsoft/typescript-go/internal/ast/kind_generated.js";
 import type { Export as Export__from_autoimport } from "../../../../modules/github.com/microsoft/typescript-go/internal/ls/autoimport/export.js";
 import type { SourceOutputAndProjectReference as SourceOutputAndProjectReference__from_tsoptions } from "../../../../modules/github.com/microsoft/typescript-go/internal/tsoptions/parsedcommandline.js";
@@ -8,36 +9,14 @@ import type { bool, gostring } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
 import * as generic_maps_kernel from "@gotots/gostdlib/internal/facets/generic-maps-kernel.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
-export function Copy$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: GoMapValue<Path__from_tspath, {
-    value: SourceOutputAndProjectReference__from_tsoptions;
-} | undefined>, $argument1: GoMapValue<Path__from_tspath, {
-    value: SourceOutputAndProjectReference__from_tsoptions;
-} | undefined>): void {
-    return generic_maps_kernel.MapsCopyKernel<GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>, GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>, Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>(($argument0: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined> => {
+export function Copy$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>, $argument1: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>): void {
+    return generic_maps_kernel.MapsCopyKernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>, GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>, Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>(($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined> => {
         return $argument0;
-    }, ($argument0: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined> => {
+    }, ($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined> => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined => {
         return $argument0;
     }, $argument0, $argument1);
 }

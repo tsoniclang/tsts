@@ -70,10 +70,10 @@ export function Collect$PointerTo_Named_ast$Symbol($argument0: iter.Seq<tsonicTy
         return $argument0;
     }, $argument0);
 }
-export function Collect$PointerTo_Named_compiler$redirectsFile($argument0: iter.Seq<redirectsFile__from_compiler | undefined>): RuntimeSlice<redirectsFile__from_compiler | undefined> {
-    return generic_slices_kernel.SlicesCollectKernel<redirectsFile__from_compiler | undefined, redirectsFile__from_compiler | undefined>(($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+export function Collect$PointerTo_Named_compiler$redirectsFile($argument0: iter.Seq<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>): RuntimeSlice<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined> {
+    return generic_slices_kernel.SlicesCollectKernel<tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined, tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
-    }, ($argument0: redirectsFile__from_compiler | undefined): redirectsFile__from_compiler | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<redirectsFile__from_compiler> | undefined => {
         return $argument0;
     }, $argument0);
 }

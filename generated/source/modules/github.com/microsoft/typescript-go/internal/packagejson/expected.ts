@@ -1,4 +1,4 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Options as Options__from_jsonopts } from "../../../../../../packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/package.js";
 import type { $goInterface$Interface_void, $goInterface$Interface_Method_Error_void_to_string as GoInterface } from "../../../../../../support/interface-contracts.js";
 import type * as reflect__from_gostdlib from "@gotots/gostdlib/reflect.js";
@@ -10,6 +10,24 @@ import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type Expected$Storage<T> = {
     actualJSONType: gostring;
     Null: bool;
@@ -130,7 +148,7 @@ export class Expected<T> {
         }
         const __gotots_argument_1 = data;
         const __gotots_store_0 = Expected.$storageOf(((e ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Expected<T>>).value);
-        const __gotots_argument_0 = tsonicTypeScriptRuntime.projectLocation<GoStorage<T>, T>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Value"), ($go$storage: GoStorage<T>): T => {
+        const __gotots_argument_0 = new $ProjectedPropertyLocation(__gotots_store_0, "Value", ($go$storage: GoStorage<T>): T => {
             return $go$from_storage$T0_to_T0($go$storage);
         }, ($go$value: T): GoStorage<T> => {
             return $go$to_storage$T0_to_T0($go$value);

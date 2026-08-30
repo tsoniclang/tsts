@@ -206,8 +206,18 @@ export class ResolvedModule {
         return new ResolvedModule($source.ResolutionDiagnostics, $source.ResolvedFileName, $source.OriginalPath, $source.Extension, $source.ResolvedUsingTsExtension, PackageId.$copy($source.PackageId), $source.IsExternalLibraryImport, $source.AlternateResult);
     }
     declare private readonly then?: never;
-    static IsResolved(r: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined): bool {
-        return !(r === undefined) && ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName !== "";
+    static IsResolved(r: ResolvedModule | undefined): bool {
+        return !(r === undefined) && (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName !== "";
+    }
+    $tsonicReplace($value: ResolvedModule): void {
+        this.ResolutionDiagnostics = $value.ResolutionDiagnostics;
+        this.ResolvedFileName = $value.ResolvedFileName;
+        this.OriginalPath = $value.OriginalPath;
+        this.Extension = $value.Extension;
+        this.ResolvedUsingTsExtension = $value.ResolvedUsingTsExtension;
+        this.PackageId = $value.PackageId;
+        this.IsExternalLibraryImport = $value.IsExternalLibraryImport;
+        this.AlternateResult = $value.AlternateResult;
     }
 }
 export class ResolvedTypeReferenceDirective {
@@ -221,8 +231,16 @@ export class ResolvedTypeReferenceDirective {
         return new ResolvedTypeReferenceDirective($source.ResolutionDiagnostics, $source.Primary, $source.ResolvedFileName, $source.OriginalPath, PackageId.$copy($source.PackageId), $source.IsExternalLibraryImport);
     }
     declare private readonly then?: never;
-    static IsResolved(r: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined): bool {
-        return ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.ResolvedFileName !== "";
+    static IsResolved(r: ResolvedTypeReferenceDirective | undefined): bool {
+        return (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName !== "";
+    }
+    $tsonicReplace($value: ResolvedTypeReferenceDirective): void {
+        this.ResolutionDiagnostics = $value.ResolutionDiagnostics;
+        this.Primary = $value.Primary;
+        this.ResolvedFileName = $value.ResolvedFileName;
+        this.OriginalPath = $value.OriginalPath;
+        this.PackageId = $value.PackageId;
+        this.IsExternalLibraryImport = $value.IsExternalLibraryImport;
     }
 }
 export type extensions = int32;

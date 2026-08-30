@@ -1,3 +1,4 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { MapEntry$Storage as MapEntry__from_collections$Storage } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.js";
 import type { BreadthFirstSearchOptions as BreadthFirstSearchOptions__from_core, BreadthFirstSearchResult as BreadthFirstSearchResult__from_core, breadthFirstSearchJob as breadthFirstSearchJob__from_core } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/core/bfs.js";
 import type { Project as Project__from_project } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/project/project.js";
@@ -64,167 +65,57 @@ export function BreadthFirstSearchParallelEx$Named_project$searchNodeKey$Named_p
         return void 0;
     }, $argument0, $argument1, $argument2, $argument3, $argument4);
 }
-export function BreadthFirstSearchParallelEx$PointerTo_Named_project$Project$PointerTo_Named_project$Project($argument0: {
-    value: Project__from_project;
-} | undefined, $argument1: (($0: {
-    value: Project__from_project;
-} | undefined) => RuntimeSlice<{
-    value: Project__from_project;
-} | undefined>) | undefined, $argument2: (($0: {
-    value: Project__from_project;
-} | undefined) => [
+export function BreadthFirstSearchParallelEx$PointerTo_Named_project$Project$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, $argument1: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>) | undefined, $argument2: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => [
     bool,
     bool
-]) | undefined, $argument3: BreadthFirstSearchOptions__from_core<{
-    value: Project__from_project;
-} | undefined, {
-    value: Project__from_project;
-} | undefined>, $argument4: (($0: {
-    value: Project__from_project;
-} | undefined) => {
-    value: Project__from_project;
-} | undefined) | undefined): BreadthFirstSearchResult__from_core<{
-    value: Project__from_project;
-} | undefined> {
-    return BreadthFirstSearchParallelEx$kernel<{
-        value: Project__from_project;
-    } | undefined, {
-        value: Project__from_project;
-    } | undefined>(($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined): breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined => {
+]) | undefined, $argument3: BreadthFirstSearchOptions__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>, $argument4: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) | undefined): BreadthFirstSearchResult__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> {
+    return BreadthFirstSearchParallelEx$kernel<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>(($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined): breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined): breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined => {
+    }, ($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined): breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>, $argument1: int): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>, $argument1: int): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0.get($argument1);
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): GoInterface | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): GoInterface | undefined => {
         return new GoInterfaceAdapter($argument0);
-    }, ($argument0: RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>): int => {
+    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>): int => {
         return $argument0.length;
-    }, ($argument0: RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>): int => {
+    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>): int => {
         return $argument0.length;
-    }, ($argument0: RuntimeSlice<MapEntry__from_collections$Storage<{
-        value: Project__from_project;
-    } | undefined, breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined>>): int => {
+    }, ($argument0: RuntimeSlice<MapEntry__from_collections$Storage<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined>>): int => {
         return $argument0.length;
-    }, ($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined, $argument1: int): GoMapValue<{
-        value: Project__from_project;
-    } | undefined, breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined> => {
+    }, ($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined, $argument1: int): GoMapValue<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined> => {
         return GoMap.make($argument1, []);
-    }, ($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined): GoMapValue<{
-        value: Project__from_project;
-    } | undefined, breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined> => {
+    }, ($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined): GoMapValue<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined> => {
         return GoMap.make(0, []);
-    }, ($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined): breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined => {
+    }, ($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined): breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined): breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined => {
+    }, ($argument0: breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined): breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: Project__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return void 0;
-    }, (): {
-        value: Project__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return void 0;
-    }, (): breadthFirstSearchJob__from_core<{
-        value: Project__from_project;
-    } | undefined> | undefined => {
+    }, (): breadthFirstSearchJob__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> | undefined => {
         return void 0;
     }, $argument0, $argument1, $argument2, $argument3, $argument4);
 }

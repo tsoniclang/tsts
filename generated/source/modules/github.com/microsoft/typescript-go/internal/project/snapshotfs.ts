@@ -62,6 +62,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export interface FileSource extends GoInterfaceValue {
     FS(): FS__from_vfs | undefined;
     FileExists($argument0: gostring, $argument1: Path__from_tspath): bool;
@@ -81,20 +99,18 @@ export class realpathAliasSet {
         return new realpathAliasSet(named_sync.SyncMutexOperations.$copy($source.mu), Set__from_collections.$copy<Path__from_tspath>($source.paths));
     }
     declare private readonly then?: never;
-    static Add(s: {
-        value: realpathAliasSet;
-    } | undefined, path: Path__from_tspath): void {
+    static Add(s: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined, path: Path__from_tspath): void {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
         try {
             try {
                 __gotots_return_block_0: {
-                    sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_25: realpathAliasSet["mu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    sync__from_gostdlib.Mutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value.mu);
+                    const __gotots_receiver_25 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value.mu;
                     __gotots_deferred_0 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_25, $go$recovery);
                     };
-                    const __gotots_store_33 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    const __gotots_store_33 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                     Set$Add$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "paths"), path);
                 }
             }
@@ -126,35 +142,27 @@ export class realpathAliasSet {
             throw __gotots_panic_0;
         }
     }
-    static Clone(s: {
-        value: realpathAliasSet;
-    } | undefined): {
-        value: realpathAliasSet;
-    } | undefined {
+    static Clone(s: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined): tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined {
         let __gotots_deferred_1: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_1: GoPanic | undefined = undefined;
-        let __gotots_return_0: {
-            value: realpathAliasSet;
-        } | undefined = void 0;
+        let __gotots_return_0: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined = void 0;
         try {
             try {
                 __gotots_return_block_1: {
-                    sync__from_gostdlib.Mutex.Lock((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu);
-                    const __gotots_receiver_46: realpathAliasSet["mu"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.mu;
+                    sync__from_gostdlib.Mutex.Lock(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value.mu);
+                    const __gotots_receiver_46 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value.mu;
                     __gotots_deferred_1 = ($go$recovery: GoRecovery): void => {
                         recovery_sync.SyncMutexUnlock(__gotots_receiver_46, $go$recovery);
                     };
-                    let clone: {
-                        value: realpathAliasSet;
-                    } | undefined = { value: new realpathAliasSet(named_sync.SyncMutexOperations.$zero(), Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
-                            return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
-                        })) };
-                    const __gotots_store_34 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    let clone: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined = tsonicTypeScriptRuntime.location<realpathAliasSet>(new realpathAliasSet(named_sync.SyncMutexOperations.$zero(), Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
+                        return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
+                    })));
+                    const __gotots_store_34 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                     const __gotots_binary_operand_6 = Set$Len$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "paths"));
                     const __gotots_binary_operand_7 = 0;
                     if (__gotots_binary_operand_6 > __gotots_binary_operand_7) {
-                        const __gotots_store_35 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
-                        (clone ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.paths = Set__from_collections.$copy<Path__from_tspath>(Set__from_collections.$copy<Path__from_tspath>(((Set$Clone$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "paths")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>>).value));
+                        const __gotots_store_35 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
+                        ((clone ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value.paths = Set__from_collections.$copy<Path__from_tspath>(Set__from_collections.$copy<Path__from_tspath>(((Set$Clone$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_35, "paths")) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>>).value));
                     }
                     __gotots_return_0 = clone;
                     break __gotots_return_block_1;
@@ -192,13 +200,7 @@ export class realpathAliasSet {
 }
 export class SnapshotFS {
     declare private readonly $goType: void;
-    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public fs: FS__from_vfs | undefined, public overlays: GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined>, public overlayDirectories: GoMapValue<Path__from_tspath, GoMapValue<Path__from_tspath, gostring>>, public diskFiles: GoMapValue<Path__from_tspath, {
-        value: diskFile;
-    } | undefined>, public diskDirectories: GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, public readFiles: SyncMap__from_collections<Path__from_tspath, memoizedDiskFile>, public nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, {
-        value: realpathAliasSet;
-    } | undefined>) {
+    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public fs: FS__from_vfs | undefined, public overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, public overlayDirectories: GoMapValue<Path__from_tspath, GoMapValue<Path__from_tspath, gostring>>, public diskFiles: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>, public diskDirectories: GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, public readFiles: SyncMap__from_collections<Path__from_tspath, memoizedDiskFile>, public nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>) {
     }
     static $copy($source: SnapshotFS): SnapshotFS {
         return new SnapshotFS($source.toPath, $source.fs, $source.overlays, $source.overlayDirectories, $source.diskFiles, $source.diskDirectories, SyncMap__from_collections.$copy<Path__from_tspath, memoizedDiskFile>($source.readFiles), $source.nodeModulesRealpathAliases);
@@ -282,9 +284,7 @@ export class SnapshotFS {
     } | undefined, fileName: gostring, path: Path__from_tspath): FileHandle | undefined {
         {
             const __gotots_results_0 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays.lookupOk(path);
-            let file: {
-                value: Overlay;
-            } | undefined = __gotots_results_0[0];
+            let file: tsonicTypeScriptRuntime.Location<Overlay> | undefined = __gotots_results_0[0];
             let ok = __gotots_results_0[1];
             if (ok) {
                 return new GoInterfaceAdapter(file);
@@ -292,9 +292,7 @@ export class SnapshotFS {
         }
         {
             const __gotots_results_1 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles.lookupOk(path);
-            let file: {
-                value: diskFile;
-            } | undefined = __gotots_results_1[0];
+            let file: tsonicTypeScriptRuntime.Location<diskFile> | undefined = __gotots_results_1[0];
             let ok = __gotots_results_1[1];
             if (ok) {
                 return new $goInterfaceAdapter$PointerTo_Named_project$diskFile(file);
@@ -344,12 +342,10 @@ export class SnapshotFS {
             let path = (__gotots_callee_7 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_9);
             {
                 const __gotots_results_10 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases.lookupOk(path);
-                let aliases: {
-                    value: realpathAliasSet;
-                } | undefined = __gotots_results_10[0];
+                let aliases: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined = __gotots_results_10[0];
                 let ok = __gotots_results_10[1];
                 if (ok) {
-                    const __gotots_store_10 = (aliases ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    const __gotots_store_10 = ((aliases ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                     const __gotots_range_6 = Set$Keys$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "paths"));
                     const __gotots_range_keys_6 = __gotots_range_6.keys();
                     for (const __gotots_range_value_18 of __gotots_range_keys_6) {
@@ -395,12 +391,10 @@ export class SnapshotFS {
             let path = (__gotots_callee_8 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_10);
             {
                 const __gotots_results_11 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases.lookupOk(path);
-                let aliases: {
-                    value: realpathAliasSet;
-                } | undefined = __gotots_results_11[0];
+                let aliases: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined = __gotots_results_11[0];
                 let ok = __gotots_results_11[1];
                 if (ok) {
-                    const __gotots_store_13 = (aliases ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    const __gotots_store_13 = ((aliases ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                     const __gotots_range_9 = Set$Keys$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "paths"));
                     const __gotots_range_keys_9 = __gotots_range_9.keys();
                     for (const __gotots_range_value_27 of __gotots_range_keys_9) {
@@ -468,20 +462,12 @@ export class memoizedDiskFile implements GoContainerStoredValue<(() => FileHandl
 }
 export class snapshotFSBuilder {
     declare private readonly $goType: void;
-    public constructor(public fs: FS__from_vfs | undefined, public prevOverlays: GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined>, public overlays: GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined>, public overlayDirectories: GoMapValue<Path__from_tspath, GoMapValue<Path__from_tspath, gostring>>, public diskFiles: {
-        value: SyncMap__from_dirty<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>;
+    public constructor(public fs: FS__from_vfs | undefined, public prevOverlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, public overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, public overlayDirectories: GoMapValue<Path__from_tspath, GoMapValue<Path__from_tspath, gostring>>, public diskFiles: {
+        value: SyncMap__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>;
     } | undefined, public diskDirectories: {
         value: Map__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>;
     } | undefined, public nodeModulesRealpathAliases: {
-        value: SyncMap__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet;
-        } | undefined>;
+        value: SyncMap__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>;
     } | undefined, public toPath: (($0: gostring) => Path__from_tspath) | undefined) {
     }
     static $copy($source: snapshotFSBuilder): snapshotFSBuilder {
@@ -505,16 +491,10 @@ export class snapshotFSBuilder {
         }
         {
             const __gotots_results_34 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path);
-            let entry: {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: diskFile;
-                } | undefined>;
-            } | undefined = __gotots_results_34[0];
+            let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_34[0];
             let ok = __gotots_results_34[1];
             if (ok) {
-                let val: {
-                    value: diskFile;
-                } | undefined = SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$diskFile(entry);
+                let val: tsonicTypeScriptRuntime.Location<diskFile> | undefined = SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$diskFile(entry);
                 if (val === undefined) {
                     return false;
                 }
@@ -534,9 +514,7 @@ export class snapshotFSBuilder {
         bool
     ] {
         let onDeletedFileOrDirectory: (($0: Path__from_tspath) => void) | undefined;
-        let deleted: GoMapValue<Path__from_tspath, {
-            value: diskFile;
-        } | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$diskFile.nil();
+        let deleted: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$diskFile.nil();
         let onAddedFile: (($0: Path__from_tspath, $1: gostring) => void) | undefined = (path: Path__from_tspath, fileName: gostring): void => {
             let childPath = path;
             let child = fileName;
@@ -549,7 +527,7 @@ export class snapshotFSBuilder {
                 let baseName = GetBaseFileName__from_tspath(child);
                 {
                     const __gotots_results_16 = Map$Get$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskDirectories, parentPath);
-                    let dirEntry: MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> | undefined = __gotots_results_16[0];
+                    let dirEntry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>> | undefined = __gotots_results_16[0];
                     let ok = __gotots_results_16[1];
                     if (ok) {
                         MapEntry$Change$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(dirEntry, (dir: CloneableMap__from_dirty<Path__from_tspath, gostring>): void => {
@@ -569,7 +547,7 @@ export class snapshotFSBuilder {
         };
         onDeletedFileOrDirectory = (path: Path__from_tspath): void => {
             const __gotots_results_17 = Map$Get$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskDirectories, path.GetDirectoryPath());
-            let dirEntry: MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> | undefined = __gotots_results_17[0];
+            let dirEntry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>> | undefined = __gotots_results_17[0];
             let ok = __gotots_results_17[1];
             if (!ok) {
                 return;
@@ -579,37 +557,29 @@ export class snapshotFSBuilder {
                 if (dir.$value.length() === 0) {
                     MapEntry$Delete$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(dirEntry);
                     const __gotots_callee_13 = onDeletedFileOrDirectory;
-                    const __gotots_store_27 = MapEntry__from_dirty.$storageOf((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    const __gotots_argument_15 = mapEntry$Key$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, mapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                    const __gotots_store_27 = MapEntry__from_dirty.$storageOf(((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>>).value);
+                    const __gotots_argument_15 = mapEntry$Key$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(new $ProjectedPropertyLocation(__gotots_store_27, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                     (__gotots_callee_13 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_15);
                 }
             });
         };
-        const __gotots_results_18 = SyncMap$FinalizeWith$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, FinalizationHooks__from_dirty.$fromStorage<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>({
-            OnDelete: (key: Path__from_tspath, value: {
-                value: diskFile;
-            } | undefined): void => {
+        const __gotots_results_18 = SyncMap$FinalizeWith$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, FinalizationHooks__from_dirty.$fromStorage<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>({
+            OnDelete: (key: Path__from_tspath, value: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
                 if (deleted.isNil()) {
                     deleted = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$diskFile.make(0, []);
                 }
                 deleted.store(key, value);
             },
-            OnAdd: (key: Path__from_tspath, value: {
-                value: diskFile;
-            } | undefined): void => {
+            OnAdd: (key: Path__from_tspath, value: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
                 const __gotots_callee_14 = onAddedFile;
                 const __gotots_argument_16 = key;
-                const __gotots_store_28 = (value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                const __gotots_store_28 = ((value ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value;
                 const __gotots_argument_17 = fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "fileBase"));
                 (__gotots_callee_14 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_16, __gotots_argument_17);
             },
             OnChange: void 0
         }));
-        let diskFiles: GoMapValue<Path__from_tspath, {
-            value: diskFile;
-        } | undefined> = __gotots_results_18[0];
+        let diskFiles: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined> = __gotots_results_18[0];
         let changed = __gotots_results_18[1];
         const __gotots_range_14 = deleted;
         const __gotots_range_keys_14 = __gotots_range_14.keys();
@@ -634,56 +604,38 @@ export class snapshotFSBuilder {
             const __gotots_range_value_47 = __gotots_range_value_45;
             const __gotots_range_value_48 = __gotots_range_value_46[0];
             let deletedPath = __gotots_range_value_47;
-            let deletedFile: {
-                value: diskFile;
-            } | undefined = __gotots_range_value_48;
-            if ((deletedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.realpathPath.$value ===
+            let deletedFile: tsonicTypeScriptRuntime.Location<diskFile> | undefined = __gotots_range_value_48;
+            if (((deletedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.realpathPath.$value ===
                 ((void Path__from_tspath,
                     "") as string)) {
                 continue;
             }
             {
-                const __gotots_results_19 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases, (deletedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.realpathPath);
-                let entry: {
-                    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                        value: realpathAliasSet;
-                    } | undefined>;
-                } | undefined = __gotots_results_19[0];
+                const __gotots_results_19 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases, ((deletedFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.realpathPath);
+                let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>> | undefined = __gotots_results_19[0];
                 let ok = __gotots_results_19[1];
                 if (ok) {
-                    SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet(entry, (e: Value__from_dirty<{
-                        value: realpathAliasSet;
-                    } | undefined> | undefined): void => {
+                    SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet(entry, (e: Value__from_dirty<tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined> | undefined): void => {
                         const __gotots_receiver_3 = e;
-                        const __gotots_argument_19 = (aliasSet: {
-                            value: realpathAliasSet;
-                        } | undefined): void => {
-                            const __gotots_store_29 = (aliasSet ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_argument_19 = (aliasSet: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined): void => {
+                            const __gotots_store_29 = ((aliasSet ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                             Set__from_collections.Delete<Path__from_tspath>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "paths"), deletedPath);
                         };
-                        goInterfaceNonNil<Value__from_dirty<{
-                            value: realpathAliasSet;
-                        } | undefined>>(__gotots_receiver_3).Change(__gotots_argument_19);
+                        goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>>(__gotots_receiver_3).Change(__gotots_argument_19);
                         const __gotots_receiver_4 = e;
-                        const __gotots_store_30 = (goInterfaceNonNil<Value__from_dirty<{
-                            value: realpathAliasSet;
-                        } | undefined>>(__gotots_receiver_4).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_30 = ((goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>>(__gotots_receiver_4).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<realpathAliasSet>).value;
                         const __gotots_binary_operand_4 = Set$Len$Named_tspath$Path(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "paths"));
                         const __gotots_binary_operand_5 = 0;
                         if (__gotots_binary_operand_4 === __gotots_binary_operand_5) {
                             const __gotots_receiver_5 = e;
-                            goInterfaceNonNil<Value__from_dirty<{
-                                value: realpathAliasSet;
-                            } | undefined>>(__gotots_receiver_5).Delete();
+                            goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>>(__gotots_receiver_5).Delete();
                         }
                     });
                 }
             }
         }
         const __gotots_results_20 = SyncMap$Finalize$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases);
-        let nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, {
-            value: realpathAliasSet;
-        } | undefined> = __gotots_results_20[0];
+        let nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined> = __gotots_results_20[0];
         let aliasesChanged = __gotots_results_20[1];
         const __gotots_field_0: snapshotFSBuilder["fs"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_field_1: snapshotFSBuilder["overlays"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays;
@@ -733,9 +685,7 @@ export class snapshotFSBuilder {
     } | undefined, fileName: gostring, path: Path__from_tspath): FileHandle | undefined {
         {
             const __gotots_results_36 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays.lookupOk(path);
-            let file: {
-                value: Overlay;
-            } | undefined = __gotots_results_36[0];
+            let file: tsonicTypeScriptRuntime.Location<Overlay> | undefined = __gotots_results_36[0];
             let ok = __gotots_results_36[1];
             if (ok) {
                 return new GoInterfaceAdapter(file);
@@ -747,13 +697,13 @@ export class snapshotFSBuilder {
         value: snapshotFSBuilder;
     } | undefined, dirPath: Path__from_tspath, files: tsonicTypeScriptRuntime.Location<Set__from_collections<DocumentUri__from_lsproto>> | undefined): void {
         const __gotots_results_25 = Map$Get$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskDirectories, dirPath);
-        let dirEntry: MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>> | undefined = __gotots_results_25[0];
+        let dirEntry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>> | undefined = __gotots_results_25[0];
         let ok = __gotots_results_25[1];
         if (!ok) {
             return;
         }
-        const __gotots_store_31 = MapEntry__from_dirty.$storageOf((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-        const __gotots_range_16 = mapEntry$Value$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, mapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)).$value;
+        const __gotots_store_31 = MapEntry__from_dirty.$storageOf(((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>>).value);
+        const __gotots_range_16 = mapEntry$Value$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(new $ProjectedPropertyLocation(__gotots_store_31, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)).$value;
         const __gotots_range_keys_16 = __gotots_range_16.keys();
         for (const __gotots_range_value_49 of __gotots_range_keys_16) {
             const __gotots_range_value_50 = __gotots_range_16.lookupOk(__gotots_range_value_49);
@@ -764,20 +714,14 @@ export class snapshotFSBuilder {
             let childPath = __gotots_range_value_51;
             {
                 const __gotots_results_26 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, childPath);
-                let entry: {
-                    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>;
-                } | undefined = __gotots_results_26[0];
+                let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_26[0];
                 let ok__shadow_1 = __gotots_results_26[1];
                 if (ok__shadow_1) {
                     {
-                        let file: {
-                            value: diskFile;
-                        } | undefined = SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$diskFile(entry);
+                        let file: tsonicTypeScriptRuntime.Location<diskFile> | undefined = SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$diskFile(entry);
                         if (!(file === undefined)) {
                             const __gotots_receiver_6 = files;
-                            const __gotots_store_32 = (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                            const __gotots_store_32 = ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value;
                             const __gotots_argument_21 = fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "fileBase"));
                             const __gotots_argument_22 = FileNameToDocumentURI__from_lsconv(__gotots_argument_21);
                             Set$Add$Named_lsproto$DocumentUri(__gotots_receiver_6, __gotots_argument_22);
@@ -799,20 +743,12 @@ export class snapshotFSBuilder {
             let path = (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_13);
             {
                 const __gotots_results_14 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path);
-                let entry: {
-                    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>;
-                } | undefined = __gotots_results_14[0];
+                let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_14[0];
                 let ok = __gotots_results_14[1];
                 let __gotots_logical_result_0 = !ok;
                 if (!__gotots_logical_result_0) {
-                    const __gotots_store_17 = SyncMapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
-                    __gotots_logical_result_0 = mapEntry$Original$Named_tspath$Path$PointerTo_Named_project$diskFile(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) === undefined;
+                    const __gotots_store_17 = SyncMapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>>).value);
+                    __gotots_logical_result_0 = mapEntry$Original$Named_tspath$Path$PointerTo_Named_project$diskFile(new $ProjectedPropertyLocation(__gotots_store_17, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) === undefined;
                 }
                 if (__gotots_logical_result_0) {
                     const __gotots_store_18 = change;
@@ -820,25 +756,17 @@ export class snapshotFSBuilder {
                 }
                 else {
                     const __gotots_results_15 = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays.lookupOk(path);
-                    let overlay: {
-                        value: Overlay;
-                    } | undefined = __gotots_results_15[0];
+                    let overlay: tsonicTypeScriptRuntime.Location<Overlay> | undefined = __gotots_results_15[0];
                     let ok__shadow_1 = __gotots_results_15[1];
                     if (ok__shadow_1) {
                         {
-                            const __gotots_store_19 = SyncMapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
-                            let diskFile__shadow_1: {
-                                value: diskFile;
-                            } | undefined = mapEntry$Original$Named_tspath$Path$PointerTo_Named_project$diskFile(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, {
-                                value: diskFile;
-                            } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
-                                value: diskFile;
-                            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                            const __gotots_store_19 = SyncMapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>>).value);
+                            let diskFile__shadow_1: tsonicTypeScriptRuntime.Location<diskFile> | undefined = mapEntry$Original$Named_tspath$Path$PointerTo_Named_project$diskFile(new $ProjectedPropertyLocation(__gotots_store_19, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                             let __gotots_logical_result_1 = !(diskFile__shadow_1 === undefined);
                             if (__gotots_logical_result_1) {
-                                const __gotots_store_20 = (overlay ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                const __gotots_store_20 = ((overlay ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                 const __gotots_equal_operand_0 = fileBase.Hash(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "fileBase"));
-                                const __gotots_store_21 = (diskFile__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                const __gotots_store_21 = ((diskFile__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value;
                                 __gotots_logical_result_1 = !Uint128__from_xxh3.$equal(__gotots_equal_operand_0, fileBase.Hash(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "fileBase")));
                             }
                             if (__gotots_logical_result_1) {
@@ -872,7 +800,7 @@ export class snapshotFSBuilder {
                 if (!(fh === undefined)) {
                     const __gotots_receiver_2 = fh;
                     const __gotots_equal_operand_1 = goInterfaceNonNil<FileHandle>(__gotots_receiver_2).Hash();
-                    const __gotots_store_24 = ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.prevOverlays.lookup(path) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                    const __gotots_store_24 = (((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.prevOverlays.lookup(path) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                     if (!Uint128__from_xxh3.$equal(__gotots_equal_operand_1, fileBase.Hash(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "fileBase")))) {
                         const __gotots_store_25 = change;
                         Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "Changed"), uri);
@@ -951,12 +879,8 @@ export class snapshotFSBuilder {
     static $go$private$project$getDiskFile(s: {
         value: snapshotFSBuilder;
     } | undefined, fileName: gostring, path: Path__from_tspath, forceReload: bool): FileHandle | undefined {
-        const __gotots_results_28 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path, { value: new diskFile(new fileBase(fileName, "", Uint128__from_xxh3.$zero(), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), true, new Path__from_tspath("")) });
-        let entry: {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile;
-            } | undefined>;
-        } | undefined = __gotots_results_28[0];
+        const __gotots_results_28 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path, tsonicTypeScriptRuntime.location<diskFile>(new diskFile(new fileBase(fileName, "", Uint128__from_xxh3.$zero(), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), true, new Path__from_tspath(""))));
+        let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_28[0];
         let loaded = __gotots_results_28[1];
         if (!(entry === undefined)) {
             if (!loaded && strings__from_gostdlib.Contains(path.$value, "/node_modules/")) {
@@ -972,15 +896,9 @@ export class snapshotFSBuilder {
     static $go$private$project$invalidateCache(s: {
         value: snapshotFSBuilder;
     } | undefined): void {
-        SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile;
-            } | undefined>;
-        } | undefined): bool => {
-            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: {
-                value: diskFile;
-            } | undefined): void => {
-                (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload = true;
+        SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined): bool => {
+            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload = true;
             });
             return true;
         });
@@ -988,23 +906,13 @@ export class snapshotFSBuilder {
     static $go$private$project$invalidateNodeModulesCache(s: {
         value: snapshotFSBuilder;
     } | undefined): void {
-        SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile;
-            } | undefined>;
-        } | undefined): bool => {
-            const __gotots_store_4 = SyncMapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
-            const __gotots_argument_6 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, {
-                value: diskFile;
-            } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile;
-            } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)).$value;
+        SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined): bool => {
+            const __gotots_store_4 = SyncMapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>>).value);
+            const __gotots_argument_6 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile(new $ProjectedPropertyLocation(__gotots_store_4, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)).$value;
             const __gotots_argument_7 = "/node_modules/";
             if (strings__from_gostdlib.Contains(__gotots_argument_6, __gotots_argument_7)) {
-                SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: {
-                    value: diskFile;
-                } | undefined): void => {
-                    (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload = true;
+                SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                    ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload = true;
                 });
             }
             return true;
@@ -1072,17 +980,11 @@ export class snapshotFSBuilder {
             let path = (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_11);
             {
                 const __gotots_results_12 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path);
-                let entry: {
-                    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>;
-                } | undefined = __gotots_results_12[0];
+                let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_12[0];
                 let ok = __gotots_results_12[1];
                 if (ok) {
-                    SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: {
-                        value: diskFile;
-                    } | undefined): void => {
-                        (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload = true;
+                    SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                        ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload = true;
                     });
                 }
             }
@@ -1102,11 +1004,7 @@ export class snapshotFSBuilder {
             let path = (__gotots_callee_10 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_12);
             {
                 const __gotots_results_13 = SyncMap$Load$Named_tspath$Path$PointerTo_Named_project$diskFile((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, path);
-                let entry: {
-                    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                        value: diskFile;
-                    } | undefined>;
-                } | undefined = __gotots_results_13[0];
+                let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined = __gotots_results_13[0];
                 let ok = __gotots_results_13[1];
                 if (ok) {
                     SyncMapEntry$Delete$Named_tspath$Path$PointerTo_Named_project$diskFile(entry);
@@ -1116,11 +1014,7 @@ export class snapshotFSBuilder {
     }
     static $go$private$project$recordRealpathAlias(s: {
         value: snapshotFSBuilder;
-    } | undefined, diskFileEntry: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>;
-    } | undefined, symlinkFileName: gostring, symlinkPath: Path__from_tspath): void {
+    } | undefined, diskFileEntry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined, symlinkFileName: gostring, symlinkPath: Path__from_tspath): void {
         const __gotots_receiver_7: snapshotFSBuilder["fs"] = (s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
         const __gotots_argument_24 = symlinkFileName;
         let realpath = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_7).Realpath(__gotots_argument_24);
@@ -1128,45 +1022,27 @@ export class snapshotFSBuilder {
         const __gotots_argument_25 = realpath;
         let realpathPath = (__gotots_callee_18 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_25);
         if (!(realpathPath.$value === symlinkPath.$value)) {
-            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(diskFileEntry, (file: {
-                value: diskFile;
-            } | undefined): void => {
-                (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.realpathPath = realpathPath;
+            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile(diskFileEntry, (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.realpathPath = realpathPath;
             });
-            const __gotots_results_30 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases, realpathPath, { value: new realpathAliasSet(named_sync.SyncMutexOperations.$zero(), Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
-                    return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
-                })) });
-            let entry: {
-                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                    value: realpathAliasSet;
-                } | undefined>;
-            } | undefined = __gotots_results_30[0];
-            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet(entry, (aliasSet: {
-                value: realpathAliasSet;
-            } | undefined): void => {
+            const __gotots_results_30 = SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModulesRealpathAliases, realpathPath, tsonicTypeScriptRuntime.location<realpathAliasSet>(new realpathAliasSet(named_sync.SyncMutexOperations.$zero(), Set__from_collections.$zero<Path__from_tspath>((): GoMapValue<Path__from_tspath, GoEmptyStruct> => {
+                return $goMap$MapOf_Named_tspath$Path_To_Struct_void.nil();
+            }))));
+            let entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>> | undefined = __gotots_results_30[0];
+            SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet(entry, (aliasSet: tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined): void => {
                 realpathAliasSet.Add(aliasSet, symlinkPath);
             });
         }
     }
     static $go$private$project$reloadEntry(s: {
         value: snapshotFSBuilder;
-    } | undefined, entry: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>;
-    } | undefined): FileHandle | undefined {
+    } | undefined, entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined): FileHandle | undefined {
         let fileName = "";
-        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<{
-            value: diskFile;
-        } | undefined> | undefined): void => {
+        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined> | undefined): void => {
             const __gotots_receiver_8 = e;
-            if (!(goInterfaceNonNil<Value__from_dirty<{
-                value: diskFile;
-            } | undefined>>(__gotots_receiver_8).Value() === undefined)) {
+            if (!(goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_8).Value() === undefined)) {
                 const __gotots_receiver_9 = e;
-                fileName = (goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_9).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName;
+                fileName = ((goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_9).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.fileName;
             }
         });
         if (fileName === "") {
@@ -1177,33 +1053,23 @@ export class snapshotFSBuilder {
         const __gotots_results_31 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_10).ReadFile(__gotots_argument_26);
         let content = __gotots_results_31[0];
         let ok = __gotots_results_31[1];
-        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<{
-            value: diskFile;
-        } | undefined> | undefined): void => {
+        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined> | undefined): void => {
             const __gotots_receiver_11 = e;
-            if (goInterfaceNonNil<Value__from_dirty<{
-                value: diskFile;
-            } | undefined>>(__gotots_receiver_11).Value() === undefined) {
+            if (goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_11).Value() === undefined) {
                 return;
             }
             if (ok) {
                 const __gotots_receiver_12 = e;
-                const __gotots_argument_27 = (file: {
-                    value: diskFile;
-                } | undefined): void => {
-                    (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content = content;
-                    (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.hash = HashString128__from_xxh3(content);
-                    (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload = false;
+                const __gotots_argument_27 = (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                    ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.content = content;
+                    ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.hash = HashString128__from_xxh3(content);
+                    ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload = false;
                 };
-                goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_12).Change(__gotots_argument_27);
+                goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_12).Change(__gotots_argument_27);
             }
             else {
                 const __gotots_receiver_13 = e;
-                goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_13).Delete();
+                goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_13).Delete();
             }
         });
         if (SyncMapEntry$Value$Named_tspath$Path$PointerTo_Named_project$diskFile(entry) === undefined) {
@@ -1213,30 +1079,18 @@ export class snapshotFSBuilder {
     }
     static $go$private$project$reloadEntryIfNeeded(s: {
         value: snapshotFSBuilder;
-    } | undefined, entry: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>;
-    } | undefined): FileHandle | undefined {
+    } | undefined, entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined): FileHandle | undefined {
         let fileName = "";
-        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<{
-            value: diskFile;
-        } | undefined> | undefined): void => {
+        SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined> | undefined): void => {
             const __gotots_receiver_14 = e;
-            let __gotots_logical_result_2 = !(goInterfaceNonNil<Value__from_dirty<{
-                value: diskFile;
-            } | undefined>>(__gotots_receiver_14).Value() === undefined);
+            let __gotots_logical_result_2 = !(goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_14).Value() === undefined);
             if (__gotots_logical_result_2) {
                 const __gotots_receiver_15 = e;
-                __gotots_logical_result_2 = !diskFile.MatchesDiskText(goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_15).Value());
+                __gotots_logical_result_2 = !diskFile.MatchesDiskText(goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_15).Value());
             }
             if (__gotots_logical_result_2) {
                 const __gotots_receiver_16 = e;
-                fileName = (goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_16).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName;
+                fileName = ((goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_16).Value() ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.fileName;
             }
         });
         if (fileName !== "") {
@@ -1245,40 +1099,28 @@ export class snapshotFSBuilder {
             const __gotots_results_32 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_17).ReadFile(__gotots_argument_28);
             let content = __gotots_results_32[0];
             let ok = __gotots_results_32[1];
-            SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<{
-                value: diskFile;
-            } | undefined> | undefined): void => {
+            SyncMapEntry$Locked$Named_tspath$Path$PointerTo_Named_project$diskFile(entry, (e: Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined> | undefined): void => {
                 const __gotots_receiver_18 = e;
-                let __gotots_logical_result_3 = goInterfaceNonNil<Value__from_dirty<{
-                    value: diskFile;
-                } | undefined>>(__gotots_receiver_18).Value() === undefined;
+                let __gotots_logical_result_3 = goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_18).Value() === undefined;
                 if (!__gotots_logical_result_3) {
                     const __gotots_receiver_19 = e;
-                    __gotots_logical_result_3 = diskFile.MatchesDiskText(goInterfaceNonNil<Value__from_dirty<{
-                        value: diskFile;
-                    } | undefined>>(__gotots_receiver_19).Value());
+                    __gotots_logical_result_3 = diskFile.MatchesDiskText(goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_19).Value());
                 }
                 if (__gotots_logical_result_3) {
                     return;
                 }
                 if (ok) {
                     const __gotots_receiver_20 = e;
-                    const __gotots_argument_29 = (file: {
-                        value: diskFile;
-                    } | undefined): void => {
-                        (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content = content;
-                        (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.hash = HashString128__from_xxh3(content);
-                        (file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload = false;
+                    const __gotots_argument_29 = (file: tsonicTypeScriptRuntime.Location<diskFile> | undefined): void => {
+                        ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.content = content;
+                        ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.hash = HashString128__from_xxh3(content);
+                        ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload = false;
                     };
-                    goInterfaceNonNil<Value__from_dirty<{
-                        value: diskFile;
-                    } | undefined>>(__gotots_receiver_20).Change(__gotots_argument_29);
+                    goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_20).Change(__gotots_argument_29);
                 }
                 else {
                     const __gotots_receiver_21 = e;
-                    goInterfaceNonNil<Value__from_dirty<{
-                        value: diskFile;
-                    } | undefined>>(__gotots_receiver_21).Delete();
+                    goInterfaceNonNil<Value__from_dirty<tsonicTypeScriptRuntime.Location<diskFile> | undefined>>(__gotots_receiver_21).Delete();
                 }
             });
         }
@@ -1349,15 +1191,7 @@ export class snapshotFSBuilder {
         return false;
     }
 }
-export function newSnapshotFSBuilder(fs: FS__from_vfs | undefined, prevOverlays: GoMapValue<Path__from_tspath, {
-    value: Overlay;
-} | undefined>, overlays: GoMapValue<Path__from_tspath, {
-    value: Overlay;
-} | undefined>, diskFiles: GoMapValue<Path__from_tspath, {
-    value: diskFile;
-} | undefined>, diskDirectories: GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, {
-    value: realpathAliasSet;
-} | undefined>, positionEncoding: PositionEncodingKind__from_lsproto, toPath: (($0: gostring) => Path__from_tspath) | undefined): {
+export function newSnapshotFSBuilder(fs: FS__from_vfs | undefined, prevOverlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, diskFiles: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>, diskDirectories: GoMapValue<Path__from_tspath, CloneableMap__from_dirty<Path__from_tspath, gostring>>, nodeModulesRealpathAliases: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>, positionEncoding: PositionEncodingKind__from_lsproto, toPath: (($0: gostring) => Path__from_tspath) | undefined): {
     value: snapshotFSBuilder;
 } | undefined {
     let cachedFS: {
@@ -1375,7 +1209,7 @@ export function newSnapshotFSBuilder(fs: FS__from_vfs | undefined, prevOverlays:
         const __gotots_range_value_2 = __gotots_range_value_0;
         let path = __gotots_range_value_2;
         let childPath = path;
-        const __gotots_store_1 = (overlays.lookup(path) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+        const __gotots_store_1 = ((overlays.lookup(path) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
         let child = fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "fileBase"));
         for (;;) {
             let parentPath = childPath.GetDirectoryPath();
@@ -1401,11 +1235,7 @@ export function newSnapshotFSBuilder(fs: FS__from_vfs | undefined, prevOverlays:
             child = parent;
         }
     }
-    return { value: new snapshotFSBuilder(new $goInterfaceAdapter$PointerTo_Named_cachedvfs$FS(cachedFS), prevOverlays, overlays, overlayDirectories, NewSyncMap__from_dirty<Path__from_tspath, {
-            value: diskFile;
-        } | undefined>(diskFiles), NewMap$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(diskDirectories), NewSyncMap__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet;
-        } | undefined>(nodeModulesRealpathAliases), toPath) };
+    return { value: new snapshotFSBuilder(new $goInterfaceAdapter$PointerTo_Named_cachedvfs$FS(cachedFS), prevOverlays, overlays, overlayDirectories, NewSyncMap__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>(diskFiles), NewMap$Named_tspath$Path$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string(diskDirectories), NewSyncMap__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet> | undefined>(nodeModulesRealpathAliases), toPath) };
 }
 export class sourceFS {
     declare private readonly $goType: void;

@@ -86,23 +86,23 @@ export class moduleResolutionCacheKey implements GoContainerStoredValue<moduleRe
 }
 export class moduleResolutionCache {
     declare private readonly $goType: void;
-    public constructor(public cache: SyncMap__from_collections<moduleResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined>) {
+    public constructor(public cache: SyncMap__from_collections<moduleResolutionCacheKey, ResolvedModule | undefined>) {
     }
     static $zero(): moduleResolutionCache {
-        return new moduleResolutionCache(SyncMap__from_collections.$zero<moduleResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined>());
+        return new moduleResolutionCache(SyncMap__from_collections.$zero<moduleResolutionCacheKey, ResolvedModule | undefined>());
     }
     static $copy($source: moduleResolutionCache): moduleResolutionCache {
-        return new moduleResolutionCache(SyncMap__from_collections.$copy<moduleResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined>($source.cache));
+        return new moduleResolutionCache(SyncMap__from_collections.$copy<moduleResolutionCacheKey, ResolvedModule | undefined>($source.cache));
     }
     declare private readonly then?: never;
     static Get(c: tsonicTypeScriptRuntime.Location<moduleResolutionCache> | undefined, key: moduleResolutionCacheKey): [
-        tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined,
+        ResolvedModule | undefined,
         bool
     ] {
         const __gotots_store_0 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<moduleResolutionCache>).value;
         return SyncMap$Load$Named___go_module$moduleResolutionCacheKey$PointerTo_Named___go_module$ResolvedModule(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "cache"), moduleResolutionCacheKey.$copy(key));
     }
-    static Set(c: tsonicTypeScriptRuntime.Location<moduleResolutionCache> | undefined, key: moduleResolutionCacheKey, value: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined): void {
+    static Set(c: tsonicTypeScriptRuntime.Location<moduleResolutionCache> | undefined, key: moduleResolutionCacheKey, value: ResolvedModule | undefined): void {
         const __gotots_store_1 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<moduleResolutionCache>).value;
         SyncMap$LoadOrStore$Named___go_module$moduleResolutionCacheKey$PointerTo_Named___go_module$ResolvedModule(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "cache"), moduleResolutionCacheKey.$copy(key), value);
     }
@@ -180,23 +180,23 @@ export class typeRefDirectiveResolutionCacheKey implements GoContainerStoredValu
 }
 export class typeRefDirectiveResolutionCache {
     declare private readonly $goType: void;
-    public constructor(public cache: SyncMap__from_collections<typeRefDirectiveResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined>) {
+    public constructor(public cache: SyncMap__from_collections<typeRefDirectiveResolutionCacheKey, ResolvedTypeReferenceDirective | undefined>) {
     }
     static $zero(): typeRefDirectiveResolutionCache {
-        return new typeRefDirectiveResolutionCache(SyncMap__from_collections.$zero<typeRefDirectiveResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined>());
+        return new typeRefDirectiveResolutionCache(SyncMap__from_collections.$zero<typeRefDirectiveResolutionCacheKey, ResolvedTypeReferenceDirective | undefined>());
     }
     static $copy($source: typeRefDirectiveResolutionCache): typeRefDirectiveResolutionCache {
-        return new typeRefDirectiveResolutionCache(SyncMap__from_collections.$copy<typeRefDirectiveResolutionCacheKey, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined>($source.cache));
+        return new typeRefDirectiveResolutionCache(SyncMap__from_collections.$copy<typeRefDirectiveResolutionCacheKey, ResolvedTypeReferenceDirective | undefined>($source.cache));
     }
     declare private readonly then?: never;
     static Get(c: tsonicTypeScriptRuntime.Location<typeRefDirectiveResolutionCache> | undefined, key: typeRefDirectiveResolutionCacheKey): [
-        tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined,
+        ResolvedTypeReferenceDirective | undefined,
         bool
     ] {
         const __gotots_store_2 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<typeRefDirectiveResolutionCache>).value;
         return SyncMap$Load$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "cache"), typeRefDirectiveResolutionCacheKey.$copy(key));
     }
-    static Set(c: tsonicTypeScriptRuntime.Location<typeRefDirectiveResolutionCache> | undefined, key: typeRefDirectiveResolutionCacheKey, value: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined): void {
+    static Set(c: tsonicTypeScriptRuntime.Location<typeRefDirectiveResolutionCache> | undefined, key: typeRefDirectiveResolutionCacheKey, value: ResolvedTypeReferenceDirective | undefined): void {
         const __gotots_store_3 = ((c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<typeRefDirectiveResolutionCache>).value;
         SyncMap$Store$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "cache"), typeRefDirectiveResolutionCacheKey.$copy(key), value);
     }

@@ -13,6 +13,24 @@ import { $goInterfaceAdapter$string, $goInterfaceAdapter$PointerTo_Named_ast$Sou
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function IsGeneratedIdentifier(emitContext: {
     value: EmitContext__from_printer;
 } | undefined, name: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool {
@@ -157,12 +175,12 @@ export function convertBindingElementToArrayAssignmentElement(emitContext: {
         const __gotots_receiver_6 = emitContext;
         const __gotots_argument_13 = elision;
         const __gotots_store_12 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_14 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_12, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.SetOriginal(__gotots_receiver_6, __gotots_argument_13, __gotots_argument_14);
         const __gotots_receiver_7 = emitContext;
         const __gotots_argument_15 = elision;
         const __gotots_store_13 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_16 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_16 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_13, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_7, __gotots_argument_15, __gotots_argument_16);
         return elision;
     }
@@ -172,12 +190,12 @@ export function convertBindingElementToArrayAssignmentElement(emitContext: {
         const __gotots_receiver_8 = emitContext;
         const __gotots_argument_17 = spread;
         const __gotots_store_15 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_18 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_18 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_15, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.SetOriginal(__gotots_receiver_8, __gotots_argument_17, __gotots_argument_18);
         const __gotots_receiver_9 = emitContext;
         const __gotots_argument_19 = spread;
         const __gotots_store_16 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_20 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_16, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_9, __gotots_argument_19, __gotots_argument_20);
         return spread;
     }
@@ -187,12 +205,12 @@ export function convertBindingElementToArrayAssignmentElement(emitContext: {
         const __gotots_receiver_10 = emitContext;
         const __gotots_argument_21 = assignment;
         const __gotots_store_17 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_22 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_17, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.SetOriginal(__gotots_receiver_10, __gotots_argument_21, __gotots_argument_22);
         const __gotots_receiver_11 = emitContext;
         const __gotots_argument_23 = assignment;
         const __gotots_store_18 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_24 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_24 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_18, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_11, __gotots_argument_23, __gotots_argument_24);
         return assignment;
     }
@@ -209,12 +227,12 @@ export function convertBindingElementToObjectAssignmentElement(emitContext: {
         const __gotots_receiver_12 = emitContext;
         const __gotots_argument_25 = spread;
         const __gotots_store_20 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_26 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_26 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_20, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.SetOriginal(__gotots_receiver_12, __gotots_argument_25, __gotots_argument_26);
         const __gotots_receiver_13 = emitContext;
         const __gotots_argument_27 = spread;
         const __gotots_store_21 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_28 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_28 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_21, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_13, __gotots_argument_27, __gotots_argument_28);
         return spread;
     }
@@ -228,12 +246,12 @@ export function convertBindingElementToObjectAssignmentElement(emitContext: {
         const __gotots_receiver_14 = emitContext;
         const __gotots_argument_29 = assignment__shadow_1;
         const __gotots_store_23 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_30 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_30 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_23, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.SetOriginal(__gotots_receiver_14, __gotots_argument_29, __gotots_argument_30);
         const __gotots_receiver_15 = emitContext;
         const __gotots_argument_31 = assignment__shadow_1;
         const __gotots_store_24 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_32 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_24, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_15, __gotots_argument_31, __gotots_argument_32);
         return assignment__shadow_1;
     }
@@ -247,12 +265,12 @@ export function convertBindingElementToObjectAssignmentElement(emitContext: {
     const __gotots_receiver_16 = emitContext;
     const __gotots_argument_33 = assignment;
     const __gotots_store_27 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_34 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_34 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_27, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.SetOriginal(__gotots_receiver_16, __gotots_argument_33, __gotots_argument_34);
     const __gotots_receiver_17 = emitContext;
     const __gotots_argument_35 = assignment;
     const __gotots_store_28 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_36 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_36 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_28, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_17, __gotots_argument_35, __gotots_argument_36);
     return assignment;
 }
@@ -299,12 +317,12 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: {
     const __gotots_receiver_4 = emitContext;
     const __gotots_argument_9 = __go_object;
     const __gotots_store_9 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_10 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_10 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_9, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.SetOriginal(__gotots_receiver_4, __gotots_argument_9, __gotots_argument_10);
     const __gotots_receiver_5 = emitContext;
     const __gotots_argument_11 = __go_object;
     const __gotots_store_10 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_12 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_12 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_10, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_5, __gotots_argument_11, __gotots_argument_12);
     return __go_object;
 }
@@ -328,12 +346,12 @@ export function convertBindingElementToArrayAssignmentPattern(emitContext: {
     const __gotots_receiver_2 = emitContext;
     const __gotots_argument_5 = __go_object;
     const __gotots_store_5 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.SetOriginal(__gotots_receiver_2, __gotots_argument_5, __gotots_argument_6);
     const __gotots_receiver_3 = emitContext;
     const __gotots_argument_7 = __go_object;
     const __gotots_store_6 = NodeBase__from_ast.$storageOf((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-    const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_8 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_3, __gotots_argument_7, __gotots_argument_8);
     return __go_object;
 }
@@ -357,13 +375,13 @@ export function ConvertVariableDeclarationToAssignmentExpression(emitContext: {
     const __gotots_argument_0 = assignment;
     const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
         VariableDeclaration__from_ast.$storageOf(((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).NodeBase));
-    const __gotots_argument_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_1 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.SetOriginal(__gotots_receiver_0, __gotots_argument_0, __gotots_argument_1);
     const __gotots_receiver_1 = emitContext;
     const __gotots_argument_2 = assignment;
     const __gotots_store_1 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
         VariableDeclaration__from_ast.$storageOf(((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableDeclaration__from_ast>).value).NodeBase));
-    const __gotots_argument_3 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_3 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     EmitContext__from_printer.AssignCommentAndSourceMapRanges(__gotots_receiver_1, __gotots_argument_2, __gotots_argument_3);
     return assignment;
 }

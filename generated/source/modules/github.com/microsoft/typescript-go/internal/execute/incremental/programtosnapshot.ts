@@ -390,7 +390,7 @@ export function getReferencedFiles(program: {
                 }
                 {
                     const __gotots_results_8 = Program__from_compiler.GetResolvedTypeReferenceDirectives(program).lookupOk(SourceFile__from_ast.Path(file));
-                    let typeRefsInFile: ModeAwareCache__from___go_module<tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined> = __gotots_results_8[0];
+                    let typeRefsInFile: ModeAwareCache__from___go_module<ResolvedTypeReferenceDirective__from___go_module | undefined> = __gotots_results_8[0];
                     let ok = __gotots_results_8[1];
                     if (ok) {
                         const __gotots_range_6 = typeRefsInFile.$value;
@@ -401,9 +401,9 @@ export function getReferencedFiles(program: {
                                 continue;
                             }
                             const __gotots_range_value_10 = __gotots_range_value_9[0];
-                            let typeRef: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined = __gotots_range_value_10;
-                            if (((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName !== "") {
-                                addReferencedFileFromFileName(program, ((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module>).value.ResolvedFileName, referencedFiles$location, sourceFileDirectory);
+                            let typeRef: ResolvedTypeReferenceDirective__from___go_module | undefined = __gotots_range_value_10;
+                            if ((typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName !== "") {
+                                addReferencedFileFromFileName(program, (typeRef ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName, referencedFiles$location, sourceFileDirectory);
                             }
                         }
                     }

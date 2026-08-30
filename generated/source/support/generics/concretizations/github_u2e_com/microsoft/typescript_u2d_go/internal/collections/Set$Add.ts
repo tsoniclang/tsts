@@ -69,8 +69,8 @@ export function Set$Add$PointerTo_Named_checker$Type($argument0: tsonicTypeScrip
         return $goMap$MapOf_PointerTo_Named_checker$Type_To_Struct_void.make(0, []);
     }, $argument1);
 }
-export function Set$Add$PointerTo_Named_ls$CodeFixProvider($argument0: tsonicTypeScriptRuntime.Location<Set__from_collections<CodeFixProvider__from_ls | undefined>> | undefined, $argument1: CodeFixProvider__from_ls | undefined): void {
-    return Set__from_collections.Add$kernel<CodeFixProvider__from_ls | undefined>($argument0, ($argument0: GoEmptyStruct): GoMapValue<CodeFixProvider__from_ls | undefined, GoEmptyStruct> => {
+export function Set$Add$PointerTo_Named_ls$CodeFixProvider($argument0: tsonicTypeScriptRuntime.Location<Set__from_collections<tsonicTypeScriptRuntime.Location<CodeFixProvider__from_ls> | undefined>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<CodeFixProvider__from_ls> | undefined): void {
+    return Set__from_collections.Add$kernel<tsonicTypeScriptRuntime.Location<CodeFixProvider__from_ls> | undefined>($argument0, ($argument0: GoEmptyStruct): GoMapValue<tsonicTypeScriptRuntime.Location<CodeFixProvider__from_ls> | undefined, GoEmptyStruct> => {
         return $goMap$MapOf_PointerTo_Named_ls$CodeFixProvider_To_Struct_void.make(0, []);
     }, $argument1);
 }

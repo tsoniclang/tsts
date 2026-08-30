@@ -307,34 +307,18 @@ export function Map$PointerTo_Named_ast$Node$string($argument0: RuntimeSlice<tso
         return "";
     }, $argument0, $argument1);
 }
-export function Map$PointerTo_Named_ast$SourceFile$PointerTo_Named_incremental$BuildInfoFileInfo($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => {
-    value: BuildInfoFileInfo__from_incremental;
-} | undefined) | undefined): RuntimeSlice<{
-    value: BuildInfoFileInfo__from_incremental;
-} | undefined> {
-    return Map$kernel__from_core<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined>(($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
+export function Map$PointerTo_Named_ast$SourceFile$PointerTo_Named_incremental$BuildInfoFileInfo($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined) => tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined> {
+    return Map$kernel__from_core<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined, tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined): {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined): tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined => {
         return $argument0;
     }, ($argument0: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined => {
         return $argument0;
     }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>): int => {
         return $argument0.length;
-    }, ($argument0: {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined): {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined): tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined => {
         return $argument0;
-    }, (): {
-        value: BuildInfoFileInfo__from_incremental;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<BuildInfoFileInfo__from_incremental> | undefined => {
         return void 0;
     }, $argument0, $argument1);
 }
@@ -920,24 +904,14 @@ export function Map$PointerTo_Named_lsproto$LocationLink$Named_lsproto$Location(
         return Location__from_lsproto.$zero();
     }, $argument0, $argument1);
 }
-export function Map$PointerTo_Named_project$Project$PointerTo_Named_compiler$Program($argument0: RuntimeSlice<{
-    value: Project__from_project;
-} | undefined>, $argument1: (($0: {
-    value: Project__from_project;
-} | undefined) => {
+export function Map$PointerTo_Named_project$Project$PointerTo_Named_compiler$Program($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>, $argument1: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => {
     value: Program__from_compiler;
 } | undefined) | undefined): RuntimeSlice<{
     value: Program__from_compiler;
 } | undefined> {
-    return Map$kernel__from_core<{
-        value: Project__from_project;
-    } | undefined, {
+    return Map$kernel__from_core<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, {
         value: Program__from_compiler;
-    } | undefined>(($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    } | undefined>(($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, ($argument0: {
         value: Program__from_compiler;
@@ -945,15 +919,9 @@ export function Map$PointerTo_Named_project$Project$PointerTo_Named_compiler$Pro
         value: Program__from_compiler;
     } | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: RuntimeSlice<{
-        value: Project__from_project;
-    } | undefined>): int => {
+    }, ($argument0: RuntimeSlice<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>): int => {
         return $argument0.length;
     }, ($argument0: {
         value: Program__from_compiler;
@@ -1119,34 +1087,18 @@ export function Map$string$PointerTo_Named_incremental$BuildInfoRoot($argument0:
         return void 0;
     }, $argument0, $argument1);
 }
-export function Map$string$PointerTo_Named_lsproto$FileSystemWatcher($argument0: RuntimeSlice<gostring>, $argument1: (($0: gostring) => {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined) | undefined): RuntimeSlice<{
-    value: FileSystemWatcher__from_lsproto;
-} | undefined> {
-    return Map$kernel__from_core<gostring, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>(($argument0: gostring): gostring => {
+export function Map$string$PointerTo_Named_lsproto$FileSystemWatcher($argument0: RuntimeSlice<gostring>, $argument1: (($0: gostring) => tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined) | undefined): RuntimeSlice<tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined> {
+    return Map$kernel__from_core<gostring, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>(($argument0: gostring): gostring => {
         return $argument0;
-    }, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return $argument0;
     }, ($argument0: gostring): gostring => {
         return $argument0;
     }, ($argument0: RuntimeSlice<gostring>): int => {
         return $argument0.length;
-    }, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return $argument0;
-    }, (): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return void 0;
     }, $argument0, $argument1);
 }

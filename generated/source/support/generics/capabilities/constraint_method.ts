@@ -29,47 +29,31 @@ export function $go$constraint_method$dirty$Clone$Named_dirty$CloneableMapOf_Nam
     const __gotots_receiver_3 = new $goInterfaceAdapter$Named_dirty$CloneableMapOf_Named_tspath$Path_And_string($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_Named_dirty$CloneableMapOf_Named_tspath$Path_And_string>(__gotots_receiver_3).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_autoimport$RegistryBucket_to_PointerTo_Named_autoimport$RegistryBucket($argument0: RegistryBucket__from_autoimport | undefined): RegistryBucket__from_autoimport | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_autoimport$RegistryBucket_to_PointerTo_Named_autoimport$RegistryBucket($argument0: tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined): tsonicTypeScriptRuntime.Location<RegistryBucket__from_autoimport> | undefined {
     const __gotots_receiver_2 = new $goInterfaceAdapter$PointerTo_Named_autoimport$RegistryBucket($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$RegistryBucket>(__gotots_receiver_2).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_autoimport$directory_to_PointerTo_Named_autoimport$directory($argument0: directory__from_autoimport | undefined): directory__from_autoimport | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_autoimport$directory_to_PointerTo_Named_autoimport$directory($argument0: tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined): tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined {
     const __gotots_receiver_16 = new $goInterfaceAdapter$PointerTo_Named_autoimport$directory($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_autoimport$directory>(__gotots_receiver_16).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$Project_to_PointerTo_Named_project$Project($argument0: {
-    value: Project__from_project;
-} | undefined): {
-    value: Project__from_project;
-} | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$Project_to_PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined {
     const __gotots_receiver_0 = new GoInterfaceAdapter($argument0);
     return goInterfaceNonNil<GoInterface>(__gotots_receiver_0).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileEntry_to_PointerTo_Named_project$configFileEntry($argument0: {
-    value: configFileEntry__from_project;
-} | undefined): {
-    value: configFileEntry__from_project;
-} | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileEntry_to_PointerTo_Named_project$configFileEntry($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined {
     const __gotots_receiver_13 = new $goInterfaceAdapter$PointerTo_Named_project$configFileEntry($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileEntry>(__gotots_receiver_13).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileNames_to_PointerTo_Named_project$configFileNames($argument0: configFileNames__from_project | undefined): configFileNames__from_project | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileNames_to_PointerTo_Named_project$configFileNames($argument0: tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined {
     const __gotots_receiver_8 = new $goInterfaceAdapter$PointerTo_Named_project$configFileNames($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$configFileNames>(__gotots_receiver_8).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$diskFile_to_PointerTo_Named_project$diskFile($argument0: {
-    value: diskFile__from_project;
-} | undefined): {
-    value: diskFile__from_project;
-} | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$diskFile_to_PointerTo_Named_project$diskFile($argument0: tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined): tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined {
     const __gotots_receiver_15 = new $goInterfaceAdapter$PointerTo_Named_project$diskFile($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$diskFile>(__gotots_receiver_15).Clone();
 }
-export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$realpathAliasSet_to_PointerTo_Named_project$realpathAliasSet($argument0: {
-    value: realpathAliasSet__from_project;
-} | undefined): {
-    value: realpathAliasSet__from_project;
-} | undefined {
+export function $go$constraint_method$dirty$Clone$PointerTo_Named_project$realpathAliasSet_to_PointerTo_Named_project$realpathAliasSet($argument0: tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined): tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined {
     const __gotots_receiver_12 = new $goInterfaceAdapter$PointerTo_Named_project$realpathAliasSet($argument0);
     return goInterfaceNonNil<$goInterface$Interface_Method_dirty$Clone_void_to_PointerTo_Named_project$realpathAliasSet>(__gotots_receiver_12).Clone();
 }

@@ -39,6 +39,24 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
 import { goStringIndex } from "@gotots/runtime/string.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function NewDiagnosticForNode(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, message: {
     value: Message__from_diagnostics;
 } | undefined, args: RuntimeSlice<GoInterface | undefined>): tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined {
@@ -581,10 +599,10 @@ export function CompareTypes(t1: tsonicTypeScriptRuntime.Location<Type> | undefi
                 const __gotots_receiver_3 = ((t1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Type>).value.checker;
                 const __gotots_store_0 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_13 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_13 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_store_1 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     TypeNodeBase__from_ast.$storageOf((((Type.AsConditionalType(t2) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.root ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.TypeNodeBase).NodeBase));
-                const __gotots_argument_14 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_argument_14 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_1, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 let c = Checker.$go$private$checker$compareNodes(__gotots_receiver_3, __gotots_argument_13, __gotots_argument_14);
                 if (c !== 0) {
                     return c;
@@ -1648,12 +1666,12 @@ export function CreateModuleNotFoundChain(program: Program | undefined, file: ts
     const __gotots_argument_1 = new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(file);
     const __gotots_argument_2 = moduleReference;
     const __gotots_argument_3 = mode;
-    let resolvedModule: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = goInterfaceNonNil<Program>(__gotots_receiver_1).GetResolvedModule(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
-    if (!(resolvedModule === undefined) && ((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.AlternateResult !== "") {
-        if (strings__from_gostdlib.Contains(((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.AlternateResult, "/node_modules/@types/")) {
+    let resolvedModule: ResolvedModule__from___go_module | undefined = goInterfaceNonNil<Program>(__gotots_receiver_1).GetResolvedModule(__gotots_argument_1, __gotots_argument_2, __gotots_argument_3);
+    if (!(resolvedModule === undefined) && (resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AlternateResult !== "") {
+        if (strings__from_gostdlib.Contains((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AlternateResult, "/node_modules/@types/")) {
             packageName = "@types/" + MangleScopedPackageName__from___go_module(packageName);
         }
-        return new DiagnosticDetails($state__diagnostics.There_are_types_at_0_but_this_result_could_not_be_resolved_when_respecting_package_json_exports_The_1_library_may_need_to_update_its_package_json_or_typings, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.AlternateResult), new GoInterfaceAdapter(packageName)]));
+        return new DiagnosticDetails($state__diagnostics.There_are_types_at_0_but_this_result_could_not_be_resolved_when_respecting_package_json_exports_The_1_library_may_need_to_update_its_package_json_or_typings, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter((resolvedModule ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AlternateResult), new GoInterfaceAdapter(packageName)]));
     }
     const __gotots_receiver_2 = program;
     let packagesMap: GoMapValue<gostring, bool> = goInterfaceNonNil<Program>(__gotots_receiver_2).GetPackagesMap();

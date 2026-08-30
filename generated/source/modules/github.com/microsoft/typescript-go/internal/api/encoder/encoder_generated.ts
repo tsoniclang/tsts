@@ -10,6 +10,24 @@ import * as fmt__from_gostdlib from "@gotots/gostdlib/fmt.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function getNodeDataType(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): uint32 {
     switch (Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind) {
         case KindIdentifier$constant__from_ast():
@@ -186,7 +204,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindVariableStatement$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<VariableStatement__from_ast> | undefined = Node__from_ast.AsVariableStatement(node);
             const __gotots_store_0 = VariableStatement__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<VariableStatement__from_ast>).value);
-            const __gotots_argument_0 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_0 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_0, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_1 = hasModifiers(__gotots_argument_0);
             const __gotots_binary_operand_0 = boolToByte(__gotots_argument_1);
             const __gotots_binary_operand_1 = 0;
@@ -216,7 +234,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindParameter$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined = Node__from_ast.AsParameterDeclaration(node);
             const __gotots_store_1 = ParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-            const __gotots_argument_2 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_2 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_1, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_3 = hasModifiers(__gotots_argument_2);
             const __gotots_binary_operand_4 = boolToByte(__gotots_argument_3);
             const __gotots_binary_operand_5 = 0;
@@ -255,7 +273,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindFunctionDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast> | undefined = Node__from_ast.AsFunctionDeclaration(node);
             const __gotots_store_3 = FunctionDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FunctionDeclaration__from_ast>).value);
-            const __gotots_argument_6 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_6 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_3, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_7 = hasModifiers(__gotots_argument_6);
             const __gotots_binary_operand_18 = boolToByte(__gotots_argument_7);
             const __gotots_binary_operand_19 = 0;
@@ -332,7 +350,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindInterfaceDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast> | undefined = Node__from_ast.AsInterfaceDeclaration(node);
             const __gotots_store_6 = InterfaceDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<InterfaceDeclaration__from_ast>).value);
-            const __gotots_argument_12 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_12 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_6, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_13 = hasModifiers(__gotots_argument_12);
             const __gotots_binary_operand_52 = boolToByte(__gotots_argument_13);
             const __gotots_binary_operand_53 = 0;
@@ -351,7 +369,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindJSTypeAliasDeclaration$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast> | undefined = Node__from_ast.AsTypeAliasDeclaration(node);
             const __gotots_store_7 = TypeAliasDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeAliasDeclaration__from_ast>).value);
-            const __gotots_argument_14 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_14 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_7, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_15 = hasModifiers(__gotots_argument_14);
             const __gotots_binary_operand_62 = boolToByte(__gotots_argument_15);
             const __gotots_binary_operand_63 = 0;
@@ -595,7 +613,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindMethodSignature$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast> | undefined = Node__from_ast.AsMethodSignatureDeclaration(node);
             const __gotots_store_16 = MethodSignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MethodSignatureDeclaration__from_ast>).value);
-            const __gotots_argument_32 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+            const __gotots_argument_32 = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_16, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_33 = hasModifiers(__gotots_argument_32);
             const __gotots_binary_operand_134 = boolToByte(__gotots_argument_33);
             const __gotots_binary_operand_135 = 0;
@@ -650,7 +668,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindPropertySignature$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast> | undefined = Node__from_ast.AsPropertySignatureDeclaration(node);
             const __gotots_store_18 = PropertySignatureDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertySignatureDeclaration__from_ast>).value);
-            const __gotots_argument_36 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_18, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+            const __gotots_argument_36 = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_18, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_37 = hasModifiers(__gotots_argument_36);
             const __gotots_binary_operand_162 = boolToByte(__gotots_argument_37);
             const __gotots_binary_operand_163 = 0;
@@ -703,7 +721,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindBinaryExpression$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast> | undefined = Node__from_ast.AsBinaryExpression(node);
             const __gotots_store_21 = BinaryExpression__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<BinaryExpression__from_ast>).value);
-            const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_42 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_21, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_43 = hasModifiers(__gotots_argument_42);
             const __gotots_binary_operand_186 = boolToByte(__gotots_argument_43);
             const __gotots_binary_operand_187 = 0;
@@ -904,7 +922,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindPropertyAssignment$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast> | undefined = Node__from_ast.AsPropertyAssignment(node);
             const __gotots_store_24 = PropertyAssignment__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAssignment__from_ast>).value);
-            const __gotots_argument_48 = NamedMemberBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<NamedMemberBase__from_ast$Storage, NamedMemberBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "NamedMemberBase"), NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
+            const __gotots_argument_48 = NamedMemberBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_24, "NamedMemberBase", NamedMemberBase__from_ast.$fromStorage, NamedMemberBase__from_ast.$storageOf));
             const __gotots_argument_49 = hasModifiers(__gotots_argument_48);
             const __gotots_binary_operand_222 = boolToByte(__gotots_argument_49);
             const __gotots_binary_operand_223 = 0;
@@ -1123,7 +1141,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
                 value: ConstructorTypeNode__from_ast;
             } | undefined = Node__from_ast.AsConstructorTypeNode(node);
             const __gotots_store_26 = FunctionOrConstructorTypeNodeBase__from_ast.$storageOf((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionOrConstructorTypeNodeBase);
-            const __gotots_argument_52 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_52 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_26, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_53 = hasModifiers(__gotots_argument_52);
             const __gotots_binary_operand_244 = boolToByte(__gotots_argument_53);
             const __gotots_binary_operand_245 = 0;
@@ -1531,7 +1549,7 @@ export function getChildrenPropertyMask(node: tsonicTypeScriptRuntime.Location<N
         case KindTypeParameter$constant__from_ast(): {
             let n: tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast> | undefined = Node__from_ast.AsTypeParameterDeclaration(node);
             const __gotots_store_30 = TypeParameterDeclaration__from_ast.$storageOf(((n ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<TypeParameterDeclaration__from_ast>).value);
-            const __gotots_argument_60 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+            const __gotots_argument_60 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_30, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
             const __gotots_argument_61 = hasModifiers(__gotots_argument_60);
             const __gotots_binary_operand_272 = boolToByte(__gotots_argument_61);
             const __gotots_binary_operand_273 = 0;
@@ -1814,7 +1832,7 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     (void JSDocCommentBase__from_ast.$storageOf, (void JSDocCommentBase__from_ast.$fromStorage,
                         JSDocText__from_ast.$storageOf(((Node__from_ast.AsJSDocText(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<JSDocText__from_ast>).value).JSDocCommentBase)).NodeBase)).NodeDefault));
-            const __gotots_argument_62 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_62 = Node__from_ast.Text(new $ProjectedPropertyLocation(__gotots_store_31, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_63 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_64 = Node__from_ast.Pos(node);
             const __gotots_argument_65 = Node__from_ast.End(node);
@@ -1826,7 +1844,7 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
             const __gotots_store_32 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLink(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_66 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_66 = Node__from_ast.Text(new $ProjectedPropertyLocation(__gotots_store_32, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_67 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_68 = Node__from_ast.Pos(node);
             const __gotots_argument_69 = Node__from_ast.End(node);
@@ -1838,7 +1856,7 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
             const __gotots_store_33 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkPlain(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_70 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_70 = Node__from_ast.Text(new $ProjectedPropertyLocation(__gotots_store_33, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_71 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_72 = Node__from_ast.Pos(node);
             const __gotots_argument_73 = Node__from_ast.End(node);
@@ -1850,7 +1868,7 @@ export function recordNodeStrings(node: tsonicTypeScriptRuntime.Location<Node__f
             const __gotots_store_34 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
                 (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     JSDocCommentBase__from_ast.$storageOf((Node__from_ast.AsJSDocLinkCode(node) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.JSDocCommentBase).NodeBase)).NodeDefault));
-            const __gotots_argument_74 = Node__from_ast.Text(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_34, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+            const __gotots_argument_74 = Node__from_ast.Text(new $ProjectedPropertyLocation(__gotots_store_34, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
             const __gotots_argument_75 = Node__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Kind;
             const __gotots_argument_76 = Node__from_ast.Pos(node);
             const __gotots_argument_77 = Node__from_ast.End(node);

@@ -60,6 +60,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class resolved {
     declare private readonly $goType: void;
     public constructor(public path: gostring, public extension: gostring, public packageId: PackageId, public originalPath: gostring, public resolvedUsingTsExtension: bool) {
@@ -104,23 +122,23 @@ export class tracer {
             tracer.$go$private$__go_module$write(__gotots_receiver_7, __gotots_argument_10, __gotots_argument_11);
         }
     }
-    static $go$private$__go_module$traceTypeReferenceDirectiveResult(r: tracer | undefined, typeReferenceDirectiveName: gostring, result: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined): void {
+    static $go$private$__go_module$traceTypeReferenceDirectiveResult(r: tracer | undefined, typeReferenceDirectiveName: gostring, result: ResolvedTypeReferenceDirective | undefined): void {
         if (!ResolvedTypeReferenceDirective.IsResolved(result)) {
             tracer.$go$private$__go_module$write(r, $state__diagnostics.Type_reference_directive_0_was_not_resolved, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(typeReferenceDirectiveName)]));
         }
-        else if (PackageId.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.PackageId).Name !== "") {
+        else if (PackageId.$storageOf((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId).Name !== "") {
             const __gotots_receiver_36 = r;
             const __gotots_argument_40 = $state__diagnostics.Type_reference_directive_0_was_successfully_resolved_to_1_with_Package_ID_2_primary_Colon_3;
             const __gotots_argument_36 = new GoInterfaceAdapter(typeReferenceDirectiveName);
-            const __gotots_argument_37 = new GoInterfaceAdapter(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.ResolvedFileName);
-            const __gotots_store_9 = ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value;
+            const __gotots_argument_37 = new GoInterfaceAdapter((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName);
+            const __gotots_store_9 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             const __gotots_argument_38 = new GoInterfaceAdapter(PackageId.String(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "PackageId")));
-            const __gotots_argument_39 = new $goInterfaceAdapter$bool(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.Primary);
+            const __gotots_argument_39 = new $goInterfaceAdapter$bool((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Primary);
             const __gotots_argument_41 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_36, __gotots_argument_37, __gotots_argument_38, __gotots_argument_39]);
             tracer.$go$private$__go_module$write(__gotots_receiver_36, __gotots_argument_40, __gotots_argument_41);
         }
         else {
-            tracer.$go$private$__go_module$write(r, $state__diagnostics.Type_reference_directive_0_was_successfully_resolved_to_1_primary_Colon_2, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(typeReferenceDirectiveName), new GoInterfaceAdapter(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.ResolvedFileName), new $goInterfaceAdapter$bool(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective>).value.Primary)]));
+            tracer.$go$private$__go_module$write(r, $state__diagnostics.Type_reference_directive_0_was_successfully_resolved_to_1_primary_Colon_2, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(typeReferenceDirectiveName), new GoInterfaceAdapter((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName), new $goInterfaceAdapter$bool((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Primary)]));
         }
     }
     static $go$private$__go_module$write(t: tracer | undefined, diag: {
@@ -222,9 +240,8 @@ export class resolutionState {
         }
         return IsApplicableVersionedTypesKey(condition);
     }
-    static $go$private$__go_module$createResolvedModule(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined, isExternalLibraryImport: bool): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    static $go$private$__go_module$createResolvedModule(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined, isExternalLibraryImport: bool): ResolvedModule | undefined {
         let resolvedModule = ResolvedModule.$zero();
-        const resolvedModule$location = tsonicTypeScriptRuntime.boundLocation({}, () => resolvedModule, resolvedModule$next => resolvedModule = resolvedModule$next);
         resolvedModule.ResolutionDiagnostics = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).diagnostics;
         if (!(resolved__shadow_1 === undefined)) {
             resolvedModule.ResolvedFileName = (resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).path;
@@ -234,9 +251,9 @@ export class resolutionState {
             resolvedModule.Extension = (resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extension;
             resolvedModule.PackageId = PackageId.$copy((resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageId);
         }
-        return resolvedModule$location;
+        return resolvedModule;
     }
-    static $go$private$__go_module$createResolvedModuleHandlingSymlink(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    static $go$private$__go_module$createResolvedModuleHandlingSymlink(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined): ResolvedModule | undefined {
         let isExternalLibraryImport = !(resolved__shadow_1 === undefined) && strings__from_gostdlib.Contains((resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).path, "/node_modules/");
         if (!(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).compilerOptions ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PreserveSymlinks === TSTrue$constant__from_core()) && isExternalLibraryImport && (resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).originalPath === "" && !IsExternalModuleNameRelative__from_tspath((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name)) {
             const __gotots_results_3 = resolutionState.$go$private$__go_module$getOriginalAndResolvedFileName(r, (resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).path);
@@ -249,9 +266,8 @@ export class resolutionState {
         }
         return resolutionState.$go$private$__go_module$createResolvedModule(r, resolved__shadow_1, isExternalLibraryImport);
     }
-    static $go$private$__go_module$createResolvedTypeReferenceDirective(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined, primary: bool): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined {
+    static $go$private$__go_module$createResolvedTypeReferenceDirective(r: resolutionState | undefined, resolved__shadow_1: resolved | undefined, primary: bool): ResolvedTypeReferenceDirective | undefined {
         let resolvedTypeReferenceDirective = ResolvedTypeReferenceDirective.$zero();
-        const resolvedTypeReferenceDirective$location = tsonicTypeScriptRuntime.boundLocation({}, () => resolvedTypeReferenceDirective, resolvedTypeReferenceDirective$next => resolvedTypeReferenceDirective = resolvedTypeReferenceDirective$next);
         resolvedTypeReferenceDirective.ResolutionDiagnostics = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).diagnostics;
         if (resolved.$go$private$__go_module$isResolved(resolved__shadow_1)) {
             if (!ExtensionIsTs__from_tspath((resolved__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extension)) {
@@ -272,7 +288,7 @@ export class resolutionState {
                 }
             }
         }
-        return resolvedTypeReferenceDirective$location;
+        return resolvedTypeReferenceDirective;
     }
     static $go$private$__go_module$getCandidateFromTypeRoot(r: resolutionState | undefined, typeRoot: gostring): gostring {
         let nameForLookup = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name;
@@ -833,7 +849,7 @@ export class resolutionState {
         let __gotots_logical_result_3 = !InfoCacheEntry__from_packagejson.Exists(packageInfo);
         if (!__gotots_logical_result_3) {
             const __gotots_store_10 = ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_3 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
+            __gotots_logical_result_3 = JSONValue__from_packagejson.IsFalsy(new $ProjectedPropertyLocation(__gotots_store_10, "JSONValue", JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_3) {
             return continueSearching();
@@ -1103,7 +1119,7 @@ export class resolutionState {
         let __gotots_logical_result_1 = !InfoCacheEntry__from_packagejson.Exists(scope);
         if (!__gotots_logical_result_1) {
             const __gotots_store_6 = ExportsOrImports__from_packagejson.$storageOf(((scope ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_1 = JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
+            __gotots_logical_result_1 = JSONValue__from_packagejson.IsFalsy(new $ProjectedPropertyLocation(__gotots_store_6, "JSONValue", JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_1) {
             return continueSearching();
@@ -1227,7 +1243,7 @@ export class resolutionState {
             let __gotots_logical_result_2 = !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).features & NodeResolutionFeaturesExports$constant()) === 0) && InfoCacheEntry__from_packagejson.Exists(packageInfo);
             if (__gotots_logical_result_2) {
                 const __gotots_store_8 = ExportsOrImports__from_packagejson.$storageOf(((packageInfo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-                __gotots_logical_result_2 = !JSONValue__from_packagejson.IsFalsy(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
+                __gotots_logical_result_2 = !JSONValue__from_packagejson.IsFalsy(new $ProjectedPropertyLocation(__gotots_store_8, "JSONValue", JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
             }
             if (__gotots_logical_result_2) {
                 return resolutionState.$go$private$__go_module$loadModuleFromExports(r, packageInfo, ext, CombinePaths__from_tspath(".", RuntimeSlice.literal<gostring>([rest])));
@@ -1319,9 +1335,9 @@ export class resolutionState {
                                         __gotots_callee_6();
                                     });
                                     {
-                                        let result: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = resolutionState.$go$private$__go_module$resolveNodeLike(r);
+                                        let result: ResolvedModule | undefined = resolutionState.$go$private$__go_module$resolveNodeLike(r);
                                         if (ResolvedModule.IsResolved(result)) {
-                                            __gotots_return_0 = new resolved(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName, ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.Extension, PackageId.$copy(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.PackageId), ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.OriginalPath, ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedUsingTsExtension);
+                                            __gotots_return_0 = new resolved((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName, (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Extension, PackageId.$copy((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId), (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).OriginalPath, (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedUsingTsExtension);
                                             break __gotots_return_block_0;
                                         }
                                     }
@@ -1805,7 +1821,7 @@ export class resolutionState {
         }
         return void 0;
     }
-    static $go$private$__go_module$resolveNodeLike(r: resolutionState | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    static $go$private$__go_module$resolveNodeLike(r: resolutionState | undefined): ResolvedModule | undefined {
         if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
             let conditions = strings__from_gostdlib.Join(Map$string$string((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).conditions, (c: gostring): gostring => {
                 return "'" + c + "'";
@@ -1817,8 +1833,8 @@ export class resolutionState {
                 tracer.$go$private$__go_module$write((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer, $state__diagnostics.Resolving_in_0_mode_with_conditions_1, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("CJS"), new GoInterfaceAdapter(conditions)]));
             }
         }
-        let result: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = resolutionState.$go$private$__go_module$resolveNodeLikeWorker(r);
-        if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolvedPackageDirectory && !(r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isConfigLookup && !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).features & NodeResolutionFeaturesExports$constant()) === 0) && !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extensions & (5)) === 0) && !IsExternalModuleNameRelative__from_tspath((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name) && ResolvedModule.IsResolved(result) && ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.IsExternalLibraryImport && !extensionIsOk(5, ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.Extension) && Contains$SliceOf_string$string((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).conditions, "import")) {
+        let result: ResolvedModule | undefined = resolutionState.$go$private$__go_module$resolveNodeLikeWorker(r);
+        if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolvedPackageDirectory && !(r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isConfigLookup && !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).features & NodeResolutionFeaturesExports$constant()) === 0) && !(((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extensions & (5)) === 0) && !IsExternalModuleNameRelative__from_tspath((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name) && ResolvedModule.IsResolved(result) && (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport && !extensionIsOk(5, (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Extension) && Contains$SliceOf_string$string((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).conditions, "import")) {
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
                 tracer.$go$private$__go_module$write((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer, $state__diagnostics.Resolution_of_non_relative_name_failed_trying_with_modern_Node_resolution_features_disabled_to_see_if_npm_library_needs_configuration_update, RuntimeSlice.nil<GoInterface | undefined>());
             }
@@ -1826,16 +1842,16 @@ export class resolutionState {
             (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extensions = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).extensions & (5);
             let diagnosticsCount = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).diagnostics.length;
             {
-                let diagnosticResult: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = resolutionState.$go$private$__go_module$resolveNodeLikeWorker(r);
-                if (ResolvedModule.IsResolved(diagnosticResult) && ((diagnosticResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.IsExternalLibraryImport) {
-                    ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.AlternateResult = ((diagnosticResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName;
+                let diagnosticResult: ResolvedModule | undefined = resolutionState.$go$private$__go_module$resolveNodeLikeWorker(r);
+                if (ResolvedModule.IsResolved(diagnosticResult) && (diagnosticResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).IsExternalLibraryImport) {
+                    (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AlternateResult = (diagnosticResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
                 }
             }
             (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).diagnostics = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).diagnostics.slice(0, diagnosticsCount, null);
         }
         return result;
     }
-    static $go$private$__go_module$resolveNodeLikeWorker(r: resolutionState | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    static $go$private$__go_module$resolveNodeLikeWorker(r: resolutionState | undefined): ResolvedModule | undefined {
         {
             let resolved__shadow_1: resolved | undefined = resolutionState.$go$private$__go_module$tryLoadModuleUsingOptionalResolutionSettings(r);
             if (!resolved.$go$private$__go_module$shouldContinueSearching(resolved__shadow_1)) {
@@ -1890,7 +1906,7 @@ export class resolutionState {
         }
         return resolutionState.$go$private$__go_module$createResolvedModule(r, void 0, false);
     }
-    static $go$private$__go_module$resolveTypeReferenceDirective(r: resolutionState | undefined, typeRoots: RuntimeSlice<gostring>, fromConfig: bool, fromInferredTypesContainingFile: bool): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined {
+    static $go$private$__go_module$resolveTypeReferenceDirective(r: resolutionState | undefined, typeRoots: RuntimeSlice<gostring>, fromConfig: bool, fromInferredTypesContainingFile: bool): ResolvedTypeReferenceDirective | undefined {
         if (typeRoots.length > 0) {
             if (!((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer === undefined)) {
                 tracer.$go$private$__go_module$write((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).tracer, $state__diagnostics.Resolving_with_primary_search_path_0, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(strings__from_gostdlib.Join(typeRoots, ", "))]));
@@ -2546,7 +2562,7 @@ export class Resolver {
         let __gotots_logical_result_8 = InfoCacheEntry__from_packagejson.Exists(packageJson);
         if (__gotots_logical_result_8) {
             const __gotots_store_20 = ExportsOrImports__from_packagejson.$storageOf(((packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports);
-            __gotots_logical_result_8 = JSONValue__from_packagejson.IsPresent(tsonicTypeScriptRuntime.projectLocation<JSONValue__from_packagejson$Storage, JSONValue__from_packagejson>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "JSONValue"), JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
+            __gotots_logical_result_8 = JSONValue__from_packagejson.IsPresent(new $ProjectedPropertyLocation(__gotots_store_20, "JSONValue", JSONValue__from_packagejson.$fromStorage, JSONValue__from_packagejson.$storageOf));
         }
         if (__gotots_logical_result_8) {
             let entrypoints = resolutionState.$go$private$__go_module$loadEntrypointsFromExportMap(state, packageJson, packageName, ExportsOrImports__from_packagejson.$copy(((packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Fields.PathFields.Exports));
@@ -2597,7 +2613,7 @@ export class Resolver {
     static ResolveModuleName(r: {
         value: Resolver;
     } | undefined, moduleName: gostring, containingFile: gostring, resolutionMode: ModuleKind__from_core, redirectedReference: ResolvedProjectReference | undefined): [
-        tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined,
+        ResolvedModule | undefined,
         RuntimeSlice<DiagAndArgs$Storage>
     ] {
         let containingDirectory = GetDirectoryPath__from_tspath(containingFile);
@@ -2612,7 +2628,7 @@ export class Resolver {
             {
                 const __gotots_store_0: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
                 const __gotots_results_0 = moduleResolutionCache.Get(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "moduleResolutionCache"), moduleResolutionCacheKey.$copy(cacheKey));
-                let cached: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = __gotots_results_0[0];
+                let cached: ResolvedModule | undefined = __gotots_results_0[0];
                 let ok = __gotots_results_0[1];
                 if (ok) {
                     return [cached, RuntimeSlice.nil<DiagAndArgs$Storage>()];
@@ -2637,7 +2653,7 @@ export class Resolver {
                 tracer.$go$private$__go_module$write(traceBuilder, $state__diagnostics.Explicitly_specified_module_resolution_kind_Colon_0, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(ModuleResolutionKind_String__from_core(moduleResolution))]));
             }
         }
-        let result: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = void 0;
+        let result: ResolvedModule | undefined = void 0;
         switch (moduleResolution) {
             case ModuleResolutionKindNode16$constant__from_core():
             case ModuleResolutionKindNodeNext$constant__from_core():
@@ -2654,32 +2670,32 @@ export class Resolver {
         }
         if (!(traceBuilder === undefined)) {
             if (ResolvedModule.IsResolved(result)) {
-                if (PackageId.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.PackageId).Name !== "") {
+                if (PackageId.$storageOf((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId).Name !== "") {
                     const __gotots_receiver_3 = traceBuilder;
                     const __gotots_argument_7 = $state__diagnostics.Module_name_0_was_successfully_resolved_to_1_with_Package_ID_2;
                     const __gotots_argument_4 = new GoInterfaceAdapter(moduleName);
-                    const __gotots_argument_5 = new GoInterfaceAdapter(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName);
-                    const __gotots_store_1 = ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value;
+                    const __gotots_argument_5 = new GoInterfaceAdapter((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName);
+                    const __gotots_store_1 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                     const __gotots_argument_6 = new GoInterfaceAdapter(PackageId.String(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "PackageId")));
                     const __gotots_argument_8 = RuntimeSlice.literal<GoInterface | undefined>([__gotots_argument_4, __gotots_argument_5, __gotots_argument_6]);
                     tracer.$go$private$__go_module$write(__gotots_receiver_3, __gotots_argument_7, __gotots_argument_8);
                 }
                 else {
-                    tracer.$go$private$__go_module$write(traceBuilder, $state__diagnostics.Module_name_0_was_successfully_resolved_to_1, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(moduleName), new GoInterfaceAdapter(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName)]));
+                    tracer.$go$private$__go_module$write(traceBuilder, $state__diagnostics.Module_name_0_was_successfully_resolved_to_1, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(moduleName), new GoInterfaceAdapter((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName)]));
                 }
             }
             else {
                 tracer.$go$private$__go_module$write(traceBuilder, $state__diagnostics.Module_name_0_was_not_resolved, RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter(moduleName)]));
             }
         }
-        let finalResult: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = Resolver.$go$private$__go_module$tryResolveFromTypingsLocation(r, moduleName, containingDirectory, result, traceBuilder);
+        let finalResult: ResolvedModule | undefined = Resolver.$go$private$__go_module$tryResolveFromTypingsLocation(r, moduleName, containingDirectory, result, traceBuilder);
         const __gotots_store_2: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
         moduleResolutionCache.Set(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "moduleResolutionCache"), moduleResolutionCacheKey.$copy(cacheKey), finalResult);
         return [finalResult, tracer.$go$private$__go_module$getTraces(traceBuilder)];
     }
     static ResolvePackageDirectory(r: {
         value: Resolver;
-    } | undefined, moduleName: gostring, containingFile: gostring, resolutionMode: ModuleKind__from_core, redirectedReference: ResolvedProjectReference | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    } | undefined, moduleName: gostring, containingFile: gostring, resolutionMode: ModuleKind__from_core, redirectedReference: ResolvedProjectReference | undefined): ResolvedModule | undefined {
         let compilerOptions: {
             value: CompilerOptions__from_core;
         } | undefined = GetCompilerOptionsWithRedirect((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerOptions, redirectedReference);
@@ -2697,7 +2713,7 @@ export class Resolver {
     static ResolveTypeReferenceDirective(r: {
         value: Resolver;
     } | undefined, typeReferenceDirectiveName: gostring, containingFile: gostring, resolutionMode: ModuleKind__from_core, redirectedReference: ResolvedProjectReference | undefined): [
-        tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined,
+        ResolvedTypeReferenceDirective | undefined,
         RuntimeSlice<DiagAndArgs$Storage>
     ] {
         let containingDirectory = GetDirectoryPath__from_tspath(containingFile);
@@ -2714,7 +2730,7 @@ export class Resolver {
             {
                 const __gotots_store_4: Resolver["caches"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.caches;
                 const __gotots_results_1 = typeRefDirectiveResolutionCache.Get(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "typeRefDirectiveResolutionCache"), typeRefDirectiveResolutionCacheKey.$copy(cacheKey));
-                let cached: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined = __gotots_results_1[0];
+                let cached: ResolvedTypeReferenceDirective | undefined = __gotots_results_1[0];
                 let ok = __gotots_results_1[1];
                 if (ok) {
                     return [cached, RuntimeSlice.nil<DiagAndArgs$Storage>()];
@@ -2735,7 +2751,7 @@ export class Resolver {
             tracer.$go$private$__go_module$traceResolutionUsingProjectReference(traceBuilder, redirectedReference);
         }
         let state: resolutionState | undefined = newResolutionState(typeReferenceDirectiveName, containingDirectory, true, resolutionMode, compilerOptions, redirectedReference, r, traceBuilder);
-        let result: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective> | undefined = resolutionState.$go$private$__go_module$resolveTypeReferenceDirective(state, typeRoots, fromConfig, fromInferredTypesContainingFile);
+        let result: ResolvedTypeReferenceDirective | undefined = resolutionState.$go$private$__go_module$resolveTypeReferenceDirective(state, typeRoots, fromConfig, fromInferredTypesContainingFile);
         if (!(traceBuilder === undefined)) {
             tracer.$go$private$__go_module$traceTypeReferenceDirectiveResult(traceBuilder, typeReferenceDirectiveName, result);
         }
@@ -2780,7 +2796,7 @@ export class Resolver {
     }
     static $go$private$__go_module$resolveConfig(r: {
         value: Resolver;
-    } | undefined, moduleName: gostring, containingFile: gostring): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+    } | undefined, moduleName: gostring, containingFile: gostring): ResolvedModule | undefined {
         let containingDirectory = GetDirectoryPath__from_tspath(containingFile);
         let state: resolutionState | undefined = newResolutionState(moduleName, containingDirectory, false, ModuleKindCommonJS$constant__from_core(), (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerOptions, void 0, r, void 0);
         (state ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isConfigLookup = true;
@@ -2789,8 +2805,8 @@ export class Resolver {
     }
     static $go$private$__go_module$tryResolveFromTypingsLocation(r: {
         value: Resolver;
-    } | undefined, moduleName: gostring, containingDirectory: gostring, originalResult: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined, traceBuilder: tracer | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
-        if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation === "" || IsExternalModuleNameRelative__from_tspath(moduleName) || (((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolvedFileName !== "" && ExtensionIsOneOf__from_tspath(((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.Extension, $state__tspath.SupportedTSExtensionsWithJsonFlat))) {
+    } | undefined, moduleName: gostring, containingDirectory: gostring, originalResult: ResolvedModule | undefined, traceBuilder: tracer | undefined): ResolvedModule | undefined {
+        if ((r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.typingsLocation === "" || IsExternalModuleNameRelative__from_tspath(moduleName) || ((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName !== "" && ExtensionIsOneOf__from_tspath((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Extension, $state__tspath.SupportedTSExtensionsWithJsonFlat))) {
             return originalResult;
         }
         let state: resolutionState | undefined = newResolutionState(moduleName, containingDirectory, false, ModuleKindNone$constant__from_core(), (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.compilerOptions, void 0, r, traceBuilder);
@@ -2801,8 +2817,8 @@ export class Resolver {
         if (globalResolved === undefined) {
             return originalResult;
         }
-        let result: tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined = resolutionState.$go$private$__go_module$createResolvedModule(state, globalResolved, true);
-        ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolutionDiagnostics = goSliceAppendSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>(((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolutionDiagnostics, ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule>).value.ResolutionDiagnostics, void 0);
+        let result: ResolvedModule | undefined = resolutionState.$go$private$__go_module$createResolvedModule(state, globalResolved, true);
+        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolutionDiagnostics = goSliceAppendSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>((originalResult ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolutionDiagnostics, (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolutionDiagnostics, void 0);
         return result;
     }
 }
@@ -3090,7 +3106,7 @@ export function matchesPatternWithTrailer(target: gostring, name: gostring): boo
 export function extensionIsOk(extensions__shadow_1: extensions, extension: gostring): bool {
     return (!((extensions__shadow_1 & extensionsJavaScript$constant()) === 0) && (extension === ExtensionJs$string__from_tspath || extension === ExtensionJsx$string__from_tspath || extension === ExtensionMjs$string__from_tspath || extension === ExtensionCjs$string__from_tspath) || (!((extensions__shadow_1 & extensionsTypeScript$constant()) === 0) && (extension === ExtensionTs$string__from_tspath || extension === ExtensionTsx$string__from_tspath || extension === ExtensionMts$string__from_tspath || extension === ExtensionCts$string__from_tspath)) || (!((extensions__shadow_1 & extensionsDeclaration$constant()) === 0) && (extension === ExtensionDts$string__from_tspath || extension === ExtensionDmts$string__from_tspath || extension === ExtensionDcts$string__from_tspath)) || (!((extensions__shadow_1 & extensionsJson$constant()) === 0) && extension === ExtensionJson$string__from_tspath));
 }
-export function ResolveConfig(moduleName: gostring, containingFile: gostring, host: ResolutionHost | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule> | undefined {
+export function ResolveConfig(moduleName: gostring, containingFile: gostring, host: ResolutionHost | undefined): ResolvedModule | undefined {
     const __gotots_argument_12 = host;
     const __gotots_field_2 = ModuleResolutionKindNodeNext$constant__from_core();
     const __gotots_struct_0 = CompilerOptions__from_core.$zero();

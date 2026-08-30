@@ -21,6 +21,24 @@ import { goUint64 } from "@gotots/runtime/integer.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function init(): void {
     if (false) {
         const __gotots_argument_49 = new GoInterfaceAdapter(fmt__from_gostdlib.Sprintf("KindLastUnaryOperator (%d) exceeds the 6-bit commonData capacity (max 63)", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$Named_ast$Kind(KindLastUnaryOperator$constant__from_ast())])));
@@ -66,10 +84,10 @@ export class NodeIndexTable {
     public constructor(public Nodes: RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public sortedOnce: sync__from_gostdlib.Once, public sortedIdx: RuntimeSlice<uint32>) {
     }
     declare private readonly then?: never;
-    static GetIndex(t: NodeIndexTable | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): uint32 {
-        sync__from_gostdlib.Once.Do((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sortedOnce, (): void => {
-            let idx = RuntimeSlice.make<uint32>(0, (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes.length, 0);
-            const __gotots_range_6 = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes;
+    static GetIndex(t: tsonicTypeScriptRuntime.Location<NodeIndexTable> | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): uint32 {
+        sync__from_gostdlib.Once.Do(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.sortedOnce, (): void => {
+            let idx = RuntimeSlice.make<uint32>(0, ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.Nodes.length, 0);
+            const __gotots_range_6 = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.Nodes;
             for (let __gotots_range_index_6 = 0; __gotots_range_index_6 < __gotots_range_6.length; __gotots_range_index_6++) {
                 const __gotots_range_value_6 = __gotots_range_index_6;
                 const __gotots_range_value_7 = __gotots_range_6.get(__gotots_range_index_6);
@@ -79,25 +97,25 @@ export class NodeIndexTable {
                     idx = idx.append(0, [i__shadow_1 >>> 0]);
                 }
             }
-            let nodes = (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes;
+            let nodes = ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.Nodes;
             SortFunc$SliceOf_uint32$uint32(idx, (a: uint32, b: uint32): int => {
                 return Compare$Named_ast$NodeId(GetNodeId__from_ast(nodes.get(a)), GetNodeId__from_ast(nodes.get(b)));
             });
-            (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sortedIdx = idx;
+            ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.sortedIdx = idx;
         });
         let target = GetNodeId__from_ast(node);
-        const __gotots_results_1 = BinarySearchUniqueFunc$SliceOf_uint32$uint32((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sortedIdx, ($0: int, el: uint32): int => {
-            return Compare$Named_ast$NodeId(GetNodeId__from_ast((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Nodes.get(el)), target);
+        const __gotots_results_1 = BinarySearchUniqueFunc$SliceOf_uint32$uint32(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.sortedIdx, ($0: int, el: uint32): int => {
+            return Compare$Named_ast$NodeId(GetNodeId__from_ast(((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.Nodes.get(el)), target);
         });
         let i = __gotots_results_1[0];
         let found = __gotots_results_1[1];
         if (found) {
-            return (t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).sortedIdx.get(i);
+            return ((t ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<NodeIndexTable>).value.sortedIdx.get(i);
         }
         return 0;
     }
 }
-export function BuildNodeIndexTable(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): NodeIndexTable | undefined {
+export function BuildNodeIndexTable(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): tsonicTypeScriptRuntime.Location<NodeIndexTable> | undefined {
     let nodeCount = 0;
     let nodeTable = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>(1, ((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeCount + 1, void 0);
     let visitor: {
@@ -119,7 +137,7 @@ export function BuildNodeIndexTable(sourceFile: tsonicTypeScriptRuntime.Location
                 ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Nodes.length > 0) {
                 const __gotots_callee_9 = (visitor__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Hooks.VisitNodes;
                 const __gotots_store_2 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_39 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_39 = new $ProjectedPropertyLocation(__gotots_store_2, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_40 = visitor__shadow_1;
                 (__gotots_callee_9 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_39, __gotots_argument_40);
             }
@@ -140,7 +158,7 @@ export function BuildNodeIndexTable(sourceFile: tsonicTypeScriptRuntime.Location
         return node;
     };
     const __gotots_store_3 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    let rootNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    let rootNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_3, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     nodeCount++;
     nodeTable = nodeTable.append(void 0, [rootNode]);
     NodeVisitor__from_ast.VisitEachChild(visitor, rootNode);
@@ -152,28 +170,28 @@ export function BuildNodeIndexTable(sourceFile: tsonicTypeScriptRuntime.Location
         const __gotots_argument_42 = jsdoc;
         (__gotots_callee_11 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_42);
     }
-    return new NodeIndexTable(nodeTable, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.nil<uint32>());
+    return tsonicTypeScriptRuntime.location<NodeIndexTable>(new NodeIndexTable(nodeTable, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.nil<uint32>()));
 }
 export function EncodeSourceFile(sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
     RuntimeSlice<uint8>,
-    NodeIndexTable | undefined,
+    tsonicTypeScriptRuntime.Location<NodeIndexTable> | undefined,
     GoInterface | undefined
 ] {
     const __gotots_store_0 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-    const __gotots_argument_0 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+    const __gotots_argument_0 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_0, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     const __gotots_argument_1 = sourceFile;
     return encodeTree(__gotots_argument_0, __gotots_argument_1);
 }
 export function EncodeNode(node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
     RuntimeSlice<uint8>,
-    NodeIndexTable | undefined,
+    tsonicTypeScriptRuntime.Location<NodeIndexTable> | undefined,
     GoInterface | undefined
 ] {
     return encodeTree(node, sourceFile);
 }
 export function encodeTree(rootNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined): [
     RuntimeSlice<uint8>,
-    NodeIndexTable | undefined,
+    tsonicTypeScriptRuntime.Location<NodeIndexTable> | undefined,
     GoInterface | undefined
 ] {
     let parentIndex = 0, nodeCount = 0, prevIndex = 0;
@@ -289,7 +307,7 @@ export function encodeTree(rootNode: tsonicTypeScriptRuntime.Location<Node__from
                 ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value).NodeList)).Nodes.length > 0) {
                 const __gotots_callee_2 = (visitor__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Hooks.VisitNodes;
                 const __gotots_store_1 = ModifierList__from_ast.$storageOf(((modifiers ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList__from_ast>).value);
-                const __gotots_argument_13 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "NodeList"), NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
+                const __gotots_argument_13 = new $ProjectedPropertyLocation(__gotots_store_1, "NodeList", NodeList__from_ast.$fromStorage, NodeList__from_ast.$storageOf);
                 const __gotots_argument_14 = visitor__shadow_1;
                 (__gotots_callee_2 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_13, __gotots_argument_14);
             }
@@ -417,7 +435,7 @@ export function encodeTree(rootNode: tsonicTypeScriptRuntime.Location<Node__from
     let headerBytes = RuntimeSlice.nil<uint8>(), strsBytes = RuntimeSlice.nil<uint8>();
     headerBytes = appendUint32s(RuntimeSlice.nil<uint8>(), header);
     strsBytes = stringTable.$go$private$encoder$encode(strs);
-    return [Concat$SliceOf_byte$byte(RuntimeSlice.literal<RuntimeSlice<uint8>>([headerBytes, strsBytes, extendedData, structuredData, nodes])), new NodeIndexTable(nodeTable, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.nil<uint32>()), void 0];
+    return [Concat$SliceOf_byte$byte(RuntimeSlice.literal<RuntimeSlice<uint8>>([headerBytes, strsBytes, extendedData, structuredData, nodes])), tsonicTypeScriptRuntime.location<NodeIndexTable>(new NodeIndexTable(nodeTable, named_sync.SyncOnceOperations.$zero(), RuntimeSlice.nil<uint32>())), void 0];
 }
 export function appendUint32s(buf: RuntimeSlice<uint8>, values: RuntimeSlice<uint32>): RuntimeSlice<uint8> {
     const __gotots_range_7 = values;
@@ -464,10 +482,10 @@ export function recordExtendedData_SourceFile(node: tsonicTypeScriptRuntime.Loca
             NodeBase__from_ast.$storageOf(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault)).Node)).Kind;
     const __gotots_store_4 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         NodeBase__from_ast.$storageOf(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_47 = Node__from_ast.Pos(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_argument_47 = Node__from_ast.Pos(new $ProjectedPropertyLocation(__gotots_store_4, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     const __gotots_store_5 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         NodeBase__from_ast.$storageOf(((sf ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase).NodeDefault));
-    const __gotots_argument_48 = Node__from_ast.End(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    const __gotots_argument_48 = Node__from_ast.End(new $ProjectedPropertyLocation(__gotots_store_5, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     let textIndex = stringTable.$go$private$encoder$add(__gotots_receiver_0, __gotots_argument_45, __gotots_argument_46, __gotots_argument_47, __gotots_argument_48);
     let fileNameIndex = stringTable.$go$private$encoder$add(strs, SourceFile__from_ast.FileName(sf), 0, 0, 0);
     let pathIndex = stringTable.$go$private$encoder$add(strs, SourceFile__from_ast.Path(sf).$value, 0, 0, 0);

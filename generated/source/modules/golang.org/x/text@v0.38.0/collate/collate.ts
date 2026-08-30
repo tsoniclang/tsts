@@ -15,6 +15,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoArray, goArrayLocation } from "@gotots/runtime/array.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { goArraySlice, goSliceAllocate } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class Collator {
     declare private readonly $goType: void;
     public constructor(public options: options, public sorter: sorter, public _iter: GoArray<iter$Storage, 2>) {
@@ -22,9 +40,9 @@ export class Collator {
     declare private readonly then?: never;
     static CompareString(c: Collator | undefined, a: gostring, b: gostring): int {
         const __gotots_store_2 = iter.$storageOf(((Collator.$go$private$collate$iter(c, 0) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), a);
+        Iter__from_colltab.SetInputString(new $ProjectedPropertyLocation(__gotots_store_2, "Iter", Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), a);
         const __gotots_store_3 = iter.$storageOf(((Collator.$go$private$collate$iter(c, 1) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-        Iter__from_colltab.SetInputString(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), b);
+        Iter__from_colltab.SetInputString(new $ProjectedPropertyLocation(__gotots_store_3, "Iter", Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf), b);
         {
             let res = Collator.$go$private$collate$compare(c);
             if (res !== 0) {
@@ -259,7 +277,7 @@ export class iter {
                 }
             }
             const __gotots_store_9 = iter.$storageOf(((i ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<iter>).value);
-            if (!Iter__from_colltab.Next(tsonicTypeScriptRuntime.projectLocation<Iter__from_colltab$Storage, Iter__from_colltab>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "Iter"), Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf))) {
+            if (!Iter__from_colltab.Next(new $ProjectedPropertyLocation(__gotots_store_9, "Iter", Iter__from_colltab.$fromStorage, Iter__from_colltab.$storageOf))) {
                 return 0;
             }
         }

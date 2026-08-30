@@ -33,9 +33,7 @@ export class compilerHost {
         value: sourceFS;
     } | undefined, public configFileRegistry: {
         value: ConfigFileRegistry;
-    } | undefined, public project: {
-        value: Project;
-    } | undefined, public builder: {
+    } | undefined, public project: tsonicTypeScriptRuntime.Location<Project> | undefined, public builder: {
         value: ProjectCollectionBuilder;
     } | undefined, public logger: {
         value: LogTree__from_logging;
@@ -55,9 +53,7 @@ export class compilerHost {
             $left.configFileRegistry
                 ===
                     $right.configFileRegistry &&
-            $left.project
-                ===
-                    $right.project &&
+            tsonicTypeScriptRuntime.sameLocation($left.project, $right.project) &&
             $left.builder
                 ===
                     $right.builder &&
@@ -72,9 +68,9 @@ export class compilerHost {
         $hash = GoMapHash.mix($hash, (($pointer: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer)))($source.sessionOptions));
         $hash = GoMapHash.mix($hash, (($pointer2: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer2 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer2)))($source.sourceFS));
         $hash = GoMapHash.mix($hash, (($pointer3: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer3 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer3)))($source.configFileRegistry));
-        $hash = GoMapHash.mix($hash, (($pointer4: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer4 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer4)))($source.project));
-        $hash = GoMapHash.mix($hash, (($pointer5: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer5 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer5)))($source.builder));
-        $hash = GoMapHash.mix($hash, (($pointer6: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer6 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer6)))($source.logger));
+        $hash = GoMapHash.mix($hash, tsonicTypeScriptRuntime.hashLocation($source.project));
+        $hash = GoMapHash.mix($hash, (($pointer4: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer4 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer4)))($source.builder));
+        $hash = GoMapHash.mix($hash, (($pointer5: object | undefined) => tsonicTypeScriptRuntime.hashRawPointer($pointer5 === void 0 ? void 0 : tsonicTypeScriptRuntime.rawPointer($pointer5)))($source.logger));
         return $hash;
     }
     declare private readonly then?: never;
@@ -156,14 +152,12 @@ export class compilerHost {
         (c ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.logger = void 0;
     }
 }
-export function newCompilerHost(currentDirectory: gostring, project: {
-    value: Project;
-} | undefined, builder: {
+export function newCompilerHost(currentDirectory: gostring, project: tsonicTypeScriptRuntime.Location<Project> | undefined, builder: {
     value: ProjectCollectionBuilder;
 } | undefined, logger: {
     value: LogTree__from_logging;
 } | undefined): {
     value: compilerHost;
 } | undefined {
-    return { value: new compilerHost((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath, currentDirectory, (builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions, newSourceFS(true, new $goInterfaceAdapter$PointerTo_Named_project$snapshotFSBuilder((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs), (builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath), void 0, project, builder, logger) };
+    return { value: new compilerHost(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.configFilePath, currentDirectory, (builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sessionOptions, newSourceFS(true, new $goInterfaceAdapter$PointerTo_Named_project$snapshotFSBuilder((builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs), (builder ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath), void 0, project, builder, logger) };
 }

@@ -31,6 +31,24 @@ import { goInt64 } from "@gotots/runtime/integer.js";
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export interface Marshaler extends GoInterfaceValue {
     MarshalJSON(): [
         RuntimeSlice<uint8>,
@@ -270,7 +288,7 @@ export function makeMethodArshaler(fncs: arshaler | undefined, t: reflect__from_
                 let prevDepth = __gotots_results_9[0];
                 let prevLength = __gotots_results_9[1];
                 const __gotots_store_0 = Struct__from_jsonopts.$storageOf(((xe ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState__from_jsontext>).value.Struct);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(9n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_0, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(9n));
                 const __gotots_results_10 = (($value: $goInterface$Interface_void | undefined): [
                     MarshalerTo | undefined,
                     boolean
@@ -285,7 +303,7 @@ export function makeMethodArshaler(fncs: arshaler | undefined, t: reflect__from_
                 const __gotots_argument_27 = enc;
                 let err: GoInterface | undefined = goInterfaceNonNil<MarshalerTo>(__gotots_receiver_7).MarshalJSONTo(__gotots_argument_27);
                 const __gotots_store_1 = Struct__from_jsonopts.$storageOf(((xe ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState__from_jsontext>).value.Struct);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(8n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_1, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(8n));
                 const __gotots_results_11 = ((xe ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<encoderState__from_jsontext>).value.state.Tokens.DepthLength();
                 let currDepth = __gotots_results_11[0];
                 let currLength = __gotots_results_11[1];
@@ -444,7 +462,7 @@ export function makeMethodArshaler(fncs: arshaler | undefined, t: reflect__from_
                     return GoProviderInterfaceBridge.$from(io__from_gostdlib.state.EOF);
                 }
                 const __gotots_store_2 = Struct__from_jsonopts.$storageOf(((xd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<decoderState__from_jsontext>).value.Struct);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(9n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_2, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(9n));
                 const __gotots_results_20 = (($value: $goInterface$Interface_void | undefined): [
                     UnmarshalerFrom | undefined,
                     boolean
@@ -459,7 +477,7 @@ export function makeMethodArshaler(fncs: arshaler | undefined, t: reflect__from_
                 const __gotots_argument_44 = dec;
                 let err: GoInterface | undefined = goInterfaceNonNil<UnmarshalerFrom>(__gotots_receiver_10).UnmarshalJSONFrom(__gotots_argument_44);
                 const __gotots_store_3 = Struct__from_jsonopts.$storageOf(((xd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<decoderState__from_jsontext>).value.Struct);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(8n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_3, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(8n));
                 const __gotots_results_21 = ((xd ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<decoderState__from_jsontext>).value.state.Tokens.DepthLength();
                 let currDepth = __gotots_results_21[0];
                 let currLength = __gotots_results_21[1];

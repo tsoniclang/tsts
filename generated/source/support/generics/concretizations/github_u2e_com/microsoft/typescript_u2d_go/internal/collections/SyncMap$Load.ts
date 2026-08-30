@@ -37,60 +37,60 @@ import { $goInterface$Interface_Method_fs$IsDir_void_to_bool_Method_fs$ModTime_v
 import * as named_time from "@gotots/gostdlib/internal/facets/named-time.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
-export function SyncMap$Load$Named___go_module$ModeAwareCacheKey$PointerTo_Named___go_module$ResolvedModule($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined, $argument1: ModeAwareCacheKey__from___go_module): [
-    tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined,
+export function SyncMap$Load$Named___go_module$ModeAwareCacheKey$PointerTo_Named___go_module$ResolvedModule($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined, $argument1: ModeAwareCacheKey__from___go_module): [
+    ResolvedModule__from___go_module | undefined,
     bool
 ] {
-    return SyncMap__from_collections.Load$kernel<ModeAwareCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    return SyncMap__from_collections.Load$kernel<ModeAwareCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>($argument0, ($argument0: ResolvedModule__from___go_module | undefined): ResolvedModule__from___go_module | undefined => {
         return $argument0;
     }, ($argument0: ModeAwareCacheKey__from___go_module): GoInterface | undefined => {
         return new GoInterfaceAdapter(ModeAwareCacheKey__from___go_module.$copy($argument0));
-    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
-        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): ResolvedModule__from___go_module | undefined => {
+        return (($value: GoInterfaceValue | undefined): ResolvedModule__from___go_module | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named___go_module$ResolvedModule.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, (): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    }, (): ResolvedModule__from___go_module | undefined => {
         return void 0;
     }, $argument1);
 }
-export function SyncMap$Load$Named___go_module$moduleResolutionCacheKey$PointerTo_Named___go_module$ResolvedModule($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<moduleResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>> | undefined, $argument1: moduleResolutionCacheKey__from___go_module): [
-    tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined,
+export function SyncMap$Load$Named___go_module$moduleResolutionCacheKey$PointerTo_Named___go_module$ResolvedModule($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<moduleResolutionCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>> | undefined, $argument1: moduleResolutionCacheKey__from___go_module): [
+    ResolvedModule__from___go_module | undefined,
     bool
 ] {
-    return SyncMap__from_collections.Load$kernel<moduleResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    return SyncMap__from_collections.Load$kernel<moduleResolutionCacheKey__from___go_module, ResolvedModule__from___go_module | undefined>($argument0, ($argument0: ResolvedModule__from___go_module | undefined): ResolvedModule__from___go_module | undefined => {
         return $argument0;
     }, ($argument0: moduleResolutionCacheKey__from___go_module): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named___go_module$moduleResolutionCacheKey(moduleResolutionCacheKey__from___go_module.$copy($argument0));
-    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
-        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): ResolvedModule__from___go_module | undefined => {
+        return (($value: GoInterfaceValue | undefined): ResolvedModule__from___go_module | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named___go_module$ResolvedModule.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, (): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined => {
+    }, (): ResolvedModule__from___go_module | undefined => {
         return void 0;
     }, $argument1);
 }
-export function SyncMap$Load$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<typeRefDirectiveResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>> | undefined, $argument1: typeRefDirectiveResolutionCacheKey__from___go_module): [
-    tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined,
+export function SyncMap$Load$Named___go_module$typeRefDirectiveResolutionCacheKey$PointerTo_Named___go_module$ResolvedTypeReferenceDirective($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<typeRefDirectiveResolutionCacheKey__from___go_module, ResolvedTypeReferenceDirective__from___go_module | undefined>> | undefined, $argument1: typeRefDirectiveResolutionCacheKey__from___go_module): [
+    ResolvedTypeReferenceDirective__from___go_module | undefined,
     bool
 ] {
-    return SyncMap__from_collections.Load$kernel<typeRefDirectiveResolutionCacheKey__from___go_module, tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined => {
+    return SyncMap__from_collections.Load$kernel<typeRefDirectiveResolutionCacheKey__from___go_module, ResolvedTypeReferenceDirective__from___go_module | undefined>($argument0, ($argument0: ResolvedTypeReferenceDirective__from___go_module | undefined): ResolvedTypeReferenceDirective__from___go_module | undefined => {
         return $argument0;
     }, ($argument0: typeRefDirectiveResolutionCacheKey__from___go_module): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named___go_module$typeRefDirectiveResolutionCacheKey(typeRefDirectiveResolutionCacheKey__from___go_module.$copy($argument0));
-    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined => {
-        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): ResolvedTypeReferenceDirective__from___go_module | undefined => {
+        return (($value: GoInterfaceValue | undefined): ResolvedTypeReferenceDirective__from___go_module | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named___go_module$ResolvedTypeReferenceDirective.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, (): tsonicTypeScriptRuntime.Location<ResolvedTypeReferenceDirective__from___go_module> | undefined => {
+    }, (): ResolvedTypeReferenceDirective__from___go_module | undefined => {
         return void 0;
     }, $argument1);
 }
@@ -631,38 +631,22 @@ export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_tsoptions$ParsedC
         return void 0;
     }, $argument1);
 }
-export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
-    value: SourceOutputAndProjectReference__from_tsoptions;
-} | undefined>> | undefined, $argument1: Path__from_tspath): [
-    {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined,
+export function SyncMap$Load$Named_tspath$Path$PointerTo_Named_tsoptions$SourceOutputAndProjectReference($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>> | undefined, $argument1: Path__from_tspath): [
+    tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined,
     bool
 ] {
-    return SyncMap__from_collections.Load$kernel<Path__from_tspath, {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined>($argument0, ($argument0: {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined => {
+    return SyncMap__from_collections.Load$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: SourceOutputAndProjectReference__from_tsoptions;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_tsoptions$SourceOutputAndProjectReference.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, (): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined => {
         return void 0;
     }, $argument1);
 }
@@ -866,38 +850,22 @@ export function SyncMap$Load$string$PointerTo_Named_ata$CachedTyping($argument0:
         return void 0;
     }, $argument1);
 }
-export function SyncMap$Load$string$PointerTo_Named_compiler$LibFile($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<gostring, {
-    value: LibFile__from_compiler;
-} | undefined>> | undefined, $argument1: gostring): [
-    {
-        value: LibFile__from_compiler;
-    } | undefined,
+export function SyncMap$Load$string$PointerTo_Named_compiler$LibFile($argument0: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<gostring, tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined>> | undefined, $argument1: gostring): [
+    tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined,
     bool
 ] {
-    return SyncMap__from_collections.Load$kernel<gostring, {
-        value: LibFile__from_compiler;
-    } | undefined>($argument0, ($argument0: {
-        value: LibFile__from_compiler;
-    } | undefined): {
-        value: LibFile__from_compiler;
-    } | undefined => {
+    return SyncMap__from_collections.Load$kernel<gostring, tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined): tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined => {
         return $argument0;
     }, ($argument0: gostring): GoInterface | undefined => {
         return new $goInterfaceAdapter$string($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: LibFile__from_compiler;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: LibFile__from_compiler;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_compiler$LibFile.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, (): {
-        value: LibFile__from_compiler;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<LibFile__from_compiler> | undefined => {
         return void 0;
     }, $argument1);
 }

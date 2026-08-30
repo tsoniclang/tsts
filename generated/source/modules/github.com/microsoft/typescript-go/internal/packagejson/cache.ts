@@ -26,6 +26,24 @@ import * as sync__from_gostdlib from "@gotots/gostdlib/sync.js";
 import { GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class PackageJson {
     declare private readonly $goType: void;
     public constructor(public Fields: Fields, public Parseable: bool, public versionPaths: VersionPaths, public versionTraces: RuntimeSlice<diagnosticAndArgs$Storage>, public once: sync__from_gostdlib.Once) {
@@ -183,7 +201,7 @@ export class PackageJson {
                     __gotots_range_state_0 = 1;
                     return true;
                 }
-                if (VersionRange__from_semver.Test(keyRange, tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version__from_semver>(tsonicTypeScriptRuntime.propertyLocation($state, "typeScriptVersion"), Version__from_semver.$fromStorage, Version__from_semver.$storageOf))) {
+                if (VersionRange__from_semver.Test(keyRange, new $ProjectedPropertyLocation($state, "typeScriptVersion", Version__from_semver.$fromStorage, Version__from_semver.$storageOf))) {
                     if (!(JSONValue.$storageOf(value).Type === JSONValueTypeObject$constant())) {
                         const __gotots_slice_build_16: PackageJson["versionTraces"] = (p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.versionTraces;
                         const __gotots_slice_build_18 = __gotots_slice_build_16.length + 1;

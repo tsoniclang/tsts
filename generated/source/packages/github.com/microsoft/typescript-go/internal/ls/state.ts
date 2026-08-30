@@ -13,14 +13,14 @@ export class $PackageState {
     declare ErrNeedsAutoImports: GoInterface | undefined;
     declare ErrNoSourceFile: GoInterface | undefined;
     declare ErrNoTokenAtPosition: GoInterface | undefined;
-    declare FixClassIncorrectlyImplementsInterfaceProvider: CodeFixProvider | undefined;
-    declare ImportFixProvider: CodeFixProvider | undefined;
-    declare IsolatedDeclarationsFixProvider: CodeFixProvider | undefined;
+    declare FixClassIncorrectlyImplementsInterfaceProvider: tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined;
+    declare ImportFixProvider: tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined;
+    declare IsolatedDeclarationsFixProvider: tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined;
     declare TriggerCharacters: RuntimeSlice<gostring>;
     declare allCommitCharacters: RuntimeSlice<gostring>;
     declare allKeywordCompletions: (() => RuntimeSlice<tsonicTypeScriptRuntime.Location<CompletionItem__from_lsproto> | undefined>) | undefined;
     declare canHaveTypeAnnotationKinds: GoMapValue<Kind__from_ast, bool>;
-    declare codeFixProviders: RuntimeSlice<CodeFixProvider | undefined>;
+    declare codeFixProviders: RuntimeSlice<tsonicTypeScriptRuntime.Location<CodeFixProvider> | undefined>;
     declare declarationEmitNodeBuilderFlags: uint32;
     declare emptyCommitCharacters: RuntimeSlice<gostring>;
     declare fixClassIncorrectlyImplementsInterfaceErrorCodes: RuntimeSlice<int32>;

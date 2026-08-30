@@ -62,6 +62,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAddress, goSliceAllocate, goSliceAppendSlice, goSliceClear } from "@gotots/runtime/slice.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export const optimizeCommon$bool: bool = true;
 export const startDetectingCyclesAfter$int: int = 1000;
 export class typedPointer {
@@ -319,7 +337,7 @@ export function makeStringArshaler(t: reflect__from_gostdlib.Type | undefined): 
             }
             const __gotots_argument_1 = __gotots_conversion_1;
             const __gotots_store_1 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-            const __gotots_argument_2 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+            const __gotots_argument_2 = new $ProjectedPropertyLocation(__gotots_store_1, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
             const __gotots_results_1 = AppendQuote__from_jsonwire(__gotots_argument_0, __gotots_argument_1, __gotots_argument_2);
             b = __gotots_results_1[0];
             let err: GoInterface | undefined = __gotots_results_1[1];
@@ -342,7 +360,7 @@ export function makeStringArshaler(t: reflect__from_gostdlib.Type | undefined): 
             }
             const __gotots_argument_4 = __gotots_conversion_4;
             const __gotots_store_3 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-            const __gotots_argument_5 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+            const __gotots_argument_5 = new $ProjectedPropertyLocation(__gotots_store_3, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
             const __gotots_results_2 = AppendQuote__from_jsonwire(__gotots_argument_3, __gotots_argument_4, __gotots_argument_5);
             let b = __gotots_results_2[0];
             let err: GoInterface | undefined = __gotots_results_2[1];
@@ -491,7 +509,7 @@ export function makeBytesArshaler(t: reflect__from_gostdlib.Type | undefined, fn
                         }
                         case "array": {
                             const __gotots_store_26 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                            Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), FormatTag$constant__from_jsonflags());
+                            Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_26, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), FormatTag$constant__from_jsonflags());
                             const __gotots_callee_20 = marshalArray;
                             const __gotots_argument_120 = enc;
                             const __gotots_argument_121 = addressableValue.$copy(va);
@@ -599,7 +617,7 @@ export function makeBytesArshaler(t: reflect__from_gostdlib.Type | undefined, fn
                         }
                         case "array": {
                             const __gotots_store_27 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                            Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_27, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), FormatTag$constant__from_jsonflags());
+                            Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_27, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), FormatTag$constant__from_jsonflags());
                             const __gotots_callee_25 = unmarshalArray;
                             const __gotots_argument_134 = dec;
                             const __gotots_argument_135 = addressableValue.$copy(va);
@@ -2129,7 +2147,7 @@ export function makeStructArshaler(t: reflect__from_gostdlib.Type | undefined): 
                     }
                     const __gotots_argument_90 = __gotots_conversion_42;
                     const __gotots_store_13 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                    const __gotots_argument_91 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+                    const __gotots_argument_91 = new $ProjectedPropertyLocation(__gotots_store_13, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                     const __gotots_results_30 = AppendQuote__from_jsonwire(__gotots_argument_89, __gotots_argument_90, __gotots_argument_91);
                     b = __gotots_results_30[0];
                 }
@@ -2152,12 +2170,12 @@ export function makeStructArshaler(t: reflect__from_gostdlib.Type | undefined): 
             if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                 structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).__go_string) {
                 const __gotots_store_16 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(134217729n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_16, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(134217729n));
             }
             if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                 structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).format !== "") {
                 const __gotots_store_17 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(268435457n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_17, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(268435457n));
                 (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
                     Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format = (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                     structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).format;
@@ -2219,7 +2237,7 @@ export function makeStructArshaler(t: reflect__from_gostdlib.Type | undefined): 
                                 const __gotots_receiver_34 = f;
                                 const __gotots_argument_95 = name;
                                 const __gotots_store_19 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                                const __gotots_argument_96 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+                                const __gotots_argument_96 = new $ProjectedPropertyLocation(__gotots_store_19, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                                 if (structField.$go$private$json$matchFoldedName(__gotots_receiver_34, __gotots_argument_95, __gotots_argument_96)) {
                                     return uintSet.$go$private$json$insert(seenIdxs, globalThis.Number(BigInt.asUintN(64, goNumberToBigInt(structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).id))));
                                 }
@@ -2304,7 +2322,7 @@ export function makeStructArshaler(t: reflect__from_gostdlib.Type | undefined): 
                             const __gotots_receiver_35 = f2;
                             const __gotots_argument_97 = name;
                             const __gotots_store_21 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                            const __gotots_argument_98 = tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
+                            const __gotots_argument_98 = new $ProjectedPropertyLocation(__gotots_store_21, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf);
                             if (structField.$go$private$json$matchFoldedName(__gotots_receiver_35, __gotots_argument_97, __gotots_argument_98)) {
                                 f = f2;
                                 break;
@@ -2362,12 +2380,12 @@ export function makeStructArshaler(t: reflect__from_gostdlib.Type | undefined): 
                     if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                         structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).__go_string) {
                         const __gotots_store_22 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                        Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_22, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(134217729n));
+                        Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_22, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(134217729n));
                     }
                     if ((void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                         structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).format !== "") {
                         const __gotots_store_23 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                        Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(268435457n));
+                        Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_23, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(268435457n));
                         (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
                             Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).ArshalValues)).Format = (void fieldOptions.$storageOf, (void fieldOptions.$fromStorage,
                             structField.$storageOf(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<structField>).value).fieldOptions)).format;
@@ -2956,7 +2974,7 @@ export function makePointerArshaler(t: reflect__from_gostdlib.Type | undefined):
                             break __gotots_return_block_0;
                         }
                         const __gotots_store_30 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                        Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
+                        Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_30, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
                     }
                     if (addressableValue.$storageOf(va).Value.IsNil()) {
                         __gotots_return_0 = Encoder__from_jsontext.WriteToken(enc, Token__from_jsontext.$copy(Token__from_jsontext.$fromStorage($state__jsontext.Null)));
@@ -3044,7 +3062,7 @@ export function makePointerArshaler(t: reflect__from_gostdlib.Type | undefined):
                 return newUnmarshalErrorBeforeWithSkipping(dec, t, $state.errInvalidStringTag);
             }
             const __gotots_store_31 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-            Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
+            Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_31, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
         }
         sync__from_gostdlib.Once.Do(once, init__shadow_1);
         let unmarshal: (($0: tsonicTypeScriptRuntime.Location<Decoder__from_jsontext> | undefined, $1: addressableValue, $2: tsonicTypeScriptRuntime.Location<Struct__from_jsonopts> | undefined) => GoInterface | undefined) | undefined = (valFncs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).unmarshal;
@@ -3123,7 +3141,7 @@ export function makeInterfaceArshaler(t: reflect__from_gostdlib.Type | undefined
                 }
                 if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Get(StringifyWithLegacySemantics$constant__from_jsonflags())) {
                     const __gotots_store_32 = Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                    Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
+                    Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_32, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
                 }
             }
             if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((mo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {
@@ -3255,7 +3273,7 @@ export function makeInterfaceArshaler(t: reflect__from_gostdlib.Type | undefined
                 }
                 if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Get(StringifyWithLegacySemantics$constant__from_jsonflags())) {
                     const __gotots_store_33 = Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value);
-                    Flags__from_jsonflags.Clear(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
+                    Flags__from_jsonflags.Clear(new $ProjectedPropertyLocation(__gotots_store_33, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), StringTag$constant__from_jsonflags());
                 }
             }
             if (Flags__from_jsonflags.$fromStorage(Struct__from_jsonopts.$storageOf(((uo ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Struct__from_jsonopts>).value).Flags).Has(FormatTag$constant__from_jsonflags())) {

@@ -13,18 +13,8 @@ import { ExportsOrImports as ExportsOrImports__from_packagejson } from "../../..
 import { JSONValue as JSONValue__from_packagejson } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/packagejson/jsonvalue.js";
 import { WatcherID as WatcherID__from_project } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/project/watch.js";
 import { Path as Path__from_tspath } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/tspath/path.js";
-export function OrderedMap$Entries$Named_project$WatcherID$PointerTo_Named_lsproto$FileSystemWatcher($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<WatcherID__from_project, {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined>> | undefined): iter.Seq2<WatcherID__from_project, {
-    value: FileSystemWatcher__from_lsproto;
-} | undefined> {
-    return OrderedMap__from_collections.Entries$kernel<WatcherID__from_project, {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined>($argument0, ($argument0: {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined): {
-        value: FileSystemWatcher__from_lsproto;
-    } | undefined => {
+export function OrderedMap$Entries$Named_project$WatcherID$PointerTo_Named_lsproto$FileSystemWatcher($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>> | undefined): iter.Seq2<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined> {
+    return OrderedMap__from_collections.Entries$kernel<WatcherID__from_project, tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined): tsonicTypeScriptRuntime.Location<FileSystemWatcher__from_lsproto> | undefined => {
         return $argument0;
     }, ($argument0: WatcherID__from_project): WatcherID__from_project => {
         return $argument0;
@@ -34,18 +24,8 @@ export function OrderedMap$Entries$Named_project$WatcherID$PointerTo_Named_lspro
         return $argument0.length;
     });
 }
-export function OrderedMap$Entries$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined>> | undefined): iter.Seq2<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined> {
-    return OrderedMap__from_collections.Entries$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+export function OrderedMap$Entries$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined): iter.Seq2<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> {
+    return OrderedMap__from_collections.Entries$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;

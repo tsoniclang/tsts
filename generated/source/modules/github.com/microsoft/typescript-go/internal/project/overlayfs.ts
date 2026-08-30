@@ -125,38 +125,24 @@ export class diskFile {
         return $hash;
     }
     declare private readonly then?: never;
-    static Clone(f: {
-        value: diskFile;
-    } | undefined): {
-        value: diskFile;
-    } | undefined {
-        return { value: new diskFile(new fileBase((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName, (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content, Uint128__from_xxh3.$copy((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.hash), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), false, (f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.realpathPath) };
+    static Clone(f: tsonicTypeScriptRuntime.Location<diskFile> | undefined): tsonicTypeScriptRuntime.Location<diskFile> | undefined {
+        return tsonicTypeScriptRuntime.location<diskFile>(new diskFile(new fileBase(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.fileName, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.content, Uint128__from_xxh3.$copy(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.hash), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), false, ((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.realpathPath));
     }
-    static IsOverlay(f: {
-        value: diskFile;
-    } | undefined): bool {
+    static IsOverlay(f: tsonicTypeScriptRuntime.Location<diskFile> | undefined): bool {
         return false;
     }
-    static Kind(f: {
-        value: diskFile;
-    } | undefined): ScriptKind__from_core {
-        return GetScriptKindFromFileName__from_core((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName);
+    static Kind(f: tsonicTypeScriptRuntime.Location<diskFile> | undefined): ScriptKind__from_core {
+        return GetScriptKindFromFileName__from_core(((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.fileBase.fileName);
     }
-    static MatchesDiskText(f: {
-        value: diskFile;
-    } | undefined): bool {
-        return !(f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.needsReload;
+    static MatchesDiskText(f: tsonicTypeScriptRuntime.Location<diskFile> | undefined): bool {
+        return !((f ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<diskFile>).value.needsReload;
     }
-    static Version(f: {
-        value: diskFile;
-    } | undefined): int32 {
+    static Version(f: tsonicTypeScriptRuntime.Location<diskFile> | undefined): int32 {
         return 0;
     }
 }
-export function newDiskFile(fileName: gostring, content: gostring): {
-    value: diskFile;
-} | undefined {
-    return { value: new diskFile(new fileBase(fileName, content, HashString128__from_xxh3(content), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), false, new Path__from_tspath("")) };
+export function newDiskFile(fileName: gostring, content: gostring): tsonicTypeScriptRuntime.Location<diskFile> | undefined {
+    return tsonicTypeScriptRuntime.location<diskFile>(new diskFile(new fileBase(fileName, content, HashString128__from_xxh3(content), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), false, new Path__from_tspath("")));
 }
 export class Overlay {
     declare private readonly $goType: void;
@@ -177,63 +163,47 @@ export class Overlay {
         return $hash;
     }
     declare private readonly then?: never;
-    static IsOverlay(o: {
-        value: Overlay;
-    } | undefined): bool {
+    static IsOverlay(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined): bool {
         return true;
     }
-    static Kind(o: {
-        value: Overlay;
-    } | undefined): ScriptKind__from_core {
-        return (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+    static Kind(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined): ScriptKind__from_core {
+        return ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.kind;
     }
-    static MatchesDiskText(o: {
-        value: Overlay;
-    } | undefined): bool {
-        return (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText;
+    static MatchesDiskText(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined): bool {
+        return ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.matchesDiskText;
     }
-    static Text(o: {
-        value: Overlay;
-    } | undefined): gostring {
-        return (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content;
+    static Text(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined): gostring {
+        return ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.content;
     }
-    static Version(o: {
-        value: Overlay;
-    } | undefined): int32 {
-        return (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.version;
+    static Version(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined): int32 {
+        return ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.version;
     }
-    static $go$private$project$computeMatchesDiskText(o: {
-        value: Overlay;
-    } | undefined, fs: FS__from_vfs | undefined): [
+    static $go$private$project$computeMatchesDiskText(o: tsonicTypeScriptRuntime.Location<Overlay> | undefined, fs: FS__from_vfs | undefined): [
         bool,
         bool
     ] {
         let matchesDiskText: bool = false;
         let exists: bool = false;
-        if (IsDynamicFileName__from_tspath((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName)) {
+        if (IsDynamicFileName__from_tspath(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.fileName)) {
             return [false, false];
         }
         const __gotots_receiver_2 = fs;
-        const __gotots_argument_14 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName;
+        const __gotots_argument_14 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.fileName;
         const __gotots_results_2 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_2).ReadFile(__gotots_argument_14);
         let diskContent = __gotots_results_2[0];
         let ok = __gotots_results_2[1];
         if (!ok) {
             return [false, false];
         }
-        return [Uint128__from_xxh3.$equal(HashString128__from_xxh3(diskContent), (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.hash), true];
+        return [Uint128__from_xxh3.$equal(HashString128__from_xxh3(diskContent), ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.hash), true];
     }
 }
-export function newOverlay(fileName: gostring, content: gostring, version: int32, kind: ScriptKind__from_core): {
-    value: Overlay;
-} | undefined {
-    return { value: new Overlay(new fileBase(fileName, content, HashString128__from_xxh3(content), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), version, kind, false) };
+export function newOverlay(fileName: gostring, content: gostring, version: int32, kind: ScriptKind__from_core): tsonicTypeScriptRuntime.Location<Overlay> | undefined {
+    return tsonicTypeScriptRuntime.location<Overlay>(new Overlay(new fileBase(fileName, content, HashString128__from_xxh3(content), named_sync.SyncOnceOperations.$zero(), void 0, named_sync.SyncOnceOperations.$zero(), void 0), version, kind, false));
 }
 export class overlayFS {
     declare private readonly $goType: void;
-    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public fs: FS__from_vfs | undefined, public positionEncoding: PositionEncodingKind__from_lsproto, public mu: sync__from_gostdlib.RWMutex, public overlays: GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined>) {
+    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public fs: FS__from_vfs | undefined, public positionEncoding: PositionEncodingKind__from_lsproto, public mu: sync__from_gostdlib.RWMutex, public overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>) {
     }
     static $copy($source: overlayFS): overlayFS {
         return new overlayFS($source.toPath, $source.fs, $source.positionEncoding, named_sync.SyncRWMutexOperations.$copy($source.mu), $source.overlays);
@@ -241,14 +211,10 @@ export class overlayFS {
     declare private readonly then?: never;
     static Overlays(fs: {
         value: overlayFS;
-    } | undefined): GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined> {
+    } | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined> {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
-        let __gotots_return_0: GoMapValue<Path__from_tspath, {
-            value: Overlay;
-        } | undefined> = GoMap.nil();
+        let __gotots_return_0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined> = GoMap.nil();
         try {
             try {
                 __gotots_return_block_0: {
@@ -294,17 +260,13 @@ export class overlayFS {
         value: overlayFS;
     } | undefined, changes: RuntimeSlice<FileChange__from_project$Storage>): [
         FileChangeSummary,
-        GoMapValue<Path__from_tspath, {
-            value: Overlay;
-        } | undefined>
+        GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>
     ] {
         let __gotots_deferred_0: (($go$recovery: GoRecovery) => void) | undefined = undefined;
         let __gotots_panic_0: GoPanic | undefined = undefined;
         let __gotots_return_0: [
             FileChangeSummary,
-            GoMapValue<Path__from_tspath, {
-                value: Overlay;
-            } | undefined>
+            GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>
         ] = [FileChangeSummary.$zero(), GoMap.nil()];
         try {
             try {
@@ -315,25 +277,21 @@ export class overlayFS {
                         recovery_sync.SyncRWMutexUnlock(__gotots_receiver_0, $go$recovery);
                     };
                     let result = FileChangeSummary.$zero();
-                    let newOverlays: GoMapValue<Path__from_tspath, {
-                        value: Overlay;
-                    } | undefined> = Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Overlay$Named_tspath$Path$PointerTo_Named_project$Overlay((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays);
+                    let newOverlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined> = Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Overlay$Named_tspath$Path$PointerTo_Named_project$Overlay((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.overlays);
                     class fileEvents {
                         declare private readonly $goType: void;
                         public constructor(public openChange: tsonicTypeScriptRuntime.Location<FileChange> | undefined, public closeChange: tsonicTypeScriptRuntime.Location<FileChange> | undefined, public watchChanged: bool, public changes: RuntimeSlice<tsonicTypeScriptRuntime.Location<FileChange> | undefined>, public saved: bool, public created: bool, public deleted: bool) {
                         }
                         declare private readonly then?: never;
                     }
-                    class $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents extends GoMapValue<DocumentUri__from_lsproto, fileEvents | undefined> {
-                        private constructor(private readonly zeroValue: fileEvents | undefined, private readonly values: Map<gostring, [
-                            fileEvents | undefined
-                        ]> | undefined) {
+                    class $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents extends GoMapValue<DocumentUri__from_lsproto, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> {
+                        private constructor(private readonly zeroValue: tsonicTypeScriptRuntime.Location<fileEvents> | undefined, private readonly values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined) {
                             super();
                         }
-                        private static $zeroValue(): fileEvents | undefined {
+                        private static $zeroValue(): tsonicTypeScriptRuntime.Location<fileEvents> | undefined {
                             return void 0;
                         }
-                        private static $copyValue($value: fileEvents | undefined): fileEvents | undefined {
+                        private static $copyValue($value: tsonicTypeScriptRuntime.Location<fileEvents> | undefined): tsonicTypeScriptRuntime.Location<fileEvents> | undefined {
                             return $value;
                         }
                         private static $projectKey($key: DocumentUri__from_lsproto): gostring {
@@ -347,62 +305,51 @@ export class overlayFS {
                         }
                         static make(size: number | bigint, entries: [
                             DocumentUri__from_lsproto,
-                            fileEvents | undefined
+                            tsonicTypeScriptRuntime.Location<fileEvents> | undefined
                         ][]): $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents {
-                            const result: $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents = new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), new Map<gostring, [
-                                fileEvents | undefined
-                            ]>);
+                            const result: $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents = new $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents($goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$zeroValue(), new Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined>);
                             for (const entry of entries) {
                                 result.store(entry[0], entry[1]);
                             }
                             return result;
                         }
-                        lookup(key: DocumentUri__from_lsproto): fileEvents | undefined {
+                        lookup(key: DocumentUri__from_lsproto): tsonicTypeScriptRuntime.Location<fileEvents> | undefined {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (values === undefined) {
                                 return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue);
                             }
-                            const entry: [
-                                fileEvents | undefined
-                            ] | undefined = values.get(storageKey);
-                            return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(entry === undefined ? this.zeroValue : entry[0]);
+                            const storedValue: (tsonicTypeScriptRuntime.Location<fileEvents> | undefined) | undefined = values.get(storageKey);
+                            return $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(storedValue === undefined ? this.zeroValue : storedValue);
                         }
                         lookupOk(key: DocumentUri__from_lsproto): [
-                            fileEvents | undefined,
+                            tsonicTypeScriptRuntime.Location<fileEvents> | undefined,
                             boolean
                         ] {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (values === undefined) {
                                 return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), false];
                             }
-                            const entry: [
-                                fileEvents | undefined
-                            ] | undefined = values.get(storageKey);
-                            if (entry === undefined) {
-                                return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), false];
+                            const storedValue: (tsonicTypeScriptRuntime.Location<fileEvents> | undefined) | undefined = values.get(storageKey);
+                            if (storedValue === undefined) {
+                                if (!values.has(storageKey)) {
+                                    return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), false];
+                                }
+                                return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(this.zeroValue), true];
                             }
-                            return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(entry[0]), true];
+                            return [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(storedValue), true];
                         }
-                        store(key: DocumentUri__from_lsproto, value: fileEvents | undefined): void {
+                        store(key: DocumentUri__from_lsproto, value: tsonicTypeScriptRuntime.Location<fileEvents> | undefined): void {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (values === undefined)
                                 GoPanic.raiseRuntime("assignment to entry in nil map");
-                            values.set(storageKey, [$goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(value)]);
+                            values.set(storageKey, $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$copyValue(value));
                         }
                         delete(key: DocumentUri__from_lsproto): void {
                             const storageKey: gostring = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.$projectKey(key);
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (!(values === undefined))
                                 values.delete(storageKey);
                         }
@@ -413,17 +360,13 @@ export class overlayFS {
                             return this.values === undefined;
                         }
                         clear(): void {
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (!(values === undefined))
                                 values.clear();
                         }
                         keys(): DocumentUri__from_lsproto[] {
                             const result: DocumentUri__from_lsproto[] = [];
-                            const values: Map<gostring, [
-                                fileEvents | undefined
-                            ]> | undefined = this.values;
+                            const values: Map<gostring, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> | undefined = this.values;
                             if (values === undefined) {
                                 return result;
                             }
@@ -433,7 +376,7 @@ export class overlayFS {
                             return result;
                         }
                     }
-                    let fileEventMap: GoMapValue<DocumentUri__from_lsproto, fileEvents | undefined> = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.make(0, []);
+                    let fileEventMap: GoMapValue<DocumentUri__from_lsproto, tsonicTypeScriptRuntime.Location<fileEvents> | undefined> = $goMap$MapOf_Named_lsproto$DocumentUri_To_PointerTo_Named_fileEvents.make(0, []);
                     const __gotots_range_0 = changes;
                     for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
                         const __gotots_range_value_0 = FileChange.$copy(FileChange.$fromStorage(__gotots_range_0.get(__gotots_range_index_0)));
@@ -441,16 +384,17 @@ export class overlayFS {
                         const change$location = tsonicTypeScriptRuntime.boundLocation({}, () => change, change$next => change = change$next);
                         let uri = new DocumentUri__from_lsproto(FileChange.$storageOf(change).URI);
                         const __gotots_results_0 = fileEventMap.lookupOk(uri);
-                        let events: fileEvents | undefined = __gotots_results_0[0];
+                        let events: tsonicTypeScriptRuntime.Location<fileEvents> | undefined = __gotots_results_0[0];
                         let exists = __gotots_results_0[1];
                         if (exists) {
-                            if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange === undefined)) {
+                            if (!(((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange === undefined)) {
                                 const __gotots_argument_0 = new GoInterfaceAdapter("should see no changes after open");
                                 GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
                             }
                         }
                         else {
-                            events = new fileEvents(void 0, void 0, false, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>(), false, false, false);
+                            events =
+                                tsonicTypeScriptRuntime.location<fileEvents>(new fileEvents(void 0, void 0, false, RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>(), false, false, false));
                             fileEventMap.store(uri, events);
                         }
                         if (!result.IncludesWatchChangeOutsideNodeModules && new FileChangeKind(FileChange.$storageOf(change).Kind).IsWatchKind() && !strings__from_gostdlib.Contains(uri.$value, "/node_modules/")) {
@@ -459,67 +403,67 @@ export class overlayFS {
                         switch (((void FileChangeKind,
                             FileChange.$storageOf(change).Kind) as number)) {
                             case 0: {
-                                if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closeChange === undefined)) {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closeChange = void 0;
+                                if (!(((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.closeChange === undefined)) {
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.closeChange = void 0;
                                 }
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange =
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange =
                                     change$location;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>();
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deleted = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>();
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.deleted = false;
                                 break;
                             }
                             case 1: {
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closeChange =
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.closeChange =
                                     change$location;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>();
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes = RuntimeSlice.nil<tsonicTypeScriptRuntime.Location<FileChange> | undefined>();
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = false;
                                 break;
                             }
                             case 2: {
-                                if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closeChange === undefined)) {
+                                if (!(((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.closeChange === undefined)) {
                                     const __gotots_argument_1 = new GoInterfaceAdapter("should see no changes after close");
                                     GoPanic.raise(__gotots_argument_1 === undefined ? GoPanicNilValue.create() : __gotots_argument_1);
                                 }
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes = (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes.append(void 0, [
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes = ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes.append(void 0, [
                                     change$location,
                                 ]);
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = false;
                                 break;
                             }
                             case 3: {
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = true;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = true;
                                 break;
                             }
                             case 4: {
-                                if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deleted) {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deleted = false;
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = true;
+                                if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.deleted) {
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.deleted = false;
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = true;
                                 }
                                 else {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created = true;
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created = true;
                                 }
                                 break;
                             }
                             case 5: {
-                                if (!(events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created) {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = true;
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = false;
+                                if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created) {
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = true;
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = false;
                                 }
                                 break;
                             }
                             case 6: {
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged = false;
-                                (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved = false;
-                                if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created) {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged = false;
+                                ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved = false;
+                                if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created) {
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created = false;
                                 }
                                 else {
-                                    (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deleted = true;
+                                    ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.deleted = true;
                                 }
                                 break;
                             }
@@ -535,15 +479,13 @@ export class overlayFS {
                         const __gotots_range_value_3 = __gotots_range_value_1;
                         const __gotots_range_value_4 = __gotots_range_value_2[0];
                         let uri = __gotots_range_value_3;
-                        let events: fileEvents | undefined = __gotots_range_value_4;
+                        let events: tsonicTypeScriptRuntime.Location<fileEvents> | undefined = __gotots_range_value_4;
                         const __gotots_receiver_2 = uri;
                         const __gotots_receiver_1: overlayFS["fs"] = (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs;
                         const __gotots_argument_2 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_1).UseCaseSensitiveFileNames();
                         let path = __gotots_receiver_2.Path(__gotots_argument_2);
-                        let o: {
-                            value: Overlay;
-                        } | undefined = newOverlays.lookup(path);
-                        if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange === undefined)) {
+                        let o: tsonicTypeScriptRuntime.Location<Overlay> | undefined = newOverlays.lookup(path);
+                        if (!(((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange === undefined)) {
                             if (!(result.Opened.$value ===
                                 ((void DocumentUri__from_lsproto,
                                     "") as string)) || !(result.Reopened.$value ===
@@ -554,9 +496,9 @@ export class overlayFS {
                             }
                             let __gotots_logical_result_0 = !(o === undefined);
                             if (__gotots_logical_result_0) {
-                                const __gotots_store_0 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                const __gotots_store_0 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                 const __gotots_binary_operand_0 = fileBase.Content(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "fileBase"));
-                                const __gotots_binary_operand_1 = FileChange.$storageOf((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Content;
+                                const __gotots_binary_operand_1 = FileChange.$storageOf(((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Content;
                                 __gotots_logical_result_0 = __gotots_binary_operand_0 !== __gotots_binary_operand_1;
                             }
                             if (__gotots_logical_result_0) {
@@ -569,14 +511,14 @@ export class overlayFS {
                             else {
                                 result.Reopened = uri;
                             }
-                            let scriptKind = LanguageKindToScriptKind__from_lsconv(new LanguageKind__from_lsproto(FileChange.$storageOf((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).LanguageKind));
+                            let scriptKind = LanguageKindToScriptKind__from_lsconv(new LanguageKind__from_lsproto(FileChange.$storageOf(((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).LanguageKind));
                             if (scriptKind === ScriptKindUnknown$constant__from_core()) {
                                 scriptKind = GetScriptKindFromFileName__from_core(uri.FileName());
                             }
-                            newOverlays.store(path, newOverlay(uri.FileName(), FileChange.$storageOf((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Content, FileChange.$storageOf((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, scriptKind));
+                            newOverlays.store(path, newOverlay(uri.FileName(), FileChange.$storageOf(((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Content, FileChange.$storageOf(((((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.openChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, scriptKind));
                             continue;
                         }
-                        if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).closeChange === undefined)) {
+                        if (!(((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.closeChange === undefined)) {
                             if (o === undefined) {
                                 const __gotots_argument_4 = new $goInterfaceAdapter$Named_lsproto$DocumentUri(new DocumentUri__from_lsproto("overlay not found for closed file: " + uri.$value));
                                 GoPanic.raise(__gotots_argument_4 === undefined ? GoPanicNilValue.create() : __gotots_argument_4);
@@ -586,37 +528,37 @@ export class overlayFS {
                             newOverlays.delete(path);
                             o = void 0;
                         }
-                        if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged) {
+                        if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged) {
                             if (o === undefined) {
                                 const __gotots_store_3 = result;
                                 Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "Changed"), uri);
                             }
-                            else if (!(o === undefined) && !(events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved) {
+                            else if (!(o === undefined) && !((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved) {
                                 {
                                     const __gotots_results_1 = Overlay.$go$private$project$computeMatchesDiskText(o, (fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fs);
                                     let matchesDiskText = __gotots_results_1[0];
                                     if (matchesDiskText !== Overlay.MatchesDiskText(o)) {
-                                        const __gotots_store_4 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                        const __gotots_store_4 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                         const __gotots_argument_5 = fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "fileBase"));
-                                        const __gotots_store_5 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                        const __gotots_store_5 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                         const __gotots_argument_6 = fileBase.Content(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "fileBase"));
                                         const __gotots_argument_7 = Overlay.Version(o);
-                                        const __gotots_argument_8: Overlay["kind"] = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+                                        const __gotots_argument_8 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.kind;
                                         o = newOverlay(__gotots_argument_5, __gotots_argument_6, __gotots_argument_7, __gotots_argument_8);
-                                        (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText = matchesDiskText;
+                                        ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.matchesDiskText = matchesDiskText;
                                         newOverlays.store(path, o);
                                     }
                                 }
                             }
                         }
-                        if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes.length > 0) {
+                        if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes.length > 0) {
                             const __gotots_store_6 = result;
                             Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "Changed"), uri);
                             if (o === undefined) {
                                 const __gotots_argument_9 = new $goInterfaceAdapter$Named_lsproto$DocumentUri(new DocumentUri__from_lsproto("overlay not found for changed file: " + uri.$value));
                                 GoPanic.raise(__gotots_argument_9 === undefined ? GoPanicNilValue.create() : __gotots_argument_9);
                             }
-                            const __gotots_range_2 = (events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).changes;
+                            const __gotots_range_2 = ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.changes;
                             for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_2.length; __gotots_range_index_1++) {
                                 const __gotots_range_value_5 = __gotots_range_2.get(__gotots_range_index_1);
                                 let change: tsonicTypeScriptRuntime.Location<FileChange> | undefined = __gotots_range_value_5;
@@ -625,7 +567,7 @@ export class overlayFS {
                                 } | undefined = NewConverters__from_lsconv((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.positionEncoding, (fileName: gostring): {
                                     value: LSPLineMap__from_lsconv;
                                 } | undefined => {
-                                    const __gotots_store_7 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                    const __gotots_store_7 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                     return fileBase.LSPLineMap(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "fileBase"));
                                 });
                                 const __gotots_range_3 = FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Changes;
@@ -637,49 +579,49 @@ export class overlayFS {
                                             value: TextDocumentContentChangePartial__from_lsproto;
                                         } | undefined = TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$storageOf(textChange).Partial;
                                         if (!(partialChange === undefined)) {
-                                            let newContent = Converters__from_lsconv.FromLSPTextChange(converters, new $goInterfaceAdapter$PointerTo_Named_project$Overlay(o), partialChange).ApplyTo((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content);
-                                            o = newOverlay((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName, newContent, FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind);
+                                            let newContent = Converters__from_lsconv.FromLSPTextChange(converters, new $goInterfaceAdapter$PointerTo_Named_project$Overlay(o), partialChange).ApplyTo(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.content);
+                                            o = newOverlay(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.fileName, newContent, FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.kind);
                                         }
                                         else {
                                             let wholeChange: {
                                                 value: TextDocumentContentChangeWholeDocument__from_lsproto;
                                             } | undefined = TextDocumentContentChangePartialOrWholeDocument__from_lsproto.$storageOf(textChange).WholeDocument;
                                             if (!(wholeChange === undefined)) {
-                                                o = newOverlay((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.fileName, (wholeChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Text, FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind);
+                                                o = newOverlay(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.fileName, (wholeChange ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Text, FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version, ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.kind);
                                             }
                                         }
                                     }
                                 }
                                 if (FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Changes.length > 0) {
-                                    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.version = FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version;
-                                    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.hash = HashString128__from_xxh3((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileBase.content);
-                                    (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText = false;
+                                    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.version = FileChange.$storageOf(((change ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<FileChange>).value).Version;
+                                    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.hash = HashString128__from_xxh3(((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.fileBase.content);
+                                    ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.matchesDiskText = false;
                                     newOverlays.store(path, o);
                                 }
                             }
                         }
-                        if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).saved) {
+                        if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.saved) {
                             if (!(o === undefined)) {
-                                const __gotots_store_8 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                const __gotots_store_8 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                 const __gotots_argument_10 = fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "fileBase"));
-                                const __gotots_store_9 = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                                const __gotots_store_9 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                                 const __gotots_argument_11 = fileBase.Content(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "fileBase"));
                                 const __gotots_argument_12 = Overlay.Version(o);
-                                const __gotots_argument_13: Overlay["kind"] = (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.kind;
+                                const __gotots_argument_13 = ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.kind;
                                 o = newOverlay(__gotots_argument_10, __gotots_argument_11, __gotots_argument_12, __gotots_argument_13);
-                                (o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.matchesDiskText = true;
+                                ((o ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value.matchesDiskText = true;
                                 newOverlays.store(path, o);
                             }
-                            else if (!(events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).watchChanged) {
+                            else if (!((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.watchChanged) {
                                 const __gotots_store_10 = result;
                                 Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "Changed"), uri);
                             }
                         }
-                        if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).created && o === undefined) {
+                        if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.created && o === undefined) {
                             const __gotots_store_11 = result;
                             Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "Created"), uri);
                         }
-                        if ((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).deleted && o === undefined) {
+                        if (((events ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<fileEvents>).value.deleted && o === undefined) {
                             const __gotots_store_12 = result;
                             Set$Add$Named_lsproto$DocumentUri(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "Deleted"), uri);
                         }
@@ -719,9 +661,7 @@ export class overlayFS {
         return __gotots_return_0;
     }
 }
-export function newOverlayFS(fs: FS__from_vfs | undefined, overlays: GoMapValue<Path__from_tspath, {
-    value: Overlay;
-} | undefined>, positionEncoding: PositionEncodingKind__from_lsproto, toPath: (($0: gostring) => Path__from_tspath) | undefined): {
+export function newOverlayFS(fs: FS__from_vfs | undefined, overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, positionEncoding: PositionEncodingKind__from_lsproto, toPath: (($0: gostring) => Path__from_tspath) | undefined): {
     value: overlayFS;
 } | undefined {
     return { value: new overlayFS(toPath, fs, positionEncoding, named_sync.SyncRWMutexOperations.$zero(), overlays) };

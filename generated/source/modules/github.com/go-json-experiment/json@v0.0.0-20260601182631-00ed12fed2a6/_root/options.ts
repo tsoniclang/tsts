@@ -16,6 +16,24 @@ import * as fmt__from_gostdlib from "@gotots/gostdlib/fmt.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function Deterministic(v: bool): Options__from_jsonopts | undefined {
     if (v) {
         return new GoInterfaceAdapter(new Bools__from_jsonflags(524289n));
@@ -154,7 +172,7 @@ export function init(): void {
             case $goInterfaceAdapter$PointerTo_Named_json$marshalersOption.$is(__gotots_type_switch_1): {
                 let src__shadow_1: tsonicTypeScriptRuntime.Location<marshalersOption> | undefined = __gotots_type_switch_1.$go$value;
                 const __gotots_store_0 = Struct__from_jsonopts.$storageOf(dst);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(33554433n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_0, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(33554433n));
                 (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
                     Struct__from_jsonopts.$storageOf(dst).ArshalValues)).Marshalers = new $goInterfaceAdapter$PointerTo_Named_json$typedArshalersOf_Named_jsontext$Encoder(tsonicTypeScriptRuntime.projectLocation<marshalersOption, typedArshalers<Encoder__from_jsontext>>(src__shadow_1, ($go$source: marshalersOption): typedArshalers<Encoder__from_jsontext> => {
                     return typedArshalers.$fromStorage<Encoder__from_jsontext>(marshalersOption.$storageOf($go$source));
@@ -166,7 +184,7 @@ export function init(): void {
             case $goInterfaceAdapter$PointerTo_Named_json$unmarshalersOption.$is(__gotots_type_switch_1): {
                 let src__shadow_1: tsonicTypeScriptRuntime.Location<unmarshalersOption> | undefined = __gotots_type_switch_1.$go$value;
                 const __gotots_store_1 = Struct__from_jsonopts.$storageOf(dst);
-                Flags__from_jsonflags.Set(tsonicTypeScriptRuntime.projectLocation<Flags__from_jsonflags$Storage, Flags__from_jsonflags>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_1, "Flags"), Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(67108865n));
+                Flags__from_jsonflags.Set(new $ProjectedPropertyLocation(__gotots_store_1, "Flags", Flags__from_jsonflags.$fromStorage, Flags__from_jsonflags.$storageOf), new Bools__from_jsonflags(67108865n));
                 (void ArshalValues__from_jsonopts.$storageOf, (void ArshalValues__from_jsonopts.$fromStorage,
                     Struct__from_jsonopts.$storageOf(dst).ArshalValues)).Unmarshalers = new $goInterfaceAdapter$PointerTo_Named_json$typedArshalersOf_Named_jsontext$Decoder(tsonicTypeScriptRuntime.projectLocation<unmarshalersOption, typedArshalers<Decoder__from_jsontext>>(src__shadow_1, ($go$source: unmarshalersOption): typedArshalers<Decoder__from_jsontext> => {
                     return typedArshalers.$fromStorage<Decoder__from_jsontext>(unmarshalersOption.$storageOf($go$source));

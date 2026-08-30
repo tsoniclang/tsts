@@ -1,3 +1,4 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { directory as directory__from_autoimport } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/ls/autoimport/registry.js";
 import type { Path as Path__from_tspath } from "../../../../../../../../modules/github.com/microsoft/typescript-go/internal/tspath/path.js";
 import type { $goInterface$Interface_void as GoInterface } from "../../../../../../../interface-contracts.js";
@@ -18,15 +19,15 @@ export function ForEachAncestorDirectoryPath$Interface_void($argument0: Path__fr
     }, $argument0, $argument1);
 }
 export function ForEachAncestorDirectoryPath$PointerTo_Named_autoimport$directory($argument0: Path__from_tspath, $argument1: (($0: Path__from_tspath) => [
-    directory__from_autoimport | undefined,
+    tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined,
     bool
 ]) | undefined): [
-    directory__from_autoimport | undefined,
+    tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined,
     bool
 ] {
-    return ForEachAncestorDirectoryPath$kernel<directory__from_autoimport | undefined>(($argument0: directory__from_autoimport | undefined): directory__from_autoimport | undefined => {
+    return ForEachAncestorDirectoryPath$kernel<tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined): tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined => {
         return $argument0;
-    }, (): directory__from_autoimport | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<directory__from_autoimport> | undefined => {
         return void 0;
     }, $argument0, $argument1);
 }

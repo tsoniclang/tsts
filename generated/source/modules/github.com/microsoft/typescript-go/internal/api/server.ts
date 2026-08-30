@@ -1,3 +1,4 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { Session as Session__from_project } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/project/package.js";
 import type { FS as FS__from_vfs } from "../../../../../../packages/github.com/microsoft/typescript-go/internal/vfs/package.js";
 import type { $goInterface$Interface_Method_Error_void_to_string, $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void, $goInterface$Interface_Method_io$Close_void_to_Named_error_Method_io$Read_SliceOf_byte_to_int_Named_error_Method_io$Write_SliceOf_byte_to_int_Named_error, $goInterface$Interface_Method_io$Close_void_to_Named_error_Method_io$Write_SliceOf_byte_to_int_Named_error, $goInterface$Interface_Method_io$Write_SliceOf_byte_to_int_Named_error, $goInterface$Interface_void, $goInterface$Interface_Method_io$Close_void_to_Named_error_Method_io$Read_SliceOf_byte_to_int_Named_error as GoInterface } from "../../../../../../support/interface-contracts.js";
@@ -78,9 +79,7 @@ export class StdioServer {
                     let projectSession: {
                         value: Session__from_project;
                     } | undefined = NewSession__from_project(new SessionInit__from_project(ctx, { value: new SessionOptions__from_project(((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Cwd, ((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DefaultLibraryPath, "", PositionEncodingKindUTF8$constant__from_lsproto(), false, false, false, false, named_time.TimeDurationValueOperations.$wrap(0n), Locale__from_locale.$zero(), CheckerPoolOptions__from_project.$zero()) }, fs, void 0, void 0, void 0, void 0));
-                    let session: {
-                        value: Session;
-                    } | undefined = NewSession(projectSession, new SessionOptions(!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Async));
+                    let session: tsonicTypeScriptRuntime.Location<Session> | undefined = NewSession(projectSession, new SessionOptions(!((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).options ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Async));
                     const __gotots_receiver_2 = session;
                     __gotots_defers_0.push(($go$recovery: GoRecovery): void => {
                         Session.Close(__gotots_receiver_2);

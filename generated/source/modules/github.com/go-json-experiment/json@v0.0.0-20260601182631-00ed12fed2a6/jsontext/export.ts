@@ -12,6 +12,24 @@ import { $goInterfaceAdapter$string, $goInterfaceAdapter$PointerTo_Named_jsontex
 import { getBufferedDecoder, getBufferedEncoder, getStreamingDecoder, getStreamingEncoder, putBufferedDecoder, putBufferedEncoder, putStreamingDecoder, putStreamingEncoder } from "./pools.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type exporter$Storage = {};
 export class exporter {
     declare private readonly $goType: void;
@@ -28,7 +46,7 @@ export class exporter {
     }
     declare private readonly then?: never;
     Export(p: tsonicTypeScriptRuntime.Location<NotForPublicUse__from_internal> | undefined): __go_export {
-        if (!tsonicTypeScriptRuntime.sameLocation(p, tsonicTypeScriptRuntime.projectLocation<NotForPublicUse__from_internal$Storage, NotForPublicUse__from_internal>(tsonicTypeScriptRuntime.propertyLocation($state__internal, "AllowInternalUse"), NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf))) {
+        if (!tsonicTypeScriptRuntime.sameLocation(p, new $ProjectedPropertyLocation($state__internal, "AllowInternalUse", NotForPublicUse__from_internal.$fromStorage, NotForPublicUse__from_internal.$storageOf))) {
             const __gotots_argument_0 = new $goInterfaceAdapter$string("unauthorized call to Export");
             GoPanic.raise(__gotots_argument_0 === undefined ? GoPanicNilValue.create() : __gotots_argument_0);
         }

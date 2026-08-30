@@ -17,6 +17,24 @@ import { $goMap$MapOf_PointerTo_Named_ast$Node_To_PointerTo_Named_ast$Node as Go
 import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class LegacyDecoratorsTransformer {
     declare private readonly $goType: void;
     public constructor(public Transformer: Transformer__from_transformers, public languageVersion: ScriptTarget__from_core, public referenceResolver: ReferenceResolver__from_binder | undefined, public classAliases: GoMapValue<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>, public enclosingClasses: RuntimeSlice<{
@@ -100,7 +118,7 @@ export class LegacyDecoratorsTransformer {
             const __gotots_map_4 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).classAliases;
             const __gotots_store_170 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_map_5 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_170, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_map_5 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_170, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_results_3 = __gotots_map_4.lookupOk(__gotots_map_5);
             classAlias = __gotots_results_3[0];
         }
@@ -108,7 +126,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_receiver_49 = Transformer__from_transformers.Factory(__gotots_store_171.Transformer);
         const __gotots_store_172 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_139 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_172, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_139 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_172, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_140 = new NameOptions__from_printer(false, true);
         let localName: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.GetDeclarationNameEx(__gotots_receiver_49, __gotots_argument_139, __gotots_argument_140);
         const __gotots_store_173 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -127,7 +145,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_142 = expression;
         const __gotots_store_178 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_141 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_178, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_141 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_178, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_143 = MoveRangePastModifiers__from_transformers(__gotots_argument_141);
         EmitContext__from_printer.SetSourceMapRange(__gotots_receiver_50, __gotots_argument_142, __gotots_argument_143);
         return expression;
@@ -156,7 +174,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_store_152 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).classAliases;
         const __gotots_store_151 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        __gotots_store_152.store(NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_151, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), classAlias);
+        __gotots_store_152.store(NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_151, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)), classAlias);
         return classAlias;
     }
     static $go$private$tstransforms$getClassElementDecorationStatements(tx: LegacyDecoratorsTransformer | undefined, node: {
@@ -184,7 +202,7 @@ export class LegacyDecoratorsTransformer {
             const __gotots_receiver_53 = Transformer__from_transformers.Factory(__gotots_store_194.Transformer);
             const __gotots_store_195 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_158 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_195, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_158 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_195, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NodeFactory__from_printer.GetDeclarationName(__gotots_receiver_53, __gotots_argument_158);
         }
         return LegacyDecoratorsTransformer.$go$private$tstransforms$getClassPrototype(tx, node);
@@ -199,7 +217,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_receiver_54 = Transformer__from_transformers.Factory(__gotots_store_205.Transformer);
         const __gotots_store_206 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_159 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_206, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_159 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_206, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_160 = NodeFactory__from_printer.GetDeclarationName(__gotots_receiver_54, __gotots_argument_159);
         const __gotots_argument_161 = void 0;
         const __gotots_store_207 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -221,7 +239,7 @@ export class LegacyDecoratorsTransformer {
             const __gotots_argument_132 = result;
             const __gotots_store_164 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_133 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_164, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_133 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_164, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             EmitContext__from_printer.SetOriginal(__gotots_receiver_46, __gotots_argument_132, __gotots_argument_133);
             return result;
         }
@@ -259,7 +277,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_receiver_47 = Transformer__from_transformers.EmitContext(__gotots_store_165.Transformer);
         const __gotots_store_166 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_134 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_166, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_134 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_166, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let classNode: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = EmitContext__from_printer.MostOriginal(__gotots_receiver_47, __gotots_argument_134);
         let isOrContainsStaticSelfReference: (($0: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined) => bool) | undefined;
         isOrContainsStaticSelfReference = (n: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): bool => {
@@ -332,12 +350,12 @@ export class LegacyDecoratorsTransformer {
                 __gotots_return_block_0: {
                     const __gotots_store_75 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_88 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_75, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_88 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_75, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     const __gotots_argument_89 = ModifierFlagsExport$constant__from_ast();
                     let isExport = HasSyntacticModifier__from_ast(__gotots_argument_88, __gotots_argument_89);
                     const __gotots_store_76 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_90 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_76, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_90 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_76, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     const __gotots_argument_91 = ModifierFlagsDefault$constant__from_ast();
                     let isDefault = HasSyntacticModifier__from_ast(__gotots_argument_90, __gotots_argument_91);
                     let modifiers: tsonicTypeScriptRuntime.Location<ModifierList__from_ast> | undefined = void 0;
@@ -376,7 +394,7 @@ export class LegacyDecoratorsTransformer {
                     }
                     const __gotots_store_85 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_94 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_85, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_94 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_85, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     let location = MoveRangePastModifiers__from_transformers(__gotots_argument_94);
                     let classAlias: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = LegacyDecoratorsTransformer.$go$private$tstransforms$getClassAliasIfNeeded(tx, node);
                     if (!(classAlias === undefined)) {
@@ -390,7 +408,7 @@ export class LegacyDecoratorsTransformer {
                     const __gotots_receiver_29 = Transformer__from_transformers.Factory(__gotots_store_86.Transformer);
                     const __gotots_store_87 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_95 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_87, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_95 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_87, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     const __gotots_argument_96 = new AssignedNameOptions__from_printer(false, true, false);
                     let declName: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = NodeFactory__from_printer.GetLocalNameEx(__gotots_receiver_29, __gotots_argument_95, __gotots_argument_96);
                     const __gotots_store_88 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -457,7 +475,7 @@ export class LegacyDecoratorsTransformer {
                     const __gotots_argument_109 = classExpression;
                     const __gotots_store_107 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_110 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_107, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_110 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_107, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     EmitContext__from_printer.SetOriginal(__gotots_receiver_35, __gotots_argument_109, __gotots_argument_110);
                     Node__from_ast.$storageOf(((classExpression ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(location));
                     let varInitializer: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = classExpression;
@@ -473,7 +491,7 @@ export class LegacyDecoratorsTransformer {
                     const __gotots_argument_111 = varDecl;
                     const __gotots_store_112 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_112 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_112, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_112 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_112, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     EmitContext__from_printer.SetOriginal(__gotots_receiver_36, __gotots_argument_111, __gotots_argument_112);
                     const __gotots_store_113 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                     const __gotots_store_114 = (Transformer__from_transformers.Factory(__gotots_store_113.Transformer) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
@@ -491,7 +509,7 @@ export class LegacyDecoratorsTransformer {
                     const __gotots_argument_115 = varStatement;
                     const __gotots_store_120 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_116 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_120, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_116 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_120, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     EmitContext__from_printer.SetOriginal(__gotots_receiver_38, __gotots_argument_115, __gotots_argument_116);
                     Node__from_ast.$storageOf(((varStatement ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(location));
                     const __gotots_store_121 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -515,7 +533,7 @@ export class LegacyDecoratorsTransformer {
                             const __gotots_receiver_39 = Transformer__from_transformers.Factory(__gotots_store_124.Transformer);
                             const __gotots_store_125 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                            const __gotots_argument_117 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_125, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                            const __gotots_argument_117 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_125, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                             const __gotots_argument_118 = NodeFactory__from_printer.GetDeclarationName(__gotots_receiver_39, __gotots_argument_117);
                             exportStatement = NodeFactory__from_printer.NewExternalModuleExport(__gotots_receiver_40, __gotots_argument_118);
                         }
@@ -581,7 +599,7 @@ export class LegacyDecoratorsTransformer {
             const __gotots_receiver_41 = Transformer__from_transformers.Factory(__gotots_store_132.Transformer);
             const __gotots_store_133 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_120 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_133, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_120 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_133, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             name = NodeFactory__from_printer.NewGeneratedNameForNode(__gotots_receiver_41, __gotots_argument_120);
         }
         const __gotots_store_134 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -754,14 +772,14 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_7 = true;
         const __gotots_store_16 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_8 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_16, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         let decorated = ClassOrConstructorParameterIsDecorated__from_ast(__gotots_argument_7, __gotots_argument_8);
         let __gotots_logical_result_1 = decorated;
         if (!__gotots_logical_result_1) {
             const __gotots_argument_9 = true;
             const __gotots_store_17 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_10 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_17, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_10 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_17, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             const __gotots_argument_11 = void 0;
             __gotots_logical_result_1 = ChildIsDecorated__from_ast(__gotots_argument_9, __gotots_argument_10, __gotots_argument_11);
         }
@@ -770,7 +788,7 @@ export class LegacyDecoratorsTransformer {
             const __gotots_receiver_6 = Transformer__from_transformers.Visitor(__gotots_store_18.Transformer);
             const __gotots_store_19 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-            const __gotots_argument_12 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_19, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_12 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_19, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             return NodeVisitor__from_ast.VisitEachChild(__gotots_receiver_6, __gotots_argument_12);
         }
         if (decorated) {
@@ -836,7 +854,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_57 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_19, __gotots_argument_54);
         const __gotots_receiver_20 = tx;
         const __gotots_store_52 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_52, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_55 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_52, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_58 = LegacyDecoratorsTransformer.$go$private$tstransforms$visitPropertyNameOfClassElement(__gotots_receiver_20, __gotots_argument_55);
         const __gotots_argument_59 = void 0;
         const __gotots_store_53 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -849,7 +867,7 @@ export class LegacyDecoratorsTransformer {
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_argument_64 = NodeFactory__from_ast.UpdateGetAccessorDeclaration(__gotots_receiver_21, __gotots_argument_56, __gotots_argument_57, __gotots_argument_58, __gotots_argument_59, __gotots_argument_60, __gotots_argument_61, __gotots_argument_62, __gotots_argument_63);
         const __gotots_store_55 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_65 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_55, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_65 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_55, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return LegacyDecoratorsTransformer.$go$private$tstransforms$finishClassElement(__gotots_receiver_22, __gotots_argument_64, __gotots_argument_65);
     }
     static $go$private$tstransforms$visitIdentifier(tx: LegacyDecoratorsTransformer | undefined, node: tsonicTypeScriptRuntime.Location<Identifier__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -863,7 +881,7 @@ export class LegacyDecoratorsTransformer {
                 const __gotots_map_0 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).classAliases;
                 const __gotots_store_5 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                     StatementBase__from_ast.$storageOf((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                const __gotots_map_1 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                const __gotots_map_1 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                 const __gotots_results_0 = __gotots_map_0.lookupOk(__gotots_map_1);
                 let ok = __gotots_results_0[1];
                 let __gotots_logical_result_0 = ok;
@@ -879,14 +897,14 @@ export class LegacyDecoratorsTransformer {
                                         (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                             (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                                 Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                    const __gotots_argument_4 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_4 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     const __gotots_argument_5 = EmitContext__from_printer.MostOriginal(__gotots_receiver_3, __gotots_argument_4);
                     const __gotots_equal_operand_0 = goInterfaceNonNil<ReferenceResolver__from_binder>(__gotots_receiver_4).GetReferencedValueDeclaration(__gotots_argument_5);
                     const __gotots_store_8 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
                     const __gotots_receiver_5 = Transformer__from_transformers.EmitContext(__gotots_store_8.Transformer);
                     const __gotots_store_9 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_argument_6 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_9, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     __gotots_logical_result_0 =
                         tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, EmitContext__from_printer.MostOriginal(__gotots_receiver_5, __gotots_argument_6));
                 }
@@ -894,7 +912,7 @@ export class LegacyDecoratorsTransformer {
                     const __gotots_map_2 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).classAliases;
                     const __gotots_store_10 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                         StatementBase__from_ast.$storageOf((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-                    const __gotots_map_3 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_10, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                    const __gotots_map_3 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_10, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                     return __gotots_map_2.lookup(__gotots_map_3);
                 }
             }
@@ -907,7 +925,7 @@ export class LegacyDecoratorsTransformer {
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        return NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_11, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     static $go$private$tstransforms$visitMethodDeclaration(tx: LegacyDecoratorsTransformer | undefined, node: {
         value: MethodDeclaration__from_ast;
@@ -926,7 +944,7 @@ export class LegacyDecoratorsTransformer {
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).AsteriskToken;
         const __gotots_receiver_12 = tx;
         const __gotots_store_36 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_29 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_29 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_36, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_33 = LegacyDecoratorsTransformer.$go$private$tstransforms$visitPropertyNameOfClassElement(__gotots_receiver_12, __gotots_argument_29);
         const __gotots_argument_34 = void 0;
         const __gotots_argument_35 = void 0;
@@ -940,7 +958,7 @@ export class LegacyDecoratorsTransformer {
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_argument_40 = NodeFactory__from_ast.UpdateMethodDeclaration(__gotots_receiver_13, __gotots_argument_30, __gotots_argument_31, __gotots_argument_32, __gotots_argument_33, __gotots_argument_34, __gotots_argument_35, __gotots_argument_36, __gotots_argument_37, __gotots_argument_38, __gotots_argument_39);
         const __gotots_store_39 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_41 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_39, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_41 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_39, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return LegacyDecoratorsTransformer.$go$private$tstransforms$finishClassElement(__gotots_receiver_14, __gotots_argument_40, __gotots_argument_41);
     }
     static $go$private$tstransforms$visitParamerDeclaration(tx: LegacyDecoratorsTransformer | undefined, node: tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -951,7 +969,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_store_66 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
         const __gotots_argument_78 = Transformer__from_transformers.Factory(__gotots_store_66.Transformer);
         const __gotots_store_67 = ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value);
-        const __gotots_argument_79 = ModifiersBase__from_ast.Modifiers(tsonicTypeScriptRuntime.projectLocation<ModifiersBase__from_ast$Storage, ModifiersBase__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_67, "ModifiersBase"), ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
+        const __gotots_argument_79 = ModifiersBase__from_ast.Modifiers(new $ProjectedPropertyLocation(__gotots_store_67, "ModifiersBase", ModifiersBase__from_ast.$fromStorage, ModifiersBase__from_ast.$storageOf));
         const __gotots_argument_81 = elideModifiers(__gotots_argument_78, __gotots_argument_79);
         const __gotots_argument_82 = ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).DotDotDotToken;
         const __gotots_store_68 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -964,7 +982,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_equal_operand_1 = updated;
         const __gotots_store_70 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-        if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_1, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_70, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
+        if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_1, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_70, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
             const __gotots_store_71 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
             EmitContext__from_printer.SetCommentRange(Transformer__from_transformers.EmitContext(__gotots_store_71.Transformer), updated, TextRange__from_core.$copy(TextRange__from_core.$fromStorage((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
                 (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
@@ -972,7 +990,7 @@ export class LegacyDecoratorsTransformer {
                         ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase)).NodeDefault)).Node)).Loc)));
             const __gotots_store_72 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
                 ParameterDeclaration__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParameterDeclaration__from_ast>).value).NodeBase));
-            const __gotots_argument_87 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_72, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            const __gotots_argument_87 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_72, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
             let newLoc = MoveRangePastModifiers__from_transformers(__gotots_argument_87);
             Node__from_ast.$storageOf(((updated ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Node__from_ast>).value).Loc = TextRange__from_core.$storageOf(TextRange__from_core.$copy(newLoc));
             const __gotots_store_73 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -1005,7 +1023,7 @@ export class LegacyDecoratorsTransformer {
                         (void LeftHandSideExpressionBase__from_ast.$storageOf, (void LeftHandSideExpressionBase__from_ast.$fromStorage,
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 PropertyAccessExpression__from_ast.$storageOf(((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<PropertyAccessExpression__from_ast>).value).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        return NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        return NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_15, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     static $go$private$tstransforms$visitPropertyDeclaration(tx: LegacyDecoratorsTransformer | undefined, node: {
         value: PropertyDeclaration__from_ast;
@@ -1016,7 +1034,7 @@ export class LegacyDecoratorsTransformer {
             return void 0;
         }
         const __gotots_store_56 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_66 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_56, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_66 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_56, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_67 = 192;
         if (HasSyntacticModifier__from_ast(__gotots_argument_66, __gotots_argument_67)) {
             return void 0;
@@ -1033,7 +1051,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_71 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_23, __gotots_argument_68);
         const __gotots_receiver_24 = tx;
         const __gotots_store_61 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_69 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_61, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_69 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_61, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_72 = LegacyDecoratorsTransformer.$go$private$tstransforms$visitPropertyNameOfClassElement(__gotots_receiver_24, __gotots_argument_69);
         const __gotots_argument_73 = void 0;
         const __gotots_argument_74 = void 0;
@@ -1041,7 +1059,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_75 = NodeVisitor__from_ast.VisitNode(Transformer__from_transformers.Visitor(__gotots_store_62.Transformer), (node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Initializer);
         const __gotots_argument_76 = NodeFactory__from_ast.UpdatePropertyDeclaration(__gotots_receiver_25, __gotots_argument_70, __gotots_argument_71, __gotots_argument_72, __gotots_argument_73, __gotots_argument_74, __gotots_argument_75);
         const __gotots_store_63 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.NodeBase);
-        const __gotots_argument_77 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_63, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_77 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_63, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return LegacyDecoratorsTransformer.$go$private$tstransforms$finishClassElement(__gotots_receiver_26, __gotots_argument_76, __gotots_argument_77);
     }
     static $go$private$tstransforms$visitPropertyNameOfClassElement(tx: LegacyDecoratorsTransformer | undefined, member: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined {
@@ -1083,7 +1101,7 @@ export class LegacyDecoratorsTransformer {
         const __gotots_argument_45 = NodeVisitor__from_ast.VisitModifiers(__gotots_receiver_15, __gotots_argument_42);
         const __gotots_receiver_16 = tx;
         const __gotots_store_44 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_43 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_44, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_43 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_44, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_46 = LegacyDecoratorsTransformer.$go$private$tstransforms$visitPropertyNameOfClassElement(__gotots_receiver_16, __gotots_argument_43);
         const __gotots_argument_47 = void 0;
         const __gotots_store_45 = (tx ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
@@ -1096,7 +1114,7 @@ export class LegacyDecoratorsTransformer {
             FunctionLikeWithBodyBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.FunctionLikeWithBodyBase).BodyBase)).Body);
         const __gotots_argument_52 = NodeFactory__from_ast.UpdateSetAccessorDeclaration(__gotots_receiver_17, __gotots_argument_44, __gotots_argument_45, __gotots_argument_46, __gotots_argument_47, __gotots_argument_48, __gotots_argument_49, __gotots_argument_50, __gotots_argument_51);
         const __gotots_store_47 = NodeBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_53 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_47, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_53 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_47, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         return LegacyDecoratorsTransformer.$go$private$tstransforms$finishClassElement(__gotots_receiver_18, __gotots_argument_52, __gotots_argument_53);
     }
 }
@@ -1180,12 +1198,12 @@ export function getAllDecoratorsOfClass(node: {
     const __gotots_store_179 = (void NodeDefault__from_ast.$storageOf, (void NodeDefault__from_ast.$fromStorage,
         (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase)).NodeDefault));
-    let decorators = Node__from_ast.Decorators(tsonicTypeScriptRuntime.projectLocation<Node__from_ast$Storage, Node__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_179, "Node"), Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
+    let decorators = Node__from_ast.Decorators(new $ProjectedPropertyLocation(__gotots_store_179, "Node", Node__from_ast.$fromStorage, Node__from_ast.$storageOf));
     let parameters = RuntimeSlice.nil<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>();
     if (useLegacyDecorators) {
         const __gotots_store_180 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((node ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_180, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_144 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_180, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_145 = GetFirstConstructorWithBody__from_ast(__gotots_argument_144);
         parameters = getDecoratorsOfParameters(__gotots_argument_145);
     }
@@ -1241,7 +1259,7 @@ export function getAllDecoratorsOfAccessors(__go_accessor: tsonicTypeScriptRunti
     let parameters = RuntimeSlice.nil<RuntimeSlice<tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined>>();
     if (useLegacyDecorators && !(decls.SetAccessor === undefined)) {
         const __gotots_store_181 = NodeBase__from_ast.$storageOf((decls.SetAccessor ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.AccessorDeclarationBase.NodeBase);
-        const __gotots_argument_148 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_181, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_148 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_181, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         parameters = getDecoratorsOfParameters(__gotots_argument_148);
     }
     if (decorators.length === 0 && parameters.length === 0) {
@@ -1305,7 +1323,7 @@ export function isDecoratedClassElement(member: tsonicTypeScriptRuntime.Location
         const __gotots_argument_155 = member;
         const __gotots_store_193 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
             StatementBase__from_ast.$storageOf((parent ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.StatementBase).NodeBase));
-        const __gotots_argument_156 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_193, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        const __gotots_argument_156 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_193, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         const __gotots_argument_157 = void 0;
         __gotots_logical_result_6 = NodeOrChildIsDecorated__from_ast(__gotots_argument_154, __gotots_argument_155, __gotots_argument_156, __gotots_argument_157);
     }

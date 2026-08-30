@@ -1,3 +1,4 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { configFileEntry as configFileEntry__from_project } from "../../../../../../../../../modules/github.com/microsoft/typescript-go/internal/project/configfileregistry.js";
 import type { diskFile as diskFile__from_project } from "../../../../../../../../../modules/github.com/microsoft/typescript-go/internal/project/overlayfs.js";
 import type { Project as Project__from_project } from "../../../../../../../../../modules/github.com/microsoft/typescript-go/internal/project/project.js";
@@ -10,291 +11,115 @@ import { Path as Path__from_tspath } from "../../../../../../../../../modules/gi
 import { $goInterfaceAdapter$Named_tspath$Path, $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry, $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile, $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet, $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$Project as GoInterfaceAdapter } from "../../../../../../../../interface-adapters.js";
 import { $go$constraint_method$dirty$Clone$PointerTo_Named_project$Project_to_PointerTo_Named_project$Project, $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileEntry_to_PointerTo_Named_project$configFileEntry, $go$constraint_method$dirty$Clone$PointerTo_Named_project$diskFile_to_PointerTo_Named_project$diskFile, $go$constraint_method$dirty$Clone$PointerTo_Named_project$realpathAliasSet_to_PointerTo_Named_project$realpathAliasSet } from "../../../../../../../capabilities/constraint_method.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
-export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$Project($argument0: {
-    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>;
-} | undefined, $argument1: (($0: {
-    value: Project__from_project;
-} | undefined) => void) | undefined): void {
-    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$Project_to_PointerTo_Named_project$Project, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined, $argument1: (($0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined) => void) | undefined): void {
+    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$Project_to_PointerTo_Named_project$Project, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>;
-    } | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>;
-    } | undefined): GoInterface | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined): GoInterface | undefined => {
         return new GoInterfaceAdapter($argument0);
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: Project__from_project;
-            } | undefined>;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined => {
             if (!GoInterfaceAdapter.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: Project__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined => {
         return void 0;
     }, $argument1);
 }
-export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: {
-    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>;
-} | undefined, $argument1: (($0: {
-    value: configFileEntry__from_project;
-} | undefined) => void) | undefined): void {
-    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileEntry_to_PointerTo_Named_project$configFileEntry, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
+export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined, $argument1: (($0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined) => void) | undefined): void {
+    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$configFileEntry_to_PointerTo_Named_project$configFileEntry, ($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>;
-    } | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>;
-    } | undefined): GoInterface | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry($argument0);
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: configFileEntry__from_project;
-            } | undefined>;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$configFileEntry.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: configFileEntry__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>> | undefined => {
         return void 0;
     }, $argument1);
 }
-export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile($argument0: {
-    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-        value: diskFile__from_project;
-    } | undefined>;
-} | undefined, $argument1: (($0: {
-    value: diskFile__from_project;
-} | undefined) => void) | undefined): void {
-    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, {
-        value: diskFile__from_project;
-    } | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$diskFile_to_PointerTo_Named_project$diskFile, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
+export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$diskFile($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined, $argument1: (($0: tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined) => void) | undefined): void {
+    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$diskFile_to_PointerTo_Named_project$diskFile, ($argument0: tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined): tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>;
-    } | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined): tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>;
-    } | undefined): GoInterface | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile($argument0);
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: diskFile__from_project;
-            } | undefined>;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$diskFile.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, ($argument0: {
-        value: diskFile__from_project;
-    } | undefined): {
-        value: diskFile__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined): tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: diskFile__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile__from_project> | undefined>> | undefined => {
         return void 0;
     }, $argument1);
 }
-export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet($argument0: {
-    value: SyncMapEntry__from_dirty<Path__from_tspath, {
-        value: realpathAliasSet__from_project;
-    } | undefined>;
-} | undefined, $argument1: (($0: {
-    value: realpathAliasSet__from_project;
-} | undefined) => void) | undefined): void {
-    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, {
-        value: realpathAliasSet__from_project;
-    } | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$realpathAliasSet_to_PointerTo_Named_project$realpathAliasSet, ($argument0: {
-        value: realpathAliasSet__from_project;
-    } | undefined): {
-        value: realpathAliasSet__from_project;
-    } | undefined => {
+export function SyncMapEntry$Change$Named_tspath$Path$PointerTo_Named_project$realpathAliasSet($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined, $argument1: (($0: tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined) => void) | undefined): void {
+    return SyncMapEntry__from_dirty.Change$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>($argument0, $go$constraint_method$dirty$Clone$PointerTo_Named_project$realpathAliasSet_to_PointerTo_Named_project$realpathAliasSet, ($argument0: tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined): tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>;
-    } | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: realpathAliasSet__from_project;
-    } | undefined): {
-        value: realpathAliasSet__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined): tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined => {
         return $argument0;
     }, ($argument0: gostring): Path__from_tspath => {
         return new Path__from_tspath($argument0);
-    }, ($argument0: {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>;
-    } | undefined): GoInterface | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined): GoInterface | undefined => {
         return new $goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet($argument0);
     }, ($argument0: Path__from_tspath): GoInterface | undefined => {
         return new $goInterfaceAdapter$Named_tspath$Path($argument0);
-    }, ($argument0: GoInterfaceValue | undefined): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>;
-    } | undefined => {
-        return (($value: GoInterfaceValue | undefined): {
-            value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                value: realpathAliasSet__from_project;
-            } | undefined>;
-        } | undefined => {
+    }, ($argument0: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined => {
+        return (($value: GoInterfaceValue | undefined): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined => {
             if (!$goInterfaceAdapter$PointerTo_Named_dirty$SyncMapEntryOf_Named_tspath$Path_And_PointerTo_Named_project$realpathAliasSet.$is($value)) {
                 return GoPanic.raiseRuntime("runtime error: interface conversion failed");
             }
             return $value.$go$value;
         })($argument0);
-    }, ($argument0: {
-        value: realpathAliasSet__from_project;
-    } | undefined): {
-        value: realpathAliasSet__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined): tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined => {
         return $argument0;
-    }, (): {
-        value: SyncMapEntry__from_dirty<Path__from_tspath, {
-            value: realpathAliasSet__from_project;
-        } | undefined>;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<realpathAliasSet__from_project> | undefined>> | undefined => {
         return void 0;
     }, $argument1);
 }

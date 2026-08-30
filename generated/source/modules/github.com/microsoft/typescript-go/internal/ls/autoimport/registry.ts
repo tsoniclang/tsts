@@ -98,6 +98,24 @@ import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class newProgramStructure {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -314,36 +332,36 @@ export class RegistryBucket {
     } | undefined> | undefined) {
     }
     declare private readonly then?: never;
-    static Clone(b: RegistryBucket | undefined): RegistryBucket | undefined {
-        return new RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state.Clone(), (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedPackageNames, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AmbientModuleNames, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index);
+    static Clone(b: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined {
+        return tsonicTypeScriptRuntime.location<RegistryBucket>(new RegistryBucket(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state.Clone(), ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.ResolvedPackageNames, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.AmbientModuleNames, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index));
     }
-    static $go$private$autoimport$markNodeModulesDirty(b: RegistryBucket | undefined, packageName: gostring): void {
-        if (BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+    static $go$private$autoimport$markNodeModulesDirty(b: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, packageName: gostring): void {
+        if (BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
             return;
         }
         if (packageName === "") {
-            BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty = true;
+            BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty = true;
             return;
         }
-        if (BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).dirtyPackages === undefined) {
-            BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).dirtyPackages =
+        if (BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).dirtyPackages === undefined) {
+            BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).dirtyPackages =
                 tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
                     M: $goMap$MapOf_string_To_Struct_void.nil()
                 }));
         }
-        Set$Add$string(BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).dirtyPackages, packageName);
+        Set$Add$string(BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).dirtyPackages, packageName);
     }
-    static $go$private$autoimport$markProjectFileDirty(b: RegistryBucket | undefined, file: Path__from_tspath): void {
-        if ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state.$go$private$autoimport$hasDirtyFileBesides(file)) {
-            BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty = true;
+    static $go$private$autoimport$markProjectFileDirty(b: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, file: Path__from_tspath): void {
+        if (((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state.$go$private$autoimport$hasDirtyFileBesides(file)) {
+            BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty = true;
         }
         else {
-            BucketState.$storageOf((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).dirtyFile = file.$value;
+            BucketState.$storageOf(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).dirtyFile = file.$value;
         }
     }
 }
-export function newRegistryBucket(): RegistryBucket | undefined {
-    return new RegistryBucket(BucketState.$fromStorage({
+export function newRegistryBucket(): tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined {
+    return tsonicTypeScriptRuntime.location<RegistryBucket>(new RegistryBucket(BucketState.$fromStorage({
         multipleFilesDirty: true,
         newProgramStructure: newProgramStructureDifferentFileNames$constant().$value,
         dirtyFile: ((void Path__from_tspath,
@@ -351,7 +369,7 @@ export function newRegistryBucket(): RegistryBucket | undefined {
         buildPreferences: bucketBuildPreferences.$zeroStorage(),
         dirtyPackages: void 0,
         recursiveSearchPackages: void 0
-    }), $goMap$MapOf_Named_tspath$Path_To_string.nil(), $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.nil(), void 0, void 0, $goMap$MapOf_string_To_SliceOf_string.nil(), void 0);
+    }), $goMap$MapOf_Named_tspath$Path_To_string.nil(), $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.nil(), void 0, void 0, $goMap$MapOf_string_To_SliceOf_string.nil(), void 0));
 }
 export class directory {
     declare private readonly $goType: void;
@@ -360,13 +378,13 @@ export class directory {
     } | undefined, public hasNodeModules: bool) {
     }
     declare private readonly then?: never;
-    static Clone(d: directory | undefined): directory | undefined {
-        return new directory((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson, (d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasNodeModules);
+    static Clone(d: tsonicTypeScriptRuntime.Location<directory> | undefined): tsonicTypeScriptRuntime.Location<directory> | undefined {
+        return tsonicTypeScriptRuntime.location<directory>(new directory(((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.name, ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson, ((d ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.hasNodeModules));
     }
 }
 export class Registry {
     declare private readonly $goType: void;
-    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public userPreferences: UserPreferences__from_lsutil, public directories: GoMapValue<Path__from_tspath, directory | undefined>, public nodeModules: GoMapValue<Path__from_tspath, RegistryBucket | undefined>, public projects: GoMapValue<Path__from_tspath, RegistryBucket | undefined>, public uniquePackageCount: int, public entrypoints: GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public specifierCache: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined>) {
+    public constructor(public toPath: (($0: gostring) => Path__from_tspath) | undefined, public userPreferences: UserPreferences__from_lsutil, public directories: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>, public nodeModules: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>, public projects: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>, public uniquePackageCount: int, public entrypoints: GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public specifierCache: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined>) {
     }
     static $copy($source: Registry): Registry {
         return new Registry($source.toPath, UserPreferences__from_lsutil.$copy($source.userPreferences), $source.directories, $source.nodeModules, $source.projects, $source.uniquePackageCount, $source.entrypoints, $source.specifierCache);
@@ -422,10 +440,10 @@ export class Registry {
             const __gotots_range_value_48 = __gotots_range_value_46;
             const __gotots_range_value_49 = __gotots_range_value_47[0];
             let path = __gotots_range_value_48;
-            let bucket: RegistryBucket | undefined = __gotots_range_value_49;
+            let bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_range_value_49;
             let exportCount = 0;
-            if (!((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index === undefined)) {
-                exportCount = Index.$storageOf(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries.length;
+            if (!(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index === undefined)) {
+                exportCount = Index.$storageOf((((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries.length;
             }
             const __gotots_slice_build_0 = (stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ProjectBuckets;
             const __gotots_slice_build_2 = __gotots_slice_build_0.length + 1;
@@ -436,9 +454,9 @@ export class Registry {
                     {
                         Path: path.$value,
                         ExportCount: exportCount,
-                        FileCount: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.length(),
-                        State: BucketState.$storageOf(BucketState.$copy((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state)),
-                        DependencyNames: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames,
+                        FileCount: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.length(),
+                        State: BucketState.$storageOf(BucketState.$copy(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state)),
+                        DependencyNames: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames,
                         PackageNames: void 0
                     })));
             }
@@ -451,9 +469,9 @@ export class Registry {
                     {
                         Path: path.$value,
                         ExportCount: exportCount,
-                        FileCount: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.length(),
-                        State: BucketState.$storageOf(BucketState.$copy((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state)),
-                        DependencyNames: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames,
+                        FileCount: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.length(),
+                        State: BucketState.$storageOf(BucketState.$copy(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state)),
+                        DependencyNames: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames,
                         PackageNames: void 0
                     })));
                 for (let __gotots_slice_build_3 = __gotots_slice_build_2; __gotots_slice_build_3 < __gotots_slice_build_1.capacity; __gotots_slice_build_3++) {
@@ -472,16 +490,16 @@ export class Registry {
             const __gotots_range_value_52 = __gotots_range_value_50;
             const __gotots_range_value_53 = __gotots_range_value_51[0];
             let path = __gotots_range_value_52;
-            let bucket: RegistryBucket | undefined = __gotots_range_value_53;
+            let bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_range_value_53;
             let exportCount = 0;
-            if (!((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index === undefined)) {
-                exportCount = Index.$storageOf(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries.length;
+            if (!(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index === undefined)) {
+                exportCount = Index.$storageOf((((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"))).entries.length;
             }
             let packageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = void 0;
             let fileCount = 0;
-            if (!(bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles.isNil()) {
-                packageNames = NewSetWithSizeHint$string((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles.length());
-                const __gotots_range_26 = (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles;
+            if (!((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles.isNil()) {
+                packageNames = NewSetWithSizeHint$string(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles.length());
+                const __gotots_range_26 = ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles;
                 const __gotots_range_keys_11 = __gotots_range_26.keys();
                 for (const __gotots_range_value_54 of __gotots_range_keys_11) {
                     const __gotots_range_value_55 = __gotots_range_26.lookupOk(__gotots_range_value_54);
@@ -506,8 +524,8 @@ export class Registry {
                         Path: path.$value,
                         ExportCount: exportCount,
                         FileCount: fileCount,
-                        State: BucketState.$storageOf(BucketState.$copy((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state)),
-                        DependencyNames: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames,
+                        State: BucketState.$storageOf(BucketState.$copy(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state)),
+                        DependencyNames: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames,
                         PackageNames: packageNames
                     })));
             }
@@ -521,8 +539,8 @@ export class Registry {
                         Path: path.$value,
                         ExportCount: exportCount,
                         FileCount: fileCount,
-                        State: BucketState.$storageOf(BucketState.$copy((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state)),
-                        DependencyNames: (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames,
+                        State: BucketState.$storageOf(BucketState.$copy(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state)),
+                        DependencyNames: ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames,
                         PackageNames: packageNames
                     })));
                 for (let __gotots_slice_build_7 = __gotots_slice_build_6; __gotots_slice_build_7 < __gotots_slice_build_5.capacity; __gotots_slice_build_7++) {
@@ -546,7 +564,7 @@ export class Registry {
             return false;
         }
         const __gotots_results_0 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projects.lookupOk(projectPath);
-        let projectBucket: RegistryBucket | undefined = __gotots_results_0[0];
+        let projectBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_results_0[0];
         let ok = __gotots_results_0[1];
         if (!ok) {
             return false;
@@ -554,17 +572,17 @@ export class Registry {
         const __gotots_callee_0: Registry["toPath"] = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
         const __gotots_argument_0 = fileName;
         let path = (__gotots_callee_0 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_0);
-        if ((projectBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state.$go$private$autoimport$possiblyNeedsRebuildForFile(path, UserPreferences__from_lsutil.$copy(preferences))) {
+        if (((projectBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state.$go$private$autoimport$possiblyNeedsRebuildForFile(path, UserPreferences__from_lsutil.$copy(preferences))) {
             return false;
         }
         let dirPath = path.GetDirectoryPath();
         for (;;) {
             {
                 const __gotots_results_1 = (r ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModules.lookupOk(dirPath);
-                let dirBucket: RegistryBucket | undefined = __gotots_results_1[0];
+                let dirBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = __gotots_results_1[0];
                 let ok__shadow_1 = __gotots_results_1[1];
                 if (ok__shadow_1) {
-                    if ((dirBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state.$go$private$autoimport$possiblyNeedsRebuildForFile(path, UserPreferences__from_lsutil.$copy(preferences))) {
+                    if (((dirBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state.$go$private$autoimport$possiblyNeedsRebuildForFile(path, UserPreferences__from_lsutil.$copy(preferences))) {
                         return false;
                     }
                 }
@@ -591,9 +609,9 @@ export class Registry {
             const __gotots_range_value_2 = __gotots_range_value_0;
             const __gotots_range_value_3 = __gotots_range_value_1[0];
             let dirPath = __gotots_range_value_2;
-            let dir: directory | undefined = __gotots_range_value_3;
-            if ((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasNodeModules) {
-                dirs.store(new Path__from_tspath(CombinePaths__from_tspath(dirPath.$value, RuntimeSlice.literal<gostring>(["node_modules"]))), CombinePaths__from_tspath((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name, RuntimeSlice.literal<gostring>(["node_modules"])));
+            let dir: tsonicTypeScriptRuntime.Location<directory> | undefined = __gotots_range_value_3;
+            if (((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.hasNodeModules) {
+                dirs.store(new Path__from_tspath(CombinePaths__from_tspath(dirPath.$value, RuntimeSlice.literal<gostring>(["node_modules"]))), CombinePaths__from_tspath(((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.name, RuntimeSlice.literal<gostring>(["node_modules"])));
             }
         }
         return dirs;
@@ -725,11 +743,11 @@ export class registryBuilder {
     public constructor(public host: RegistryCloneHost | undefined, public base: {
         value: Registry;
     } | undefined, public userPreferences: UserPreferences__from_lsutil, public directories: {
-        value: Map__from_dirty<Path__from_tspath, directory | undefined>;
+        value: Map__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>;
     } | undefined, public nodeModules: {
-        value: Map__from_dirty<Path__from_tspath, RegistryBucket | undefined>;
+        value: Map__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>;
     } | undefined, public projects: {
-        value: Map__from_dirty<Path__from_tspath, RegistryBucket | undefined>;
+        value: Map__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>;
     } | undefined, public specifierCache: MapBuilder__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined, tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, gostring>> | undefined> | undefined, public resolverOptions: ResolverOptions__from___go_module, public uniquePackageCount: int, public entrypoints: MapBuilder__from_dirty<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>> | undefined) {
     }
     declare private readonly then?: never;
@@ -746,7 +764,7 @@ export class registryBuilder {
         const __gotots_field_12 = FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$RegistryBucket(__gotots_results_25[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_25[1])]));
         return { value: new Registry(__gotots_field_8, __gotots_field_9, __gotots_field_10, __gotots_field_11, __gotots_field_12, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).uniquePackageCount, MapBuilder$Build$Named_tspath$Path$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints), FirstResult$MapOf_Named_tspath$Path_To_PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_string(MapBuilder$Build$Named_tspath$Path$PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_string$PointerTo_Named_collections$SyncMapOf_Named_tspath$Path_And_string((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).specifierCache), RuntimeSlice.nil<$goInterface$Interface_void | undefined>())) };
     }
-    static $go$private$autoimport$buildNodeModulesBucket(b: registryBuilder | undefined, ctx: GoInterface | undefined, result: bucketBuildResult | undefined, dependencies: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, dirPath: Path__from_tspath, discovered: RuntimeSlice<discoveredPackage | undefined>, directoryPackageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, extractionCache: GoMapValue<gostring, perPackageExtractionResult | undefined>, recursiveSearchPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, logger: {
+    static $go$private$autoimport$buildNodeModulesBucket(b: registryBuilder | undefined, ctx: GoInterface | undefined, result: bucketBuildResult | undefined, dependencies: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, dirPath: Path__from_tspath, discovered: RuntimeSlice<discoveredPackage | undefined>, directoryPackageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, extractionCache: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined>, recursiveSearchPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, logger: {
         value: LogTree__from_logging;
     } | undefined): void {
         const __gotots_receiver_50 = ctx;
@@ -798,23 +816,24 @@ export class registryBuilder {
                 }
             }
         }
-        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket = new RegistryBucket(BucketState.$fromStorage({
-            buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences))),
-            recursiveSearchPackages: Set$Clone$string(recursiveSearchPackages),
-            dirtyFile: ((void Path__from_tspath,
-                "") as string),
-            multipleFilesDirty: false,
-            newProgramStructure: ((void newProgramStructure,
-                0) as int),
-            dirtyPackages: void 0
-        }), paths, allPackageFiles, void 0, dependencies, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModuleNames, Index.$fromStorage<{
-            value: Export;
-        } | undefined>({
-            entries: RuntimeSlice.nil<{
+        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket =
+            tsonicTypeScriptRuntime.location<RegistryBucket>(new RegistryBucket(BucketState.$fromStorage({
+                buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences))),
+                recursiveSearchPackages: Set$Clone$string(recursiveSearchPackages),
+                dirtyFile: ((void Path__from_tspath,
+                    "") as string),
+                multipleFilesDirty: false,
+                newProgramStructure: ((void newProgramStructure,
+                    0) as int),
+                dirtyPackages: void 0
+            }), paths, allPackageFiles, void 0, dependencies, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModuleNames, Index.$fromStorage<{
                 value: Export;
-            } | undefined>(),
-            index: $goMap$MapOf_rune_To_SliceOf_int.nil()
-        }));
+            } | undefined>({
+                entries: RuntimeSlice.nil<{
+                    value: Export;
+                } | undefined>(),
+                index: $goMap$MapOf_rune_To_SliceOf_int.nil()
+            })));
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints = $goMap$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint.make((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports.length(), []);
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources;
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupTargets = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupTargets;
@@ -833,7 +852,7 @@ export class registryBuilder {
                 let exp: {
                     value: Export;
                 } | undefined = __gotots_range_value_118;
-                Index$insertAsWords$PointerTo_Named_autoimport$Export(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, exp);
+                Index$insertAsWords$PointerTo_Named_autoimport$Export((((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, exp);
             }
         }
         const __gotots_range_52 = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints;
@@ -852,12 +871,12 @@ export class registryBuilder {
         }
         {
             const __gotots_results_37 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, dirPath);
-            let oldEntry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_37[0];
+            let oldEntry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_37[0];
             let ok = __gotots_results_37[1];
             if (ok) {
-                const __gotots_store_41 = MapEntry__from_dirty.$storageOf((oldEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                let oldBucket: RegistryBucket | undefined = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_41, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
-                const __gotots_range_54 = (oldBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles;
+                const __gotots_store_41 = MapEntry__from_dirty.$storageOf(((oldEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                let oldBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_41, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                const __gotots_range_54 = ((oldBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles;
                 const __gotots_range_keys_28 = __gotots_range_54.keys();
                 for (const __gotots_range_value_121 of __gotots_range_keys_28) {
                     const __gotots_range_value_122 = __gotots_range_54.lookupOk(__gotots_range_value_121);
@@ -918,7 +937,8 @@ export class registryBuilder {
                     const __gotots_receiver_57 = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_56).FS();
                     const __gotots_argument_65 = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_57).UseCaseSensitiveFileNames();
                     let fileExcludePatterns: SpecMatcher__from_vfsmatch | undefined = __gotots_receiver_58.ParsedAutoImportFileExcludePatterns(__gotots_argument_65);
-                    (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket = new RegistryBucket(BucketState.$zero(), $goMap$MapOf_Named_tspath$Path_To_string.nil(), $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.nil(), void 0, void 0, $goMap$MapOf_string_To_SliceOf_string.nil(), void 0);
+                    (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket =
+                        tsonicTypeScriptRuntime.location<RegistryBucket>(new RegistryBucket(BucketState.$zero(), $goMap$MapOf_Named_tspath$Path_To_string.nil(), $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.nil(), void 0, void 0, $goMap$MapOf_string_To_SliceOf_string.nil(), void 0));
                     let moduleResolver: {
                         value: Resolver__from___go_module;
                     } | undefined = NewResolverWithOptions__from___go_module((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host, $state__core.EmptyCompilerOptions, "", "", ResolverOptions__from___go_module.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).resolverOptions));
@@ -1059,10 +1079,10 @@ export class registryBuilder {
                             Index$insertAsWords$PointerTo_Named_autoimport$Export(idx, exp);
                         }
                     }
-                    ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths = paths;
-                    ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index = idx;
-                    ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedPackageNames = resolvedPackageNames;
-                    BucketState.$storageOf(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).buildPreferences = bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences)));
+                    (((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths = paths;
+                    (((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index = idx;
+                    (((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.ResolvedPackageNames = resolvedPackageNames;
+                    BucketState.$storageOf((((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).buildPreferences = bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences)));
                     if (!(logger === undefined)) {
                         const __gotots_receiver_61 = logger;
                         const __gotots_argument_71 = "Extracted exports: %v (%d exports, %d used checker, %d created checkers)";
@@ -1126,18 +1146,18 @@ export class registryBuilder {
         let dependencies: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
             M: $goMap$MapOf_string_To_Struct_void.nil()
         }));
-        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, (entry: MapEntry__from_dirty<Path__from_tspath, directory | undefined> | undefined): bool => {
-            const __gotots_store_36 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            let __gotots_logical_result_6 = InfoCacheEntry__from_packagejson.Exists((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_36, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson);
+        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, (entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>> | undefined): bool => {
+            const __gotots_store_36 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+            let __gotots_logical_result_6 = InfoCacheEntry__from_packagejson.Exists(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_36, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson);
             if (__gotots_logical_result_6) {
                 const __gotots_receiver_29 = dirPath;
-                const __gotots_store_37 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                const __gotots_argument_42 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_37, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                const __gotots_store_37 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+                const __gotots_argument_42 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_37, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                 __gotots_logical_result_6 = __gotots_receiver_29.ContainsPath(__gotots_argument_42);
             }
             if (__gotots_logical_result_6) {
-                const __gotots_store_38 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                const __gotots_argument_43: InfoCacheEntry__from_packagejson["Contents"] = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_38, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents;
+                const __gotots_store_38 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+                const __gotots_argument_43: InfoCacheEntry__from_packagejson["Contents"] = (((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_38, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Contents;
                 const __gotots_argument_44 = dependencies;
                 addPackageJsonDependencies(__gotots_argument_43, __gotots_argument_44);
             }
@@ -1228,7 +1248,7 @@ export class registryBuilder {
     }
     static $go$private$autoimport$extractPackage(b: registryBuilder | undefined, ctx: GoInterface | undefined, packageJson: {
         value: InfoCacheEntry__from_packagejson;
-    } | undefined, packageName: gostring, projectReferenceOutputs: GoMapValue<Path__from_tspath, gostring>, fileExcludePatterns: SpecMatcher__from_vfsmatch | undefined, enableDirectorySearch: bool): perPackageExtractionResult | undefined {
+    } | undefined, packageName: gostring, projectReferenceOutputs: GoMapValue<Path__from_tspath, gostring>, fileExcludePatterns: SpecMatcher__from_vfsmatch | undefined, enableDirectorySearch: bool): tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined {
         if (packageJson === undefined || !(packageJson ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.DirectoryExists) {
             return void 0;
         }
@@ -1256,9 +1276,9 @@ export class registryBuilder {
         if (packageEntrypoints.length === 0) {
             return void 0;
         }
-        let result: perPackageExtractionResult | undefined = new perPackageExtractionResult($goMap$MapOf_Named_tspath$Path_To_string.make(0, []), packageEntrypoints, $goMap$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export.make(0, []), $goMap$MapOf_string_To_SliceOf_string.make(0, []), 0, 0, skippedEntrypoints, false, $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$failedAmbientModuleLookupSource.make(0, []), tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
+        let result: tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined = tsonicTypeScriptRuntime.location<perPackageExtractionResult>(new perPackageExtractionResult($goMap$MapOf_Named_tspath$Path_To_string.make(0, []), packageEntrypoints, $goMap$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export.make(0, []), $goMap$MapOf_string_To_SliceOf_string.make(0, []), 0, 0, skippedEntrypoints, false, $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_autoimport$failedAmbientModuleLookupSource.make(0, []), tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
             M: $goMap$MapOf_string_To_Struct_void.nil()
-        })));
+        }))));
         let seenFiles: tsonicTypeScriptRuntime.Location<Set__from_collections<Path__from_tspath>> | undefined = NewSetWithSizeHint$Named_tspath$Path(packageEntrypoints.length);
         let rootFiles = RuntimeSlice.make<tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined>(packageEntrypoints.length, null, void 0);
         let symlinks__shadow_1: GoMapValue<Path__from_tspath, pathAndFileName> = $goMap$MapOf_Named_tspath$Path_To_Named_autoimport$pathAndFileName.make(0, []);
@@ -1296,7 +1316,7 @@ export class registryBuilder {
                 const __gotots_argument_57 = fileName;
                 let symlinkPath = (__gotots_callee_17 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_57);
                 symlinks__shadow_1.store(realpathPath, new pathAndFileName(symlinkPath, fileName));
-                (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isSymlinked = true;
+                ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.isSymlinked = true;
             }
             sync__from_gostdlib.WaitGroup.Go(wg, (): void => {
                 const __gotots_receiver_41 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
@@ -1316,20 +1336,20 @@ export class registryBuilder {
         let aliasResolver__shadow_1: {
             value: aliasResolver;
         } | undefined = newAliasResolver(rootFiles, symlinks__shadow_1, (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host, resolver, ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath, (source: HasFileName__from_ast | undefined, moduleName: gostring): void => {
-            Set$Add$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupTargets, moduleName);
+            Set$Add$string(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupTargets, moduleName);
             {
-                const __gotots_map_6 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupSources;
+                const __gotots_map_6 = ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupSources;
                 const __gotots_receiver_42 = source;
                 const __gotots_map_7 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_42).Path();
                 const __gotots_results_29 = __gotots_map_6.lookupOk(__gotots_map_7);
                 let exists = __gotots_results_29[1];
                 if (!exists) {
-                    const __gotots_store_39 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupSources;
+                    const __gotots_store_39 = ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupSources;
                     const __gotots_receiver_43 = source;
                     const __gotots_store_40 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_43).Path();
                     const __gotots_receiver_44 = source;
                     const __gotots_field_14 = goInterfaceNonNil<HasFileName__from_ast>(__gotots_receiver_44).FileName();
-                    __gotots_store_39.store(__gotots_store_40, { value: new failedAmbientModuleLookupSource(named_sync.SyncMutexOperations.$zero(), __gotots_field_14, "") });
+                    __gotots_store_39.store(__gotots_store_40, tsonicTypeScriptRuntime.location<failedAmbientModuleLookupSource>(new failedAmbientModuleLookupSource(named_sync.SyncMutexOperations.$zero(), __gotots_field_14, "")));
                 }
             }
         });
@@ -1355,27 +1375,25 @@ export class registryBuilder {
             for (let __gotots_range_index_17 = 0; __gotots_range_index_17 < __gotots_range_34.length; __gotots_range_index_17++) {
                 const __gotots_range_value_74 = __gotots_range_34.get(__gotots_range_index_17);
                 let name = __gotots_range_value_74;
-                (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModules.store(name, (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModules.lookup(name).append("", [SourceFile__from_ast.FileName(entrypoint)]));
+                ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.ambientModules.store(name, ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.ambientModules.lookup(name).append("", [SourceFile__from_ast.FileName(entrypoint)]));
             }
-            (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.store(SourceFile__from_ast.Path(entrypoint), SourceFile__from_ast.FileName(entrypoint));
+            ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.packageFiles.store(SourceFile__from_ast.Path(entrypoint), SourceFile__from_ast.FileName(entrypoint));
             const __gotots_results_31 = (aliasResolver__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.symlinks.lookupOk(SourceFile__from_ast.Path(entrypoint));
             let symlink = __gotots_results_31[0];
             let hasSymlink = __gotots_results_31[1];
             if (hasSymlink) {
-                (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.store(symlink.path, symlink.fileName);
+                ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.packageFiles.store(symlink.path, symlink.fileName);
             }
             let hasExports = fileExports.length > 0 && !(((entrypoint ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ExternalModuleIndicator === undefined);
             {
-                const __gotots_results_32 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupSources.lookupOk(SourceFile__from_ast.Path(entrypoint));
-                let source: {
-                    value: failedAmbientModuleLookupSource;
-                } | undefined = __gotots_results_32[0];
+                const __gotots_results_32 = ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupSources.lookupOk(SourceFile__from_ast.Path(entrypoint));
+                let source: tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined = __gotots_results_32[0];
                 let ok = __gotots_results_32[1];
                 if (!ok) {
-                    (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports.store(SourceFile__from_ast.Path(entrypoint), fileExports);
+                    ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.exports.store(SourceFile__from_ast.Path(entrypoint), fileExports);
                 }
                 else {
-                    (source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.packageName = packageName;
+                    ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource>).value.packageName = packageName;
                     hasExports = !(((entrypoint ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ExternalModuleIndicator === undefined);
                 }
             }
@@ -1386,7 +1404,7 @@ export class registryBuilder {
                 }
             }
         }
-        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints = DeleteFunc$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint$PointerTo_Named___go_module$ResolvedEntrypoint((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints, (ep: ResolvedEntrypoint__from___go_module | undefined): bool => {
+        ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.entrypoints = DeleteFunc$SliceOf_PointerTo_Named___go_module$ResolvedEntrypoint$PointerTo_Named___go_module$ResolvedEntrypoint(((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.entrypoints, (ep: ResolvedEntrypoint__from___go_module | undefined): bool => {
             const __gotots_receiver_46 = nonModuleFiles$location;
             const __gotots_callee_19: Registry["toPath"] = ((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.toPath;
             const __gotots_argument_60 = (ep ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName;
@@ -1394,29 +1412,29 @@ export class registryBuilder {
             return Set__from_collections.Has<Path__from_tspath>(__gotots_receiver_46, __gotots_argument_61);
         });
         let stats: extractorStats | undefined = exportExtractor.Stats(extractor);
-        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).statsExports = atomic__from_gostdlib.Int32.Load((stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports);
-        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).statsUsedChecker = atomic__from_gostdlib.Int32.Load((stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).usedChecker);
+        ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.statsExports = atomic__from_gostdlib.Int32.Load((stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports);
+        ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.statsUsedChecker = atomic__from_gostdlib.Int32.Load((stats ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).usedChecker);
         return result;
     }
-    static $go$private$autoimport$getNearestAncestorDirectoryWithPackageJson(b: registryBuilder | undefined, filePath: Path__from_tspath): directory | undefined {
+    static $go$private$autoimport$getNearestAncestorDirectoryWithPackageJson(b: registryBuilder | undefined, filePath: Path__from_tspath): tsonicTypeScriptRuntime.Location<directory> | undefined {
         const __gotots_results_47 = ForEachAncestorDirectoryPath$PointerTo_Named_autoimport$directory(filePath.GetDirectoryPath(), (dirPath: Path__from_tspath): [
-            directory | undefined,
+            tsonicTypeScriptRuntime.Location<directory> | undefined,
             bool
         ] => {
-            let result: directory | undefined = void 0;
+            let result: tsonicTypeScriptRuntime.Location<directory> | undefined = void 0;
             let stop: bool = false;
             {
                 const __gotots_results_44 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, dirPath);
-                let dirEntry: MapEntry__from_dirty<Path__from_tspath, directory | undefined> | undefined = __gotots_results_44[0];
+                let dirEntry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>> | undefined = __gotots_results_44[0];
                 let ok = __gotots_results_44[1];
                 let __gotots_logical_result_8 = ok;
                 if (__gotots_logical_result_8) {
-                    const __gotots_store_43 = MapEntry__from_dirty.$storageOf((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    __gotots_logical_result_8 = InfoCacheEntry__from_packagejson.Exists((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_43, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson);
+                    const __gotots_store_43 = MapEntry__from_dirty.$storageOf(((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+                    __gotots_logical_result_8 = InfoCacheEntry__from_packagejson.Exists(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_43, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson);
                 }
                 if (__gotots_logical_result_8) {
-                    const __gotots_store_44 = MapEntry__from_dirty.$storageOf((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    const __gotots_results_45 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_44, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                    const __gotots_store_44 = MapEntry__from_dirty.$storageOf(((dirEntry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+                    const __gotots_results_45 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_44, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                     const __gotots_results_46 = true;
                     return [__gotots_results_45, __gotots_results_46];
                 }
@@ -1441,32 +1459,32 @@ export class registryBuilder {
             let newFileNames = __gotots_range_value_18;
             {
                 const __gotots_results_9 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, projectPath);
-                let bucket: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_9[0];
+                let bucket: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_9[0];
                 let ok = __gotots_results_9[1];
                 if (ok) {
-                    MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(bucket, (bucket__shadow_1: RegistryBucket | undefined): void => {
-                        BucketState.$storageOf((bucket__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).newProgramStructure = IfElse$Named_autoimport$newProgramStructure(newFileNames, newProgramStructureDifferentFileNames$constant(), newProgramStructureSameFileNames$constant()).$value;
+                    MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(bucket, (bucket__shadow_1: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
+                        BucketState.$storageOf(((bucket__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).newProgramStructure = IfElse$Named_autoimport$newProgramStructure(newFileNames, newProgramStructureDifferentFileNames$constant(), newProgramStructureSameFileNames$constant()).$value;
                     });
                 }
             }
         }
         let cleanNodeModulesBuckets: GoMapValue<Path__from_tspath, GoEmptyStruct> = $goMap$MapOf_Named_tspath$Path_To_Struct_void.make(0, []);
         let cleanProjectBuckets: GoMapValue<Path__from_tspath, GoEmptyStruct> = $goMap$MapOf_Named_tspath$Path_To_Struct_void.make(0, []);
-        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, (entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined): bool => {
-            const __gotots_store_5 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            if (!BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, (entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined): bool => {
+            const __gotots_store_5 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+            if (!BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_5, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
                 const __gotots_store_7 = cleanNodeModulesBuckets;
-                const __gotots_store_6 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                __gotots_store_7.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
+                const __gotots_store_6 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                __gotots_store_7.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_6, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
             }
             return true;
         });
-        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, (entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined): bool => {
-            const __gotots_store_8 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            if (!BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, (entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined): bool => {
+            const __gotots_store_8 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+            if (!BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_8, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
                 const __gotots_store_10 = cleanProjectBuckets;
-                const __gotots_store_9 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                __gotots_store_10.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_9, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
+                const __gotots_store_9 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                __gotots_store_10.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_9, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), new GoEmptyStruct);
             }
             return true;
         });
@@ -1496,16 +1514,16 @@ export class registryBuilder {
                                 let ok = __gotots_results_10[1];
                                 if (ok) {
                                     const __gotots_results_11 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, dirPath);
-                                    let entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket(__gotots_results_11[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_11[1])]));
-                                    const __gotots_store_11 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                                    const __gotots_map_0 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_11, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths;
+                                    let entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket(__gotots_results_11[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_11[1])]));
+                                    const __gotots_store_11 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                                    const __gotots_map_0 = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_11, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths;
                                     const __gotots_map_1 = path;
                                     let packageName = __gotots_map_0.lookup(__gotots_map_1);
-                                    MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: RegistryBucket | undefined): void => {
+                                    MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
                                         RegistryBucket.$go$private$autoimport$markNodeModulesDirty(bucket, packageName);
                                     });
-                                    const __gotots_store_12 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                                    if (!BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_12, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+                                    const __gotots_store_12 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                                    if (!BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_12, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
                                         cleanNodeModulesBuckets.delete(dirPath);
                                     }
                                 }
@@ -1522,20 +1540,20 @@ export class registryBuilder {
                                 const __gotots_range_value_24 = __gotots_range_value_22;
                                 let bucketDirPath = __gotots_range_value_24;
                                 const __gotots_results_12 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, bucketDirPath);
-                                let entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket(__gotots_results_12[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_12[1])]));
+                                let entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$RegistryBucket(__gotots_results_12[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_12[1])]));
                                 {
-                                    const __gotots_store_13 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                                    const __gotots_map_2 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_13, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths;
+                                    const __gotots_store_13 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                                    const __gotots_map_2 = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_13, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths;
                                     const __gotots_map_3 = path;
                                     const __gotots_results_13 = __gotots_map_2.lookupOk(__gotots_map_3);
                                     let packageName = __gotots_results_13[0];
                                     let ok = __gotots_results_13[1];
                                     if (ok) {
-                                        MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: RegistryBucket | undefined): void => {
+                                        MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
                                             RegistryBucket.$go$private$autoimport$markNodeModulesDirty(bucket, packageName);
                                         });
-                                        const __gotots_store_14 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                                        if (!BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_14, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+                                        const __gotots_store_14 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                                        if (!BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_14, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
                                             cleanNodeModulesBuckets.delete(bucketDirPath);
                                         }
                                     }
@@ -1554,19 +1572,19 @@ export class registryBuilder {
                     const __gotots_range_value_27 = __gotots_range_value_25;
                     let projectDirPath = __gotots_range_value_27;
                     const __gotots_results_14 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, projectDirPath);
-                    let entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_14[0];
+                    let entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_14[0];
                     {
-                        const __gotots_store_15 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        const __gotots_map_4 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_15, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths;
+                        const __gotots_store_15 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                        const __gotots_map_4 = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_15, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths;
                         const __gotots_map_5 = path;
                         const __gotots_results_15 = __gotots_map_4.lookupOk(__gotots_map_5);
                         let ok = __gotots_results_15[1];
                         if (ok) {
-                            MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: RegistryBucket | undefined): void => {
+                            MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(entry, (bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
                                 RegistryBucket.$go$private$autoimport$markProjectFileDirty(bucket, path);
                             });
-                            const __gotots_store_16 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                            if (!BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_16, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).multipleFilesDirty) {
+                            const __gotots_store_16 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                            if (!BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_16, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).multipleFilesDirty) {
                                 cleanProjectBuckets.delete(projectDirPath);
                             }
                         }
@@ -1603,12 +1621,12 @@ export class registryBuilder {
             let stop: bool = false;
             {
                 const __gotots_results_41 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, dirPath);
-                let bucket: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_41[0];
+                let bucket: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_41[0];
                 let ok = __gotots_results_41[1];
                 if (ok) {
                     {
-                        const __gotots_store_42 = MapEntry__from_dirty.$storageOf((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        const __gotots_map_8 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_42, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AmbientModuleNames;
+                        const __gotots_store_42 = MapEntry__from_dirty.$storageOf(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                        const __gotots_map_8 = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_42, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.AmbientModuleNames;
                         const __gotots_map_9 = moduleName;
                         const __gotots_results_42 = __gotots_map_8.lookupOk(__gotots_map_9);
                         let fileNames = __gotots_results_42[0];
@@ -1708,7 +1726,7 @@ export class registryBuilder {
             }
         }
         let addedProjects = RuntimeSlice.nil<gostring>(), removedProjects = RuntimeSlice.nil<gostring>();
-        DiffMapsFunc$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket$Struct_void(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projects, neededProjects, ($0: RegistryBucket | undefined, $1: GoEmptyStruct): bool => {
+        DiffMapsFunc$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket$Struct_void(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.projects, neededProjects, ($0: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, $1: GoEmptyStruct): bool => {
             const __gotots_argument_7 = new $goInterfaceAdapter$string("never called because onChanged is nil");
             GoPanic.raise(__gotots_argument_7 === undefined ? GoPanicNilValue.create() : __gotots_argument_7);
             GoPanic.raiseRuntime("unreachable Go function end");
@@ -1716,7 +1734,7 @@ export class registryBuilder {
             Map$Add$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, projectPath, newRegistryBucket());
             addedProjects = addedProjects.append(((void Path__from_tspath,
                 "") as string), [projectPath.$value]);
-        }, (projectPath: Path__from_tspath, $1: RegistryBucket | undefined): void => {
+        }, (projectPath: Path__from_tspath, $1: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
             Map$Delete$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, projectPath);
             removedProjects = removedProjects.append(((void Path__from_tspath,
                 "") as string), [projectPath.$value]);
@@ -1743,16 +1761,16 @@ export class registryBuilder {
             let hasNodeModules = goInterfaceNonNil<FS__from_vfs>(__gotots_receiver_5).DirectoryExists(__gotots_argument_8);
             {
                 const __gotots_results_6 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, dirPath);
-                let entry: MapEntry__from_dirty<Path__from_tspath, directory | undefined> | undefined = __gotots_results_6[0];
+                let entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>> | undefined = __gotots_results_6[0];
                 let ok = __gotots_results_6[1];
                 if (ok) {
-                    MapEntry$ChangeIf$Named_tspath$Path$PointerTo_Named_autoimport$directory(entry, (dir: directory | undefined): bool => {
-                        return packageJsonChanged || (dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasNodeModules !== hasNodeModules;
-                    }, (dir: directory | undefined): void => {
+                    MapEntry$ChangeIf$Named_tspath$Path$PointerTo_Named_autoimport$directory(entry, (dir: tsonicTypeScriptRuntime.Location<directory> | undefined): bool => {
+                        return packageJsonChanged || ((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.hasNodeModules !== hasNodeModules;
+                    }, (dir: tsonicTypeScriptRuntime.Location<directory> | undefined): void => {
                         const __gotots_receiver_6 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
                         const __gotots_argument_9 = packageJsonFileName;
-                        (dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_6).GetPackageJson(__gotots_argument_9);
-                        (dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).hasNodeModules = hasNodeModules;
+                        ((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.packageJson = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_6).GetPackageJson(__gotots_argument_9);
+                        ((dir ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.hasNodeModules = hasNodeModules;
                     });
                 }
                 else {
@@ -1762,7 +1780,7 @@ export class registryBuilder {
                     const __gotots_receiver_7 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
                     const __gotots_argument_10 = packageJsonFileName;
                     const __gotots_field_1 = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_7).GetPackageJson(__gotots_argument_10);
-                    const __gotots_argument_12 = new directory(__gotots_field_0, __gotots_field_1, hasNodeModules);
+                    const __gotots_argument_12 = tsonicTypeScriptRuntime.location<directory>(new directory(__gotots_field_0, __gotots_field_1, hasNodeModules));
                     Map$Add$Named_tspath$Path$PointerTo_Named_autoimport$directory(__gotots_receiver_8, __gotots_argument_11, __gotots_argument_12);
                 }
             }
@@ -1783,7 +1801,7 @@ export class registryBuilder {
             }
         };
         let addedNodeModulesDirs = RuntimeSlice.nil<gostring>(), removedNodeModulesDirs = RuntimeSlice.nil<gostring>();
-        DiffMapsFunc$Named_tspath$Path$PointerTo_Named_autoimport$directory$string(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.directories, neededDirectories, (dir: directory | undefined, dirName: gostring): bool => {
+        DiffMapsFunc$Named_tspath$Path$PointerTo_Named_autoimport$directory$string(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.directories, neededDirectories, (dir: tsonicTypeScriptRuntime.Location<directory> | undefined, dirName: gostring): bool => {
             let packageJsonUri = FileNameToDocumentURI__from_lsconv(CombinePaths__from_tspath(dirName, RuntimeSlice.literal<gostring>(["package.json"])));
             const __gotots_store_2 = change;
             let __gotots_logical_result_0 = !Set__from_collections.Has<DocumentUri__from_lsproto>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "Changed"), packageJsonUri);
@@ -1815,7 +1833,7 @@ export class registryBuilder {
                         "") as string), [dirPath.$value]);
                 }
             }
-        }, (dirPath: Path__from_tspath, dir: directory | undefined): void => {
+        }, (dirPath: Path__from_tspath, dir: tsonicTypeScriptRuntime.Location<directory> | undefined): void => {
             let hadNodeModules = !(((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).base ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.nodeModules.lookup(dirPath) === undefined);
             Map$Delete$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, dirPath);
             Map$TryDelete$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, dirPath);
@@ -1826,7 +1844,7 @@ export class registryBuilder {
                 removedNodeModulesDirs = removedNodeModulesDirs.append(((void Path__from_tspath,
                     "") as string), [dirPath.$value]);
             }
-        }, (dirPath: Path__from_tspath, dir: directory | undefined, dirName: gostring): void => {
+        }, (dirPath: Path__from_tspath, dir: tsonicTypeScriptRuntime.Location<directory> | undefined, dirName: gostring): void => {
             const __gotots_callee_2 = updateDirectory;
             const __gotots_argument_16 = dirPath;
             const __gotots_argument_17 = dirName;
@@ -1857,7 +1875,7 @@ export class registryBuilder {
     } | undefined): void {
         class nodeModulesBucketTask {
             declare private readonly $goType: void;
-            public constructor(public entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined, public dependencyNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public dirName: gostring, public dirPath: Path__from_tspath, public isUpdate: bool, public existingBucket: RegistryBucket | undefined, public dirtyPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public packageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public directoryPackageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public discovered: RuntimeSlice<discoveredPackage | undefined>, public discoverErr: $goInterface$Interface_Method_Error_void_to_string | undefined) {
+            public constructor(public entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined, public dependencyNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public dirName: gostring, public dirPath: Path__from_tspath, public isUpdate: bool, public existingBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, public dirtyPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public packageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public directoryPackageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public discovered: RuntimeSlice<discoveredPackage | undefined>, public discoverErr: $goInterface$Interface_Method_Error_void_to_string | undefined) {
             }
             declare private readonly then?: never;
         }
@@ -1876,17 +1894,17 @@ export class registryBuilder {
         let allDeepImportPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
             M: $goMap$MapOf_string_To_Struct_void.nil()
         }));
-        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, (entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined): bool => {
+        Map$Range$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, (entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined): bool => {
             const __gotots_receiver_10 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
-            const __gotots_store_20 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-            const __gotots_argument_24 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_20, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+            const __gotots_store_20 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+            const __gotots_argument_24 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_20, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
             let program: {
                 value: Program__from_compiler;
             } | undefined = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_10).GetProgramForProject(__gotots_argument_24);
             if (!(program === undefined)) {
                 const __gotots_store_22 = allResolvedPackageNames;
-                const __gotots_store_21 = MapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                __gotots_store_22.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_21, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), getResolvedPackageNames(ctx, program));
+                const __gotots_store_21 = MapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                __gotots_store_22.store(mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_21, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)), getResolvedPackageNames(ctx, program));
                 addProjectReferenceOutputMappings(program, projectReferenceOutputs);
                 const __gotots_range_11 = Set$Keys$string(Program__from_compiler.DeepImportPackageNames(program));
                 const __gotots_range_keys_7 = __gotots_range_11.keys();
@@ -1918,19 +1936,19 @@ export class registryBuilder {
         ] => {
             {
                 const __gotots_results_17 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).nodeModules, dirPath);
-                let nodeModulesBucket: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_17[0];
+                let nodeModulesBucket: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_17[0];
                 let ok = __gotots_results_17[1];
                 if (ok) {
                     const __gotots_results_18 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$directory((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).directories, dirPath);
-                    const __gotots_store_23 = MapEntry__from_dirty.$storageOf((FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$directory(__gotots_results_18[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_18[1])])) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    let dirName = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, directory | undefined>, mapEntry__from_dirty<Path__from_tspath, directory | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_23, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).name;
+                    const __gotots_store_23 = MapEntry__from_dirty.$storageOf(((FirstResult$PointerTo_Named_dirty$MapEntryOf_Named_tspath$Path_And_PointerTo_Named_autoimport$directory(__gotots_results_18[0], RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new $goInterfaceAdapter$bool(__gotots_results_18[1])])) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<directory> | undefined>>).value);
+                    let dirName = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$directory(new $ProjectedPropertyLocation(__gotots_store_23, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<directory>).value.name;
                     let dependencies: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = registryBuilder.$go$private$autoimport$computeDependenciesForNodeModulesDirectory(b, RegistryChange.$copy(change), allResolvedPackageNames, dirName, dirPath);
-                    const __gotots_store_24 = MapEntry__from_dirty.$storageOf((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    let bucketState = BucketState.$copy((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_24, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state);
+                    const __gotots_store_24 = MapEntry__from_dirty.$storageOf(((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                    let bucketState = BucketState.$copy(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_24, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state);
                     let __gotots_logical_result_2 = BucketState.$storageOf(bucketState).multipleFilesDirty;
                     if (!__gotots_logical_result_2) {
-                        const __gotots_store_25 = MapEntry__from_dirty.$storageOf((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        __gotots_logical_result_2 = !Set$Equals$string((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_25, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames, dependencies);
+                        const __gotots_store_25 = MapEntry__from_dirty.$storageOf(((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                        __gotots_logical_result_2 = !Set$Equals$string(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_25, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames, dependencies);
                     }
                     let needsFullRebuild = __gotots_logical_result_2 || !bucketBuildPreferences.$fromStorage(BucketState.$storageOf(bucketState).buildPreferences).Equal(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences))) || !recursiveSearchSubset(targetRecursivePackages, BucketState.$storageOf(bucketState).recursiveSearchPackages);
                     let dirtyPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = bucketState.DirtyPackages();
@@ -1945,8 +1963,8 @@ export class registryBuilder {
                         const __gotots_field_4 = dirName;
                         const __gotots_field_5 = dirPath;
                         const __gotots_field_6 = true;
-                        const __gotots_store_26 = MapEntry__from_dirty.$storageOf((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        const __gotots_field_7 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_26, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                        const __gotots_store_26 = MapEntry__from_dirty.$storageOf(((nodeModulesBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                        const __gotots_field_7 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_26, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                         const __gotots_argument_27 = new nodeModulesBucketTask(__gotots_field_2, __gotots_field_3, __gotots_field_4, __gotots_field_5, __gotots_field_6, __gotots_field_7, dirtyPackages, void 0, void 0, RuntimeSlice.nil<discoveredPackage | undefined>(), void 0);
                         nodeModulesTasks = __gotots_argument_26.append(void 0, [__gotots_argument_27]);
                     }
@@ -1993,7 +2011,7 @@ export class registryBuilder {
         }
         let extractionStart = time__from_gostdlib.Now();
         let seen: GoMapValue<gostring, bool> = GoMap__from_gotots_runtime.make<gostring, bool>(false, 0, []);
-        let extractionCache: GoMapValue<gostring, perPackageExtractionResult | undefined> = $goMap$MapOf_string_To_PointerTo_Named_autoimport$perPackageExtractionResult.make(0, []);
+        let extractionCache: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined> = $goMap$MapOf_string_To_PointerTo_Named_autoimport$perPackageExtractionResult.make(0, []);
         let extractionMu = named_sync.SyncMutexOperations.$zero();
         let typesFallbackCandidates = RuntimeSlice.nil<discoveredPackage | undefined>();
         const __gotots_range_13 = nodeModulesTasks;
@@ -2019,7 +2037,7 @@ export class registryBuilder {
                             if (!(goInterfaceNonNil<GoInterface>(__gotots_receiver_15).Err() === undefined)) {
                                 return;
                             }
-                            let result: perPackageExtractionResult | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, enableDirSearch);
+                            let result: tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, enableDirSearch);
                             if (!(result === undefined)) {
                                 sync__from_gostdlib.Mutex.Lock(extractionMu);
                                 extractionCache.store((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).realpath, result);
@@ -2042,7 +2060,7 @@ export class registryBuilder {
                             if (!(goInterfaceNonNil<GoInterface>(__gotots_receiver_16).Err() === undefined)) {
                                 return;
                             }
-                            let result: perPackageExtractionResult | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesPackageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, true);
+                            let result: tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesPackageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, true);
                             if (!(result === undefined)) {
                                 sync__from_gostdlib.Mutex.Lock(extractionMu);
                                 extractionCache.store((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesRealpath, result);
@@ -2070,7 +2088,7 @@ export class registryBuilder {
                 if (!(goInterfaceNonNil<GoInterface>(__gotots_receiver_17).Err() === undefined)) {
                     return;
                 }
-                let result: perPackageExtractionResult | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesPackageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, true);
+                let result: tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined = registryBuilder.$go$private$autoimport$extractPackage(b, ctx, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesPackageJson, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, projectReferenceOutputs, fileExcludePatterns, true);
                 if (!(result === undefined)) {
                     sync__from_gostdlib.Mutex.Lock(extractionMu);
                     extractionCache.store((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesRealpath, result);
@@ -2105,7 +2123,7 @@ export class registryBuilder {
         }
         {
             const __gotots_results_20 = Map$Get$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).projects, projectPath);
-            let project: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined = __gotots_results_20[0];
+            let project: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined = __gotots_results_20[0];
             let hasProject = __gotots_results_20[1];
             if (hasProject) {
                 const __gotots_receiver_18 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
@@ -2114,36 +2132,36 @@ export class registryBuilder {
                     value: Program__from_compiler;
                 } | undefined = goInterfaceNonNil<RegistryCloneHost>(__gotots_receiver_18).GetProgramForProject(__gotots_argument_30);
                 let resolvedPackageNames: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined = allResolvedPackageNames.lookup(projectPath);
-                const __gotots_store_28 = MapEntry__from_dirty.$storageOf((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                let __gotots_logical_result_3 = (mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_28, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state.$go$private$autoimport$hasDirtyFileBesides(change.RequestedFile);
+                const __gotots_store_28 = MapEntry__from_dirty.$storageOf(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                let __gotots_logical_result_3 = ((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_28, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state.$go$private$autoimport$hasDirtyFileBesides(change.RequestedFile);
                 if (!__gotots_logical_result_3) {
-                    const __gotots_store_29 = MapEntry__from_dirty.$storageOf((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    __gotots_logical_result_3 = !bucketBuildPreferences.$fromStorage(BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_29, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).buildPreferences).Equal(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences)));
+                    const __gotots_store_29 = MapEntry__from_dirty.$storageOf(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                    __gotots_logical_result_3 = !bucketBuildPreferences.$fromStorage(BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_29, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).buildPreferences).Equal(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences)));
                 }
                 let shouldRebuild = __gotots_logical_result_3;
                 let __gotots_logical_result_4 = !shouldRebuild;
                 if (__gotots_logical_result_4) {
-                    const __gotots_store_30 = MapEntry__from_dirty.$storageOf((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
+                    const __gotots_store_30 = MapEntry__from_dirty.$storageOf(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
                     const __gotots_binary_operand_0 = ((void newProgramStructure,
-                        BucketState.$storageOf((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_30, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).newProgramStructure) as int);
+                        BucketState.$storageOf(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_30, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).newProgramStructure) as int);
                     const __gotots_binary_operand_1 = 0;
                     __gotots_logical_result_4 = __gotots_binary_operand_0 > __gotots_binary_operand_1;
                 }
                 if (__gotots_logical_result_4) {
-                    const __gotots_store_31 = MapEntry__from_dirty.$storageOf((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                    let __gotots_logical_result_5 = !Set$Equals$string((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_31, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedPackageNames, resolvedPackageNames);
+                    const __gotots_store_31 = MapEntry__from_dirty.$storageOf(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                    let __gotots_logical_result_5 = !Set$Equals$string(((mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_31, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf)) ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.ResolvedPackageNames, resolvedPackageNames);
                     if (!__gotots_logical_result_5) {
                         const __gotots_argument_31 = program;
-                        const __gotots_store_32 = MapEntry__from_dirty.$storageOf((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                        const __gotots_argument_32 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_32, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                        const __gotots_store_32 = MapEntry__from_dirty.$storageOf(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                        const __gotots_argument_32 = mapEntry$Value$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_32, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                         __gotots_logical_result_5 = hasNewNonNodeModulesFiles(__gotots_argument_31, __gotots_argument_32);
                     }
                     if (__gotots_logical_result_5) {
                         shouldRebuild = true;
                     }
                     else {
-                        MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(project, (b__shadow_1: RegistryBucket | undefined): void => {
-                            BucketState.$storageOf((b__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).newProgramStructure = newProgramStructureFalse$constant().$value;
+                        MapEntry$Change$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(project, (b__shadow_1: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): void => {
+                            BucketState.$storageOf(((b__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).newProgramStructure = newProgramStructureFalse$constant().$value;
                         });
                     }
                 }
@@ -2221,8 +2239,8 @@ export class registryBuilder {
                 let target = __gotots_range_value_43;
                 const __gotots_receiver_19 = b;
                 const __gotots_argument_33 = target;
-                const __gotots_store_33 = MapEntry__from_dirty.$storageOf(((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")));
-                const __gotots_argument_34 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, RegistryBucket | undefined>, mapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_33, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                const __gotots_store_33 = MapEntry__from_dirty.$storageOf((((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>>).value);
+                const __gotots_argument_34 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_autoimport$RegistryBucket(new $ProjectedPropertyLocation(__gotots_store_33, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                 const __gotots_range_22 = registryBuilder.$go$private$autoimport$resolveAmbientModuleName(__gotots_receiver_19, __gotots_argument_33, __gotots_argument_34);
                 for (let __gotots_range_index_12 = 0; __gotots_range_index_12 < __gotots_range_22.length; __gotots_range_index_12++) {
                     const __gotots_range_value_44 = __gotots_range_22.get(__gotots_range_index_12);
@@ -2263,12 +2281,10 @@ export class registryBuilder {
                 let ch: {
                     value: Checker__from_checker;
                 } | undefined = __gotots_results_22[0];
-                SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources, (path: Path__from_tspath, source: {
-                    value: failedAmbientModuleLookupSource;
-                } | undefined): bool => {
-                    let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = aliasResolver.GetSourceFile(aliasResolver__shadow_1, (source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.fileName);
+                SyncMap$Range$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources, (path: Path__from_tspath, source: tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined): bool => {
+                    let sourceFile: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = aliasResolver.GetSourceFile(aliasResolver__shadow_1, ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource>).value.fileName);
                     const __gotots_receiver_24 = b;
-                    const __gotots_argument_38: failedAmbientModuleLookupSource["packageName"] = (source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.packageName;
+                    const __gotots_argument_38 = ((source ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource>).value.packageName;
                     const __gotots_argument_39 = ch;
                     const __gotots_argument_40 = moduleResolver;
                     const __gotots_receiver_21 = (b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).host;
@@ -2286,7 +2302,7 @@ export class registryBuilder {
                         let exp: {
                             value: Export;
                         } | undefined = __gotots_range_value_45;
-                        Index$insertAsWords$PointerTo_Named_autoimport$Export(((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, exp);
+                        Index$insertAsWords$PointerTo_Named_autoimport$Export((((br ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, exp);
                     }
                     return true;
                 });
@@ -2299,7 +2315,7 @@ export class registryBuilder {
             LogTree__from_logging.Logf(nodeModulesLogger, "Total: %v", RuntimeSlice.literal<$goInterface$Interface_void | undefined>([new GoInterfaceAdapter(time__from_gostdlib.Since(named_time.TimeOperations.$copy(discoveryStart)))]));
         }
     }
-    static $go$private$autoimport$updateNodeModulesBucket(b: registryBuilder | undefined, ctx: GoInterface | undefined, result: bucketBuildResult | undefined, existingBucket: RegistryBucket | undefined, dirtyPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, discovered: RuntimeSlice<discoveredPackage | undefined>, extractionCache: GoMapValue<gostring, perPackageExtractionResult | undefined>, recursiveSearchPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, logger: {
+    static $go$private$autoimport$updateNodeModulesBucket(b: registryBuilder | undefined, ctx: GoInterface | undefined, result: bucketBuildResult | undefined, existingBucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, dirtyPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, discovered: RuntimeSlice<discoveredPackage | undefined>, extractionCache: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined>, recursiveSearchPackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, logger: {
         value: LogTree__from_logging;
     } | undefined): void {
         const __gotots_receiver_47 = ctx;
@@ -2313,12 +2329,12 @@ export class registryBuilder {
         let indexStart = time__from_gostdlib.Now();
         let newIndex: Index<{
             value: Export;
-        } | undefined> | undefined = Index$Clone$PointerTo_Named_autoimport$Export((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Index, (exp: {
+        } | undefined> | undefined = Index$Clone$PointerTo_Named_autoimport$Export(((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Index, (exp: {
             value: Export;
         } | undefined): bool => {
             return !Set__from_collections.Has<gostring>(dirtyPackages, (exp ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.PackageName);
         });
-        let newPackageFiles: GoMapValue<gostring, GoMapValue<Path__from_tspath, gostring>> = Clone$MapOf_string_To_MapOf_Named_tspath$Path_To_string$string$MapOf_Named_tspath$Path_To_string((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageFiles);
+        let newPackageFiles: GoMapValue<gostring, GoMapValue<Path__from_tspath, gostring>> = Clone$MapOf_string_To_MapOf_Named_tspath$Path_To_string$string$MapOf_Named_tspath$Path_To_string(((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.PackageFiles);
         const __gotots_range_35 = Set$Keys$string(dirtyPackages);
         const __gotots_range_keys_16 = __gotots_range_35.keys();
         for (const __gotots_range_value_75 of __gotots_range_keys_16) {
@@ -2331,8 +2347,8 @@ export class registryBuilder {
             newPackageFiles.delete(pkgName);
         }
         Copy$MapOf_string_To_MapOf_Named_tspath$Path_To_string$MapOf_string_To_MapOf_Named_tspath$Path_To_string$string$MapOf_Named_tspath$Path_To_string(newPackageFiles, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles);
-        let newPaths: GoMapValue<Path__from_tspath, gostring> = $goMap$MapOf_Named_tspath$Path_To_string.make((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.length(), []);
-        const __gotots_range_36 = (existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths;
+        let newPaths: GoMapValue<Path__from_tspath, gostring> = $goMap$MapOf_Named_tspath$Path_To_string.make(((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.length(), []);
+        const __gotots_range_36 = ((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths;
         const __gotots_range_keys_17 = __gotots_range_36.keys();
         for (const __gotots_range_value_78 of __gotots_range_keys_17) {
             const __gotots_range_value_79 = __gotots_range_36.lookupOk(__gotots_range_value_78);
@@ -2376,8 +2392,8 @@ export class registryBuilder {
                 }
             }
         }
-        let newAmbientModuleNames: GoMapValue<gostring, RuntimeSlice<gostring>> = $goMap$MapOf_string_To_SliceOf_string.make((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AmbientModuleNames.length(), []);
-        const __gotots_range_39 = (existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).AmbientModuleNames;
+        let newAmbientModuleNames: GoMapValue<gostring, RuntimeSlice<gostring>> = $goMap$MapOf_string_To_SliceOf_string.make(((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.AmbientModuleNames.length(), []);
+        const __gotots_range_39 = ((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.AmbientModuleNames;
         const __gotots_range_keys_20 = __gotots_range_39.keys();
         for (const __gotots_range_value_88 of __gotots_range_keys_20) {
             const __gotots_range_value_89 = __gotots_range_39.lookupOk(__gotots_range_value_88);
@@ -2397,7 +2413,7 @@ export class registryBuilder {
                 const __gotots_argument_62 = fileName;
                 let path = (__gotots_callee_20 ?? GoPanic.raiseRuntime("call of nil function"))(__gotots_argument_62);
                 {
-                    const __gotots_results_34 = (existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.lookupOk(path);
+                    const __gotots_results_34 = ((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.lookupOk(path);
                     let pkgName = __gotots_results_34[0];
                     let ok = __gotots_results_34[1];
                     if (ok && Set__from_collections.Has<gostring>(dirtyPackages, pkgName)) {
@@ -2434,7 +2450,7 @@ export class registryBuilder {
             const __gotots_range_value_99 = __gotots_range_value_97;
             let path = __gotots_range_value_99;
             {
-                const __gotots_results_35 = (existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.lookupOk(path);
+                const __gotots_results_35 = ((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.lookupOk(path);
                 let pkgName = __gotots_results_35[0];
                 let ok = __gotots_results_35[1];
                 if (ok && Set__from_collections.Has<gostring>(dirtyPackages, pkgName)) {
@@ -2476,16 +2492,17 @@ export class registryBuilder {
                 Index$insertAsWords$PointerTo_Named_autoimport$Export(newIndex, exp);
             }
         }
-        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket = new RegistryBucket(BucketState.$fromStorage({
-            buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences))),
-            recursiveSearchPackages: Set$Clone$string(recursiveSearchPackages),
-            dirtyFile: ((void Path__from_tspath,
-                "") as string),
-            multipleFilesDirty: false,
-            newProgramStructure: ((void newProgramStructure,
-                0) as int),
-            dirtyPackages: void 0
-        }), newPaths, newPackageFiles, void 0, (existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).DependencyNames, newAmbientModuleNames, newIndex);
+        (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).bucket =
+            tsonicTypeScriptRuntime.location<RegistryBucket>(new RegistryBucket(BucketState.$fromStorage({
+                buildPreferences: bucketBuildPreferences.$storageOf(bucketBuildPreferencesFromUserPreferences(UserPreferences__from_lsutil.$copy((b ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).userPreferences))),
+                recursiveSearchPackages: Set$Clone$string(recursiveSearchPackages),
+                dirtyFile: ((void Path__from_tspath,
+                    "") as string),
+                multipleFilesDirty: false,
+                newProgramStructure: ((void newProgramStructure,
+                    0) as int),
+                dirtyPackages: void 0
+            }), newPaths, newPackageFiles, void 0, ((existingBucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.DependencyNames, newAmbientModuleNames, newIndex));
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints = newEntrypoints;
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).removedEntrypointPaths = removedEntrypointPaths;
         (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources;
@@ -2513,9 +2530,9 @@ export function newRegistryBuilder(registry: {
 }
 export function hasNewNonNodeModulesFiles(program: {
     value: Program__from_compiler;
-} | undefined, bucket: RegistryBucket | undefined): bool {
+} | undefined, bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined): bool {
     if (!(((void newProgramStructure,
-        BucketState.$storageOf((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).state).newProgramStructure) as int)
+        BucketState.$storageOf(((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.state).newProgramStructure) as int)
         === newProgramStructureDifferentFileNames$constant().$value)) {
         return false;
     }
@@ -2527,7 +2544,7 @@ export function hasNewNonNodeModulesFiles(program: {
             continue;
         }
         {
-            const __gotots_results_26 = (bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).Paths.lookupOk(SourceFile__from_ast.Path(file));
+            const __gotots_results_26 = ((bucket ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<RegistryBucket>).value.Paths.lookupOk(SourceFile__from_ast.Path(file));
             let ok = __gotots_results_26[1];
             if (!ok) {
                 return true;
@@ -2615,9 +2632,7 @@ export class failedAmbientModuleLookupSource {
 }
 export class bucketBuildResult {
     declare private readonly $goType: void;
-    public constructor(public entry: MapEntry__from_dirty<Path__from_tspath, RegistryBucket | undefined> | undefined, public err: $goInterface$Interface_Method_Error_void_to_string | undefined, public bucket: RegistryBucket | undefined, public entrypoints: GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public removedEntrypointPaths: RuntimeSlice<gostring>, public possibleFailedAmbientModuleLookupSources: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource;
-    } | undefined>> | undefined, public possibleFailedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<SyncSet__from_collections<gostring>> | undefined) {
+    public constructor(public entry: tsonicTypeScriptRuntime.Location<MapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined>> | undefined, public err: $goInterface$Interface_Method_Error_void_to_string | undefined, public bucket: tsonicTypeScriptRuntime.Location<RegistryBucket> | undefined, public entrypoints: GoMapValue<Path__from_tspath, RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public removedEntrypointPaths: RuntimeSlice<gostring>, public possibleFailedAmbientModuleLookupSources: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined>> | undefined, public possibleFailedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<SyncSet__from_collections<gostring>> | undefined) {
     }
     declare private readonly then?: never;
 }
@@ -2635,9 +2650,7 @@ export class perPackageExtractionResult {
     declare private readonly $goType: void;
     public constructor(public packageFiles: GoMapValue<Path__from_tspath, gostring>, public entrypoints: RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>, public exports: GoMapValue<Path__from_tspath, RuntimeSlice<{
         value: Export;
-    } | undefined>>, public ambientModules: GoMapValue<gostring, RuntimeSlice<gostring>>, public statsExports: int, public statsUsedChecker: int, public skippedEntrypoints: int, public isSymlinked: bool, public failedAmbientModuleLookupSources: GoMapValue<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource;
-    } | undefined>, public failedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined) {
+    } | undefined>>, public ambientModules: GoMapValue<gostring, RuntimeSlice<gostring>>, public statsExports: int, public statsUsedChecker: int, public skippedEntrypoints: int, public isSymlinked: bool, public failedAmbientModuleLookupSources: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined>, public failedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined) {
     }
     declare private readonly then?: never;
 }
@@ -2645,25 +2658,19 @@ export class packageExtractionResult {
     declare private readonly $goType: void;
     public constructor(public exports: GoMapValue<Path__from_tspath, RuntimeSlice<{
         value: Export;
-    } | undefined>>, public packageFiles: GoMapValue<gostring, GoMapValue<Path__from_tspath, gostring>>, public ambientModuleNames: GoMapValue<gostring, RuntimeSlice<gostring>>, public entrypoints: RuntimeSlice<RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public workspacePackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public possibleFailedAmbientModuleLookupSources: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource;
-    } | undefined>> | undefined, public possibleFailedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<SyncSet__from_collections<gostring>> | undefined, public stats: extractorStats, public skippedEntrypointsCount: int) {
+    } | undefined>>, public packageFiles: GoMapValue<gostring, GoMapValue<Path__from_tspath, gostring>>, public ambientModuleNames: GoMapValue<gostring, RuntimeSlice<gostring>>, public entrypoints: RuntimeSlice<RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>, public workspacePackages: tsonicTypeScriptRuntime.Location<Set__from_collections<gostring>> | undefined, public possibleFailedAmbientModuleLookupSources: tsonicTypeScriptRuntime.Location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined>> | undefined, public possibleFailedAmbientModuleLookupTargets: tsonicTypeScriptRuntime.Location<SyncSet__from_collections<gostring>> | undefined, public stats: extractorStats, public skippedEntrypointsCount: int) {
     }
     declare private readonly then?: never;
 }
-export function installExtractions(discovered: RuntimeSlice<discoveredPackage | undefined>, extractionCache: GoMapValue<gostring, perPackageExtractionResult | undefined>): packageExtractionResult | undefined {
+export function installExtractions(discovered: RuntimeSlice<discoveredPackage | undefined>, extractionCache: GoMapValue<gostring, tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined>): packageExtractionResult | undefined {
     const __gotots_field_15 = $goMap$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export.make(0, []);
     const __gotots_field_16 = $goMap$MapOf_string_To_MapOf_Named_tspath$Path_To_string.make(0, []);
     const __gotots_field_17 = $goMap$MapOf_string_To_SliceOf_string.make(0, []);
     const __gotots_field_18 = tsonicTypeScriptRuntime.location<Set__from_collections<gostring>>(Set__from_collections.$fromStorage<gostring>({
         M: $goMap$MapOf_string_To_Struct_void.nil()
     }));
-    const __gotots_struct_2 = SyncMap__from_collections.$zero<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource;
-    } | undefined>();
-    const __gotots_field_19 = tsonicTypeScriptRuntime.location<SyncMap__from_collections<Path__from_tspath, {
-        value: failedAmbientModuleLookupSource;
-    } | undefined>>(__gotots_struct_2);
+    const __gotots_struct_2 = SyncMap__from_collections.$zero<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined>();
+    const __gotots_field_19 = tsonicTypeScriptRuntime.location<SyncMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined>>(__gotots_struct_2);
     const __gotots_struct_3 = SyncSet__from_collections.$zero<gostring>();
     const __gotots_field_20 = tsonicTypeScriptRuntime.location<SyncSet__from_collections<gostring>>(__gotots_struct_3);
     let result: packageExtractionResult | undefined = new packageExtractionResult(__gotots_field_15, __gotots_field_16, __gotots_field_17, RuntimeSlice.nil<RuntimeSlice<ResolvedEntrypoint__from___go_module | undefined>>(), __gotots_field_18, __gotots_field_19, __gotots_field_20, extractorStats.$zero(), 0);
@@ -2671,19 +2678,19 @@ export function installExtractions(discovered: RuntimeSlice<discoveredPackage | 
     for (let __gotots_range_index_27 = 0; __gotots_range_index_27 < __gotots_range_59.length; __gotots_range_index_27++) {
         const __gotots_range_value_133 = __gotots_range_59.get(__gotots_range_index_27);
         let pkg: discoveredPackage | undefined = __gotots_range_value_133;
-        let extraction: perPackageExtractionResult | undefined = extractionCache.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).realpath);
+        let extraction: tsonicTypeScriptRuntime.Location<perPackageExtractionResult> | undefined = extractionCache.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).realpath);
         if (extraction === undefined) {
             extraction = extractionCache.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).typesRealpath);
         }
         if (extraction === undefined) {
             continue;
         }
-        Copy$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export$Named_tspath$Path$SliceOf_PointerTo_Named_autoimport$Export((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports);
+        Copy$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export$MapOf_Named_tspath$Path_To_SliceOf_PointerTo_Named_autoimport$Export$Named_tspath$Path$SliceOf_PointerTo_Named_autoimport$Export((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).exports, ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.exports);
         if ((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName).isNil()) {
-            (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.store((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, $goMap$MapOf_Named_tspath$Path_To_string.make((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.length(), []));
+            (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.store((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName, $goMap$MapOf_Named_tspath$Path_To_string.make(((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.packageFiles.length(), []));
         }
-        Copy$MapOf_Named_tspath$Path_To_string$MapOf_Named_tspath$Path_To_string$Named_tspath$Path$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName), (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles);
-        const __gotots_range_60 = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModules;
+        Copy$MapOf_Named_tspath$Path_To_string$MapOf_Named_tspath$Path_To_string$Named_tspath$Path$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageFiles.lookup((pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName), ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.packageFiles);
+        const __gotots_range_60 = ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.ambientModules;
         const __gotots_range_keys_31 = __gotots_range_60.keys();
         for (const __gotots_range_value_134 of __gotots_range_keys_31) {
             const __gotots_range_value_135 = __gotots_range_60.lookupOk(__gotots_range_value_134);
@@ -2696,10 +2703,10 @@ export function installExtractions(discovered: RuntimeSlice<discoveredPackage | 
             let fileNames = __gotots_range_value_137;
             (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModuleNames.store(name, goSliceAppendSlice<gostring>((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ambientModuleNames.lookup(name), fileNames, ""));
         }
-        if (!(extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints.isNil()) {
-            (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints.append(RuntimeSlice.nil<ResolvedEntrypoint__from___go_module | undefined>(), [(extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints]);
+        if (!((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.entrypoints.isNil()) {
+            (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).entrypoints.append(RuntimeSlice.nil<ResolvedEntrypoint__from___go_module | undefined>(), [((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.entrypoints]);
         }
-        const __gotots_range_61 = (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupSources;
+        const __gotots_range_61 = ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupSources;
         const __gotots_range_keys_32 = __gotots_range_61.keys();
         for (const __gotots_range_value_138 of __gotots_range_keys_32) {
             const __gotots_range_value_139 = __gotots_range_61.lookupOk(__gotots_range_value_138);
@@ -2709,12 +2716,10 @@ export function installExtractions(discovered: RuntimeSlice<discoveredPackage | 
             const __gotots_range_value_140 = __gotots_range_value_138;
             const __gotots_range_value_141 = __gotots_range_value_139[0];
             let path = __gotots_range_value_140;
-            let source: {
-                value: failedAmbientModuleLookupSource;
-            } | undefined = __gotots_range_value_141;
+            let source: tsonicTypeScriptRuntime.Location<failedAmbientModuleLookupSource> | undefined = __gotots_range_value_141;
             SyncMap$LoadOrStore$Named_tspath$Path$PointerTo_Named_autoimport$failedAmbientModuleLookupSource((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupSources, path, source);
         }
-        const __gotots_range_62 = Set$Keys$string((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).failedAmbientModuleLookupTargets);
+        const __gotots_range_62 = Set$Keys$string(((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.failedAmbientModuleLookupTargets);
         const __gotots_range_keys_33 = __gotots_range_62.keys();
         for (const __gotots_range_value_142 of __gotots_range_keys_33) {
             const __gotots_range_value_143 = __gotots_range_62.lookupOk(__gotots_range_value_142);
@@ -2725,13 +2730,13 @@ export function installExtractions(discovered: RuntimeSlice<discoveredPackage | 
             let target = __gotots_range_value_144;
             SyncSet$Add$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).possibleFailedAmbientModuleLookupTargets, target);
         }
-        if ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isSymlinked && (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isLocal) {
+        if (((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.isSymlinked && (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).isLocal) {
             Set$Add$string((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).workspacePackages, (pkg ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).packageName);
         }
-        atomic__from_gostdlib.Int32.Add((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).stats.exports, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).statsExports | 0);
-        atomic__from_gostdlib.Int32.Add((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).stats.usedChecker, (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).statsUsedChecker | 0);
+        atomic__from_gostdlib.Int32.Add((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).stats.exports, ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.statsExports | 0);
+        atomic__from_gostdlib.Int32.Add((result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).stats.usedChecker, ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.statsUsedChecker | 0);
         const __gotots_store_45 = (result ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"));
-        __gotots_store_45.skippedEntrypointsCount = __gotots_store_45.skippedEntrypointsCount + (extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).skippedEntrypoints;
+        __gotots_store_45.skippedEntrypointsCount = __gotots_store_45.skippedEntrypointsCount + ((extraction ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<perPackageExtractionResult>).value.skippedEntrypoints;
     }
     return result;
 }

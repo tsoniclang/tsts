@@ -67,6 +67,24 @@ import { GoMap, GoMapHash } from "@gotots/runtime/map.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAppendSlice } from "@gotots/runtime/slice.js";
 import { GoEmptyStruct } from "@gotots/runtime/struct.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class extendsResult {
     declare private readonly $goType: void;
     public constructor(public options: {
@@ -768,9 +786,9 @@ export function getExtendsConfigPath(extendedConfig: gostring, host: ParseConfig
         value: resolverHost;
     } | undefined = { value: new resolverHost(host) };
     {
-        let resolved: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = ResolveConfig__from___go_module(extendedConfig, CombinePaths__from_tspath(basePath, RuntimeSlice.literal<gostring>(["tsconfig.json"])), new $goInterfaceAdapter$PointerTo_Named_tsoptions$resolverHost(resolverHost__shadow_1));
+        let resolved: ResolvedModule__from___go_module | undefined = ResolveConfig__from___go_module(extendedConfig, CombinePaths__from_tspath(basePath, RuntimeSlice.literal<gostring>(["tsconfig.json"])), new $goInterfaceAdapter$PointerTo_Named_tsoptions$resolverHost(resolverHost__shadow_1));
         if (ResolvedModule__from___go_module.IsResolved(resolved)) {
-            return [((resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.ResolvedFileName, errors];
+            return [(resolved ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).ResolvedFileName, errors];
         }
     }
     if (extendedConfig === "") {
@@ -2055,7 +2073,7 @@ export function validateSpecs(specs: GoInterface | undefined, disallowTrailingRe
                                     (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                         (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                             StringLiteral__from_ast.$storageOf(((element ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-            node = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_4, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+            node = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_4, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
         }
         return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(jsonSourceFile, node, message, RuntimeSlice.literal<GoInterface | undefined>([new $goInterfaceAdapter$string(spec)]));
     };

@@ -25,6 +25,24 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class fileIncludeKind {
     declare private readonly $goType: void;
     constructor(public readonly $value: int) {
@@ -437,8 +455,8 @@ export class FileIncludeReason {
                         }
                     }
                 }
-                let resolution: tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined = Program.GetResolvedModuleFromModuleSpecifier(program, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(file), specifier);
-                return { value: new referenceFileLocation(file, specifier, void 0, PackageId__from___go_module.$copy(((resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module>).value.PackageId), isSynthetic) };
+                let resolution: ResolvedModule__from___go_module | undefined = Program.GetResolvedModuleFromModuleSpecifier(program, new $goInterfaceAdapter$PointerTo_Named_ast$SourceFile(file), specifier);
+                return { value: new referenceFileLocation(file, specifier, void 0, PackageId__from___go_module.$copy((resolution ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).PackageId), isSynthetic) };
                 break;
             }
             case 1: {
@@ -520,7 +538,7 @@ export class FileIncludeReason {
                                                         (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                                             (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                                                 StringLiteral__from_ast.$storageOf(((filesNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                                const __gotots_argument_76 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                                const __gotots_argument_76 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                 const __gotots_argument_77 = $state__diagnostics.File_is_matched_by_files_list_specified_here;
                                 const __gotots_argument_78 = RuntimeSlice.nil<GoInterface | undefined>();
                                 return CreateDiagnosticForNodeInSourceFile__from_tsoptions(__gotots_argument_75, __gotots_argument_76, __gotots_argument_77, __gotots_argument_78);
@@ -545,7 +563,7 @@ export class FileIncludeReason {
                                                             (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                                                 (void LiteralExpressionBase__from_ast.$storageOf, (void LiteralExpressionBase__from_ast.$fromStorage,
                                                                     StringLiteral__from_ast.$storageOf(((includeNode ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<StringLiteral__from_ast>).value).LiteralExpressionBase)).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-                                    const __gotots_argument_80 = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+                                    const __gotots_argument_80 = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
                                     const __gotots_argument_81 = $state__diagnostics.File_is_matched_by_include_pattern_specified_here;
                                     const __gotots_argument_82 = RuntimeSlice.nil<GoInterface | undefined>();
                                     return CreateDiagnosticForNodeInSourceFile__from_tsoptions(__gotots_argument_79, __gotots_argument_80, __gotots_argument_81, __gotots_argument_82);

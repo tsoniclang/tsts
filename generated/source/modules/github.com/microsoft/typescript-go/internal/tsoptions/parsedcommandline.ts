@@ -40,11 +40,7 @@ export class ParsedCommandLine {
         value: TsConfigSourceFile;
     } | undefined, public Errors: RuntimeSlice<tsonicTypeScriptRuntime.Location<Diagnostic__from_ast> | undefined>, public Raw: GoInterface | undefined, public CompileOnSave: tsonicTypeScriptRuntime.Location<bool> | undefined, public comparePathsOptions: ComparePathsOptions__from_tspath, public wildcardDirectoriesOnce: sync__from_gostdlib.Once, public wildcardDirectories: GoMapValue<gostring, bool>, public includeGlobsOnce: sync__from_gostdlib.Once, public includeGlobs: RuntimeSlice<{
         value: Glob__from_glob;
-    } | undefined>, public extraFileExtensions: RuntimeSlice<FileExtensionInfo__from_tsoptions$Storage>, public sourceAndOutputMapsOnce: sync__from_gostdlib.Once, public sourceToProjectReference: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference;
-    } | undefined>, public outputDtsToProjectReference: GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference;
-    } | undefined>, public commonSourceDirectory: gostring, public commonSourceDirectoryOnce: sync__from_gostdlib.Once, public resolvedProjectReferencePaths: RuntimeSlice<gostring>, public resolvedProjectReferencePathsOnce: sync__from_gostdlib.Once, public literalFileNamesLen: int, public fileNamesByPath: GoMapValue<Path__from_tspath, gostring>, public fileNamesByPathOnce: sync__from_gostdlib.Once, public locale: Locale__from_locale, public localeOnce: sync__from_gostdlib.Once) {
+    } | undefined>, public extraFileExtensions: RuntimeSlice<FileExtensionInfo__from_tsoptions$Storage>, public sourceAndOutputMapsOnce: sync__from_gostdlib.Once, public sourceToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined>, public outputDtsToProjectReference: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined>, public commonSourceDirectory: gostring, public commonSourceDirectoryOnce: sync__from_gostdlib.Once, public resolvedProjectReferencePaths: RuntimeSlice<gostring>, public resolvedProjectReferencePathsOnce: sync__from_gostdlib.Once, public literalFileNamesLen: int, public fileNamesByPath: GoMapValue<Path__from_tspath, gostring>, public fileNamesByPathOnce: sync__from_gostdlib.Once, public locale: Locale__from_locale, public localeOnce: sync__from_gostdlib.Once) {
     }
     static $copy($source: ParsedCommandLine): ParsedCommandLine {
         return new ParsedCommandLine($source.ParsedConfig, $source.ConfigFile, $source.Errors, $source.Raw, $source.CompileOnSave, ComparePathsOptions__from_tspath.$copy($source.comparePathsOptions), named_sync.SyncOnceOperations.$copy($source.wildcardDirectoriesOnce), $source.wildcardDirectories, named_sync.SyncOnceOperations.$copy($source.includeGlobsOnce), $source.includeGlobs, $source.extraFileExtensions, named_sync.SyncOnceOperations.$copy($source.sourceAndOutputMapsOnce), $source.sourceToProjectReference, $source.outputDtsToProjectReference, $source.commonSourceDirectory, named_sync.SyncOnceOperations.$copy($source.commonSourceDirectoryOnce), $source.resolvedProjectReferencePaths, named_sync.SyncOnceOperations.$copy($source.resolvedProjectReferencePathsOnce), $source.literalFileNamesLen, $source.fileNamesByPath, named_sync.SyncOnceOperations.$copy($source.fileNamesByPathOnce), Locale__from_locale.$copy($source.locale), named_sync.SyncOnceOperations.$copy($source.localeOnce));
@@ -198,19 +194,13 @@ export class ParsedCommandLine {
         });
         return Locale__from_locale.$copy(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.locale);
     }
-    static OutputDtsToProjectReference(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference;
-    } | undefined> {
+    static OutputDtsToProjectReference(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined> {
         return ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.outputDtsToProjectReference;
     }
     static ParseInputOutputNames(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): void {
         sync__from_gostdlib.Once.Do(((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.sourceAndOutputMapsOnce, (): void => {
-            let sourceToOutput: GoMapValue<Path__from_tspath, {
-                value: SourceOutputAndProjectReference;
-            } | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.make(0, []);
-            let outputDtsToSource: GoMapValue<Path__from_tspath, {
-                value: SourceOutputAndProjectReference;
-            } | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.make(0, []);
+            let sourceToOutput: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.make(0, []);
+            let outputDtsToSource: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined> = $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_tsoptions$SourceOutputAndProjectReference.make(0, []);
             const __gotots_range_6 = named_iter.IterSeq2ValueOperations.$project(ParsedCommandLine.$go$private$tsoptions$getOutputDeclarationAndSourceFileNames(p));
             if (__gotots_range_6 === void 0) {
                 GoPanic.raiseRuntime("call of nil function");
@@ -235,9 +225,7 @@ export class ParsedCommandLine {
                 let outputDts = __gotots_range_value_12;
                 let source = __gotots_range_value_13;
                 let path = ToPath__from_tspath(source, ParsedCommandLine.GetCurrentDirectory(p), ParsedCommandLine.UseCaseSensitiveFileNames(p));
-                let projectReference: {
-                    value: SourceOutputAndProjectReference;
-                } | undefined = { value: new SourceOutputAndProjectReference(source, outputDts, p) };
+                let projectReference: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined = tsonicTypeScriptRuntime.location<SourceOutputAndProjectReference>(new SourceOutputAndProjectReference(source, outputDts, p));
                 if (outputDts !== "") {
                     outputDtsToSource.store(ToPath__from_tspath(outputDts, ParsedCommandLine.GetCurrentDirectory(p), ParsedCommandLine.UseCaseSensitiveFileNames(p)), projectReference);
                 }
@@ -335,9 +323,7 @@ export class ParsedCommandLine {
         });
         return ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.resolvedProjectReferencePaths;
     }
-    static SourceToProjectReference(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): GoMapValue<Path__from_tspath, {
-        value: SourceOutputAndProjectReference;
-    } | undefined> {
+    static SourceToProjectReference(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference> | undefined> {
         return ((p ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine>).value.sourceToProjectReference;
     }
     static TypeAcquisition(p: tsonicTypeScriptRuntime.Location<ParsedCommandLine> | undefined): {

@@ -318,14 +318,12 @@ export function addProjectReferenceOutputMappings(program: {
             const __gotots_range_value_10 = __gotots_range_value_8;
             const __gotots_range_value_11 = __gotots_range_value_9[0];
             let outputDtsPath = __gotots_range_value_10;
-            let mapping: {
-                value: SourceOutputAndProjectReference__from_tsoptions;
-            } | undefined = __gotots_range_value_11;
+            let mapping: tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined = __gotots_range_value_11;
             {
                 const __gotots_results_1 = result.lookupOk(outputDtsPath);
                 let exists = __gotots_results_1[1];
                 if (!exists) {
-                    result.store(outputDtsPath, (mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Source);
+                    result.store(outputDtsPath, ((mapping ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions>).value.Source);
                 }
             }
         }

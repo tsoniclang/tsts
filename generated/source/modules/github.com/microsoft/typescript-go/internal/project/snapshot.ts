@@ -67,6 +67,24 @@ import { goInterfaceNonNil } from "@gotots/runtime/interface.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic, GoRecovery, goDeferPop } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class Snapshot {
     declare private readonly $goType: void;
     public constructor(public id: uint64, public parentId: uint64, public refCount: atomic__from_gostdlib.Int32, public sessionOptions: {
@@ -102,9 +120,7 @@ export class Snapshot {
     }
     static Clone(s: {
         value: Snapshot;
-    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, change: SnapshotChange, overlays: GoMapValue<Path__from_tspath, {
-        value: Overlay;
-    } | undefined>, session: {
+    } | undefined, ctx: $goInterface$Interface_Method_context$Deadline_void_to_Named_time$Time_bool_Method_context$Done_void_to_ReceiveChannelOf_Struct_void_Method_context$Err_void_to_Named_error_Method_context$Value_Interface_void_to_Interface_void | undefined, change: SnapshotChange, overlays: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay> | undefined>, session: {
         value: Session;
     } | undefined): {
         value: Snapshot;
@@ -309,11 +325,9 @@ export class Snapshot {
                     const __gotots_range_8 = ProjectCollection.Projects(projectCollection);
                     for (let __gotots_range_index_7 = 0; __gotots_range_index_7 < __gotots_range_8.length; __gotots_range_index_7++) {
                         const __gotots_range_value_10 = __gotots_range_8.get(__gotots_range_index_7);
-                        let project: {
-                            value: Project;
-                        } | undefined = __gotots_range_value_10;
-                        if ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProgramLastUpdate === newSnapshotID && !((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProgramUpdateKind.$value === ProgramUpdateKindCloned$constant().$value)) {
-                            projectsWithNewProgramStructure.store((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.configFilePath, (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProgramUpdateKind.$value === ProgramUpdateKindNewFiles$constant().$value);
+                        let project: tsonicTypeScriptRuntime.Location<Project> | undefined = __gotots_range_value_10;
+                        if (((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.ProgramLastUpdate === newSnapshotID && !(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.ProgramUpdateKind.$value === ProgramUpdateKindCloned$constant().$value)) {
+                            projectsWithNewProgramStructure.store(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.configFilePath, ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.ProgramUpdateKind.$value === ProgramUpdateKindNewFiles$constant().$value);
                         }
                     }
                     let __gotots_logical_result_0 = change.cleanDiskCache || !(change.fileChanges.Opened.$value ===
@@ -339,26 +353,16 @@ export class Snapshot {
                         if (projectsWithNewProgramStructure.length() > 0 || change.cleanDiskCache) {
                             let cleanFilesStart = time__from_gostdlib.Now();
                             let removedFiles = 0;
-                            SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: {
-                                value: SyncMapEntry__from_dirty<Path__from_tspath, {
-                                    value: diskFile;
-                                } | undefined>;
-                            } | undefined): bool => {
+                            SyncMap$Range$Named_tspath$Path$PointerTo_Named_project$diskFile((fs ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.diskFiles, (entry: tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>> | undefined): bool => {
                                 const __gotots_range_9 = ProjectCollection.Projects(projectCollection);
                                 for (let __gotots_range_index_8 = 0; __gotots_range_index_8 < __gotots_range_9.length; __gotots_range_index_8++) {
                                     const __gotots_range_value_11 = __gotots_range_9.get(__gotots_range_index_8);
-                                    let project: {
-                                        value: Project;
-                                    } | undefined = __gotots_range_value_11;
-                                    let __gotots_logical_result_2 = !((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host === undefined);
+                                    let project: tsonicTypeScriptRuntime.Location<Project> | undefined = __gotots_range_value_11;
+                                    let __gotots_logical_result_2 = !(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.host === undefined);
                                     if (__gotots_logical_result_2) {
-                                        const __gotots_receiver_11: compilerHost["sourceFS"] = ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceFS;
-                                        const __gotots_store_2 = SyncMapEntry__from_dirty.$storageOf((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value);
-                                        const __gotots_argument_25 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile(tsonicTypeScriptRuntime.projectLocation<mapEntry__from_dirty$Storage<Path__from_tspath, {
-                                            value: diskFile;
-                                        } | undefined>, mapEntry__from_dirty<Path__from_tspath, {
-                                            value: diskFile;
-                                        } | undefined>>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "mapEntry"), mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
+                                        const __gotots_receiver_11: compilerHost["sourceFS"] = (((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.host ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.sourceFS;
+                                        const __gotots_store_2 = SyncMapEntry__from_dirty.$storageOf(((entry ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SyncMapEntry__from_dirty<Path__from_tspath, tsonicTypeScriptRuntime.Location<diskFile> | undefined>>).value);
+                                        const __gotots_argument_25 = mapEntry$Key$Named_tspath$Path$PointerTo_Named_project$diskFile(new $ProjectedPropertyLocation(__gotots_store_2, "mapEntry", mapEntry__from_dirty.$fromStorage, mapEntry__from_dirty.$storageOf));
                                         __gotots_logical_result_2 = sourceFS.SeenFile(__gotots_receiver_11, __gotots_argument_25);
                                     }
                                     if (__gotots_logical_result_2) {
@@ -392,12 +396,10 @@ export class Snapshot {
                         const __gotots_range_value_14 = __gotots_range_value_12;
                         const __gotots_range_value_15 = __gotots_range_value_13[0];
                         let path = __gotots_range_value_14;
-                        let overlay: {
-                            value: Overlay;
-                        } | undefined = __gotots_range_value_15;
+                        let overlay: tsonicTypeScriptRuntime.Location<Overlay> | undefined = __gotots_range_value_15;
                         const __gotots_store_4 = openFiles;
                         const __gotots_store_5 = path;
-                        const __gotots_store_3 = (overlay ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value;
+                        const __gotots_store_3 = ((overlay ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Overlay>).value;
                         __gotots_store_4.store(__gotots_store_5, fileBase.FileName(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_3, "fileBase")));
                     }
                     let prepareAutoImports = new Path__from_tspath("");
@@ -438,13 +440,11 @@ export class Snapshot {
                     const __gotots_range_11 = ProjectCollection.Projects((newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
                     for (let __gotots_range_index_9 = 0; __gotots_range_index_9 < __gotots_range_11.length; __gotots_range_index_9++) {
                         const __gotots_range_value_16 = __gotots_range_11.get(__gotots_range_index_9);
-                        let project: {
-                            value: Project;
-                        } | undefined = __gotots_range_value_16;
-                        if (!((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program === undefined)) {
-                            programCounter.Ref((session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programCounter, (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program);
-                            if ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProgramLastUpdate === newSnapshotID) {
-                                compilerHost.$go$private$project$freeze((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.host, snapshotFS, (newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFileRegistry);
+                        let project: tsonicTypeScriptRuntime.Location<Project> | undefined = __gotots_range_value_16;
+                        if (!(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program === undefined)) {
+                            programCounter.Ref((session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programCounter, ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program);
+                            if (((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.ProgramLastUpdate === newSnapshotID) {
+                                compilerHost.$go$private$project$freeze(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.host, snapshotFS, (newSnapshot ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ConfigFileRegistry);
                             }
                         }
                     }
@@ -456,11 +456,9 @@ export class Snapshot {
                             continue;
                         }
                         const __gotots_range_value_19 = __gotots_range_value_18[0];
-                        let config__shadow_1: {
-                            value: configFileEntry;
-                        } | undefined = __gotots_range_value_19;
-                        if (!((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine === undefined) && !((((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile === undefined)) {
-                            const __gotots_range_13: TsConfigSourceFile__from_tsoptions["ExtendedSourceFiles"] = ((((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendedSourceFiles;
+                        let config__shadow_1: tsonicTypeScriptRuntime.Location<configFileEntry> | undefined = __gotots_range_value_19;
+                        if (!(((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileEntry>).value.commandLine === undefined) && !(((((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileEntry>).value.commandLine ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile === undefined)) {
+                            const __gotots_range_13: TsConfigSourceFile__from_tsoptions["ExtendedSourceFiles"] = (((((config__shadow_1 ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileEntry>).value.commandLine ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ParsedCommandLine__from_tsoptions>).value.ConfigFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ExtendedSourceFiles;
                             for (let __gotots_range_index_10 = 0; __gotots_range_index_10 < __gotots_range_13.length; __gotots_range_index_10++) {
                                 const __gotots_range_value_20 = __gotots_range_13.get(__gotots_range_index_10);
                                 let file = __gotots_range_value_20;
@@ -546,9 +544,7 @@ export class Snapshot {
     }
     static GetDefaultProject(s: {
         value: Snapshot;
-    } | undefined, uri: DocumentUri__from_lsproto): {
-        value: Project;
-    } | undefined {
+    } | undefined, uri: DocumentUri__from_lsproto): tsonicTypeScriptRuntime.Location<Project> | undefined {
         return ProjectCollection.GetDefaultProject((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection, uri.Path(Snapshot.UseCaseSensitiveFileNames(s)));
     }
     static GetDirectories(s: {
@@ -649,20 +645,18 @@ export class Snapshot {
         const __gotots_range_0 = ProjectCollection.Projects((s ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.ProjectCollection);
         for (let __gotots_range_index_0 = 0; __gotots_range_index_0 < __gotots_range_0.length; __gotots_range_index_0++) {
             const __gotots_range_value_0 = __gotots_range_0.get(__gotots_range_index_0);
-            let project: {
-                value: Project;
-            } | undefined = __gotots_range_value_0;
-            if (!((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program === undefined) && programCounter.Deref((session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programCounter, (project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program)) {
-                if (!((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool === undefined)) {
-                    checkerPool.Discard((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.checkerPool);
+            let project: tsonicTypeScriptRuntime.Location<Project> | undefined = __gotots_range_value_0;
+            if (!(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program === undefined) && programCounter.Deref((session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.programCounter, ((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program)) {
+                if (!(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.checkerPool === undefined)) {
+                    checkerPool.Discard(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.checkerPool);
                 }
-                const __gotots_range_1 = Program__from_compiler.SourceFiles((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program);
+                const __gotots_range_1 = Program__from_compiler.SourceFiles(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program);
                 for (let __gotots_range_index_1 = 0; __gotots_range_index_1 < __gotots_range_1.length; __gotots_range_index_1++) {
                     const __gotots_range_value_1 = __gotots_range_1.get(__gotots_range_index_1);
                     let file: tsonicTypeScriptRuntime.Location<SourceFile__from_ast> | undefined = __gotots_range_value_1;
                     RefCountCache$Deref$Named_project$ParseCacheKey$PointerTo_Named_ast$SourceFile$Named_project$FileHandle((session ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.parseCache, NewParseCacheKey(SourceFile__from_ast.ParseOptions(file), Uint128__from_xxh3.$copy(((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.Hash), ((file ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.ScriptKind));
                 }
-                const __gotots_range_2 = Program__from_compiler.DuplicateSourceFiles((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.Program);
+                const __gotots_range_2 = Program__from_compiler.DuplicateSourceFiles(((project ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Project>).value.Program);
                 for (let __gotots_range_index_2 = 0; __gotots_range_index_2 < __gotots_range_2.length; __gotots_range_index_2++) {
                     const __gotots_range_value_2 = __gotots_range_2.get(__gotots_range_index_2);
                     let file: {
@@ -680,11 +674,9 @@ export class Snapshot {
                 continue;
             }
             const __gotots_range_value_5 = __gotots_range_value_4[0];
-            let config: {
-                value: configFileEntry;
-            } | undefined = __gotots_range_value_5;
-            if (!((config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine === undefined)) {
-                const __gotots_range_4 = ParsedCommandLine__from_tsoptions.ExtendedSourceFiles((config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).value.commandLine);
+            let config: tsonicTypeScriptRuntime.Location<configFileEntry> | undefined = __gotots_range_value_5;
+            if (!(((config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileEntry>).value.commandLine === undefined)) {
+                const __gotots_range_4 = ParsedCommandLine__from_tsoptions.ExtendedSourceFiles(((config ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<configFileEntry>).value.commandLine);
                 for (let __gotots_range_index_3 = 0; __gotots_range_index_3 < __gotots_range_4.length; __gotots_range_index_3++) {
                     const __gotots_range_value_6 = __gotots_range_4.get(__gotots_range_index_3);
                     let file = __gotots_range_value_6;
@@ -789,7 +781,7 @@ export class SnapshotChange {
     declare private readonly $goType: void;
     public constructor(public ResourceRequest: ResourceRequest, public reason: UpdateReason, public fileChanges: FileChangeSummary, public compilerOptionsForInferredProjects: {
         value: CompilerOptions__from_core;
-    } | undefined, public newConfig: tsonicTypeScriptRuntime.Location<UserPreferences__from_lsutil> | undefined, public ataChanges: GoMapValue<Path__from_tspath, ATAStateChange | undefined>, public apiRequest: APISnapshotRequest | undefined, public cleanDiskCache: bool) {
+    } | undefined, public newConfig: tsonicTypeScriptRuntime.Location<UserPreferences__from_lsutil> | undefined, public ataChanges: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<ATAStateChange> | undefined>, public apiRequest: APISnapshotRequest | undefined, public cleanDiskCache: bool) {
     }
     static $copy($source: SnapshotChange): SnapshotChange {
         return new SnapshotChange(ResourceRequest.$copy($source.ResourceRequest), $source.reason, FileChangeSummary.$copy($source.fileChanges), $source.compilerOptionsForInferredProjects, $source.newConfig, $source.ataChanges, $source.apiRequest, $source.cleanDiskCache);

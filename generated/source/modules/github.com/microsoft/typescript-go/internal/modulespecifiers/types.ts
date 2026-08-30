@@ -116,11 +116,9 @@ export interface ModuleSpecifierGenerationHost extends GoInterfaceValue {
     GetPackageJsonInfo($argument0: gostring): {
         value: InfoCacheEntry__from_packagejson;
     } | undefined;
-    GetProjectReferenceFromSource($argument0: Path__from_tspath): {
-        value: SourceOutputAndProjectReference__from_tsoptions;
-    } | undefined;
+    GetProjectReferenceFromSource($argument0: Path__from_tspath): tsonicTypeScriptRuntime.Location<SourceOutputAndProjectReference__from_tsoptions> | undefined;
     GetRedirectTargets($argument0: Path__from_tspath): RuntimeSlice<gostring>;
-    GetResolvedModuleFromModuleSpecifier($argument0: HasFileName__from_ast | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): tsonicTypeScriptRuntime.Location<ResolvedModule__from___go_module> | undefined;
+    GetResolvedModuleFromModuleSpecifier($argument0: HasFileName__from_ast | undefined, $argument1: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined): ResolvedModule__from___go_module | undefined;
     GetSourceOfProjectReferenceIfOutputIncluded($argument0: HasFileName__from_ast | undefined): gostring;
     GetSymlinkCache(): tsonicTypeScriptRuntime.Location<KnownSymlinks__from_symlinks> | undefined;
     UseCaseSensitiveFileNames(): bool;

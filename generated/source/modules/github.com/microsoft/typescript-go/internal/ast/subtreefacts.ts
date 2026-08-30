@@ -1,9 +1,27 @@
-import * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
 import type { NodeList$Storage as NodeList__from_ast$Storage } from "./ast.js";
 import type { uint32 } from "@gotots/runtime/scalars.js";
 import { IfElse$Named_ast$SubtreeFacts } from "../../../../../../support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/IfElse.js";
 import { ModifierList, Node, NodeList } from "./ast.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export type SubtreeFacts = uint32;
 export function SubtreeContainsTypeScript$constant(): SubtreeFacts {
     return 1;
@@ -123,7 +141,7 @@ export function propagateModifierListSubtreeFacts(children: tsonicTypeScriptRunt
         return SubtreeFactsNone$constant();
     }
     const __gotots_store_0 = ModifierList.$storageOf(((children ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<ModifierList>).value);
-    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<NodeList__from_ast$Storage, NodeList>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_0, "NodeList"), NodeList.$fromStorage, NodeList.$storageOf);
+    const __gotots_argument_1 = new $ProjectedPropertyLocation(__gotots_store_0, "NodeList", NodeList.$fromStorage, NodeList.$storageOf);
     const __gotots_argument_2 = propagateSubtreeFacts;
     return propagateNodeListSubtreeFacts(__gotots_argument_1, __gotots_argument_2);
 }

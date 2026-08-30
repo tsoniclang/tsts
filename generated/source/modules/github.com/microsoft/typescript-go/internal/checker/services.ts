@@ -23,6 +23,24 @@ import * as strings__from_gostdlib from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringIndex, goStringSlice } from "@gotots/runtime/string.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function runWithInferenceBlockedFromSourceNode$kernel<T>($go$copy$T0_to_T0: ($0: T) => T, c: {
     value: Checker;
 } | undefined, node: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined, fn: (() => T) | undefined): T {
@@ -144,7 +162,7 @@ export function isExportSpecifierAlias(referenceLocation: tsonicTypeScriptRuntim
                         (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                             (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                 Identifier__from_ast.$storageOf(((referenceLocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-    let __gotots_logical_result_0 = tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_1, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_6, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
+    let __gotots_logical_result_0 = tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_1, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_6, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
     if (!__gotots_logical_result_0) {
         const __gotots_equal_operand_2 = ExportSpecifier__from_ast.Name(exportSpecifier);
         const __gotots_store_7 = (void NodeBase__from_ast.$storageOf, (void NodeBase__from_ast.$fromStorage,
@@ -156,7 +174,7 @@ export function isExportSpecifierAlias(referenceLocation: tsonicTypeScriptRuntim
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((referenceLocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
         __gotots_logical_result_0 =
-            tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_2, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_7, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
+            tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_2, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_7, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
     }
     const __gotots_argument_2 = __gotots_logical_result_0;
     const __gotots_argument_3 = RuntimeSlice.literal<GoInterface | undefined>([new GoInterfaceAdapter("referenceLocation is not export specifier name or property name")]);
@@ -172,7 +190,7 @@ export function isExportSpecifierAlias(referenceLocation: tsonicTypeScriptRuntim
                             (void MemberExpressionBase__from_ast.$storageOf, (void MemberExpressionBase__from_ast.$fromStorage,
                                 (void PrimaryExpressionBase__from_ast.$storageOf, (void PrimaryExpressionBase__from_ast.$fromStorage,
                                     Identifier__from_ast.$storageOf(((referenceLocation ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<Identifier__from_ast>).value).PrimaryExpressionBase)).MemberExpressionBase)).LeftHandSideExpressionBase)).UpdateExpressionBase)).UnaryExpressionBase)).ExpressionBase)).NodeBase));
-        return tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_3, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_8, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
+        return tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_3, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_8, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)));
     }
     else {
         return Node__from_ast.ModuleSpecifier(Node__from_ast.$storageOf((((void Node__from_ast.$storageOf, (void Node__from_ast.$fromStorage,
@@ -186,7 +204,7 @@ export function getPossibleSymbolReferenceNodes(sourceFile: tsonicTypeScriptRunt
             let referenceLocation: tsonicTypeScriptRuntime.Location<Node__from_ast> | undefined = GetTouchingPropertyName__from_astnav(sourceFile, pos);
             const __gotots_equal_operand_0 = referenceLocation;
             const __gotots_store_2 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-            if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_2, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
+            if (!tsonicTypeScriptRuntime.sameLocation(__gotots_equal_operand_0, NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_2, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf)))) {
                 return referenceLocation;
             }
         }
@@ -203,7 +221,7 @@ export function getPossibleSymbolReferencePositions(sourceFile: tsonicTypeScript
     let symbolNameLength = symbolName.length;
     if (container === undefined) {
         const __gotots_store_5 = NodeBase__from_ast.$storageOf(((sourceFile ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")) as tsonicTypeScriptRuntime.Location<SourceFile__from_ast>).value.NodeBase);
-        container = NodeDefault__from_ast.AsNode(tsonicTypeScriptRuntime.projectLocation<NodeDefault__from_ast$Storage, NodeDefault__from_ast>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "NodeDefault"), NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
+        container = NodeDefault__from_ast.AsNode(new $ProjectedPropertyLocation(__gotots_store_5, "NodeDefault", NodeDefault__from_ast.$fromStorage, NodeDefault__from_ast.$storageOf));
     }
     let position = globalThis.Number(BigInt.asIntN(64, strings__from_gostdlib.Index(goStringSlice(text, Node__from_ast.Pos(container)), symbolName)));
     let endPos = Node__from_ast.End(container);

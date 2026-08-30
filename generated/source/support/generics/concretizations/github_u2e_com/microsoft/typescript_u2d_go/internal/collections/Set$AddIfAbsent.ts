@@ -101,22 +101,10 @@ export function Set$AddIfAbsent$PointerTo_Named_compiler$projectReferenceParseTa
         return $goMap$MapOf_PointerTo_Named_compiler$projectReferenceParseTask_To_Struct_void.make(0, []);
     }, $argument1);
 }
-export function Set$AddIfAbsent$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<Set__from_collections<{
-    value: Project__from_project;
-} | undefined>> | undefined, $argument1: {
-    value: Project__from_project;
-} | undefined): bool {
-    return Set__from_collections.AddIfAbsent$kernel<{
-        value: Project__from_project;
-    } | undefined>($argument0, ($argument0: {
-        value: Project__from_project;
-    } | undefined): {
-        value: Project__from_project;
-    } | undefined => {
+export function Set$AddIfAbsent$PointerTo_Named_project$Project($argument0: tsonicTypeScriptRuntime.Location<Set__from_collections<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined, $argument1: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): bool {
+    return Set__from_collections.AddIfAbsent$kernel<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>($argument0, ($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: GoEmptyStruct): GoMapValue<{
-        value: Project__from_project;
-    } | undefined, GoEmptyStruct> => {
+    }, ($argument0: GoEmptyStruct): GoMapValue<tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, GoEmptyStruct> => {
         return $goMap$MapOf_PointerTo_Named_project$Project_To_Struct_void.make(0, []);
     }, $argument1);
 }

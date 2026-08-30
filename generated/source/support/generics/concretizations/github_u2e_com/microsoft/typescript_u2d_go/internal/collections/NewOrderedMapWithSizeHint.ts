@@ -31,22 +31,12 @@ export function NewOrderedMapWithSizeHint$Named_tspath$Path$Named_tspath$Path($a
         return new Path__from_tspath("");
     }, $argument0);
 }
-export function NewOrderedMapWithSizeHint$Named_tspath$Path$PointerTo_Named_project$Project($argument0: int): tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, {
-    value: Project__from_project;
-} | undefined>> | undefined {
-    return NewOrderedMapWithSizeHint$kernel<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined>(($argument0: {
-        value: Project__from_project;
-    } | undefined, $argument1: int): GoMapValue<Path__from_tspath, {
-        value: Project__from_project;
-    } | undefined> => {
+export function NewOrderedMapWithSizeHint$Named_tspath$Path$PointerTo_Named_project$Project($argument0: int): tsonicTypeScriptRuntime.Location<OrderedMap__from_collections<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>> | undefined {
+    return NewOrderedMapWithSizeHint$kernel<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined>(($argument0: tsonicTypeScriptRuntime.Location<Project__from_project> | undefined, $argument1: int): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Project__from_project> | undefined> => {
         return GoMap.make($argument1, []);
     }, ($argument0: Path__from_tspath): gostring => {
         return $argument0.$value;
-    }, (): {
-        value: Project__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Project__from_project> | undefined => {
         return void 0;
     }, (): Path__from_tspath => {
         return new Path__from_tspath("");

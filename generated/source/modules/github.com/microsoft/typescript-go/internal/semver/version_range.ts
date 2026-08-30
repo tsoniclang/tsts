@@ -11,6 +11,24 @@ import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice, goSliceAllocate } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export class VersionRange {
     declare private readonly $goType: void;
     public constructor(public alternatives: RuntimeSlice<RuntimeSlice<versionComparator$Storage>>) {
@@ -111,7 +129,7 @@ export function testAlternative(alternative: RuntimeSlice<versionComparator$Stor
 export function testComparator(comparator: versionComparator, version: tsonicTypeScriptRuntime.Location<Version> | undefined): bool {
     const __gotots_receiver_5 = version;
     const __gotots_store_5 = versionComparator.$storageOf(comparator);
-    const __gotots_argument_1 = tsonicTypeScriptRuntime.projectLocation<Version__from_semver$Storage, Version>(tsonicTypeScriptRuntime.propertyLocation(__gotots_store_5, "operand"), Version.$fromStorage, Version.$storageOf);
+    const __gotots_argument_1 = new $ProjectedPropertyLocation(__gotots_store_5, "operand", Version.$fromStorage, Version.$storageOf);
     let cmp = Version.Compare(__gotots_receiver_5, __gotots_argument_1);
     switch (((void comparatorOperator,
         versionComparator.$storageOf(comparator).operator) as gostring)) {

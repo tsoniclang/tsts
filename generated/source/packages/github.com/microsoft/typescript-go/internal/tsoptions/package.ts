@@ -31,6 +31,24 @@ import * as named_sync from "@gotots/gostdlib/internal/facets/named-sync.js";
 import { GoMap as GoMap__from_gotots_runtime } from "@gotots/runtime/map.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
+class $ProjectedPropertyLocation<TObject extends object, TKey extends keyof TObject, TTarget> {
+    storageIdentity: TObject;
+    storageKey: TKey;
+    fromSource: (value: TObject[TKey]) => TTarget;
+    toSource: (value: TTarget) => TObject[TKey];
+    constructor(storageIdentity: TObject, storageKey: TKey, fromSource: (value: TObject[TKey]) => TTarget, toSource: (value: TTarget) => TObject[TKey]) {
+        this.storageIdentity = storageIdentity;
+        this.storageKey = storageKey;
+        this.fromSource = fromSource;
+        this.toSource = toSource;
+    }
+    get value(): TTarget {
+        return this.fromSource(this.storageIdentity[this.storageKey]);
+    }
+    set value(value: TTarget) {
+        this.storageIdentity[this.storageKey] = this.toSource(value);
+    }
+}
 export function $initialize(): void {
     CommandLineOptionTypeBoolean = CommandLineOptionTypeBoolean$constant();
     CommandLineOptionTypeEnum = CommandLineOptionTypeEnum$constant();
@@ -553,7 +571,7 @@ export function $initialize(): void {
     }
     {
         $state.OptionsForBuild = RuntimeSlice.literal<tsonicTypeScriptRuntime.Location<CommandLineOption> | undefined>([
-            tsonicTypeScriptRuntime.projectLocation<CommandLineOption__from_tsoptions$Storage, CommandLineOption>(tsonicTypeScriptRuntime.propertyLocation($state, "TscBuildOption"), CommandLineOption.$fromStorage, CommandLineOption.$storageOf), tsonicTypeScriptRuntime.location<CommandLineOption>(CommandLineOption.$fromStorage({
+            new $ProjectedPropertyLocation($state, "TscBuildOption", CommandLineOption.$fromStorage, CommandLineOption.$storageOf), tsonicTypeScriptRuntime.location<CommandLineOption>(CommandLineOption.$fromStorage({
                 Name: "verbose",
                 ShortName: "v",
                 Category: $state__diagnostics.Command_line_Options,

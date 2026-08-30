@@ -44,100 +44,48 @@ export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_ast$SourceFile$
         return void 0;
     }, $argument0);
 }
-export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Overlay$Named_tspath$Path$PointerTo_Named_project$Overlay($argument0: GoMapValue<Path__from_tspath, {
-    value: Overlay__from_project;
-} | undefined>): GoMapValue<Path__from_tspath, {
-    value: Overlay__from_project;
-} | undefined> {
-    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined>, Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined>(($argument0: GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined> => {
+export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Overlay$Named_tspath$Path$PointerTo_Named_project$Overlay($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined> {
+    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined>, Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined>(($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined> => {
         return $argument0;
-    }, ($argument0: GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined> => {
+    }, ($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined> => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: Overlay__from_project;
-    } | undefined): {
-        value: Overlay__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined): tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: Overlay__from_project;
-    } | undefined): GoMapValue<Path__from_tspath, {
-        value: Overlay__from_project;
-    } | undefined> => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined> => {
         return $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$Overlay.make(0, []);
-    }, (): {
-        value: Overlay__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<Overlay__from_project> | undefined => {
         return void 0;
     }, $argument0);
 }
-export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileEntry$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: GoMapValue<Path__from_tspath, {
-    value: configFileEntry__from_project;
-} | undefined>): GoMapValue<Path__from_tspath, {
-    value: configFileEntry__from_project;
-} | undefined> {
-    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>, Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>(($argument0: GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined> => {
+export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileEntry$Named_tspath$Path$PointerTo_Named_project$configFileEntry($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined> {
+    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>, Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>(($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined> => {
         return $argument0;
-    }, ($argument0: GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined>): GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined> => {
+    }, ($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined> => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): {
-        value: configFileEntry__from_project;
-    } | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: {
-        value: configFileEntry__from_project;
-    } | undefined): GoMapValue<Path__from_tspath, {
-        value: configFileEntry__from_project;
-    } | undefined> => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined> => {
         return $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileEntry.make(0, []);
-    }, (): {
-        value: configFileEntry__from_project;
-    } | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<configFileEntry__from_project> | undefined => {
         return void 0;
     }, $argument0);
 }
-export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileNames$Named_tspath$Path$PointerTo_Named_project$configFileNames($argument0: GoMapValue<Path__from_tspath, configFileNames__from_project | undefined>): GoMapValue<Path__from_tspath, configFileNames__from_project | undefined> {
-    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, configFileNames__from_project | undefined>, Path__from_tspath, configFileNames__from_project | undefined>(($argument0: GoMapValue<Path__from_tspath, configFileNames__from_project | undefined>): GoMapValue<Path__from_tspath, configFileNames__from_project | undefined> => {
+export function Clone$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileNames$Named_tspath$Path$PointerTo_Named_project$configFileNames($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined> {
+    return generic_maps_kernel.MapsCloneKernel<GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>, Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>(($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined> => {
         return $argument0;
-    }, ($argument0: GoMapValue<Path__from_tspath, configFileNames__from_project | undefined>): GoMapValue<Path__from_tspath, configFileNames__from_project | undefined> => {
+    }, ($argument0: GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined>): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined> => {
         return $argument0;
     }, ($argument0: Path__from_tspath): Path__from_tspath => {
         return $argument0;
-    }, ($argument0: configFileNames__from_project | undefined): configFileNames__from_project | undefined => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined): tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined => {
         return $argument0;
-    }, ($argument0: configFileNames__from_project | undefined): GoMapValue<Path__from_tspath, configFileNames__from_project | undefined> => {
+    }, ($argument0: tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined): GoMapValue<Path__from_tspath, tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined> => {
         return $goMap$MapOf_Named_tspath$Path_To_PointerTo_Named_project$configFileNames.make(0, []);
-    }, (): configFileNames__from_project | undefined => {
+    }, (): tsonicTypeScriptRuntime.Location<configFileNames__from_project> | undefined => {
         return void 0;
     }, $argument0);
 }
