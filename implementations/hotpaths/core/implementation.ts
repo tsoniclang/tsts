@@ -21,7 +21,7 @@ export function arenaNew<T>(
   ) => RuntimeSlice<GoContainerStorage<T>>,
   copyValue: (value: T) => T,
   fromContainerStorage: (value: GoContainerStorage<T>) => T,
-  _indexAddress: (
+  indexAddress: (
     slice: RuntimeSlice<GoContainerStorage<T>>,
     index: int,
   ) => Pointer<T> | undefined,
@@ -56,11 +56,7 @@ export function arenaNew<T>(
   const index = sliceLength(data);
   data = data.slice(0, index + 1, null);
   arena.data = data;
-  return data.$projectedAddress(
-    index,
-    fromContainerStorage,
-    toContainerStorage,
-  );
+  return indexAddress(data, index);
 }
 
 export function linkStoreGet<K, V>(
