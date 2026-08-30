@@ -90,22 +90,16 @@ output digest. The superseded multi-file JavaScript graph is removed only by
 the successful atomic packaging transaction. No text rewrite or second
 executable route survives.
 
-The same profile derives manifest-certified `generic-kernel` transports from
-the exact pinned GoToTS gostdlib manifest and may explicitly select a closed
-target-lowering callable by exact module, export, and kind. The current
-product selects GoToTS's canonical `goMapStore` as an
-`inline-generic-method-call`; this product profile is the sole owner of that
-choice. The TypeScript target still exact-joins the checked import,
-declaration, selected signature, checker-owned generic parameter types, and
-the one method-call body before it can transport or inline a call. TSTS does
-not classify source names or inspect generated text.
-
-The sealed evidence must match the profile digest and callable count and must
-report nonzero selected and inlined calls for this product. A stale manifest,
-duplicate identity, wrong module or export, concrete parameter, aliased or
-overloaded target, body drift, or same-spelled ordinary call remains an
-external boundary or fails the explicit inline contract rather than becoming
-an optimization exception.
+The same profile derives its representation-transport callable set from the
+exact pinned GoToTS gostdlib manifest. Only signature-certified synchronous
+generic kernels with generated-caller representation facets enter that set.
+TSTS passes the immutable, canonically ordered module/export identities to the
+TypeScript target; it does not maintain a product-specific callable list. The
+target exact-joins each selected call and admits only generic-owned parameter
+shapes. Its sealed evidence must match the profile digest and callable count
+and must report at least one selected call for this product. A stale manifest,
+duplicate identity, concrete parameter, or same-spelled ordinary call remains
+an external boundary rather than becoming an optimization exception.
 
 The profile separately records exact product-acceptance denominators for
 measured target optimizations. These values never select source or permit an
@@ -202,9 +196,9 @@ independently rejects authored suspension nodes from the exact checked tree
 before planning or printing. Its sealed evidence exact-joins
 `sourceExecution: "synchronous"`, the selected optimization identity, and the
 complete source membership. Representation evidence separately exact-joins
-the certified transport digest, denominator, selected-call count, and inline-
-call count. Neither gate decides semantics by marker spelling or repairs
-generated source. Adding an obsolete concurrency selector, changing
+the certified generic-kernel transport digest, denominator, and selected-call
+count. Neither gate decides semantics by marker spelling or repairs generated
+source. Adding an obsolete concurrency selector, changing
 the target execution contract away from `synchronous`, removing the product
 runner's source-owned serial selection, or supplying that selection more than
 once must fail before publication.

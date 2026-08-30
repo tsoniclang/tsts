@@ -208,8 +208,8 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 30) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 30");
+  if (evidence["schemaVersion"] !== 29) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 29");
   }
   verifyOptimizationAcceptance(evidence, profile.acceptance);
   if (evidence["sourceExecution"] !== profile.execution) {
@@ -231,11 +231,7 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     transports["contractCount"] !== profile.representationTransports.callables.length ||
     typeof transports["selectedCallCount"] !== "number" ||
     !Number.isSafeInteger(transports["selectedCallCount"]) ||
-    transports["selectedCallCount"] <= 0 ||
-    typeof transports["inlineCallCount"] !== "number" ||
-    !Number.isSafeInteger(transports["inlineCallCount"]) ||
-    transports["inlineCallCount"] <= 0 ||
-    transports["inlineCallCount"] > transports["selectedCallCount"]
+    transports["selectedCallCount"] <= 0
   ) {
     throw new Error(
       "TypeScript optimization evidence representation transports differ from the selected certified profile",

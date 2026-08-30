@@ -107,7 +107,7 @@ const optimizationArtifact = compiled.artifacts.find((artifact) =>
 );
 assert.ok(optimizationArtifact !== undefined);
 assert.deepEqual(JSON.parse(optimizationArtifact.text), {
-  schemaVersion: 30,
+  schemaVersion: 29,
   sourceExecution: "synchronous",
   profileIdentity:
     "typescript-optimization-v4/pointer=location/scalar=preserve/representations=preserve",
@@ -173,10 +173,9 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
   },
   representationTransports: {
     digest:
-      "72134632cc93c866f0706a8bc177b57d88b853bff4d7d04ea4c4e218a7e68d18",
+      "e0b8c30fa1ab2fb9d676b79532fb204339a6666ecb3f546a49d4c57a577fa909",
     contractCount: 0,
     selectedCallCount: 0,
-    inlineCallCount: 0,
   },
 });
 
