@@ -9,6 +9,20 @@ export function verifyOptimizationAcceptance(evidence, acceptance) {
       `TypeScript pointer-key map denominator ${String(actual)} differs from accepted ${acceptance.pointerKeyMapCount}`,
     );
   }
+  const representations = requireRecord(
+    evidence["representationProjections"],
+    "TypeScript optimization representation evidence",
+  );
+  const fields = requireRecord(
+    representations["directLogicalFields"],
+    "TypeScript optimization direct logical-field evidence",
+  );
+  const actualFields = fields["optimizedCount"];
+  if (actualFields !== acceptance.directLogicalFieldCount) {
+    throw new Error(
+      `TypeScript direct logical-field denominator ${String(actualFields)} differs from accepted ${acceptance.directLogicalFieldCount}`,
+    );
+  }
 }
 
 function requireRecord(value, subject) {

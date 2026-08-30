@@ -27,8 +27,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 8) {
-    throw new Error("TypeScript target profile schemaVersion must be 8");
+  if (parsed["schemaVersion"] !== 9) {
+    throw new Error("TypeScript target profile schemaVersion must be 9");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -76,15 +76,17 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     acceptance,
-    new Set(["pointerKeyMapCount"]),
+    new Set(["pointerKeyMapCount", "directLogicalFieldCount"]),
     "TypeScript target profile acceptance",
   );
   if (
     !Number.isSafeInteger(acceptance["pointerKeyMapCount"]) ||
-    acceptance["pointerKeyMapCount"] <= 0
+    acceptance["pointerKeyMapCount"] <= 0 ||
+    !Number.isSafeInteger(acceptance["directLogicalFieldCount"]) ||
+    acceptance["directLogicalFieldCount"] <= 0
   ) {
     throw new Error(
-      "TypeScript target profile pointerKeyMapCount must be a positive safe integer",
+      "TypeScript target profile acceptance counts must be positive safe integers",
     );
   }
   assertOptimizationChoice(
