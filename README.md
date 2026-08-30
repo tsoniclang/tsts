@@ -61,9 +61,6 @@ the editing surface.
 The target profile also pins measured product-acceptance denominators. They
 verify the target's independently fact-selected output; they never act as
 source-name allowlists or optimization selectors.
-The pointer-key map denominator is partitioned into location-backed and
-direct-object identity maps, and the profile exact-joins both partitions to
-their total.
 
 Run the smallest Go pointer -> canonical marker -> TSTS fact -> target AST ->
 executable TypeScript proof with:

@@ -27,8 +27,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 10) {
-    throw new Error("TypeScript target profile schemaVersion must be 10");
+  if (parsed["schemaVersion"] !== 9) {
+    throw new Error("TypeScript target profile schemaVersion must be 9");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -76,11 +76,7 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     acceptance,
-    new Set([
-      "pointerKeyMapCount",
-      "locationPointerKeyMapCount",
-      "directObjectPointerKeyMapCount",
-    ]),
+    new Set(["pointerKeyMapCount"]),
     "TypeScript target profile acceptance",
   );
   if (
@@ -89,28 +85,6 @@ export async function readTypeScriptTargetProfile(path) {
   ) {
     throw new Error(
       "TypeScript target profile pointerKeyMapCount must be a positive safe integer",
-    );
-  }
-  for (const name of [
-    "locationPointerKeyMapCount",
-    "directObjectPointerKeyMapCount",
-  ]) {
-    if (
-      !Number.isSafeInteger(acceptance[name]) ||
-      acceptance[name] < 0
-    ) {
-      throw new Error(
-        `TypeScript target profile ${name} must be a nonnegative safe integer`,
-      );
-    }
-  }
-  if (
-    acceptance["locationPointerKeyMapCount"] +
-        acceptance["directObjectPointerKeyMapCount"] !==
-      acceptance["pointerKeyMapCount"]
-  ) {
-    throw new Error(
-      "TypeScript target profile pointer-key map partitions must equal pointerKeyMapCount",
     );
   }
   assertOptimizationChoice(

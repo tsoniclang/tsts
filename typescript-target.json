@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 9,
   "execution": "synchronous",
   "assembly": {
     "modulePackaging": "single-esm"
@@ -10,9 +10,7 @@
     "representationProjections": "closed-direct"
   },
   "acceptance": {
-    "pointerKeyMapCount": 72,
-    "locationPointerKeyMapCount": 61,
-    "directObjectPointerKeyMapCount": 11
+    "pointerKeyMapCount": 72
   },
   "evidence": {
     "representationTransportCallables": [
