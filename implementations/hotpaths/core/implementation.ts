@@ -3,60 +3,28 @@ import type { int } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import type { GoContainerStorage } from "@gotots/runtime/storage.js";
 import type { Pointer } from "@tsonic/core/types.js";
-import * as genericSlicesKernel from "@gotots/gostdlib/internal/facets/generic-slices-kernel.js";
-import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { LinkStore } from "../../modules/github.com/microsoft/typescript-go/internal/core/linkstore.js";
-import {
-  Arena,
-  nextArenaSize,
-} from "../../modules/github.com/microsoft/typescript-go/internal/core/arena.js";
+import type { Arena } from "../../modules/github.com/microsoft/typescript-go/internal/core/arena.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
 
 export function arenaNew<T>(
-  arenaPointer: Pointer<Arena<T>> | undefined,
-  sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
-  convertSlice: (
+  _arenaPointer: Pointer<Arena<T>> | undefined,
+  _sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
+  _convertSlice: (
     slice: RuntimeSlice<GoContainerStorage<T>>,
   ) => RuntimeSlice<GoContainerStorage<T>>,
-  copyValue: (value: T) => T,
-  fromContainerStorage: (value: GoContainerStorage<T>) => T,
-  indexAddress: (
+  _copyValue: (value: T) => T,
+  _fromContainerStorage: (value: GoContainerStorage<T>) => T,
+  _indexAddress: (
     slice: RuntimeSlice<GoContainerStorage<T>>,
     index: int,
   ) => Pointer<T> | undefined,
-  sliceLength: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
-  toContainerStorage: (value: T) => GoContainerStorage<T>,
+  _sliceLength: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
+  _toContainerStorage: (value: T) => GoContainerStorage<T>,
   zeroValue: () => T,
 ): Pointer<T> | undefined {
-  const arena = Arena.$storageOf(
-    loadPointer(
-      arenaPointer ??
-        GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"),
-    ),
-  );
-  let data = arena.data;
-  const currentLength = sliceLength(data);
-  if (currentLength === sliceCapacity(data)) {
-    data = genericSlicesKernel.SlicesGrowKernel<
-      RuntimeSlice<GoContainerStorage<T>>,
-      T,
-      GoContainerStorage<T>
-    >(
-      convertSlice,
-      convertSlice,
-      copyValue,
-      fromContainerStorage,
-      toContainerStorage,
-      zeroValue,
-      RuntimeSlice.nil<GoContainerStorage<T>>(),
-      BigInt.asIntN(64, goNumberToBigInt(nextArenaSize(currentLength))),
-    );
-  }
-  const index = sliceLength(data);
-  data = data.slice(0, index + 1, null);
-  arena.data = data;
-  return indexAddress(data, index);
+  return allocatePointer(zeroValue());
 }
 
 export function linkStoreGet<K, V>(

@@ -143,7 +143,12 @@ product and passing the differential gates.
 The selected callable set is exactly `Checker.compareNodes`,
 `Checker.compareSymbolsWorker`, `Checker.sortSymbols`, `Arena.New`, and
 `LinkStore.Get`. The comparison and storage replacements preserve their source
-algorithms while removing generated representation overhead.
+behavior while removing generated representation overhead. `Arena.New` returns
+one fresh zero-valued pointer cell directly: its Go backing slice is private,
+its capacity and allocation order are unobservable, and retaining the same
+value through both the returned pointer and an arena slice would duplicate the
+JavaScript reachability graph. `LinkStore.Get` likewise lets its entries map
+own each fresh value rather than retaining it through a second arena.
 `Checker.sortSymbols` replaces Go's generic `slices.SortFunc` machinery with
 native `Array.sort` under the same total `compareSymbols` order. A zero
 comparison identifies the same symbol value, so target sort stability cannot

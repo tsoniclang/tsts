@@ -71,6 +71,7 @@ run_toolchain "$tsgo" -p "$target/tsconfig.emit.json"
 run_toolchain "$node" "$root/scripts/assemble.mjs" \
   "$root" "$target" "$toolchain_digest" "$toolchain_root"
 run_toolchain "$node" "$root/test/xxh3-contract.mjs" "$root"
+run_toolchain "$node" "$root/test/core-hotpaths-contract.mjs" "$root"
 run_toolchain "$node" "$root/scripts/seal-executable.mjs" \
   "$root" "$target" "$toolchain_digest" "$toolchain_root"
 run_toolchain "$node" "$root/scripts/differential.mjs" "$root" "$tsgo"
