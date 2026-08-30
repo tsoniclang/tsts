@@ -201,6 +201,7 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
       "profileIdentity",
       "sourceMembership",
       "programIndex",
+      "valueStructures",
       "pointer",
       "scalar",
       "representationProjections",
@@ -208,8 +209,8 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 29) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 29");
+  if (evidence["schemaVersion"] !== 31) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 31");
   }
   verifyOptimizationAcceptance(evidence, profile.acceptance);
   if (evidence["sourceExecution"] !== profile.execution) {
@@ -224,6 +225,19 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
   if (evidence["profileIdentity"] !== expectedIdentity) {
     throw new Error("TypeScript optimization evidence profile differs from the selected profile");
   }
+  const structures = evidence["valueStructures"];
+  if (
+    !isRecord(structures) ||
+    !Number.isSafeInteger(structures["assertionCount"]) ||
+    structures["assertionCount"] <= 0 ||
+    !Number.isSafeInteger(structures["directLayoutCount"]) ||
+    structures["directLayoutCount"] <= 0 ||
+    structures["directLayoutCount"] > structures["assertionCount"]
+  ) {
+    throw new Error(
+      "TypeScript optimization evidence value structures are invalid or vacuous",
+    );
+  }
   const transports = evidence["representationTransports"];
   if (
     !isRecord(transports) ||
@@ -231,7 +245,11 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     transports["contractCount"] !== profile.representationTransports.callables.length ||
     typeof transports["selectedCallCount"] !== "number" ||
     !Number.isSafeInteger(transports["selectedCallCount"]) ||
-    transports["selectedCallCount"] <= 0
+    transports["selectedCallCount"] <= 0 ||
+    typeof transports["inlineCallCount"] !== "number" ||
+    !Number.isSafeInteger(transports["inlineCallCount"]) ||
+    transports["inlineCallCount"] <= 0 ||
+    transports["inlineCallCount"] > transports["selectedCallCount"]
   ) {
     throw new Error(
       "TypeScript optimization evidence representation transports differ from the selected certified profile",
