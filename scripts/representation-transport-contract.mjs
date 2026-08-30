@@ -10,7 +10,10 @@ export async function readRepresentationTransportContract(profilePath, value) {
   }
   rejectUnknownKeys(
     value,
-    new Set(["representationTransportManifest"]),
+    new Set([
+      "representationTransportCallables",
+      "representationTransportManifest",
+    ]),
     "TypeScript target profile evidence",
   );
   const manifestPath = value["representationTransportManifest"];
@@ -45,7 +48,9 @@ export async function readRepresentationTransportContract(profilePath, value) {
   if (!Array.isArray(modules)) {
     throw new Error("representation transport manifest facetModules is invalid");
   }
-  const callables = [];
+  const callables = readConfiguredCallables(
+    value["representationTransportCallables"],
+  );
   for (const [moduleIndex, moduleValue] of modules.entries()) {
     const module = requireRecord(
       moduleValue,
@@ -105,7 +110,7 @@ export async function readRepresentationTransportContract(profilePath, value) {
     throw new Error("representation transport manifest contains no generic kernels");
   }
   const document = Object.freeze({
-    schemaVersion: 1,
+    schemaVersion: 2,
     callables: Object.freeze(callables),
   });
   return Object.freeze({
@@ -115,10 +120,44 @@ export async function readRepresentationTransportContract(profilePath, value) {
   });
 }
 
+function readConfiguredCallables(value) {
+  if (!Array.isArray(value)) {
+    throw new Error(
+      "TypeScript target representationTransportCallables must be an array",
+    );
+  }
+  return value.map((entry, index) => {
+    const callable = requireRecord(
+      entry,
+      `representation transport callable ${index}`,
+    );
+    rejectUnknownKeys(
+      callable,
+      new Set(["kind", "moduleSpecifier", "exportName"]),
+      `representation transport callable ${index}`,
+    );
+    if (
+      callable["kind"] !== "inline-generic-method-call" ||
+      typeof callable["moduleSpecifier"] !== "string" ||
+      callable["moduleSpecifier"].length === 0 ||
+      typeof callable["exportName"] !== "string" ||
+      callable["exportName"].length === 0
+    ) {
+      throw new Error(
+        `representation transport callable ${index} is incomplete`,
+      );
+    }
+    return Object.freeze({
+      kind: callable["kind"],
+      moduleSpecifier: callable["moduleSpecifier"],
+      exportName: callable["exportName"],
+    });
+  });
+}
+
 function compareRepresentationTransportCallables(left, right) {
   return compareCodeUnits(left.moduleSpecifier, right.moduleSpecifier) ||
-    compareCodeUnits(left.exportName, right.exportName) ||
-    compareCodeUnits(left.kind, right.kind);
+    compareCodeUnits(left.exportName, right.exportName);
 }
 
 function requireRecord(value, subject) {
