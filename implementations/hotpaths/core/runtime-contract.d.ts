@@ -41,4 +41,6 @@ declare module "@tsonic/core/lang.js" {
     right: RawPointer | undefined,
   ): boolean;
   export function hashRawPointer(pointer: RawPointer | undefined): number;
+  export function struct<T>(shape: T): T;
+  export function field<T>(): T;
 }

@@ -145,6 +145,13 @@ GoToTS or TypeScript-target profile. Neither class may patch the committed
 generated tree: its result becomes visible only by regenerating the complete
 product and passing the differential gates.
 
+The core-hotpath certification source also carries the complete marker
+declarations needed to typecheck the generated and handwritten modules in one
+strict certification project. Its `struct<T>(shape): T` and `field<T>(): T`
+signatures mirror the source-core virtual-module contract exactly; they enable
+checking only and do not select marker semantics. Source-core remains the sole
+owner that attaches finalized marker facts in the subsequent target session.
+
 The selected callable set is exactly `Checker.compareNodes`,
 `Checker.compareSymbolsWorker`, `Checker.sortSymbols`, `Arena.New`, and
 `LinkStore.Get`. The comparison and storage replacements preserve their source
