@@ -27,8 +27,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 8) {
-    throw new Error("TypeScript target profile schemaVersion must be 8");
+  if (parsed["schemaVersion"] !== 9) {
+    throw new Error("TypeScript target profile schemaVersion must be 9");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -39,12 +39,17 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     assembly,
-    new Set(["modulePackaging"]),
+    new Set(["modulePackaging", "minification"]),
     "TypeScript target profile assembly",
   );
   if (assembly["modulePackaging"] !== "single-esm") {
     throw new Error(
       "TSTS TypeScript target modulePackaging must be 'single-esm'",
+    );
+  }
+  if (assembly["minification"] !== "full") {
+    throw new Error(
+      "TSTS TypeScript target minification must be 'full'",
     );
   }
   const optimizations = parsed["optimizations"];

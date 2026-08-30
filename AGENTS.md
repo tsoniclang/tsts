@@ -56,6 +56,9 @@ shell state. Every package implementation bundle is package-atomic. Every
 callable implementation is certified against the exact selected-source
 snapshot, declaration identity, signature, and canonical source-body digest.
 Both are strict-ESM and selected before output is sealed.
+Canonical generated TypeScript remains the readable inspection artifact; the
+disposable single-ESM JavaScript executable is fully minified exactly as
+selected by `typescript-target.json` before its manifest is sealed.
 
 The selected TSTS product is synchronous. `gotots.json` owns that language
 decision with concurrency disabled. GoToTS must emit synchronous callable

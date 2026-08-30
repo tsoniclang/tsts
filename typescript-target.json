@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "execution": "synchronous",
   "assembly": {
-    "modulePackaging": "single-esm"
+    "modulePackaging": "single-esm",
+    "minification": "full"
   },
   "optimizations": {
     "pointerFlows": "closed-direct",

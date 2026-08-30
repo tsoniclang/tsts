@@ -22,6 +22,9 @@ export async function bundleExecutable({
   if (targetProfile?.assembly?.modulePackaging !== "single-esm") {
     throw new Error("Executable bundling requires the selected single-esm profile");
   }
+  if (targetProfile.assembly.minification !== "full") {
+    throw new Error("Executable bundling requires the selected full-minification profile");
+  }
   const bundler = selectedBundler(toolchain);
   const outputRoot = join(targetRoot, "out");
   const entry = join(outputRoot, "runner.js");
@@ -48,6 +51,7 @@ export async function bundleExecutable({
     "--charset=utf8",
     "--legal-comments=none",
     "--log-level=warning",
+    "--minify",
     "--tree-shaking=true",
     "--external:node:*",
     `--outfile=${output}`,

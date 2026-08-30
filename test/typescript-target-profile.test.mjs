@@ -15,9 +15,9 @@ test("target profile has one stable semantic identity", async () => {
   const second = join(root, "second.json");
   await writeRepresentationTransportManifest(root);
   await writeFile(first, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",
@@ -33,17 +33,20 @@ test("target profile has one stable semantic identity", async () => {
       scalarProjections: "closed-direct",
       pointerFlows: "closed-direct",
     },
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     acceptance: { pointerKeyMapCount: 69 },
     execution: "synchronous",
-    schemaVersion: 8,
+    schemaVersion: 9,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
   const right = await readTypeScriptTargetProfile(second);
   assert.equal(left.digest, right.digest);
   assert.equal(left.execution, "synchronous");
-  assert.deepEqual(left.assembly, { modulePackaging: "single-esm" });
+  assert.deepEqual(left.assembly, {
+    modulePackaging: "single-esm",
+    minification: "full",
+  });
   assert.equal(Object.isFrozen(left.assembly), true);
   assert.deepEqual(left.optimizations, right.optimizations);
   assert.equal(Object.isFrozen(left.optimizations), true);
@@ -64,9 +67,9 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
   const root = await createScratch("removed-fields-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: { cooperativeEffects: "closed-program" },
   }), "utf8");
   await assert.rejects(
@@ -74,9 +77,9 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
     /unsupported field 'cooperativeEffects'/u,
   );
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
     diagnostics: { planningPhases: true },
   }), "utf8");
@@ -91,9 +94,9 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
     fallback: true,
   }), "utf8");
@@ -108,9 +111,9 @@ test("target profile rejects non-synchronous execution", async () => {
   const root = await createScratch("execution-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "unrestricted",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",
@@ -128,9 +131,9 @@ test("target profile rejects alternate executable packaging", async () => {
   const root = await createScratch("packaging-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "multi-esm" },
+    assembly: { modulePackaging: "multi-esm", minification: "full" },
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",
@@ -140,6 +143,22 @@ test("target profile rejects alternate executable packaging", async () => {
   await assert.rejects(
     readTypeScriptTargetProfile(path),
     /modulePackaging must be 'single-esm'/u,
+  );
+  await writeFile(path, JSON.stringify({
+    ...canonicalProfile(),
+    assembly: { modulePackaging: "single-esm", minification: "none" },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /minification must be 'full'/u,
+  );
+  await writeFile(path, JSON.stringify({
+    ...canonicalProfile(),
+    assembly: { modulePackaging: "single-esm" },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /minification must be 'full'/u,
   );
   await removeSuccessfulScratchTree(resolve("."), root);
 });
@@ -303,9 +322,9 @@ async function createScratch(prefix) {
 
 function canonicalProfile() {
   return {
-    schemaVersion: 8,
+    schemaVersion: 9,
     execution: "synchronous",
-    assembly: { modulePackaging: "single-esm" },
+    assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",

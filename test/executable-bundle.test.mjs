@@ -33,6 +33,10 @@ test("single-esm assembly is deterministic and preserves module initialization",
     const secondBytes = await readFile(join(second.targetRoot, "out", "tsts.mjs"));
 
     assert.deepEqual(secondBytes, firstBytes);
+    assert.doesNotMatch(
+      firstBytes.toString("utf8"),
+      /DeliberatelyLongInternalClassName/u,
+    );
     assert.deepEqual(secondManifest, firstManifest);
     assert.equal(firstManifest.inputs.some((input) => input.path === "unused.js"), false);
     assert.deepEqual(firstManifest.externalImports, ["node:path"]);
@@ -108,7 +112,7 @@ async function createFixture(prefix, options = {}) {
   await writeFile(join(outputRoot, "state.js"), "export const order = [];\n", "utf8");
   await writeFile(
     join(outputRoot, "a.js"),
-    `import { order } from "./state.js"; order.push("a"); export const value = ${JSON.stringify(options.value ?? "value")};\n`,
+    `import { order } from "./state.js"; class DeliberatelyLongInternalClassName { value() { return ${JSON.stringify(options.value ?? "value")}; } } order.push("a"); export const value = new DeliberatelyLongInternalClassName().value();\n`,
     "utf8",
   );
   await writeFile(
@@ -143,7 +147,10 @@ async function bundle(fixture) {
     }),
     targetProfile: Object.freeze({
       digest: "2".repeat(64),
-      assembly: Object.freeze({ modulePackaging: "single-esm" }),
+      assembly: Object.freeze({
+        modulePackaging: "single-esm",
+        minification: "full",
+      }),
     }),
   });
 }
