@@ -13,36 +13,6 @@ import {
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
 
-class ArenaElementLocation<F, T> implements Pointer<T> {
-  declare readonly __tsonicSourceType: (value: T) => T;
-
-  readonly storageIdentity: object;
-  readonly storageKey: PropertyKey;
-
-  constructor(
-    private readonly source: RuntimeSlice<F>,
-    private readonly index: int,
-    private readonly fromSource: (value: F) => T,
-    private readonly toSource: (value: T) => F,
-  ) {
-    const numericIndex = globalThis.Number(index);
-    const location = source.$arrayLocation(numericIndex + 1);
-    if (location === undefined) {
-      GoPanic.raiseRuntime("slice bounds out of range");
-    }
-    this.storageIdentity = location[0];
-    this.storageKey = location[1] + numericIndex;
-  }
-
-  get value(): T {
-    return this.fromSource(this.source.get(this.index));
-  }
-
-  set value(value: T) {
-    this.source.set(this.index, this.toSource(value));
-  }
-}
-
 export function arenaNew<T>(
   arenaPointer: Pointer<Arena<T>> | undefined,
   sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
@@ -86,8 +56,7 @@ export function arenaNew<T>(
   const index = sliceLength(data);
   data = data.slice(0, index + 1, null);
   arena.data = data;
-  return new ArenaElementLocation(
-    data,
+  return data.$projectedAddress(
     index,
     fromContainerStorage,
     toContainerStorage,
