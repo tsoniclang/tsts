@@ -27,8 +27,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 10) {
-    throw new Error("TypeScript target profile schemaVersion must be 10");
+  if (parsed["schemaVersion"] !== 9) {
+    throw new Error("TypeScript target profile schemaVersion must be 9");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");

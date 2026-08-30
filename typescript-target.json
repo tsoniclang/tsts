@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 9,
   "execution": "synchronous",
   "assembly": {
     "modulePackaging": "single-esm",
@@ -14,13 +14,6 @@
     "pointerKeyMapCount": 72
   },
   "evidence": {
-    "representationTransportCallables": [
-      {
-        "kind": "inline-generic-method-call",
-        "moduleSpecifier": "@gotots/runtime/map.js",
-        "exportName": "goMapStore"
-      }
-    ],
     "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"
   }
 }

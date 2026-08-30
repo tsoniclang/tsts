@@ -15,7 +15,7 @@ test("target profile has one stable semantic identity", async () => {
   const second = join(root, "second.json");
   await writeRepresentationTransportManifest(root);
   await writeFile(first, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -36,7 +36,7 @@ test("target profile has one stable semantic identity", async () => {
     assembly: { modulePackaging: "single-esm", minification: "full" },
     acceptance: { pointerKeyMapCount: 69 },
     execution: "synchronous",
-    schemaVersion: 10,
+    schemaVersion: 9,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
@@ -53,10 +53,6 @@ test("target profile has one stable semantic identity", async () => {
   assert.deepEqual(left.acceptance, { pointerKeyMapCount: 69 });
   assert.equal(Object.isFrozen(left.acceptance), true);
   assert.deepEqual(left.representationTransports.callables, [{
-    kind: "inline-generic-method-call",
-    moduleSpecifier: "@gotots/runtime/map.js",
-    exportName: "goMapStore",
-  }, {
     kind: "generic-kernel",
     moduleSpecifier: "@provider/kernel.js",
     exportName: "Kernel",
@@ -71,7 +67,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
   const root = await createScratch("removed-fields-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: { cooperativeEffects: "closed-program" },
@@ -81,7 +77,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
     /unsupported field 'cooperativeEffects'/u,
   );
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
@@ -98,7 +94,7 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
@@ -115,7 +111,7 @@ test("target profile rejects non-synchronous execution", async () => {
   const root = await createScratch("execution-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "unrestricted",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -135,7 +131,7 @@ test("target profile rejects alternate executable packaging", async () => {
   const root = await createScratch("packaging-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "multi-esm", minification: "full" },
     optimizations: {
@@ -203,10 +199,6 @@ test("target profile derives only certified generic-kernel transports", async ()
 
   const profile = await readTypeScriptTargetProfile(path);
   assert.deepEqual(profile.representationTransports.callables, [{
-    kind: "inline-generic-method-call",
-    moduleSpecifier: "@gotots/runtime/map.js",
-    exportName: "goMapStore",
-  }, {
     kind: "generic-kernel",
     moduleSpecifier: "@provider/a.js",
     exportName: "A",
@@ -237,31 +229,6 @@ test("target profile rejects uncertified, duplicate, and escaping transports", a
   await assert.rejects(
     readTypeScriptTargetProfile(path),
     /callable identity is duplicated/u,
-  );
-
-  await writeRepresentationTransportManifest(root, [
-    genericKernel("@gotots/runtime/map.js", "goMapStore"),
-  ]);
-  await assert.rejects(
-    readTypeScriptTargetProfile(path),
-    /callable identity is duplicated/u,
-  );
-
-  await writeRepresentationTransportManifest(root);
-  await writeFile(path, JSON.stringify({
-    ...canonicalProfile(),
-    evidence: {
-      ...representationTransportEvidence(),
-      representationTransportCallables: [{
-        kind: "generic-kernel",
-        moduleSpecifier: "@gotots/runtime/map.js",
-        exportName: "goMapStore",
-      }],
-    },
-  }), "utf8");
-  await assert.rejects(
-    readTypeScriptTargetProfile(path),
-    /callable 0 is incomplete/u,
   );
 
   await writeFile(path, JSON.stringify({
@@ -355,7 +322,7 @@ async function createScratch(prefix) {
 
 function canonicalProfile() {
   return {
-    schemaVersion: 10,
+    schemaVersion: 9,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -369,14 +336,7 @@ function canonicalProfile() {
 }
 
 function representationTransportEvidence() {
-  return {
-    representationTransportCallables: [{
-      kind: "inline-generic-method-call",
-      moduleSpecifier: "@gotots/runtime/map.js",
-      exportName: "goMapStore",
-    }],
-    representationTransportManifest: "manifest.json",
-  };
+  return { representationTransportManifest: "manifest.json" };
 }
 
 function genericKernel(moduleSpecifier, exportName) {
