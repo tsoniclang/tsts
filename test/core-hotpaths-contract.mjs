@@ -12,7 +12,7 @@ if (repositoryRoot === undefined) {
 }
 
 const outputRoot = join(repositoryRoot, ".temp", "target", "out");
-const { arenaNew } = await import(
+const { arenaNew, linkStoreGet } = await import(
   pathToFileURL(
     join(outputRoot, "implementations", "tsts", "core-hotpaths.js"),
   ).href
@@ -74,8 +74,15 @@ function allocateFrom(receiver) {
   return allocated;
 }
 
-const nativeNilMessage = await nativeArenaNilMessage(repositoryRoot);
-assert.equal(goPanicMessage(() => allocateFrom(undefined)), nativeNilMessage);
+const nativeNilMessages = await nativeCoreNilMessages(repositoryRoot);
+assert.equal(
+  goRuntimePanicPayload(() => allocateFrom(undefined)),
+  nativeNilMessages.arena,
+);
+assert.equal(
+  goRuntimePanicPayload(() => linkStoreGet(undefined)),
+  nativeNilMessages.linkStore,
+);
 
 function allocate() {
   return allocateFrom(arenaPointer);
@@ -100,7 +107,7 @@ assert.equal(forbiddenCapabilityCalls, 0);
 
 console.log("core hotpaths: independent arena allocation verified");
 
-function goPanicMessage(action) {
+function goRuntimePanicPayload(action) {
   try {
     action();
   } catch (failure) {
@@ -111,7 +118,7 @@ function goPanicMessage(action) {
   assert.fail("nil Arena receiver did not panic");
 }
 
-async function nativeArenaNilMessage(rootArgument) {
+async function nativeCoreNilMessages(rootArgument) {
   const root = resolve(rootArgument);
   const scratch = join(root, ".temp", `core-hotpaths-native-${process.pid}`);
   const source = join(scratch, "arena_nil_contract_test.go");
@@ -132,16 +139,31 @@ import (
   "testing"
 )
 
-func TestTSTSArenaNilReceiverContract(t *testing.T) {
+func panicMessage(action func()) (message string) {
   defer func() {
     failure := recover()
     if failure == nil {
-      t.Fatal("nil Arena receiver did not panic")
+      return
     }
-    fmt.Printf("TSTS_ARENA_NIL=%v\\n", failure)
+    message = fmt.Sprint(failure)
   }()
+  action()
+  return
+}
+
+func TestTSTSCoreNilReceiverContract(t *testing.T) {
   var arena *Arena[int]
-  arena.New()
+  arenaMessage := panicMessage(func() { arena.New() })
+  if arenaMessage == "" {
+    t.Fatal("nil Arena receiver did not panic")
+  }
+  var store *LinkStore[int, int]
+  storeMessage := panicMessage(func() { store.Get(1) })
+  if storeMessage == "" {
+    t.Fatal("nil LinkStore receiver did not panic")
+  }
+  fmt.Printf("TSTS_ARENA_NIL=%s\\n", arenaMessage)
+  fmt.Printf("TSTS_LINKSTORE_NIL=%s\\n", storeMessage)
 }
 `, "utf8");
   await writeFile(
@@ -154,7 +176,7 @@ func TestTSTSArenaNilReceiverContract(t *testing.T) {
     [
       "test",
       `-overlay=${overlay}`,
-      "-run=^TestTSTSArenaNilReceiverContract$",
+      "-run=^TestTSTSCoreNilReceiverContract$",
       "-count=1",
       "-v",
       "./internal/core",
@@ -173,10 +195,16 @@ func TestTSTSArenaNilReceiverContract(t *testing.T) {
       `native Arena nil-receiver differential failed\n${result.stdout}${result.stderr}`,
     );
   }
-  const match = /^TSTS_ARENA_NIL=(.+)$/mu.exec(result.stdout);
-  if (match === null) {
-    throw new Error("native Arena nil-receiver differential produced no panic value");
+  const arenaMatch = /^TSTS_ARENA_NIL=runtime error: (.+)$/mu.exec(result.stdout);
+  const linkStoreMatch = /^TSTS_LINKSTORE_NIL=runtime error: (.+)$/mu.exec(
+    result.stdout,
+  );
+  if (arenaMatch === null || linkStoreMatch === null) {
+    throw new Error("native core nil-receiver differential produced no runtime panic value");
   }
   await removeSuccessfulScratchTree(root, scratch);
-  return match[1];
+  return {
+    arena: arenaMatch[1],
+    linkStore: linkStoreMatch[1],
+  };
 }
