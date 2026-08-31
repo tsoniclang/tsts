@@ -9,6 +9,18 @@ export function verifyOptimizationAcceptance(evidence, acceptance) {
       `TypeScript pointer-key map denominator ${String(actual)} differs from accepted ${acceptance.pointerKeyMapCount}`,
     );
   }
+  const dominatingNilChecks = requireRecord(
+    pointer["dominatingNilChecks"],
+    "TypeScript dominating nil-check evidence",
+  );
+  const eliminatedGuardCount = dominatingNilChecks["eliminatedGuardCount"];
+  if (
+    eliminatedGuardCount !== acceptance.dominatingNilCheckEliminationCount
+  ) {
+    throw new Error(
+      `TypeScript dominating nil-check elimination denominator ${String(eliminatedGuardCount)} differs from accepted ${acceptance.dominatingNilCheckEliminationCount}`,
+    );
+  }
 }
 
 function requireRecord(value, subject) {
