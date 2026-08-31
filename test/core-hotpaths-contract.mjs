@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -122,16 +122,22 @@ async function nativeCoreNilMessages(rootArgument) {
   const root = resolve(rootArgument);
   const scratch = join(root, ".temp", `core-hotpaths-native-${process.pid}`);
   const source = join(scratch, "arena_nil_contract_test.go");
-  const overlay = join(scratch, "overlay.json");
-  const virtualSource = join(
+  const selectedCore = join(
     root,
     "vendor",
     "typescript-go",
     "internal",
     "core",
-    "arena_tsts_contract_test.go",
   );
   await mkdir(scratch, { recursive: true });
+  await Promise.all(
+    ["arena.go", "linkstore.go"].map(async (fileName) =>
+      writeFile(
+        join(scratch, fileName),
+        await readFile(join(selectedCore, fileName)),
+      )
+    ),
+  );
   await writeFile(source, `package core
 
 import (
@@ -166,23 +172,19 @@ func TestTSTSCoreNilReceiverContract(t *testing.T) {
   fmt.Printf("TSTS_LINKSTORE_NIL=%s\\n", storeMessage)
 }
 `, "utf8");
-  await writeFile(
-    overlay,
-    `${JSON.stringify({ Replace: { [virtualSource]: source } }, undefined, 2)}\n`,
-    "utf8",
-  );
   const result = spawnSync(
     "go",
     [
       "test",
-      `-overlay=${overlay}`,
       "-run=^TestTSTSCoreNilReceiverContract$",
       "-count=1",
       "-v",
-      "./internal/core",
+      "arena.go",
+      "linkstore.go",
+      "arena_nil_contract_test.go",
     ],
     {
-      cwd: join(root, "vendor", "typescript-go"),
+      cwd: scratch,
       encoding: "utf8",
       maxBuffer: 16 * 1024 * 1024,
     },
