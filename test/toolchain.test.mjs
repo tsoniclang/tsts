@@ -466,6 +466,18 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.ok(opener > constructor, "product transaction does not follow construction");
   assert.equal(buildScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
   assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
+  assert.match(
+    buildScript,
+    /run_measured_toolchain\(\)[\s\S]*target-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
+  );
+  for (const phase of ["target-proof", "generation", "target", "typecheck"]) {
+    assert.match(
+      buildScript,
+      new RegExp(`run_measured_toolchain ${phase}\\b`, "u"),
+      `${phase} lacks an exact measured owner`,
+    );
+  }
+  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|generation|target|typecheck)\b/gu)?.length, 4);
 
   const constructorScript = await readFile(
     join(repositoryRoot, "scripts", "construct-toolchain.mjs"),

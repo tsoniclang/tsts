@@ -57,26 +57,53 @@ IFS=$'\t' read -r \
   distribution_workspace \
   <<< "$toolchain_line"
 
-run_toolchain() {
-  "$host/bash" "$root/scripts/run-exact-toolchain.sh" \
+run_measured_toolchain() {
+  local phase="$1"
+  shift
+  case "$phase" in
+    target-proof|generation|target|typecheck) ;;
+    *)
+      echo "unknown measured build phase: $phase" >&2
+      exit 2
+      ;;
+  esac
+  local metrics_root="$root/.temp/phase-metrics"
+  local record="$metrics_root/$phase.time"
+  "$host/mkdir" -p "$metrics_root"
+  "$host/time" --verbose --output "$record" \
+    "$host/bash" "$root/scripts/run-exact-toolchain.sh" \
     "$host" "$node_root" "$go_root" "$go_module_cache" "$state_root" "$@"
+  "$host/awk" -v phase="$phase" '
+    /Elapsed \(wall clock\) time/ { elapsed = $NF }
+    /Maximum resident set size/ { peak = $NF }
+    END {
+      if (elapsed == "" || peak == "") {
+        exit 2
+      }
+      printf "phase=%s elapsed=%s peak_rss_kib=%s\n", phase, elapsed, peak
+    }
+  ' "$record"
 }
 
-run_toolchain "$node" "$root/scripts/verify-typescript-target.mjs" \
+run_measured_toolchain target-proof \
+  "$node" "$root/scripts/verify-typescript-target.mjs" \
   "$root" "$toolchain_digest" "$toolchain_root"
-run_toolchain "$gotots" build -c "$root/gotots.json" \
+run_measured_toolchain generation "$gotots" build -c "$root/gotots.json" \
   --distribution-root "$distribution_workspace" \
   --project-root "$immutable_source" \
   --go "$go" \
   --tsgo "$tsgo" \
   --tool-cache "$tool_cache_root"
-run_toolchain "$node" "$root/scripts/target.mjs" \
+run_measured_toolchain target "$node" "$root/scripts/target.mjs" \
   "$root" \
   "$root/.temp/generated" \
   "$root/.temp/target" \
   "$root/assembly/runner.ts" \
   "$toolchain_digest" \
   "$toolchain_root"
-run_toolchain "$tsgo" -p "$root/.temp/target/tsconfig.json"
-run_toolchain "$node" "$root/scripts/remove-successful-scratch.mjs" \
+run_measured_toolchain typecheck \
+  "$tsgo" -p "$root/.temp/target/tsconfig.json"
+"$host/bash" "$root/scripts/run-exact-toolchain.sh" \
+  "$host" "$node_root" "$go_root" "$go_module_cache" "$state_root" \
+  "$node" "$root/scripts/remove-successful-scratch.mjs" \
   "$root" "${distribution_workspace%/compiler-distribution}"
