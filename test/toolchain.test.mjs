@@ -306,20 +306,20 @@ test("selection uses clean committed authority and rejects index or untracked st
   await removeToolchainFixtures(...fixtures);
 });
 
-test("committed generated output does not perturb toolchain authority", async () => {
+test("every committed superproject entry perturbs toolchain authority", async () => {
   const fixture = await createToolchainFixture("derived-output-");
   const stateRoot = join(fixture.repositoryRoot, ".temp", "authority-state");
   await prepareToolchainState(stateRoot);
   const environment = exactAuthorityEnvironment(fixture.hostUtilityPath, stateRoot);
   const before = await verifyRepositoryAuthority(fixture.repositoryRoot, environment);
 
-  await mkdir(join(fixture.repositoryRoot, "generated", "source"), { recursive: true });
+  await mkdir(join(fixture.repositoryRoot, "authority-extension"), { recursive: true });
   await writeFile(
-    join(fixture.repositoryRoot, "generated", "source", "program.ts"),
+    join(fixture.repositoryRoot, "authority-extension", "selection.ts"),
     "export {};\n",
     "utf8",
   );
-  runGit(fixture.repositoryRoot, ["add", "generated"]);
+  runGit(fixture.repositoryRoot, ["add", "authority-extension"]);
   runGit(fixture.repositoryRoot, [
     "-c", "user.name=TSTS Tests", "-c", "user.email=tsts-tests@example.invalid",
     "commit", "--quiet", "-m", "commit derived product",
@@ -328,7 +328,7 @@ test("committed generated output does not perturb toolchain authority", async ()
     fixture.repositoryRoot,
     environment,
   );
-  assert.equal(
+  assert.notEqual(
     afterDerivedCommit.superprojectAuthorityDigest,
     before.superprojectAuthorityDigest,
   );
@@ -345,7 +345,7 @@ test("committed generated output does not perturb toolchain authority", async ()
   );
   assert.notEqual(
     afterAuthorityCommit.superprojectAuthorityDigest,
-    before.superprojectAuthorityDigest,
+    afterDerivedCommit.superprojectAuthorityDigest,
   );
   await removeToolchainFixtures(fixture);
 });

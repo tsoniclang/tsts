@@ -6,18 +6,14 @@ TSTS assembles one generated compiler. TS-Go defines the source behavior,
 GoToTS defines generic translation, and this repository defines product
 selection. No product decision is encoded in GoToTS.
 
-The final executable TypeScript is committed under `generated/source/` so the
-product can be reviewed without running the assembly. This tree is derived
-evidence, not an editing surface. `npm run generate` is its sole writer and
-seals it with `generated/manifest.json`; emitted JavaScript and all other
-transient or failed generation state remain under `.temp/`.
+Final executable TypeScript and emitted JavaScript are transient artifacts
+under `.temp/`. They are never hand-edited or committed. The target manifest
+binds the generated tree to the exact source, target profile, toolchain, file
+membership, byte counts, and content digests for each guarded transaction.
 
-The toolchain identity hashes every committed superproject entry except
-`generated/`, then joins the selected submodule gitlinks. This prevents the
-derived snapshot from recursively changing the identity of the tool that
-produced it. The exclusion is not an unverified hole: the repository must be
-clean before construction, while the generated manifest and regeneration gate
-independently own every committed product byte.
+The toolchain identity hashes every committed superproject entry and joins the
+selected submodule gitlinks. No generated-output exception or recursively
+self-authored committed snapshot participates in that identity.
 
 ## Pinned Inputs
 
@@ -81,14 +77,13 @@ claim of Go concurrency parity, and no alternate execution profile exists.
 `typescript-target.json` also selects one executable packaging route:
 `single-esm`. After strict TypeScript checking and JavaScript emission, TSTS
 verifies implementation contracts against the unbundled graph, then invokes
-the exact esbuild binary sealed in the immutable toolchain. The bundler
-aggregates the reachable ESM graph without minification and leaves only
-`node:` built-ins external. The committed TypeScript remains the reviewable
-product source; the transient executable is `out/tsts.mjs` plus one canonical
-manifest containing the exact input graph, external set, bundler identity, and
-output digest. The superseded multi-file JavaScript graph is removed only by
-the successful atomic packaging transaction. No text rewrite or second
-executable route survives.
+the exact esbuild binary sealed in the immutable toolchain. The bundler fully
+minifies the reachable ESM graph and leaves only `node:` built-ins external.
+The transient TypeScript remains the readable inspection artifact; the
+transient executable is `out/tsts.mjs` plus one canonical manifest containing
+the exact input graph, external set, bundler identity, and output digest. The
+superseded multi-file JavaScript graph is removed only by the successful atomic
+packaging transaction. No text rewrite or second executable route survives.
 
 The same profile derives its representation-transport callable set from the
 exact pinned GoToTS gostdlib manifest. Only signature-certified synchronous
@@ -136,9 +131,9 @@ load-owned selected-source snapshot, canonical Go callable identity, generated
 TypeScript signature, and canonical source-body digest before the translated
 body is omitted. Package implementations remain package-atomic. A generic
 translation or representation optimization remains owned by the selected
-GoToTS or TypeScript-target profile. Neither class may patch the committed
-generated tree: its result becomes visible only by regenerating the complete
-product and passing the differential gates.
+GoToTS or TypeScript-target profile. Neither class may patch generated text:
+its result becomes visible only by regenerating the complete transient product
+and passing the differential gates.
 
 The selected callable set is exactly `Checker.compareNodes`,
 `Checker.compareSymbolsWorker`, `Checker.sortSymbols`, `Arena.New`, and
@@ -147,8 +142,10 @@ behavior while removing generated representation overhead. `Arena.New` returns
 one fresh zero-valued pointer cell directly: its Go backing slice is private,
 its capacity and allocation order are unobservable, and retaining the same
 value through both the returned pointer and an arena slice would duplicate the
-JavaScript reachability graph. `LinkStore.Get` likewise lets its entries map
-own each fresh value rather than retaining it through a second arena.
+JavaScript reachability graph. Its named internal-algorithm envelope still
+preserves the native nil-receiver panic exactly. `LinkStore.Get` likewise lets
+its entries map own each fresh value rather than retaining it through a second
+arena.
 `Checker.sortSymbols` replaces Go's generic `slices.SortFunc` machinery with
 native `Array.sort` under the same total `compareSymbols` order. A zero
 comparison identifies the same symbol value, so target sort stability cannot
@@ -171,12 +168,11 @@ fixture's emitted file set and bytes are also exact-joined. Generation,
 typecheck, startup, minimal-compilation time, peak RSS, source size, and output
 size are reported at the exact pins.
 
-The same checkpoint exact-joins the freshly generated final TypeScript against
-`generated/`. The committed manifest carries the
-canonical semantic, target-profile, and historical toolchain digests plus
-the normalized tree digest, file count, byte count, and fixed entrypoint.
-Source drift, missing files, extra files, stale toolchain selection, and hand
-edits all fail the checkpoint.
+The same checkpoint seals the freshly generated final TypeScript under
+`.temp/target`. Its manifest carries the canonical semantic, target-profile,
+and historical toolchain digests plus exact member paths, byte counts, content
+digests, and the fixed entrypoint. Source drift, missing files, extra files,
+stale toolchain selection, and post-seal edits all fail the checkpoint.
 
 The product check owns four serial, resource-disjoint guarded transactions:
 assembly tests, exact toolchain construction, product generation plus strict
@@ -214,7 +210,7 @@ implementation verification, deterministic executable bundling, native TS-Go
 construction, and the exact runtime differential. It uses the
 same guarded execution and output preservation policy as the full check.
 
-`npm run generate` executes that complete checkpoint in publication mode and
-atomically replaces `generated/` only after the staged source and manifest
-verify. `npm run check` runs the same pipeline in verification mode and
-requires byte-identical committed TypeScript.
+`npm run generate` and `npm run check` execute the same complete guarded
+checkpoint. Both leave the certified TypeScript, manifest, JavaScript, and
+bounded resource evidence under `.temp/`; neither publishes or commits a
+generated tree.

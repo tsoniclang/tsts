@@ -9,7 +9,7 @@ import { GoPanic } from "@gotots/runtime/panic.js";
 import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
 
 export function arenaNew<T>(
-  _arenaPointer: Pointer<Arena<T>> | undefined,
+  arenaPointer: Pointer<Arena<T>> | undefined,
   _sliceCapacity: (slice: RuntimeSlice<GoContainerStorage<T>>) => int,
   _convertSlice: (
     slice: RuntimeSlice<GoContainerStorage<T>>,
@@ -24,6 +24,9 @@ export function arenaNew<T>(
   _toContainerStorage: (value: T) => GoContainerStorage<T>,
   zeroValue: () => T,
 ): Pointer<T> | undefined {
+  if (arenaPointer === undefined) {
+    GoPanic.raiseRuntime("invalid memory address or nil pointer dereference");
+  }
   return allocatePointer(zeroValue());
 }
 

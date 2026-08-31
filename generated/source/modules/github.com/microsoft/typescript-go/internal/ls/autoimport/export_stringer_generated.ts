@@ -1,2 +1,0 @@
-import type { gostring } from "@gotots/runtime/scalars.js";
-export const _ExportSyntax_name$string: gostring = "ExportSyntaxNoneExportSyntaxModifierExportSyntaxNamedExportSyntaxDefaultModifierExportSyntaxDefaultDeclarationExportSyntaxEqualsExportSyntaxUMDExportSyntaxStarExportSyntaxCommonJSModuleExportsExportSyntaxCommonJSExportsProperty";

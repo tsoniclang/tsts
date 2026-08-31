@@ -13,16 +13,8 @@ from the pinned Microsoft TS-Go source by the pinned GoToTS compiler.
 - `gotots.json` owns the canonical Go translation profile.
 - `typescript-target.json` owns the executable TypeScript target profile.
 - `implementations/` owns certified TSTS-specific package implementations.
-- `generated/source/` owns the committed, derived final TypeScript product
-  snapshot. It is refreshed only by `npm run generate` and is never
-  hand-edited. Emitted JavaScript remains transient runtime evidence.
-- `.temp/` owns uncommitted generation, verification, and failure evidence.
-
-The exact toolchain identity is the digest of every committed non-generated
-superproject entry plus the selected submodule gitlinks. `generated/` is
-excluded from that input identity because it is the output being certified;
-its own manifest and exact regeneration join are its authority. The repository
-must still be clean before toolchain construction.
+- Generated TypeScript and JavaScript are build artifacts under `.temp/` and
+  are never hand-edited or committed.
 
 Do not add TS-Go-specific behavior to GoToTS. Do not patch either submodule in
 this repository. A generic compiler defect is fixed and certified in GoToTS,
@@ -85,8 +77,7 @@ Every product checkpoint must:
 5. compare exit status, stdout, and stderr with pinned native TS-Go;
 6. inspect generated artifacts and implementation replacement;
 7. report generation/typecheck/runtime time, peak RSS, and output size;
-8. exact-join the regenerated final TypeScript with `generated/`;
-9. fail on stale implementation contracts or unselected generated remnants.
+8. fail on stale implementation contracts or unselected generated remnants.
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
@@ -111,5 +102,5 @@ counters or bounded phase timing, then profile only the isolated phase.
 - Work on feature branches and merge through pull requests.
 - Never edit or commit files inside either submodule.
 - Never commit `.analysis/`, `.temp/`, or local logs.
-- Never hand-edit `generated/`; commit its complete `npm run generate` result.
+- Never commit generated TypeScript or JavaScript.
 - Never use `git stash`.

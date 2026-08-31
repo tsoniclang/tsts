@@ -6,9 +6,8 @@
   "scripts": {
     "build": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/build.sh",
     "check": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check.sh",
-    "check:generated": "\"$TSTS_NODE_BUILDER\" scripts/verify-generated.mjs \"$PWD\"",
     "check:scalar": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check-scalar.sh",
-    "generate": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check.sh publish",
+    "generate": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check.sh",
     "replay": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/replay.sh",
     "test:assembly": "\"$TSTS_NODE_BUILDER\" --test 'test/*.test.mjs'"
   },

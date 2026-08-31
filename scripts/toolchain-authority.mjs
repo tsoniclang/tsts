@@ -15,7 +15,6 @@ import { isDeepStrictEqual } from "node:util";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { copyNormalizedTree, describeNormalizedTree } from "./normalized-tree.mjs";
-import { generatedProductDirectory } from "./product-layout.mjs";
 import {
   copyNormalizedDistribution,
   describeNormalizedDistribution,
@@ -52,14 +51,11 @@ export async function verifyRepositoryAuthority(repositoryArgument, environment)
   const authorityEntries = committedTree
     .split("\0")
     .filter((entry) => entry.length !== 0)
-    .filter((entry) => {
-      const separator = entry.indexOf("\t");
-      if (separator < 0) {
+    .map((entry) => {
+      if (entry.indexOf("\t") < 0) {
         throw new Error(`Committed superproject tree entry '${entry}' is invalid`);
       }
-      const path = entry.slice(separator + 1);
-      return path !== generatedProductDirectory &&
-        !path.startsWith(`${generatedProductDirectory}/`);
+      return entry;
     });
   const superprojectAuthorityDigest = createHash("sha256")
     .update(authorityEntries.map((entry) => `${entry}\0`).join(""))
