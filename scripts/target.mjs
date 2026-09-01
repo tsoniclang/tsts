@@ -113,6 +113,7 @@ const artifacts = compileResult.value.artifacts.map((artifact) =>
     : artifact
 );
 verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
+verifyNoSelectedPrimitiveMarkerDependency(artifacts);
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
@@ -201,6 +202,7 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
       "profileIdentity",
       "sourceMembership",
       "programIndex",
+      "sourcePrimitives",
       "pointer",
       "scalar",
       "representationProjections",
@@ -208,9 +210,10 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 30) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 30");
+  if (evidence["schemaVersion"] !== 31) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 31");
   }
+  verifySourcePrimitiveEvidence(evidence["sourcePrimitives"]);
   verifyOptimizationAcceptance(evidence, profile.acceptance);
   if (evidence["sourceExecution"] !== profile.execution) {
     throw new Error("TypeScript optimization evidence execution differs from the selected profile");
@@ -249,6 +252,38 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     canonicalMembership,
     sourceLayout.expectedArtifacts,
   );
+}
+
+function verifySourcePrimitiveEvidence(value) {
+  const evidence = parseRecord(value, "TypeScript source-primitive evidence");
+  rejectUnknownKeys(
+    evidence,
+    new Set(["typeReferenceCount", "removableImportBindingCount"]),
+    "TypeScript source-primitive evidence",
+  );
+  for (const name of ["typeReferenceCount", "removableImportBindingCount"]) {
+    const count = evidence[name];
+    if (!Number.isSafeInteger(count) || count < 0) {
+      throw new Error(
+        `TypeScript source-primitive evidence '${name}' must be a nonnegative safe integer`,
+      );
+    }
+  }
+}
+
+function verifyNoSelectedPrimitiveMarkerDependency(artifacts) {
+  const markerModule = "@tsonic/core/types.js";
+  const remnants = artifacts
+    .filter((artifact) =>
+      artifact.kind === "source" && artifact.text.includes(markerModule)
+    )
+    .map((artifact) => artifact.path)
+    .sort(compareCodeUnits);
+  if (remnants.length !== 0) {
+    throw new Error(
+      `TypeScript target retained selected primitive marker '${markerModule}' in ${remnants.join(", ")}`,
+    );
+  }
 }
 
 async function readCanonicalManifest(root) {

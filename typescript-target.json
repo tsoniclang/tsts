@@ -12,7 +12,7 @@
   },
   "acceptance": {
     "pointerKeyMapCount": 72,
-    "dominatingNilCheckEliminationCount": 2843
+    "dominatingNilCheckEliminationCount": 2849
   },
   "evidence": {
     "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"

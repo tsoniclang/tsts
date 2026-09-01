@@ -31,6 +31,12 @@ lowering only; it does not run a post-generation effect analysis or repair
 callable execution. Any provider-facing asynchronous contract and any reached
 operation that would require suspension fail before publication.
 
+Required target-neutral primitive facts are concretized by exact checked-node
+identity (`int64` to `bigint`, narrower numeric primitives to `number`, and so
+on). This is not spelling recognition: an unrelated local alias with the same
+name remains unchanged, and the selected marker import must be absent from the
+strictly checked target output.
+
 ## Build
 
 ```sh

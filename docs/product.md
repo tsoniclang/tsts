@@ -109,6 +109,15 @@ source, compiler, or target-pin change that produces any other denominator
 must be re-reviewed and recertified rather than silently widening or shrinking
 the optimized class.
 
+Target-neutral primitive facts are required lowering rather than an optional
+optimization. The checked source selects each primitive by exact declaration
+identity and records its runtime base; the TypeScript target rewrites that
+exact type reference to `boolean`, `number`, `bigint`, `string`, or `object`
+and removes its fully consumed type-only marker binding. Local same-spelled
+types remain untouched. The sealed target evidence carries exact reference and
+binding denominators, and strict assembly rejects any surviving selected
+marker-module dependency.
+
 Module aggregation is a bounded internal equivalence envelope. It may remove
 loader and per-module initialization overhead, but it must preserve ESM
 dependency initialization order and may not change the compiler's exit status,
