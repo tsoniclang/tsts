@@ -21,6 +21,28 @@ export function verifyOptimizationAcceptance(evidence, acceptance) {
       `TypeScript dominating nil-check elimination denominator ${String(eliminatedGuardCount)} differs from accepted ${acceptance.dominatingNilCheckEliminationCount}`,
     );
   }
+  const sourcePrimitives = requireRecord(
+    evidence["sourcePrimitives"],
+    "TypeScript source-primitive evidence",
+  );
+  exactJoin(
+    sourcePrimitives["typeReferenceCount"],
+    acceptance.sourcePrimitiveTypeReferenceCount,
+    "source-primitive type-reference",
+  );
+  exactJoin(
+    sourcePrimitives["removableImportBindingCount"],
+    acceptance.sourcePrimitiveImportBindingCount,
+    "source-primitive import-binding",
+  );
+}
+
+function exactJoin(actual, accepted, subject) {
+  if (actual !== accepted) {
+    throw new Error(
+      `TypeScript ${subject} denominator ${String(actual)} differs from accepted ${accepted}`,
+    );
+  }
 }
 
 function requireRecord(value, subject) {

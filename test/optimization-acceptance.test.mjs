@@ -6,6 +6,13 @@ import { verifyOptimizationAcceptance } from "../scripts/optimization-acceptance
 const accepted = Object.freeze({
   pointerKeyMapCount: 69,
   dominatingNilCheckEliminationCount: 2843,
+  sourcePrimitiveTypeReferenceCount: 11,
+  sourcePrimitiveImportBindingCount: 11,
+});
+
+const sourcePrimitives = Object.freeze({
+  typeReferenceCount: 11,
+  removableImportBindingCount: 11,
 });
 
 test("optimization acceptance exact-joins the pointer-key map denominator", () => {
@@ -15,7 +22,53 @@ test("optimization acceptance exact-joins the pointer-key map denominator", () =
         optimizedPointerKeyMapCount: 69,
         dominatingNilChecks: { eliminatedGuardCount: 2843 },
       },
+      sourcePrimitives,
     }, accepted)
+  );
+});
+
+test("optimization acceptance exact-joins source-primitive denominators", () => {
+  const evidence = {
+    pointer: {
+      optimizedPointerKeyMapCount: 69,
+      dominatingNilChecks: { eliminatedGuardCount: 2843 },
+    },
+    sourcePrimitives,
+  };
+  assert.doesNotThrow(() => verifyOptimizationAcceptance(evidence, accepted));
+  assert.throws(
+    () => verifyOptimizationAcceptance({
+      ...evidence,
+      sourcePrimitives: {
+        ...sourcePrimitives,
+        typeReferenceCount: 10,
+      },
+    }, accepted),
+    /source-primitive type-reference denominator 10 differs from accepted 11/u,
+  );
+  assert.throws(
+    () => verifyOptimizationAcceptance({
+      ...evidence,
+      sourcePrimitives: {
+        ...sourcePrimitives,
+        removableImportBindingCount: 10,
+      },
+    }, accepted),
+    /source-primitive import-binding denominator 10 differs from accepted 11/u,
+  );
+  assert.throws(
+    () => verifyOptimizationAcceptance(evidence, {
+      ...accepted,
+      sourcePrimitiveTypeReferenceCount: 0,
+    }),
+    /source-primitive type-reference denominator 11 differs from accepted 0/u,
+  );
+  assert.throws(
+    () => verifyOptimizationAcceptance({
+      ...evidence,
+      sourcePrimitives: undefined,
+    }, accepted),
+    /source-primitive evidence must be an object/u,
   );
 });
 

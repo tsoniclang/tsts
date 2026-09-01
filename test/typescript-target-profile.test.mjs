@@ -15,7 +15,7 @@ test("target profile has one stable semantic identity", async () => {
   const second = join(root, "second.json");
   await writeRepresentationTransportManifest(root);
   await writeFile(first, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -26,6 +26,8 @@ test("target profile has one stable semantic identity", async () => {
     acceptance: {
       pointerKeyMapCount: 69,
       dominatingNilCheckEliminationCount: 2843,
+      sourcePrimitiveTypeReferenceCount: 11,
+      sourcePrimitiveImportBindingCount: 11,
     },
     evidence: representationTransportEvidence(),
   }), "utf8");
@@ -40,9 +42,11 @@ test("target profile has one stable semantic identity", async () => {
     acceptance: {
       pointerKeyMapCount: 69,
       dominatingNilCheckEliminationCount: 2843,
+      sourcePrimitiveTypeReferenceCount: 11,
+      sourcePrimitiveImportBindingCount: 11,
     },
     execution: "synchronous",
-    schemaVersion: 10,
+    schemaVersion: 11,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
@@ -59,6 +63,8 @@ test("target profile has one stable semantic identity", async () => {
   assert.deepEqual(left.acceptance, {
     pointerKeyMapCount: 69,
     dominatingNilCheckEliminationCount: 2843,
+    sourcePrimitiveTypeReferenceCount: 11,
+    sourcePrimitiveImportBindingCount: 11,
   });
   assert.equal(Object.isFrozen(left.acceptance), true);
   assert.deepEqual(left.representationTransports.callables, [{
@@ -76,7 +82,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
   const root = await createScratch("removed-fields-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: { cooperativeEffects: "closed-program" },
@@ -86,7 +92,7 @@ test("target profile rejects effect and diagnostic compatibility fields", async 
     /unsupported field 'cooperativeEffects'/u,
   );
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
@@ -103,7 +109,7 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {},
@@ -120,7 +126,7 @@ test("target profile rejects non-synchronous execution", async () => {
   const root = await createScratch("execution-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "unrestricted",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -140,7 +146,7 @@ test("target profile rejects alternate executable packaging", async () => {
   const root = await createScratch("packaging-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "multi-esm", minification: "full" },
     optimizations: {
@@ -176,20 +182,16 @@ test("target profile rejects invalid optimization acceptance", async () => {
   const root = await createScratch("acceptance-");
   const path = join(root, "profile.json");
   await writeRepresentationTransportManifest(root);
+  const accepted = canonicalProfile().acceptance;
   for (const acceptance of [
     {},
-    { pointerKeyMapCount: 0 },
-    { pointerKeyMapCount: 69 },
-    { dominatingNilCheckEliminationCount: 2843 },
-    {
-      pointerKeyMapCount: 69,
-      dominatingNilCheckEliminationCount: 0,
-    },
-    {
-      pointerKeyMapCount: 69,
-      dominatingNilCheckEliminationCount: 2843,
-      fallback: true,
-    },
+    { ...accepted, pointerKeyMapCount: 0 },
+    { ...accepted, dominatingNilCheckEliminationCount: 0 },
+    { ...accepted, sourcePrimitiveTypeReferenceCount: 0 },
+    { ...accepted, sourcePrimitiveImportBindingCount: 0 },
+    { ...accepted, sourcePrimitiveTypeReferenceCount: undefined },
+    { ...accepted, sourcePrimitiveImportBindingCount: undefined },
+    { ...accepted, fallback: true },
   ]) {
     await writeFile(path, JSON.stringify({
       ...canonicalProfile(),
@@ -197,7 +199,7 @@ test("target profile rejects invalid optimization acceptance", async () => {
     }), "utf8");
     await assert.rejects(
       readTypeScriptTargetProfile(path),
-      /acceptance|pointerKeyMapCount|dominatingNilCheckEliminationCount/u,
+      /acceptance|pointerKeyMapCount|dominatingNilCheckEliminationCount|sourcePrimitive/u,
     );
   }
   await removeSuccessfulScratchTree(resolve("."), root);
@@ -341,7 +343,7 @@ async function createScratch(prefix) {
 
 function canonicalProfile() {
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     execution: "synchronous",
     assembly: { modulePackaging: "single-esm", minification: "full" },
     optimizations: {
@@ -352,6 +354,8 @@ function canonicalProfile() {
     acceptance: {
       pointerKeyMapCount: 69,
       dominatingNilCheckEliminationCount: 2843,
+      sourcePrimitiveTypeReferenceCount: 11,
+      sourcePrimitiveImportBindingCount: 11,
     },
     evidence: representationTransportEvidence(),
   };

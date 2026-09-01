@@ -104,10 +104,12 @@ The profile separately records exact product-acceptance denominators for
 measured target optimizations. These values never select source or permit an
 optimization: the target decides solely from finalized facts and emits its own
 count. TSTS exact-joins that count before installing output. The current pinned
-product accepts exactly 72 complete canonical pointer-key map rewrites; a
-source, compiler, or target-pin change that produces any other denominator
-must be re-reviewed and recertified rather than silently widening or shrinking
-the optimized class.
+product accepts exactly 72 complete canonical pointer-key map rewrites and
+2,849 eliminated dominated nil checks. It also accepts exactly 11 neutral
+primitive type-reference rewrites and 11 fully consumed type-only marker
+bindings. A source, compiler, or target-pin change that produces any other
+denominator must be re-reviewed and recertified rather than silently widening
+or shrinking the selected class.
 
 Target-neutral primitive facts are required lowering rather than an optional
 optimization. The checked source selects each primitive by exact declaration

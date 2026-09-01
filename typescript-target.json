@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "execution": "synchronous",
   "assembly": {
     "modulePackaging": "single-esm",
@@ -12,7 +12,9 @@
   },
   "acceptance": {
     "pointerKeyMapCount": 72,
-    "dominatingNilCheckEliminationCount": 2849
+    "dominatingNilCheckEliminationCount": 2849,
+    "sourcePrimitiveTypeReferenceCount": 11,
+    "sourcePrimitiveImportBindingCount": 11
   },
   "evidence": {
     "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"

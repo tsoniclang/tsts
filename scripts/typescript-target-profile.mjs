@@ -27,8 +27,8 @@ export async function readTypeScriptTargetProfile(path) {
     ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 10) {
-    throw new Error("TypeScript target profile schemaVersion must be 10");
+  if (parsed["schemaVersion"] !== 11) {
+    throw new Error("TypeScript target profile schemaVersion must be 11");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
@@ -84,26 +84,22 @@ export async function readTypeScriptTargetProfile(path) {
     new Set([
       "pointerKeyMapCount",
       "dominatingNilCheckEliminationCount",
+      "sourcePrimitiveTypeReferenceCount",
+      "sourcePrimitiveImportBindingCount",
     ]),
     "TypeScript target profile acceptance",
   );
-  if (
-    !Number.isSafeInteger(acceptance["pointerKeyMapCount"]) ||
-    acceptance["pointerKeyMapCount"] <= 0
-  ) {
-    throw new Error(
-      "TypeScript target profile pointerKeyMapCount must be a positive safe integer",
-    );
-  }
-  if (
-    !Number.isSafeInteger(
-      acceptance["dominatingNilCheckEliminationCount"],
-    ) ||
-    acceptance["dominatingNilCheckEliminationCount"] <= 0
-  ) {
-    throw new Error(
-      "TypeScript target profile dominatingNilCheckEliminationCount must be a positive safe integer",
-    );
+  for (const name of [
+    "pointerKeyMapCount",
+    "dominatingNilCheckEliminationCount",
+    "sourcePrimitiveTypeReferenceCount",
+    "sourcePrimitiveImportBindingCount",
+  ]) {
+    if (!Number.isSafeInteger(acceptance[name]) || acceptance[name] <= 0) {
+      throw new Error(
+        `TypeScript target profile ${name} must be a positive safe integer`,
+      );
+    }
   }
   assertOptimizationChoice(
     optimizations["representationProjections"],
