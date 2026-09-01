@@ -90,6 +90,10 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     await readFile(join(first.packages.targetTypeScript.root, "dist", "index.js"), "utf8"),
     /@tsonic\/target-typescript:A/u,
   );
+  assert.deepEqual(
+    first.packages.targetTypeScript.dependencies.map(({ key }) => key),
+    ["sourceCore", "targetApi", "tsts", "typeScriptRuntime"],
+  );
   assert.equal(
     await readFile(join(first.distributionRoot, "gostdlib", "dist", "index.js"), "utf8"),
     await readFile(join(first.packages.gostdlib.root, "dist", "index.js"), "utf8"),
