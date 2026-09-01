@@ -11,6 +11,7 @@ import { compareCodeUnits } from "./canonical-order.mjs";
 import { replaceDirectory } from "./directory-transaction.mjs";
 import { verifyOptimizationAcceptance } from "./optimization-acceptance.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
+import { verifySourcePrimitiveEvidence } from "./source-primitive-evidence.mjs";
 import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
@@ -252,23 +253,6 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     canonicalMembership,
     sourceLayout.expectedArtifacts,
   );
-}
-
-function verifySourcePrimitiveEvidence(value) {
-  const evidence = parseRecord(value, "TypeScript source-primitive evidence");
-  rejectUnknownKeys(
-    evidence,
-    new Set(["typeReferenceCount", "removableImportBindingCount"]),
-    "TypeScript source-primitive evidence",
-  );
-  for (const name of ["typeReferenceCount", "removableImportBindingCount"]) {
-    const count = evidence[name];
-    if (!Number.isSafeInteger(count) || count < 0) {
-      throw new Error(
-        `TypeScript source-primitive evidence '${name}' must be a nonnegative safe integer`,
-      );
-    }
-  }
 }
 
 function verifyNoSelectedPrimitiveMarkerDependency(artifacts) {
