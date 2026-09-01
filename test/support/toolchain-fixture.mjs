@@ -56,7 +56,6 @@ const packageDependencies = new Map([
   ["@tsonic/target-typescript", {
     dependencies: { "@tsonic/typescript-runtime": "0.0.1" },
     peerDependencies: {
-      "@tsonic/source-core": "0.0.0",
       "@tsonic/target-api": "0.0.0",
       "@tsonic/tsts": "0.0.0",
     },

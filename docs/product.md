@@ -47,9 +47,10 @@ Build tools are assembled from each pinned package's `npm pack` surface into
 one isolated module graph. That graph contains exactly one `@tsonic/tsts`
 package: the target-AST-enabled bootstrap. The semantic host, source-core,
 target API, TypeScript target, and encoder therefore share one AST runtime. The
-TypeScript target's declared `@tsonic/source-core` fact dependency is an exact
-owned edge in that sealed graph; undeclared or stale internal edges fail
-toolchain construction.
+TypeScript target consumes finalized facts through the checked TSTS/target-API
+contract and has no direct `@tsonic/source-core` package dependency. Every
+declared internal edge is exact-owned in the sealed graph; an undeclared,
+unneeded, or stale edge fails toolchain construction.
 Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 
 ## Selected Profile

@@ -6,7 +6,7 @@ const definitions = [
   packageComponent("host", "tools/tsonic/packages/host", "@tsonic/host", "node_modules/@tsonic/host", ["sourceCore", "targetApi", "tsts"], "dist/index.js"),
   packageComponent("sourceCore", "tools/tsonic/packages/source-core", "@tsonic/source-core", "node_modules/@tsonic/source-core", ["tsts"], "dist/public/index.js"),
   packageComponent("targetApi", "tools/tsonic/packages/target-api", "@tsonic/target-api", "node_modules/@tsonic/target-api", ["tsts"], "dist/public/index.js"),
-  packageComponent("targetTypeScript", "tools/tsonic-typescript", "@tsonic/target-typescript", "node_modules/@tsonic/target-typescript", ["sourceCore", "targetApi", "tsts", "typeScriptRuntime"], "dist/index.js"),
+  packageComponent("targetTypeScript", "tools/tsonic-typescript", "@tsonic/target-typescript", "node_modules/@tsonic/target-typescript", ["targetApi", "tsts", "typeScriptRuntime"], "dist/index.js"),
   packageComponent("tsts", "tools/tsts-legacy/packages/tsts", "@tsonic/tsts", "node_modules/@tsonic/tsts", [], "dist/src/index.js"),
   packageComponent("typeScriptRuntime", "tools/typescript-runtime", "@tsonic/typescript-runtime", "node_modules/@tsonic/typescript-runtime", [], "dist/index.js"),
   component("binary", "gotots", "bin/gotots"),
