@@ -131,17 +131,3 @@ declare module "@gotots/gostdlib/syscall.js" {
     Error(): string;
   }
 }
-
-declare module "@tsonic/core/types.js" {
-  const pointerBrand: unique symbol;
-  export interface Pointer<T> {
-    readonly [pointerBrand]: (value: T) => T;
-  }
-}
-
-declare module "@tsonic/core/lang.js" {
-  import type { Pointer } from "@tsonic/core/types.js";
-
-  export function allocatePointer<T>(initial: T): Pointer<T>;
-  export function loadPointer<T>(pointer: Pointer<T>): T;
-}

@@ -21,9 +21,6 @@
   },
   "source": "implementation.ts",
   "output": "implementations/tsts/checker-hotpaths.ts",
-  "certificationSources": [
-    "runtime-contract.d.ts"
-  ],
   "equivalenceEnvelope": {
     "kind": "exact"
   },

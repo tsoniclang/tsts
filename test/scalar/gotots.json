@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 4,
   "distribution": {
     "root": "../../tools/gotots"
   },
@@ -23,7 +23,8 @@
     "externals": false
   },
   "implementations": {
-    "bundles": []
+    "packages": [],
+    "callables": []
   },
   "output": {
     "directory": "../../.temp/scalar/canonical"

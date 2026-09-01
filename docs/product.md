@@ -114,6 +114,20 @@ failed-transaction retention are permanent gates.
 
 ## Product Implementations
 
+`gotots.json` selects one project-wide implementation-certification source at
+`implementations/certification/tsonic-core.d.ts`. It is a deterministic,
+checked-in projection of the complete virtual declaration model supplied by
+the exact pinned `@tsonic/source-core`; it is not an independent declaration
+authority. `scripts/tsonic-core-certification.mjs` fails closed on an unknown
+module, declaration, member, type, or binding shape and byte-compares the
+projection at every assembly checkpoint. The denominator gate pins all 53
+provider declarations and their exact names. Independently, GoToTS seals this
+source into every package and callable implementation verifier, and the guarded
+full-product TS-Go transaction strict-typechecks every selected implementation
+and generated consumer. Bundle-local certification files may declare only
+private runtime dependencies; no second `@tsonic/core` declaration owner is
+permitted.
+
 `implementations/xxh3` atomically replaces
 `github.com/zeebo/xxh3@v1.1.0` for this profile. Its bounded internal
 equivalence envelope permits a fast deterministic internal digest because TSTS

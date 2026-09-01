@@ -21,9 +21,6 @@
   },
   "source": "implementation.ts",
   "output": "implementations/tsts/core-hotpaths.ts",
-  "certificationSources": [
-    "runtime-contract.d.ts"
-  ],
   "equivalenceEnvelope": {
     "kind": "internal-algorithm",
     "relaxedBehavior": "Arena.New and LinkStore.Get allocate independent stable JavaScript pointer locations instead of retaining returned values in Arena.data; the private backing-slice capacity, growth, and allocation layout are not product-observable.",

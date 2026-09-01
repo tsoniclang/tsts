@@ -9,6 +9,7 @@
     "types": []
   },
   "files": [
+    "../certification/tsonic-core.d.ts",
     "runtime-contract.d.ts",
     "target/packages/golang.org/x/sys@v0.46.0/unix/package.ts",
     "target/support/interface-adapters.d.ts",

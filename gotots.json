@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "distribution": {
     "root": "tools/gotots"
   },
@@ -23,6 +23,9 @@
     "externals": true
   },
   "implementations": {
+    "certificationSources": [
+      "implementations/certification/tsonic-core.d.ts"
+    ],
     "packages": [
       "implementations/fswatch/contract.json",
       "implementations/x-sys-unix/contract.json",

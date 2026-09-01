@@ -1,15 +1,37 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const stalePathIdentity = /(?:^|\/)[0-9a-f]{32,}(?:\/|\.|$)/u;
 const staleSymbolIdentity = /\$(?:goInterface(?:Method|Adapter|Bridge)?|go\$private)_[0-9a-f]{12,}/u;
 
+test("implementation declarations select one shared source-core snapshot", async () => {
+  const product = await readJson(join(repositoryRoot, "gotots.json"));
+  assert.equal(product.schemaVersion, 4);
+  const sources = product.implementations.certificationSources;
+  assert.deepEqual(sources, ["implementations/certification/tsonic-core.d.ts"]);
+  for (const source of sources) {
+    assert.doesNotMatch(source, stalePathIdentity);
+    assert.match(await readFile(join(repositoryRoot, source), "utf8"), /declare module "@tsonic\/core\/types\.js"/u);
+  }
+
+  const declarationFiles = await collectDeclarationFiles(join(repositoryRoot, "implementations"));
+  const owners = [];
+  for (const file of declarationFiles) {
+    const source = await readFile(file, "utf8");
+    if (/declare module "@tsonic\/core\//u.test(source)) {
+      owners.push(relative(repositoryRoot, file));
+    }
+  }
+  assert.deepEqual(owners, sources);
+});
+
 test("package implementations use semantic package and support identities", async () => {
   const product = await readJson(join(repositoryRoot, "gotots.json"));
   const contracts = product.implementations.packages;
+  const sharedSources = product.implementations.certificationSources;
   assert.ok(Array.isArray(contracts) && contracts.length > 0);
 
   for (const relativeContract of contracts) {
@@ -26,10 +48,17 @@ test("package implementations use semantic package and support identities", asyn
     );
 
     const tsconfig = await readJson(join(bundleRoot, contract.tsconfig));
-    const expectedFiles = new Set([contract.source, ...contract.certificationSources]);
+    const sharedFiles = sharedSources.map((source) =>
+      relative(bundleRoot, join(repositoryRoot, source)).replaceAll("\\", "/")
+    );
+    const expectedFiles = new Set([
+      contract.source,
+      ...contract.certificationSources,
+      ...sharedFiles,
+    ]);
     assert.deepEqual(new Set(tsconfig.files), expectedFiles, relativeContract);
 
-    for (const relativeSource of expectedFiles) {
+    for (const relativeSource of [contract.source, ...contract.certificationSources]) {
       assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
       const source = await readFile(join(bundleRoot, relativeSource), "utf8");
       assert.doesNotMatch(source, staleSymbolIdentity, relativeSource);
@@ -56,13 +85,14 @@ test("callable implementations use exact source and body identities", async () =
     assert.match(contract.output, /^implementations\/tsts\/.+\.ts$/u);
     assert.ok(!outputs.has(contract.output), contract.output);
     outputs.add(contract.output);
+    const localCertificationSources = contract.certificationSources ?? [];
     assert.deepEqual(
-      contract.certificationSources,
-      [...new Set(contract.certificationSources)].sort(),
+      localCertificationSources,
+      [...new Set(localCertificationSources)].sort(),
       relativeContract,
     );
 
-    const sources = [contract.source, ...contract.certificationSources];
+    const sources = [contract.source, ...localCertificationSources];
     for (const relativeSource of sources) {
       assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
       const source = await readFile(join(contractRoot, relativeSource), "utf8");
@@ -134,4 +164,17 @@ function semanticSourcePath(packageContract) {
 
 async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
+}
+
+async function collectDeclarationFiles(root) {
+  const result = [];
+  for (const entry of await readdir(root, { withFileTypes: true })) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...await collectDeclarationFiles(path));
+    } else if (entry.isFile() && entry.name.endsWith(".d.ts")) {
+      result.push(path);
+    }
+  }
+  return result.sort();
 }

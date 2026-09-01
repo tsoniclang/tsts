@@ -59,6 +59,12 @@ Product-specific hot-path rewrites remain authoritative under
 then flow into transient output through regeneration. Generated files are
 never the editing surface.
 
+All package and callable implementations share the certified source-core
+declaration projection at `implementations/certification/tsonic-core.d.ts`.
+Run `node scripts/tsonic-core-certification.mjs --check` to verify that it is
+byte-exact with the selected provider model; bundle-local declaration files
+contain only implementation-private dependencies.
+
 The target profile also pins measured product-acceptance denominators. They
 verify the target's independently fact-selected output; they never act as
 source-name allowlists or optimization selectors.

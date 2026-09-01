@@ -9,6 +9,7 @@
     "types": []
   },
   "files": [
+    "../certification/tsonic-core.d.ts",
     "runtime-contract.d.ts",
     "target/packages/github.com/zeebo/xxh3@v1.1.0/_root/package.ts"
   ]
