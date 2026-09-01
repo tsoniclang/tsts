@@ -17,7 +17,7 @@ import { RuntimeSlice, goSliceAddress } from "@gotots/runtime/slice.js";
 import type {
   $goInterface$Interface_Method_Error_void_to_string as GoInterface,
 } from "../../../../../support/interface-contracts.js";
-import { $goInterfaceAdapter$Named_syscall$Errno } from "../../../../../support/interface-adapters.js";
+import { $goInterfaceAdapter$Named_syscall$Errno } from "../../../../../support/interface-adapters/packages/syscall.js";
 import { $goProviderInterfaceBridge$Named_error } from "../../../../../support/provider-interface-bridges.js";
 import * as fs from "@gotots/gostdlib/io/fs.js";
 import * as os from "@gotots/gostdlib/os.js";

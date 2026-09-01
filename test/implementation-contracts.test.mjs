@@ -6,6 +6,8 @@ import { dirname, join, relative, resolve } from "node:path";
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const stalePathIdentity = /(?:^|\/)[0-9a-f]{32,}(?:\/|\.|$)/u;
 const staleSymbolIdentity = /\$(?:goInterface(?:Method|Adapter|Bridge)?|go\$private)_[0-9a-f]{12,}/u;
+const retiredPrivateMemberIdentity = /\$go\$private\$/u;
+const retiredMonolithicInterfaceAdapter = /(?:^|\/)interface-adapters\.js/u;
 
 test("implementation declarations select one shared source-core snapshot", async () => {
   const product = await readJson(join(repositoryRoot, "gotots.json"));
@@ -62,6 +64,8 @@ test("package implementations use semantic package and support identities", asyn
       assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
       const source = await readFile(join(bundleRoot, relativeSource), "utf8");
       assert.doesNotMatch(source, staleSymbolIdentity, relativeSource);
+      assert.doesNotMatch(source, retiredPrivateMemberIdentity, relativeSource);
+      assert.doesNotMatch(source, retiredMonolithicInterfaceAdapter, relativeSource);
     }
   }
 });
@@ -97,6 +101,8 @@ test("callable implementations use exact source and body identities", async () =
       assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
       const source = await readFile(join(contractRoot, relativeSource), "utf8");
       assert.doesNotMatch(source, staleSymbolIdentity, relativeSource);
+      assert.doesNotMatch(source, retiredPrivateMemberIdentity, relativeSource);
+      assert.doesNotMatch(source, retiredMonolithicInterfaceAdapter, relativeSource);
     }
 
     const sortedCallables = [...contract.callables].sort((left, right) => {

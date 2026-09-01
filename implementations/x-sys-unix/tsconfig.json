@@ -12,7 +12,7 @@
     "../certification/tsonic-core.d.ts",
     "runtime-contract.d.ts",
     "target/packages/golang.org/x/sys@v0.46.0/unix/package.ts",
-    "target/support/interface-adapters.d.ts",
+    "target/support/interface-adapters/packages/syscall.d.ts",
     "target/support/interface-contracts.d.ts",
     "target/support/provider-interface-bridges.d.ts"
   ]
