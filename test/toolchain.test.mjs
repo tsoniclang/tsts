@@ -90,6 +90,10 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     await readFile(join(first.packages.targetTypeScript.root, "dist", "index.js"), "utf8"),
     /@tsonic\/target-typescript:A/u,
   );
+  assert.deepEqual(
+    first.packages.targetTypeScript.dependencies.map(({ key }) => key),
+    ["targetApi", "tsts", "typeScriptRuntime"],
+  );
   assert.equal(
     await readFile(join(first.distributionRoot, "gostdlib", "dist", "index.js"), "utf8"),
     await readFile(join(first.packages.gostdlib.root, "dist", "index.js"), "utf8"),
@@ -175,11 +179,16 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
     run(reopened.binaries.npm, ["--version"], toolchainEnvironment(reopened)).trim(),
     "10.0.0",
   );
+  assert.equal(
+    run(reopened.binaries.esbuild, ["--version"], toolchainEnvironment(reopened)).trim(),
+    "0.28.0",
+  );
 
   const module = reopened.manifest.goModules.modules[0];
   for (const path of [
     join(reopened.packages.host.root, "dist", "index.js"),
     reopened.binaries.gotots,
+    reopened.binaries.esbuild,
     reopened.binaries.tsgoAstPrinter,
     reopened.binaries.tsgo,
     reopened.binaries.go,
@@ -301,20 +310,20 @@ test("selection uses clean committed authority and rejects index or untracked st
   await removeToolchainFixtures(...fixtures);
 });
 
-test("committed generated output does not perturb toolchain authority", async () => {
+test("every committed superproject entry perturbs toolchain authority", async () => {
   const fixture = await createToolchainFixture("derived-output-");
   const stateRoot = join(fixture.repositoryRoot, ".temp", "authority-state");
   await prepareToolchainState(stateRoot);
   const environment = exactAuthorityEnvironment(fixture.hostUtilityPath, stateRoot);
   const before = await verifyRepositoryAuthority(fixture.repositoryRoot, environment);
 
-  await mkdir(join(fixture.repositoryRoot, "generated", "source"), { recursive: true });
+  await mkdir(join(fixture.repositoryRoot, "authority-extension"), { recursive: true });
   await writeFile(
-    join(fixture.repositoryRoot, "generated", "source", "program.ts"),
+    join(fixture.repositoryRoot, "authority-extension", "selection.ts"),
     "export {};\n",
     "utf8",
   );
-  runGit(fixture.repositoryRoot, ["add", "generated"]);
+  runGit(fixture.repositoryRoot, ["add", "authority-extension"]);
   runGit(fixture.repositoryRoot, [
     "-c", "user.name=TSTS Tests", "-c", "user.email=tsts-tests@example.invalid",
     "commit", "--quiet", "-m", "commit derived product",
@@ -323,7 +332,7 @@ test("committed generated output does not perturb toolchain authority", async ()
     fixture.repositoryRoot,
     environment,
   );
-  assert.equal(
+  assert.notEqual(
     afterDerivedCommit.superprojectAuthorityDigest,
     before.superprojectAuthorityDigest,
   );
@@ -340,7 +349,7 @@ test("committed generated output does not perturb toolchain authority", async ()
   );
   assert.notEqual(
     afterAuthorityCommit.superprojectAuthorityDigest,
-    before.superprojectAuthorityDigest,
+    afterDerivedCommit.superprojectAuthorityDigest,
   );
   await removeToolchainFixtures(fixture);
 });
@@ -400,7 +409,8 @@ test("product consumers have one immutable path and a closed environment", async
 
   const repositoryRoot = resolve(".");
   for (const script of [
-    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs", "target.mjs",
+    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs",
+    "seal-executable.mjs", "target.mjs",
     "verify-target-manifest.mjs", "verify-typescript-target.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
@@ -408,6 +418,7 @@ test("product consumers have one immutable path and a closed environment", async
   for (const script of [
     "build.sh", "check-scalar.sh", "replay.sh", "run-exact-toolchain.sh", "target.mjs",
     "verify-typescript-target.mjs", "assemble.mjs", "differential.mjs",
+    "seal-executable.mjs",
   ]) {
     const text = await readFile(join(repositoryRoot, "scripts", script), "utf8");
     assert.doesNotMatch(text, /\.temp\/tool-runtime|\.temp\/bin|go tool tsgo|hostPlatform/u, script);
@@ -459,6 +470,18 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.ok(opener > constructor, "product transaction does not follow construction");
   assert.equal(buildScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
   assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
+  assert.match(
+    buildScript,
+    /run_measured_toolchain\(\)[\s\S]*target-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
+  );
+  for (const phase of ["target-proof", "generation", "target", "typecheck"]) {
+    assert.match(
+      buildScript,
+      new RegExp(`run_measured_toolchain ${phase}\\b`, "u"),
+      `${phase} lacks an exact measured owner`,
+    );
+  }
+  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|generation|target|typecheck)\b/gu)?.length, 4);
 
   const constructorScript = await readFile(
     join(repositoryRoot, "scripts", "construct-toolchain.mjs"),

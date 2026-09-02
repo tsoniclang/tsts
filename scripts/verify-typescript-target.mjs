@@ -107,10 +107,10 @@ const optimizationArtifact = compiled.artifacts.find((artifact) =>
 );
 assert.ok(optimizationArtifact !== undefined);
 assert.deepEqual(JSON.parse(optimizationArtifact.text), {
-  schemaVersion: 23,
+  schemaVersion: 31,
   sourceExecution: "synchronous",
   profileIdentity:
-    "typescript-optimization-v4/pointer=location/scalar=preserve/representations=preserve",
+    "typescript-optimization-v5/pointer=location/scalar=preserve/representations=preserve",
   sourceMembership: ["index.ts"],
   programIndex: {
     nodeVisits: 75,
@@ -131,7 +131,24 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
     bindingCandidates: 0,
     bindingWrites: 0,
   },
-  pointer: { profile: "location", analyzed: false },
+  sourcePrimitives: {
+    typeReferenceCount: 0,
+    removableImportBindingCount: 0,
+  },
+  pointer: {
+    profile: "location",
+    analyzed: false,
+    dominatingNilChecks: {
+      profile: "location",
+      analyzed: false,
+    },
+    projectionCallables: {
+      candidateCount: 0,
+      optimizedCount: 0,
+      retainedCount: 0,
+      fallbackReasons: [],
+    },
+  },
   scalar: {
     profile: "preserve",
     syntacticProjectionCount: 0,
@@ -161,6 +178,12 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
       retainedCount: 0,
       fallbackReasons: [],
     },
+  },
+  representationTransports: {
+    digest:
+      "e0b8c30fa1ab2fb9d676b79532fb204339a6666ecb3f546a49d4c57a577fa909",
+    contractCount: 0,
+    selectedCallCount: 0,
   },
 });
 

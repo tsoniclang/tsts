@@ -10,8 +10,8 @@ import {
   $goInterfaceMethod$Name$void_to_string,
   $goInterfaceMethod$WatchDirectory$string_Named_fswatch$WatchCallback_Variadic_SliceOf_Named_fswatch$WatchOption_to_Named_fswatch$Watch_Named_error,
   $goInterfaceMethod$WatchFile$string_Named_fswatch$WatchCallback_to_Named_fswatch$Watch_Named_error,
-  $goInterfaceMethod$fswatch$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
-  $goInterfaceMethod$fswatch$unexported$void_to_void,
+  $goInterfaceMethod$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
+  $goInterfaceMethod$unexported$void_to_void,
 } from "../../../../../../support/interface-methods.js";
 import type {
   $goInterface$Interface_Method_Error_void_to_string as GoInterface,
@@ -67,14 +67,14 @@ export const Watcher$contract: readonly object[] = Object.freeze([
   $goInterfaceMethod$Name$void_to_string,
   $goInterfaceMethod$WatchDirectory$string_Named_fswatch$WatchCallback_Variadic_SliceOf_Named_fswatch$WatchOption_to_Named_fswatch$Watch_Named_error,
   $goInterfaceMethod$WatchFile$string_Named_fswatch$WatchCallback_to_Named_fswatch$Watch_Named_error,
-  $goInterfaceMethod$fswatch$unexported$void_to_void,
+  $goInterfaceMethod$unexported$void_to_void,
 ]);
 export const Watch$contract: readonly object[] = Object.freeze([
   $goInterfaceMethod$Close$void_to_Named_error,
-  $goInterfaceMethod$fswatch$unexported$void_to_void,
+  $goInterfaceMethod$unexported$void_to_void,
 ]);
 export const WatchOption$contract: readonly object[] = Object.freeze([
-  $goInterfaceMethod$fswatch$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
+  $goInterfaceMethod$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
 ]);
 
 const objectIdentities = new WeakMap<object, number>();
@@ -189,7 +189,7 @@ interface WatchOptions {
 }
 
 export interface WatchOption extends GoInterfaceValue {
-  $go$private$fswatch$applyWatchOption(options: WatchOptions): void;
+  applyWatchOption(options: WatchOptions): void;
 }
 
 export function WatchOption$is(
@@ -206,7 +206,7 @@ class IgnoreOption extends ProductInterfaceValue implements WatchOption {
     super();
   }
 
-  $go$private$fswatch$applyWatchOption(options: WatchOptions): void {
+  applyWatchOption(options: WatchOptions): void {
     options.ignore = this.ignore;
   }
 }
@@ -215,7 +215,7 @@ class RecursiveOption extends ProductInterfaceValue implements WatchOption {
   readonly $go$methods = new Set<object>(WatchOption$contract);
   readonly goTypeName = "fswatch.recursiveOption";
 
-  $go$private$fswatch$applyWatchOption(options: WatchOptions): void {
+  applyWatchOption(options: WatchOptions): void {
     options.recursive = true;
   }
 }
@@ -240,7 +240,7 @@ export class WatchCallback {
 
 export interface Watch extends GoInterfaceValue {
   Close(): GoInterface | undefined;
-  $go$private$fswatch$unexported(): void;
+  unexported(): void;
 }
 
 export function Watch$is(value: GoInterfaceValue | undefined): value is Watch {
@@ -271,7 +271,7 @@ class WatchHandle extends ProductInterfaceValue implements Watch {
     return undefined;
   }
 
-  $go$private$fswatch$unexported(): void {}
+  unexported(): void {}
 }
 
 export interface Watcher extends GoInterfaceValue {
@@ -287,7 +287,7 @@ export interface Watcher extends GoInterfaceValue {
     path: gostring,
     fn: WatchCallback,
   ): [Watch | undefined, GoInterface | undefined];
-  $go$private$fswatch$unexported(): void;
+  unexported(): void;
 }
 
 export function Watcher$is(
@@ -347,7 +347,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
 
     const options: WatchOptions = { ignore: undefined, recursive: false };
     for (let index = 0; index < selected.length; index++) {
-      selected.get(index)?.$go$private$fswatch$applyWatchOption(options);
+      selected.get(index)?.applyWatchOption(options);
     }
     return this.watchPath(dir, undefined, fn, options);
   }
@@ -378,7 +378,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     });
   }
 
-  $go$private$fswatch$unexported(): void {}
+  unexported(): void {}
 
   private watchPath(
     root: string,

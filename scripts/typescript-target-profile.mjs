@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
+import { readRepresentationTransportContract } from "./representation-transport-contract.mjs";
 
 export async function readTypeScriptTargetProfile(path) {
   const text = await readFile(path, "utf8");
@@ -16,14 +17,40 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "execution", "optimizations"]),
+    new Set([
+      "schemaVersion",
+      "execution",
+      "assembly",
+      "optimizations",
+      "acceptance",
+      "evidence",
+    ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 5) {
-    throw new Error("TypeScript target profile schemaVersion must be 5");
+  if (parsed["schemaVersion"] !== 11) {
+    throw new Error("TypeScript target profile schemaVersion must be 11");
   }
   if (parsed["execution"] !== "synchronous") {
     throw new Error("TSTS TypeScript target execution must be 'synchronous'");
+  }
+  const assembly = parsed["assembly"];
+  if (!isRecord(assembly)) {
+    throw new Error("TypeScript target profile assembly must be an object");
+  }
+  rejectUnknownKeys(
+    assembly,
+    new Set(["modulePackaging", "minification"]),
+    "TypeScript target profile assembly",
+  );
+  if (assembly["modulePackaging"] !== "single-esm") {
+    throw new Error(
+      "TSTS TypeScript target modulePackaging must be 'single-esm'",
+    );
+  }
+  if (assembly["minification"] !== "full") {
+    throw new Error(
+      "TSTS TypeScript target minification must be 'full'",
+    );
   }
   const optimizations = parsed["optimizations"];
   if (!isRecord(optimizations)) {
@@ -48,19 +75,55 @@ export async function readTypeScriptTargetProfile(path) {
     "scalarProjections",
     "preserve",
   );
+  const acceptance = parsed["acceptance"];
+  if (!isRecord(acceptance)) {
+    throw new Error("TypeScript target profile acceptance must be an object");
+  }
+  rejectUnknownKeys(
+    acceptance,
+    new Set([
+      "pointerKeyMapCount",
+      "dominatingNilCheckEliminationCount",
+      "sourcePrimitiveTypeReferenceCount",
+      "sourcePrimitiveImportBindingCount",
+    ]),
+    "TypeScript target profile acceptance",
+  );
+  for (const name of [
+    "pointerKeyMapCount",
+    "dominatingNilCheckEliminationCount",
+    "sourcePrimitiveTypeReferenceCount",
+    "sourcePrimitiveImportBindingCount",
+  ]) {
+    if (!Number.isSafeInteger(acceptance[name]) || acceptance[name] <= 0) {
+      throw new Error(
+        `TypeScript target profile ${name} must be a positive safe integer`,
+      );
+    }
+  }
   assertOptimizationChoice(
     optimizations["representationProjections"],
     "representationProjections",
     "preserve",
   );
-  const normalized = normalizeJson(parsed);
+  const representationTransports = await readRepresentationTransportContract(
+    path,
+    parsed["evidence"],
+  );
+  const normalized = normalizeJson({
+    profile: parsed,
+    representationTransports,
+  });
   const digest = createHash("sha256")
     .update(JSON.stringify(normalized))
     .digest("hex");
   return Object.freeze({
     digest,
     execution: parsed["execution"],
+    assembly: freezeJson(assembly),
     optimizations: freezeJson(optimizations),
+    acceptance: freezeJson(acceptance),
+    representationTransports,
   });
 }
 

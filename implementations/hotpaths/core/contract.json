@@ -21,11 +21,21 @@
   },
   "source": "implementation.ts",
   "output": "implementations/tsts/core-hotpaths.ts",
-  "certificationSources": [
-    "runtime-contract.d.ts"
-  ],
   "equivalenceEnvelope": {
-    "kind": "exact"
+    "kind": "internal-algorithm",
+    "relaxedBehavior": "Arena.New and LinkStore.Get allocate independent stable JavaScript pointer locations instead of retaining returned values in Arena.data; the private backing-slice capacity, growth, and allocation layout are not product-observable.",
+    "preservedObservables": [
+      "A nil Arena or LinkStore receiver raises the canonical Go nil-pointer runtime failure",
+      "Every successful allocation returns a distinct nonnil zero-valued pointer with stable alias identity and mutation",
+      "Repeated LinkStore lookup returns the same pointer and distinct keys receive distinct pointers",
+      "Generated compiler exit status stdout stderr and emitted TypeScript remain equivalent to pinned native TS-Go"
+    ],
+    "evidence": [
+      "Exact selected declaration signature and canonical source-body digest certification",
+      "Native-Go versus generated-TypeScript nil-receiver differential",
+      "Generated hot-path zero alias identity and distinct-allocation contract tests",
+      "Pinned TS-Go valid syntax-error semantic-error and emit runtime differential"
+    ]
   },
   "callables": [
     {

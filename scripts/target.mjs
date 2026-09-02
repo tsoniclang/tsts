@@ -9,7 +9,9 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { replaceDirectory } from "./directory-transaction.mjs";
+import { verifyOptimizationAcceptance } from "./optimization-acceptance.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
+import { verifySourcePrimitiveEvidence } from "./source-primitive-evidence.mjs";
 import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
@@ -79,6 +81,7 @@ const project = {
       printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
       execution: targetProfile.execution,
       optimizations: targetProfile.optimizations,
+      representationTransports: targetProfile.representationTransports.callables,
     },
   }],
 };
@@ -111,6 +114,7 @@ const artifacts = compileResult.value.artifacts.map((artifact) =>
     : artifact
 );
 verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
+verifyNoSelectedPrimitiveMarkerDependency(artifacts);
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
@@ -199,26 +203,43 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
       "profileIdentity",
       "sourceMembership",
       "programIndex",
+      "sourcePrimitives",
       "pointer",
       "scalar",
       "representationProjections",
+      "representationTransports",
     ]),
     "TypeScript optimization evidence",
   );
-  if (evidence["schemaVersion"] !== 23) {
-    throw new Error("TypeScript optimization evidence schemaVersion must be 23");
+  if (evidence["schemaVersion"] !== 31) {
+    throw new Error("TypeScript optimization evidence schemaVersion must be 31");
   }
+  verifySourcePrimitiveEvidence(evidence["sourcePrimitives"]);
+  verifyOptimizationAcceptance(evidence, profile.acceptance);
   if (evidence["sourceExecution"] !== profile.execution) {
     throw new Error("TypeScript optimization evidence execution differs from the selected profile");
   }
   const expectedIdentity = [
-    "typescript-optimization-v4",
+    "typescript-optimization-v5",
     `pointer=${profile.optimizations.pointerFlows}`,
     `scalar=${profile.optimizations.scalarProjections}`,
     `representations=${profile.optimizations.representationProjections}`,
   ].join("/");
   if (evidence["profileIdentity"] !== expectedIdentity) {
     throw new Error("TypeScript optimization evidence profile differs from the selected profile");
+  }
+  const transports = evidence["representationTransports"];
+  if (
+    !isRecord(transports) ||
+    transports["digest"] !== profile.representationTransports.digest ||
+    transports["contractCount"] !== profile.representationTransports.callables.length ||
+    typeof transports["selectedCallCount"] !== "number" ||
+    !Number.isSafeInteger(transports["selectedCallCount"]) ||
+    transports["selectedCallCount"] <= 0
+  ) {
+    throw new Error(
+      "TypeScript optimization evidence representation transports differ from the selected certified profile",
+    );
   }
   const membership = evidence["sourceMembership"];
   if (!Array.isArray(membership) || !membership.every((path) => typeof path === "string")) {
@@ -232,6 +253,21 @@ function verifyOptimizationEvidence(artifacts, profile, sourceLayout) {
     canonicalMembership,
     sourceLayout.expectedArtifacts,
   );
+}
+
+function verifyNoSelectedPrimitiveMarkerDependency(artifacts) {
+  const markerModule = "@tsonic/core/types.js";
+  const remnants = artifacts
+    .filter((artifact) =>
+      artifact.kind === "source" && artifact.text.includes(markerModule)
+    )
+    .map((artifact) => artifact.path)
+    .sort(compareCodeUnits);
+  if (remnants.length !== 0) {
+    throw new Error(
+      `TypeScript target retained selected primitive marker '${markerModule}' in ${remnants.join(", ")}`,
+    );
+  }
 }
 
 async function readCanonicalManifest(root) {

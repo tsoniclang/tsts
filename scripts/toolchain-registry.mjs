@@ -10,6 +10,7 @@ const definitions = [
   packageComponent("tsts", "tools/tsts-legacy/packages/tsts", "@tsonic/tsts", "node_modules/@tsonic/tsts", [], "dist/src/index.js"),
   packageComponent("typeScriptRuntime", "tools/typescript-runtime", "@tsonic/typescript-runtime", "node_modules/@tsonic/typescript-runtime", [], "dist/index.js"),
   component("binary", "gotots", "bin/gotots"),
+  component("binary", "esbuild", "bin/esbuild"),
   component("binary", "tsgoAstPrinter", "bin/tsgo-ast-printer"),
   component("binary", "tsgo", "bin/tsgo"),
   component("snapshot", "goRoot", "go-root"),

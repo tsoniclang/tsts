@@ -151,6 +151,13 @@ assert.deepEqual(
   [128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
 );
 assertSameDigest(implementation.Uint128.$copy(wide), wide, "wide-word copy");
+const zeroStorage = implementation.Uint128.$zeroStorage();
+assert.deepEqual(zeroStorage, { Hi: 0n, Lo: 0n });
+assertSameDigest(
+  implementation.Uint128.$fromStorage(zeroStorage),
+  implementation.Uint128.$zero(),
+  "canonical storage zero",
+);
 
 console.log(
   `xxh3: ${corpus.length} unique inputs; streaming, reset, and bytes verified`,

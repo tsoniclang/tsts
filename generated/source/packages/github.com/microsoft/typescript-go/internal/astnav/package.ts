@@ -1,1 +1,0 @@
-export { FindChildOfKind, FindNextToken, FindPrecedingToken, FindPrecedingTokenEx, GetStartOfNode, GetTokenAtPosition, GetTouchingPropertyName, GetTouchingToken, VisitEachChildAndJSDoc } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/astnav/tokens.js";

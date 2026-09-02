@@ -1,9 +1,22 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 11,
   "execution": "synchronous",
+  "assembly": {
+    "modulePackaging": "single-esm",
+    "minification": "full"
+  },
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
     "representationProjections": "closed-direct"
+  },
+  "acceptance": {
+    "pointerKeyMapCount": 72,
+    "dominatingNilCheckEliminationCount": 2849,
+    "sourcePrimitiveTypeReferenceCount": 11,
+    "sourcePrimitiveImportBindingCount": 11
+  },
+  "evidence": {
+    "representationTransportManifest": "tools/gotots/gostdlib/contract/manifest.json"
   }
 }

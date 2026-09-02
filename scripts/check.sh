@@ -9,9 +9,8 @@ root="$(cd "$script_dir/.." && pwd)"
 : "${TSTS_NPM_CLI:?TSTS_NPM_CLI must select the exact npm CLI}"
 : "${TSTS_HOST_PLATFORM_PATH:?TSTS_HOST_PLATFORM_PATH must select host utilities}"
 host="$TSTS_HOST_PLATFORM_PATH"
-mode="${1:-verify}"
-if [[ "$#" -gt 1 || ( "$mode" != "verify" && "$mode" != "publish" ) ]]; then
-  echo "usage: scripts/check.sh [verify|publish]" >&2
+if [[ "$#" -ne 0 ]]; then
+  echo "usage: scripts/check.sh" >&2
   exit 2
 fi
 for utility in awk bash date env flock git mkdir mv sh systemd-run time timeout; do
@@ -39,16 +38,3 @@ fi
   "$TSTS_NODE_BUILDER" --test "$root"/test/*.test.mjs
 "$host/bash" "$root/scripts/build.sh"
 "$host/bash" "$root/scripts/replay.sh"
-if [[ "$mode" = "publish" ]]; then
-  "$host/env" -i \
-    HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
-    TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
-    "$TSTS_NODE_BUILDER" "$root/scripts/publish-generated.mjs" \
-    "$root" "$root/.temp/target" "$root/generated"
-else
-  "$host/env" -i \
-    HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
-    TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
-    "$TSTS_NODE_BUILDER" "$root/scripts/verify-generated.mjs" \
-    "$root" "$root/.temp/target" "$root/generated"
-fi

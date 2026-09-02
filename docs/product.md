@@ -6,18 +6,14 @@ TSTS assembles one generated compiler. TS-Go defines the source behavior,
 GoToTS defines generic translation, and this repository defines product
 selection. No product decision is encoded in GoToTS.
 
-The final executable TypeScript is committed under `generated/source/` so the
-product can be reviewed without running the assembly. This tree is derived
-evidence, not an editing surface. `npm run generate` is its sole writer and
-seals it with `generated/manifest.json`; emitted JavaScript and all other
-transient or failed generation state remain under `.temp/`.
+Final executable TypeScript and emitted JavaScript are transient artifacts
+under `.temp/`. They are never hand-edited or committed. The target manifest
+binds the generated tree to the exact source, target profile, toolchain, file
+membership, byte counts, and content digests for each guarded transaction.
 
-The toolchain identity hashes every committed superproject entry except
-`generated/`, then joins the selected submodule gitlinks. This prevents the
-derived snapshot from recursively changing the identity of the tool that
-produced it. The exclusion is not an unverified hole: the repository must be
-clean before construction, while the generated manifest and regeneration gate
-independently own every committed product byte.
+The toolchain identity hashes every committed superproject entry and joins the
+selected submodule gitlinks. No generated-output exception or recursively
+self-authored committed snapshot participates in that identity.
 
 ## Pinned Inputs
 
@@ -50,7 +46,11 @@ runtime package, or dropping unreferenced package modules.
 Build tools are assembled from each pinned package's `npm pack` surface into
 one isolated module graph. That graph contains exactly one `@tsonic/tsts`
 package: the target-AST-enabled bootstrap. The semantic host, source-core,
-target API, TypeScript target, and encoder therefore share one AST runtime.
+target API, TypeScript target, and encoder therefore share one AST runtime. The
+TypeScript target consumes finalized facts through the checked TSTS/target-API
+contract and has no direct `@tsonic/source-core` package dependency. Every
+declared internal edge is exact-owned in the sealed graph; an undeclared,
+unneeded, or stale edge fails toolchain construction.
 Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 
 ## Selected Profile
@@ -78,7 +78,70 @@ inline, and a channel or synchronization operation that would suspend fails
 loudly at its typed owner. This is a bounded serial product semantics, not a
 claim of Go concurrency parity, and no alternate execution profile exists.
 
+`typescript-target.json` also selects one executable packaging route:
+`single-esm`. After strict TypeScript checking and JavaScript emission, TSTS
+verifies implementation contracts against the unbundled graph, then invokes
+the exact esbuild binary sealed in the immutable toolchain. The bundler fully
+minifies the reachable ESM graph and leaves only `node:` built-ins external.
+The transient TypeScript remains the readable inspection artifact; the
+transient executable is `out/tsts.mjs` plus one canonical manifest containing
+the exact input graph, external set, bundler identity, and output digest. The
+superseded multi-file JavaScript graph is removed only by the successful atomic
+packaging transaction. No text rewrite or second executable route survives.
+
+The same profile derives its representation-transport callable set from the
+exact pinned GoToTS gostdlib manifest. Only signature-certified synchronous
+generic kernels with generated-caller representation facets enter that set.
+TSTS passes the immutable, canonically ordered module/export identities to the
+TypeScript target; it does not maintain a product-specific callable list. The
+target exact-joins each selected call and admits only generic-owned parameter
+shapes. Its sealed evidence must match the profile digest and callable count
+and must report at least one selected call for this product. A stale manifest,
+duplicate identity, concrete parameter, or same-spelled ordinary call remains
+an external boundary rather than becoming an optimization exception.
+
+The profile separately records exact product-acceptance denominators for
+measured target optimizations. These values never select source or permit an
+optimization: the target decides solely from finalized facts and emits its own
+count. TSTS exact-joins that count before installing output. The current pinned
+product accepts exactly 72 complete canonical pointer-key map rewrites and
+2,849 eliminated dominated nil checks. It also accepts exactly 11 neutral
+primitive type-reference rewrites and 11 fully consumed type-only marker
+bindings. A source, compiler, or target-pin change that produces any other
+denominator must be re-reviewed and recertified rather than silently widening
+or shrinking the selected class.
+
+Target-neutral primitive facts are required lowering rather than an optional
+optimization. The checked source selects each primitive by exact declaration
+identity and records its runtime base; the TypeScript target rewrites that
+exact type reference to `boolean`, `number`, `bigint`, `string`, or `object`
+and removes its fully consumed type-only marker binding. Local same-spelled
+types remain untouched. The sealed target evidence carries exact reference and
+binding denominators, and strict assembly rejects any surviving selected
+marker-module dependency.
+
+Module aggregation is a bounded internal equivalence envelope. It may remove
+loader and per-module initialization overhead, but it must preserve ESM
+dependency initialization order and may not change the compiler's exit status,
+stdout, stderr, or emitted files. Deterministic bundle bytes, side-effect
+ordering, exact input membership, external membership, output mutation, and
+failed-transaction retention are permanent gates.
+
 ## Product Implementations
+
+`gotots.json` selects one project-wide implementation-certification source at
+`implementations/certification/tsonic-core.d.ts`. It is a deterministic,
+checked-in projection of the complete virtual declaration model supplied by
+the exact pinned `@tsonic/source-core`; it is not an independent declaration
+authority. `scripts/tsonic-core-certification.mjs` fails closed on an unknown
+module, declaration, member, type, or binding shape and byte-compares the
+projection at every assembly checkpoint. The denominator gate pins all 53
+provider declarations and their exact names. Independently, GoToTS seals this
+source into every package and callable implementation verifier, and the guarded
+full-product TS-Go transaction strict-typechecks every selected implementation
+and generated consumer. Bundle-local certification files may declare only
+private runtime dependencies; no second `@tsonic/core` declaration owner is
+permitted.
 
 `implementations/xxh3` atomically replaces
 `github.com/zeebo/xxh3@v1.1.0` for this profile. Its bounded internal
@@ -97,14 +160,21 @@ load-owned selected-source snapshot, canonical Go callable identity, generated
 TypeScript signature, and canonical source-body digest before the translated
 body is omitted. Package implementations remain package-atomic. A generic
 translation or representation optimization remains owned by the selected
-GoToTS or TypeScript-target profile. Neither class may patch the committed
-generated tree: its result becomes visible only by regenerating the complete
-product and passing the differential gates.
+GoToTS or TypeScript-target profile. Neither class may patch generated text:
+its result becomes visible only by regenerating the complete transient product
+and passing the differential gates.
 
 The selected callable set is exactly `Checker.compareNodes`,
 `Checker.compareSymbolsWorker`, `Checker.sortSymbols`, `Arena.New`, and
 `LinkStore.Get`. The comparison and storage replacements preserve their source
-algorithms while removing generated representation overhead.
+behavior while removing generated representation overhead. `Arena.New` returns
+one fresh zero-valued pointer cell directly: its Go backing slice is private,
+its capacity and allocation order are unobservable, and retaining the same
+value through both the returned pointer and an arena slice would duplicate the
+JavaScript reachability graph. Its named internal-algorithm envelope still
+preserves the native nil-receiver panic exactly. `LinkStore.Get` likewise lets
+its entries map own each fresh value rather than retaining it through a second
+arena.
 `Checker.sortSymbols` replaces Go's generic `slices.SortFunc` machinery with
 native `Array.sort` under the same total `compareSymbols` order. A zero
 comparison identifies the same symbol value, so target sort stability cannot
@@ -127,12 +197,11 @@ fixture's emitted file set and bytes are also exact-joined. Generation,
 typecheck, startup, minimal-compilation time, peak RSS, source size, and output
 size are reported at the exact pins.
 
-The same checkpoint exact-joins the freshly generated final TypeScript against
-`generated/`. The committed manifest carries the
-canonical semantic, target-profile, and historical toolchain digests plus
-the normalized tree digest, file count, byte count, and fixed entrypoint.
-Source drift, missing files, extra files, stale toolchain selection, and hand
-edits all fail the checkpoint.
+The same checkpoint seals the freshly generated final TypeScript under
+`.temp/target`. Its manifest carries the canonical semantic, target-profile,
+and historical toolchain digests plus exact member paths, byte counts, content
+digests, and the fixed entrypoint. Source drift, missing files, extra files,
+stale toolchain selection, and post-seal edits all fail the checkpoint.
 
 The product check owns four serial, resource-disjoint guarded transactions:
 assembly tests, exact toolchain construction, product generation plus strict
@@ -156,18 +225,21 @@ Promise-bearing ABI. GoToTS owns the callable contract; the TypeScript target
 independently rejects authored suspension nodes from the exact checked tree
 before planning or printing. Its sealed evidence exact-joins
 `sourceExecution: "synchronous"`, the selected optimization identity, and the
-complete source membership. Neither gate decides semantics by marker spelling
-or repairs generated source. Adding an obsolete concurrency selector, changing
+complete source membership. Representation evidence separately exact-joins
+the certified generic-kernel transport digest, denominator, and selected-call
+count. Neither gate decides semantics by marker spelling or repairs generated
+source. Adding an obsolete concurrency selector, changing
 the target execution contract away from `synchronous`, removing the product
 runner's source-owned serial selection, or supplying that selection more than
 once must fail before publication.
 
 `npm run replay` resumes from the current certified generated source and runs
 only JavaScript emission from `.temp/target`, provider/runtime assembly,
-native TS-Go construction, and the exact runtime differential. It uses the
+implementation verification, deterministic executable bundling, native TS-Go
+construction, and the exact runtime differential. It uses the
 same guarded execution and output preservation policy as the full check.
 
-`npm run generate` executes that complete checkpoint in publication mode and
-atomically replaces `generated/` only after the staged source and manifest
-verify. `npm run check` runs the same pipeline in verification mode and
-requires byte-identical committed TypeScript.
+`npm run generate` and `npm run check` execute the same complete guarded
+checkpoint. Both leave the certified TypeScript, manifest, JavaScript, and
+bounded resource evidence under `.temp/`; neither publishes or commits a
+generated tree.
