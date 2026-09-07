@@ -1,7 +1,19 @@
-// Certified projection of the selected @tsonic/source-core provider model.
+// Certified projection of the selected source-core and Go ABI provider models.
 // Regenerate only with: node scripts/tsonic-core-certification.mjs --write
 
 declare module "@tsonic/core/types.js" {
+  export interface DataLayout {
+    readonly __tsonicDataLayout: "DataLayout";
+  }
+
+  export interface MemoryLayout<T> {
+    readonly __tsonicMemoryLayout: (value: T) => T;
+  }
+
+  export interface MemoryFieldLayout<T> {
+    readonly __tsonicMemoryFieldLayout: (value: T) => T;
+  }
+
   export interface NativePointer<T> {
     readonly __tsonicNativePointer: (value: T) => T;
   }
@@ -62,7 +74,7 @@ declare module "@tsonic/core/types.js" {
 }
 
 declare module "@tsonic/core/lang.js" {
-  import type { NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
+  import type { DataLayout, MemoryFieldLayout, MemoryLayout, NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
 
   export interface __TsonicAttributeBuilder<TOwner> {
     add(attribute: object, ...args: unknown[]): void;
@@ -76,6 +88,37 @@ declare module "@tsonic/core/lang.js" {
     parameter(name: string): __TsonicAttributeMemberBuilder<TOwner>;
     target(specifier: string): __TsonicAttributeMemberBuilder<TOwner>;
   }
+
+  export function toRawPointer<T>(pointer: Pointer<T> | undefined, layout: MemoryLayout<T>): RawPointer | undefined;
+
+  export function reinterpretRawPointer<T>(pointer: RawPointer | undefined, layout: MemoryLayout<T>): Pointer<T> | undefined;
+
+  export function offsetRawPointer<TOffset extends number | bigint>(pointer: RawPointer | undefined, byteOffset: TOffset, dataLayout: DataLayout): RawPointer | undefined;
+
+  export function rawPointerToAddressInteger<TAddress extends number | bigint>(pointer: RawPointer | undefined, dataLayout: DataLayout): TAddress;
+
+  export function addressIntegerToRawPointer<TAddress extends number | bigint>(address: TAddress, dataLayout: DataLayout): RawPointer | undefined;
+
+  export function memoryLayout<T>(dataLayout: DataLayout, byteSize: number, byteAlignment: number, stride: number, ...fields: MemoryFieldLayout<T>[]): MemoryLayout<T>;
+
+  export function memoryField<T, TField>(select: (value: T) => TField, byteOffset: number, byteAlignment: number, fieldLayout: MemoryLayout<TField>): MemoryFieldLayout<T>;
+
+  export function sizeOf<T>(layout: MemoryLayout<T>): number;
+
+  export function alignOf<T>(layout: MemoryLayout<T>): number;
+
+  export function strideOf<T>(layout: MemoryLayout<T>): number;
+
+  export function fieldOffsetOf<T, TField>(layout: MemoryLayout<T>, select: (value: T) => TField): number;
+
+  export function keepAlive<T>(value: T): void;
+
+  export function comptime<T>(value: T): T;
+  export function comptime<T>(): T;
+
+  export function comptimeIf(condition: boolean): boolean;
+
+  export function unroll<T>(iterable: T): T;
 
   export function loadNativePointer<T>(pointer: NativePointer<T>): T;
 
@@ -142,9 +185,19 @@ declare module "@tsonic/core/lang.js" {
   export function projectPointer<F, T>(pointer: Pointer<F>, fromSource: (value: F) => T, toSource: (value: T) => F): Pointer<T>;
   export function projectPointer<F, T>(pointer: Pointer<F> | undefined, fromSource: (value: F) => T, toSource: (value: T) => F): Pointer<T> | undefined;
 
-  export function bindRawPointer(identity: object): RawPointer;
-
   export function equalRawPointer(left: RawPointer | undefined, right: RawPointer | undefined): boolean;
 
   export function hashRawPointer(pointer: RawPointer | undefined): number;
+}
+
+declare module "@gotots/abi/layout.js" {
+  import type { DataLayout } from "@tsonic/core/types.js";
+
+  export const little32: DataLayout;
+
+  export const little64: DataLayout;
+
+  export const big32: DataLayout;
+
+  export const big64: DataLayout;
 }

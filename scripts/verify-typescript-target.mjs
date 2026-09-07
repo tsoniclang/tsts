@@ -126,7 +126,7 @@ assert.deepEqual(JSON.parse(optimizationArtifact.text), {
       selectedDeclarations: 11,
       reverseEdges: 21,
       indexedSymbols: 8,
-      moduleExportsExamined: 53,
+      moduleExportsExamined: 70,
     },
     bindingCandidates: 0,
     bindingWrites: 0,

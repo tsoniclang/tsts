@@ -73,6 +73,11 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     restoreEnvironment(ambient);
   }
   const firstManifest = await readFile(join(first.root, "toolchain-manifest.json"), "utf8");
+  assert.equal(first.packages.tsts.version, "0.1.1");
+  assert.equal(
+    await readFile(join(fixture.repositoryRoot, "tools/tsonic/packages/tsts/dist/src/index.js"), "utf8"),
+    await readFile(join(first.packages.tsts.root, "dist/src/index.js"), "utf8"),
+  );
   assert.equal(first.manifest.schemaVersion, 5);
   assert.equal(Object.hasOwn(first.manifest, "hostPlatform"), false);
   assert.deepEqual(
@@ -92,7 +97,7 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
   );
   assert.deepEqual(
     first.packages.targetTypeScript.dependencies.map(({ key }) => key),
-    ["targetApi", "tsts", "typeScriptRuntime"],
+    ["sourceCore", "targetApi", "tsts", "typeScriptRuntime"],
   );
   assert.equal(
     await readFile(join(first.distributionRoot, "gostdlib", "dist", "index.js"), "utf8"),
@@ -404,7 +409,9 @@ test("product consumers have one immutable path and a closed environment", async
   assert.equal(environment.GOSUMDB, "off");
   assert.equal(environment.GOENV, "off");
   assert.equal(environment.HOME, "/state/home");
-  assert.equal(environment.NODE_OPTIONS, "");
+  assert.equal(environment.NODE_OPTIONS, `--max-old-space-size=${process.env.TSTS_NODE_OLD_SPACE_MIB}`);
+  assert.equal(environment.GOMEMLIMIT, process.env.TSTS_GO_MEMORY_LIMIT);
+  assert.equal(environment.GOMAXPROCS, process.env.TSTS_GO_MAX_PROCS);
   assert.notEqual(environment.NPM_CONFIG_GLOBALCONFIG, environment.NPM_CONFIG_USERCONFIG);
 
   const repositoryRoot = resolve(".");
@@ -441,12 +448,14 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.match(check, /product check must own fresh assembly, toolchain, product, and replay guards/u);
 
   const testGuard = check.indexOf('"$root/scripts/run-guarded.sh"');
-  const testCommand = check.indexOf(' --test "$root"/test/*.test.mjs');
+  const testCommand = check.indexOf(' --test --test-concurrency=1 "$root"/test/*.test.mjs');
   const build = check.indexOf('"$root/scripts/build.sh"');
   const replay = check.indexOf('"$root/scripts/replay.sh"');
   assert.ok(testGuard >= 0, "assembly tests lack their guard");
-  assert.ok(testCommand > testGuard, "assembly tests escape their guard");
-  assert.ok(build > testCommand, "build does not follow the assembly-test transaction");
+  assert.match(check, /if \[\[ "\$\{TSTS_ASSEMBLY_GUARDED:-0\}" = "1" \]\]; then\s+exec "\$host\/env" -i/u);
+  assert.match(check, /TSTS_ASSEMBLY_GUARDED=1[^\n]*run-guarded\.sh/u);
+  assert.ok(testCommand > check.indexOf('TSTS_ASSEMBLY_GUARDED:-0'), "assembly test command lacks its guarded branch");
+  assert.ok(build > testGuard, "build does not follow the assembly-test transaction");
   assert.ok(replay > build, "replay does not follow the build transaction");
   assert.equal(check.match(/run-guarded\.sh/gu)?.length, 1);
 

@@ -8,21 +8,25 @@ import {
   providerExportDeclarationsForSourceModule,
 } from "../tools/tsonic/packages/source-core/dist/public/extension.js";
 import {
+  goAbiModule,
+  goAbiProviderDeclarations,
+} from "../tools/gotots/abi/dist/index.js";
+import {
   buildTsonicCoreCertificationSource,
   tsonicCoreCertificationPath,
 } from "../scripts/tsonic-core-certification.mjs";
 
 const modules = tsonicCoreSourceSemanticsModules();
-const declarationsByModule = new Map(modules.map((module) => [
+const declarationsByModule = new Map([...modules.map((module) => [
   module.moduleSpecifier,
   providerExportDeclarationsForSourceModule(module),
-]));
+]), [goAbiModule, goAbiProviderDeclarations()]]);
 
 test("source-core certification is an exact deterministic provider projection", async () => {
   const actual = await readFile(tsonicCoreCertificationPath, "utf8");
   const expected = buildTsonicCoreCertificationSource();
   assert.equal(actual, expected);
-  assert.equal([...declarationsByModule.values()].reduce((sum, entries) => sum + entries.length, 0), 53);
+  assert.equal([...declarationsByModule.values()].reduce((sum, entries) => sum + entries.length, 0), 74);
 });
 
 test("source-core certification closes the complete selected denominator", () => {
@@ -35,9 +39,10 @@ test("source-core certification closes the complete selected denominator", () =>
     [
       {
         moduleSpecifier: "@tsonic/core/types.js",
-        declarations: 23,
+        declarations: 26,
         names: [
-          "FixedArray", "FunctionPointer", "NativePointer", "Pointer", "RawPointer",
+          "DataLayout", "FixedArray", "FunctionPointer", "MemoryFieldLayout", "MemoryLayout",
+          "NativePointer", "Pointer", "RawPointer",
           "bool", "char", "decimal", "float16", "float32", "float64", "int128",
           "int16", "int32", "int64", "int8", "nativeInt", "nativeUint", "uint128",
           "uint16", "uint32", "uint64", "uint8",
@@ -45,18 +50,37 @@ test("source-core certification closes the complete selected denominator", () =>
       },
       {
         moduleSpecifier: "@tsonic/core/lang.js",
-        declarations: 30,
+        declarations: 44,
         names: [
           "__TsonicAttributeBuilder", "__TsonicAttributeMemberBuilder",
           "__TsonicSafetyBuilder", "__TsonicSafetyMemberBuilder", "addressOf",
-          "allocatePointer", "attribute", "bindPointer", "bindRawPointer",
-          "defaultValue", "equalPointer", "equalRawPointer", "field", "hashPointer",
-          "hashRawPointer", "loadNativePointer", "loadPointer", "move",
+          "addressIntegerToRawPointer", "alignOf", "allocatePointer", "attribute", "bindPointer",
+          "comptime", "comptimeIf", "defaultValue", "equalPointer", "equalRawPointer", "field", "fieldOffsetOf", "hashPointer",
+          "hashRawPointer", "keepAlive", "loadNativePointer", "loadPointer", "memoryField", "memoryLayout", "move",
           "mutableBorrow", "offsetNativePointer", "projectPointer", "readOnlyRef",
           "readWriteRef", "safety", "sharedBorrow", "storeNativePointer",
           "storePointer", "struct", "unsafeContext", "writeOnlyRef",
-        ],
+          "offsetRawPointer", "rawPointerToAddressInteger", "reinterpretRawPointer",
+          "sizeOf", "strideOf", "toRawPointer", "unroll",
+        ].sort(),
+      },
+      {
+        moduleSpecifier: "@gotots/abi/layout.js",
+        declarations: 4,
+        names: ["big32", "big64", "little32", "little64"],
       },
     ],
   );
+});
+
+test("certification carries exact address domains and child-layout arguments", () => {
+  const source = buildTsonicCoreCertificationSource();
+  assert.match(source, /export const little64: DataLayout;/u);
+  for (const name of ["rawPointerToAddressInteger", "addressIntegerToRawPointer", "memoryField", "memoryLayout", "toRawPointer"]) {
+    assert.match(source, new RegExp(`export function ${name}[<(]`, "u"));
+  }
+  const fields = source.split("\n").filter(line => line.includes("export function memoryField"));
+  assert.equal(fields.length, 1);
+  assert.match(fields[0], /MemoryLayout</u);
+  assert.doesNotMatch(source, /export function bindRawPointer/u);
 });

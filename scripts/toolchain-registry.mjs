@@ -1,13 +1,14 @@
 import { compareCodeUnits } from "./canonical-order.mjs";
 
 const definitions = [
+  packageComponent("goAbi", "tools/gotots/abi", "@gotots/abi", "node_modules/@gotots/abi", ["sourceCore", "targetApi", "tsts"], "dist/index.js"),
   packageComponent("gostdlib", "tools/gotots/gostdlib", "@gotots/gostdlib", "node_modules/@gotots/gostdlib", ["goRuntime"]),
   packageComponent("externals", "tools/gotots/externals", "@gotots/externals", "node_modules/@gotots/externals", ["gostdlib"]),
   packageComponent("host", "tools/tsonic/packages/host", "@tsonic/host", "node_modules/@tsonic/host", ["sourceCore", "targetApi", "tsts"], "dist/index.js"),
-  packageComponent("sourceCore", "tools/tsonic/packages/source-core", "@tsonic/source-core", "node_modules/@tsonic/source-core", ["tsts"], "dist/public/index.js"),
+  packageComponent("sourceCore", "tools/tsonic/packages/source-core", "@tsonic/source-core", "node_modules/@tsonic/source-core", ["targetApi", "tsts"], "dist/public/index.js"),
   packageComponent("targetApi", "tools/tsonic/packages/target-api", "@tsonic/target-api", "node_modules/@tsonic/target-api", ["tsts"], "dist/public/index.js"),
-  packageComponent("targetTypeScript", "tools/tsonic-typescript", "@tsonic/target-typescript", "node_modules/@tsonic/target-typescript", ["targetApi", "tsts", "typeScriptRuntime"], "dist/index.js"),
-  packageComponent("tsts", "tools/tsts-legacy/packages/tsts", "@tsonic/tsts", "node_modules/@tsonic/tsts", [], "dist/src/index.js"),
+  packageComponent("targetTypeScript", "tools/tsonic-typescript", "@tsonic/target-typescript", "node_modules/@tsonic/target-typescript", ["sourceCore", "targetApi", "tsts", "typeScriptRuntime"], "dist/index.js"),
+  packageComponent("tsts", "tools/tsonic/packages/tsts", "@tsonic/tsts", "node_modules/@tsonic/tsts", [], "dist/src/index.js", "committed"),
   packageComponent("typeScriptRuntime", "tools/typescript-runtime", "@tsonic/typescript-runtime", "node_modules/@tsonic/typescript-runtime", [], "dist/index.js"),
   component("binary", "gotots", "bin/gotots"),
   component("binary", "esbuild", "bin/esbuild"),
@@ -50,7 +51,7 @@ export const generatedGoRuntime = componentByKey.get("goRuntime");
 
 validateRegistry();
 
-function packageComponent(key, source, name, target, dependencies, entry) {
+function packageComponent(key, source, name, target, dependencies, entry, artifactSource = "built") {
   return Object.freeze({
     kind: "package",
     key,
@@ -59,6 +60,7 @@ function packageComponent(key, source, name, target, dependencies, entry) {
     target,
     dependencies: Object.freeze([...dependencies].sort(compareCodeUnits)),
     entry,
+    artifactSource,
   });
 }
 

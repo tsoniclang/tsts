@@ -7,6 +7,10 @@ import {
 import {
   providerExportDeclarationsForSourceModule,
 } from "../tools/tsonic/packages/source-core/dist/public/extension.js";
+import {
+  goAbiModule,
+  goAbiProviderDeclarations,
+} from "../tools/gotots/abi/dist/index.js";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -16,10 +20,16 @@ export const tsonicCoreCertificationPath = resolve(
 );
 
 export function buildTsonicCoreCertificationSource() {
-  const modules = tsonicCoreSourceSemanticsModules();
+  const modules = [
+    ...tsonicCoreSourceSemanticsModules().map(module => ({
+      moduleSpecifier: module.moduleSpecifier,
+      declarations: providerExportDeclarationsForSourceModule(module),
+    })),
+    { moduleSpecifier: goAbiModule, declarations: goAbiProviderDeclarations() },
+  ];
   assertExactModuleSet(modules);
   return [
-    "// Certified projection of the selected @tsonic/source-core provider model.",
+    "// Certified projection of the selected source-core and Go ABI provider models.",
     "// Regenerate only with: node scripts/tsonic-core-certification.mjs --write",
     "",
     ...modules.map(renderModule),
@@ -27,7 +37,7 @@ export function buildTsonicCoreCertificationSource() {
 }
 
 function renderModule(module) {
-  const declarations = providerExportDeclarationsForSourceModule(module);
+  const { declarations } = module;
   assertUniqueDeclarations(module.moduleSpecifier, declarations);
   const imports = collectExternalReferences(module.moduleSpecifier, declarations);
   const body = [];
@@ -57,6 +67,8 @@ function renderDeclaration(declaration, moduleSpecifier) {
     throw new Error(`Unsupported metadata on source-core declaration '${declaration.id}'.`);
   }
   switch (declaration.kind) {
+    case "value":
+      return `export const ${declaration.name}: ${renderType(declaration.type, moduleSpecifier)};`;
     case "type":
       return `export type ${declaration.name}${renderTypeParameters(declaration.typeParameters, moduleSpecifier)} = ${renderType(declaration.type, moduleSpecifier)};`;
     case "interface":
@@ -276,7 +288,7 @@ function collectExternalReferences(moduleSpecifier, declarations) {
 
 function assertExactModuleSet(modules) {
   const actual = modules.map((module) => module.moduleSpecifier);
-  const expected = ["@tsonic/core/types.js", "@tsonic/core/lang.js"];
+  const expected = ["@tsonic/core/types.js", "@tsonic/core/lang.js", "@gotots/abi/layout.js"];
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(`Selected source-core module set changed: ${JSON.stringify(actual)}.`);
   }

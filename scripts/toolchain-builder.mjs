@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import { copyPublishedPackage } from "./package-artifact.mjs";
+import { buildJavaScriptPackages } from "./toolchain-javascript.mjs";
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { stageGoModuleCache } from "./go-module-cache.mjs";
 import { createGoToolBuildModule } from "./go-tool-build.mjs";
@@ -48,15 +49,6 @@ import {
   assembleCompilerDistribution,
   assembleTypeScriptGoSource,
 } from "./toolchain-snapshots.mjs";
-
-const installRoots = Object.freeze([
-  ".",
-  "tools/gotots/gostdlib",
-  "tools/typescript-runtime",
-  "tools/tsts-legacy",
-  "tools/tsonic",
-  "tools/tsonic-typescript",
-]);
 
 export async function createToolchainCandidate(
   repositoryRoot,
@@ -145,6 +137,8 @@ export async function createToolchainCandidate(
     join(stagedRoot, componentByKey.get("tsgo").target),
     node,
     buildEnvironment,
+    runRoot,
+    run,
   );
   await stageEsbuild(repositoryRoot, stagedRoot, buildEnvironment);
   const afterBuild = await verifyRepositoryAuthority(repositoryRoot, authorityEnvironment);
@@ -210,6 +204,7 @@ export async function createToolchainCandidate(
 
 async function preservePackageOutputs(repositoryRoot, runRoot) {
   for (const selected of selectedPackages) {
+    if (selected.artifactSource === "committed") continue;
     const output = join(repositoryRoot, selected.source, "dist");
     try {
       await lstat(output);
@@ -371,47 +366,6 @@ function inspectTsgoBuildInfo(goExecutable, binary, environment) {
   };
 }
 
-async function buildJavaScriptPackages(repositoryRoot, tsgo, node, environment) {
-  for (const path of installRoots) {
-    runNpm(
-      node,
-      ["--prefix", join(repositoryRoot, path), "ci"],
-      repositoryRoot,
-      environment,
-      `install ${path}`,
-    );
-  }
-  for (const config of [
-    "tools/gotots/gostdlib/test/runtime-package/tsconfig.json",
-    "tools/gotots/gostdlib/tsconfig.json",
-    "tools/gotots/externals/tsconfig.json",
-    "tools/tsonic/packages/source-core/tsconfig.json",
-    "tools/tsonic/packages/target-api/tsconfig.json",
-    "tools/tsonic/packages/host/tsconfig.json",
-  ]) {
-    run(
-      tsgo,
-      ["-p", join(repositoryRoot, config), "--pretty", "false"],
-      repositoryRoot,
-      environment,
-      `build ${config}`,
-    );
-  }
-  for (const path of [
-    "tools/typescript-runtime",
-    "tools/tsts-legacy",
-    "tools/tsonic-typescript",
-  ]) {
-    runNpm(
-      node,
-      ["--prefix", join(repositoryRoot, path), "run", "build"],
-      repositoryRoot,
-      environment,
-      `build ${path}`,
-    );
-  }
-}
-
 async function stageEsbuild(repositoryRoot, stagedRoot, environment) {
   const source = join(repositoryRoot, "node_modules", "esbuild", "bin", "esbuild");
   const selected = await lstat(source);
@@ -539,10 +493,6 @@ function run(command, arguments_, cwd, environment, subject) {
   if (output.length !== 0) {
     process.stderr.write(output.endsWith("\n") ? output : `${output}\n`);
   }
-}
-
-function runNpm(node, arguments_, cwd, environment, subject) {
-  run(node.npmExecutable, arguments_, cwd, environment, subject);
 }
 
 function runCapture(command, arguments_, cwd, environment, subject) {

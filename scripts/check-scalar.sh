@@ -40,6 +40,9 @@ if [[ "$scalar_transaction" = "toolchain" ]]; then
   "$host/env" -i \
     HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
     TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+    TSTS_GO_MEMORY_LIMIT="$TSTS_GO_MEMORY_LIMIT" TSTS_GO_MAX_PROCS="$TSTS_GO_MAX_PROCS" \
+    TSTS_NODE_OLD_SPACE_MIB="$TSTS_NODE_OLD_SPACE_MIB" \
+    NODE_OPTIONS="--max-old-space-size=$TSTS_NODE_OLD_SPACE_MIB" \
     "$TSTS_NODE_BUILDER" "$root/scripts/construct-toolchain.mjs" \
     "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
     "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host"
@@ -49,6 +52,9 @@ fi
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+  TSTS_GO_MEMORY_LIMIT="$TSTS_GO_MEMORY_LIMIT" TSTS_GO_MAX_PROCS="$TSTS_GO_MAX_PROCS" \
+  TSTS_NODE_OLD_SPACE_MIB="$TSTS_NODE_OLD_SPACE_MIB" \
+  NODE_OPTIONS="--max-old-space-size=$TSTS_NODE_OLD_SPACE_MIB" \
   "$TSTS_NODE_BUILDER" "$root/scripts/open-selected-toolchain.mjs" \
   "$root" "$TSTS_NODE_BUILDER")"
 IFS=$'\t' read -r \

@@ -21,6 +21,14 @@ this repository. A generic compiler defect is fixed and certified in GoToTS,
 then the submodule pin is advanced. A product-only implementation or
 equivalence envelope remains in TSTS.
 
+## Coordinated Repository Scope
+
+This workstream owns GoToTS, tsonic-typescript, typescript-runtime, and TSTS.
+Changes within those four repositories need no additional scope permission.
+Tsonic core, TSTS Legacy, other targets, and all other repositories remain
+read-only without explicit user approval. Submodule pin updates do not grant
+permission to edit or commit source inside a submodule.
+
 ## Begin With WCBUBWHB
 
 Before design or edits, establish:
