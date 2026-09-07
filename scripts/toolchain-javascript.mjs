@@ -4,7 +4,7 @@ import { componentByKey, packageComponents } from "./toolchain-registry.mjs";
 
 const installRoots = [
   ".", "tools/gotots/gostdlib", "tools/gotots/abi", "tools/typescript-runtime",
-  "tools/tsts-legacy", "tools/tsonic", "tools/tsonic-typescript",
+  "tools/tsonic", "tools/tsonic-typescript",
 ];
 
 export async function buildJavaScriptPackages(repositoryRoot, tsgo, node, environment, runRoot, run) {
@@ -13,11 +13,6 @@ export async function buildJavaScriptPackages(repositoryRoot, tsgo, node, enviro
       repositoryRoot, environment, `install ${path}`);
   }
   await bindPackageBuildDependencies(repositoryRoot, runRoot);
-  const bootstrap = join(repositoryRoot, componentByKey.get("tsts").source);
-  run(tsgo, ["-p", join(bootstrap, "tsconfig.json"), "--pretty", "false"],
-    repositoryRoot, environment, "build pinned bootstrap checker");
-  run(node.executable, [join(bootstrap, "tools/package/copy-bundled-libraries.mjs")],
-    repositoryRoot, environment, "copy pinned bootstrap bundled libraries");
   for (const config of [
     "tools/gotots/gostdlib/test/runtime-package/tsconfig.json",
     "tools/gotots/gostdlib/tsconfig.json",

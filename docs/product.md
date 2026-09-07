@@ -22,7 +22,7 @@ The gitlinks are authoritative:
 - `vendor/typescript-go`: selected Microsoft TS-Go source;
 - `tools/gotots`: selected GoToTS compiler and provider distribution.
 - `tools/tsonic`: selected semantic host and shared source-core contracts;
-- `tools/tsts-legacy`: bootstrap TSTS checker and exact target-AST contract;
+- `tools/tsts-legacy`: pinned checker-source reference; not a second runtime package;
 - `tools/tsonic-typescript`: selected TypeScript target;
 - `tools/typescript-runtime`: selected ordinary TypeScript runtime.
 
@@ -53,7 +53,8 @@ runtime package, or dropping unreferenced package modules.
 
 Build tools are assembled from each pinned package's `npm pack` surface into
 one isolated module graph. That graph contains exactly one `@tsonic/tsts`
-package: the target-AST-enabled bootstrap. The semantic host, source-core,
+package: the committed public package in `tools/tsonic/packages/tsts`, including
+its certified checker, target-AST contract and bundled libraries. The semantic host, source-core,
 target API, TypeScript target, and encoder therefore share one AST runtime. The
 TypeScript target consumes finalized facts through the checked TSTS/target-API
 contract, including shared-core finalized pointer/layout queries. The selected
@@ -62,10 +63,11 @@ extension. Neither component defines alternative marker semantics. Every
 declared internal edge is exact-owned in the sealed graph; an undeclared,
 unneeded, or stale edge fails toolchain construction.
 Nested dependency copies and whole-`dist` test leakage are not assembly paths.
-Build-time internal dependencies use that same registry and pinned bootstrap,
-not older wrapper declarations. The bootstrap builds before its dependents;
-its selected compiler and bundled-library copier run without a recursive shell
-deletion. Displaced build links and outputs stay in the guarded transaction.
+Build-time internal dependencies use that same registry and committed package,
+not an independently rebuilt source package with a different public version.
+Committed package outputs are never moved, rebuilt or patched; their selected
+bytes are copied and sealed. Displaced build links and build-owned outputs stay
+in the guarded transaction.
 
 ## Selected Profile
 

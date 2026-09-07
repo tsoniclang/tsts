@@ -204,6 +204,7 @@ export async function createToolchainCandidate(
 
 async function preservePackageOutputs(repositoryRoot, runRoot) {
   for (const selected of selectedPackages) {
+    if (selected.artifactSource === "committed") continue;
     const output = join(repositoryRoot, selected.source, "dist");
     try {
       await lstat(output);

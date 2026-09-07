@@ -73,6 +73,11 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     restoreEnvironment(ambient);
   }
   const firstManifest = await readFile(join(first.root, "toolchain-manifest.json"), "utf8");
+  assert.equal(first.packages.tsts.version, "0.1.1");
+  assert.equal(
+    await readFile(join(fixture.repositoryRoot, "tools/tsonic/packages/tsts/dist/src/index.js"), "utf8"),
+    await readFile(join(first.packages.tsts.root, "dist/src/index.js"), "utf8"),
+  );
   assert.equal(first.manifest.schemaVersion, 5);
   assert.equal(Object.hasOwn(first.manifest, "hostPlatform"), false);
   assert.deepEqual(

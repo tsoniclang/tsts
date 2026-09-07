@@ -40,29 +40,29 @@ const selectedPackages = [
   ["tools/tsonic/packages/source-core", "@tsonic/source-core"],
   ["tools/tsonic/packages/target-api", "@tsonic/target-api"],
   ["tools/tsonic-typescript", "@tsonic/target-typescript"],
-  ["tools/tsts-legacy/packages/tsts", "@tsonic/tsts"],
+  ["tools/tsonic/packages/tsts", "@tsonic/tsts"],
   ["tools/typescript-runtime", "@tsonic/typescript-runtime"],
 ];
 
 const packageDependencies = new Map([
   ["@gotots/abi", { peerDependencies: {
-    "@tsonic/source-core": "0.0.0", "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.0.0",
+    "@tsonic/source-core": "0.0.0", "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.1.1",
   } }],
   ["@gotots/gostdlib", { peerDependencies: { "@gotots/runtime": "0.0.0" } }],
   ["@gotots/externals", { peerDependencies: { "@gotots/gostdlib": "0.0.0" } }],
   ["@tsonic/host", { dependencies: {
     "@tsonic/source-core": "0.0.0",
     "@tsonic/target-api": "0.0.0",
-    "@tsonic/tsts": "0.0.0",
+    "@tsonic/tsts": "0.1.1",
   } }],
-  ["@tsonic/source-core", { dependencies: { "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.0.0" } }],
-  ["@tsonic/target-api", { dependencies: { "@tsonic/tsts": "0.0.0" } }],
+  ["@tsonic/source-core", { dependencies: { "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.1.1" } }],
+  ["@tsonic/target-api", { dependencies: { "@tsonic/tsts": "0.1.1" } }],
   ["@tsonic/target-typescript", {
     dependencies: { "@tsonic/typescript-runtime": "0.0.1" },
     peerDependencies: {
       "@tsonic/source-core": "0.0.0",
       "@tsonic/target-api": "0.0.0",
-      "@tsonic/tsts": "0.0.0",
+      "@tsonic/tsts": "0.1.1",
     },
   }],
 ]);
@@ -91,9 +91,6 @@ export async function createToolchainFixture(prefix) {
 
   for (const path of selectedSubmodules) await createSubmodule(repositoryRoot, path);
   for (const [path, name] of selectedPackages) await createPackage(join(repositoryRoot, path), name);
-  const bundledCopy = join(repositoryRoot, "tools/tsts-legacy/packages/tsts/tools/package/copy-bundled-libraries.mjs");
-  await mkdir(dirname(bundledCopy), { recursive: true });
-  await writeFile(bundledCopy, 'process.stdout.write("fixture bundled libraries\\n");\n');
   await createDistributionInputs(repositoryRoot);
 
   const vendorRoot = join(repositoryRoot, "vendor", "typescript-go");
@@ -237,13 +234,18 @@ async function createPackage(root, name) {
       : "./dist/index.js";
   await writeFile(join(root, "package.json"), `${JSON.stringify({
     name,
-    version: name === "@tsonic/typescript-runtime" ? "0.0.1" : "0.0.0",
+    version: name === "@tsonic/tsts" ? "0.1.1" : name === "@tsonic/typescript-runtime" ? "0.0.1" : "0.0.0",
     type: "module",
     main,
     files: provider ? ["dist", "contract", "tsconfig.json", "README.md"] : ["dist"],
     ...(packageDependencies.get(name) ?? {}),
   }, undefined, 2)}\n`, "utf8");
   await writeFile(join(root, "tsconfig.json"), "{}\n", "utf8");
+  if (name === "@tsonic/tsts") {
+    await mkdir(join(root, "dist/src"), { recursive: true });
+    await writeFile(join(root, "dist/src/index.js"), 'export const identity = "@tsonic/tsts:A";\n');
+    await writeFile(join(root, "dist/src/index.d.ts"), 'export declare const identity: string;\n');
+  }
 }
 
 async function createDistributionInputs(repositoryRoot) {
@@ -545,7 +547,7 @@ if (args.includes("ci")) {
 if (!args.includes("build")) process.exit(2);
 const nested = spawnSync("npm", ["--version"], { encoding: "utf8", env: process.env });
 if (nested.status !== 0 || nested.stdout.trim() !== "10.0.0") process.exit(3);
-const roots = prefix.endsWith("/tools/tsts-legacy") ? [join(prefix, "packages/tsts")] : [prefix];
+const roots = [prefix];
 for (const root of roots) {
   const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   let selected = root;
