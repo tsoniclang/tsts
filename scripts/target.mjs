@@ -16,6 +16,7 @@ import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
   targetRunnerPath,
+  withProviderDeclarationArtifacts,
 } from "./target-source-layout.mjs";
 import { sealTargetManifest } from "./target-manifest.mjs";
 import {
@@ -56,6 +57,7 @@ activateToolchainEnvironment(toolchain);
 const { compileProject } = await importPackage("host");
 const { createTargetRegistry } = await importPackage("target-api");
 const { createTypeScriptTargetPack } = await importPackage("target-typescript");
+const { createGoAbiCapability } = await importPackage("goAbi");
 const targetProfile = await readTypeScriptTargetProfile(
   join(repositoryRoot, "typescript-target.json"),
 );
@@ -64,7 +66,7 @@ const canonical = await readCanonicalManifest(canonicalRoot);
 const canonicalSources = canonical.files
   .filter((path) => path.endsWith(".ts"))
   .sort(compareCodeUnits);
-const sourceLayout = createTargetSourceLayout(canonicalSources);
+const canonicalLayout = createTargetSourceLayout(canonicalSources);
 await copyCanonicalProject(canonicalRoot, sourceWorkspace, canonical.files);
 await copyFile(runnerSource, join(sourceWorkspace, targetRunnerPath));
 await installGoPackages(toolchain, sourceWorkspace);
@@ -72,7 +74,7 @@ await installGeneratedGoRuntime(join(sourceWorkspace, "runtime"), sourceWorkspac
 
 const project = {
   entryPoint: targetRunnerPath,
-  rootFiles: sourceLayout.rootFiles,
+  rootFiles: canonicalLayout.rootFiles,
   rootDir: ".",
   outDir: targetRoot,
   targets: [{
@@ -90,6 +92,7 @@ const result = compileProject({
   projectFilePath: join(sourceWorkspace, "tsonic.json"),
   rootFiles: canonicalSources,
   registry: createTargetRegistry([createTypeScriptTargetPack()]),
+  installedCapabilities: [createGoAbiCapability("typescript")],
 });
 const errors = result.diagnostics.filter((diagnostic) => diagnostic.category === "error");
 if (errors.length !== 0) {
@@ -109,10 +112,11 @@ const artifacts = compileResult.value.artifacts.map((artifact) =>
   artifact.kind === "source"
     ? {
         ...artifact,
-        path: canonicalTargetSourcePath(artifact.path, sourceLayout.canonicalSet),
+        path: canonicalTargetSourcePath(artifact.path, canonicalLayout.canonicalSet),
       }
     : artifact
 );
+const sourceLayout = withProviderDeclarationArtifacts(canonicalLayout, artifacts, toolchain.packages);
 verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
 verifyNoSelectedPrimitiveMarkerDependency(artifacts);
 const sourceArtifacts = artifacts
@@ -126,6 +130,7 @@ assertEqualPaths(
 );
 
 await mkdir(stagedTarget, { recursive: true });
+await installGoPackages(toolchain, stagedTarget);
 const installedPaths = new Set();
 for (const artifact of artifacts) {
   const path = validateRelativePath(artifact.path);
@@ -155,7 +160,6 @@ for (const [source, path] of [
   installedPaths.add(path);
   await copyFile(source, join(stagedTarget, path));
 }
-await installGoPackages(toolchain, stagedTarget);
 await installGeneratedGoRuntime(join(stagedTarget, "runtime"), stagedTarget);
 await installTypeScriptRuntime(toolchain, stagedTarget);
 

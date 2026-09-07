@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
+  withProviderDeclarationArtifacts,
 } from "../scripts/target-source-layout.mjs";
 
 test("target source layout roots every canonical module exactly once", () => {
@@ -33,6 +34,22 @@ test("target source layout roots every canonical module exactly once", () => {
     ),
     "runtime/scalars.ts",
   );
+});
+
+test("provider declaration artifacts join the sealed package without admitting implementation edits", () => {
+  const packages = {
+    gostdlib: { files: ["dist/src/reflect.d.ts", "dist/src/reflect.js", "package.json"] },
+    externals: { files: ["package.json"] },
+  };
+  const layout = createTargetSourceLayout(["program.ts"]);
+  const declaration = { kind: "source", path: "node_modules/@gotots/gostdlib/dist/src/reflect.d.ts", text: "lowered declaration" };
+  assert.deepEqual(withProviderDeclarationArtifacts(layout, [declaration], packages).expectedArtifacts, [
+    declaration.path, "program.ts", "runner.ts",
+  ]);
+  assert.throws(() => withProviderDeclarationArtifacts(layout, [declaration, declaration], packages), /duplicated/u);
+  for (const path of ["dist/src/missing.d.ts", "dist/src/reflect.js", "package.json", "dist/src/../reflect.d.ts"]) {
+    assert.throws(() => withProviderDeclarationArtifacts(layout, [{ ...declaration, path: `node_modules/@gotots/gostdlib/${path}` }], packages), /no exact selected declaration/u);
+  }
 });
 
 test("target source layout fails closed on an unowned runtime package artifact", () => {

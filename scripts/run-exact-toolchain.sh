@@ -38,6 +38,8 @@ exec "$host/env" -i \
   CI=1 HOME="$state_root/home" TMPDIR="$state_root/tmp" TMP="$state_root/tmp" \
   TEMP="$state_root/tmp" LANG=C LC_ALL=C TZ=UTC NO_COLOR=1 SOURCE_DATE_EPOCH=0 \
   GOMEMLIMIT="$TSTS_GO_MEMORY_LIMIT" GOMAXPROCS="$TSTS_GO_MAX_PROCS" \
+  TSTS_GO_MEMORY_LIMIT="$TSTS_GO_MEMORY_LIMIT" TSTS_GO_MAX_PROCS="$TSTS_GO_MAX_PROCS" \
+  TSTS_NODE_OLD_SPACE_MIB="$TSTS_NODE_OLD_SPACE_MIB" \
   NODE_OPTIONS="--max-old-space-size=$TSTS_NODE_OLD_SPACE_MIB" NODE_PATH= \
   PATH="$node_root/bin:$go_root/bin" SHELL= \
   NPM_CONFIG_CACHE="$state_root/npm-cache" \

@@ -55,6 +55,9 @@ bootstrap_state="$root/.temp/replay-bootstrap"
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+  TSTS_GO_MEMORY_LIMIT="$TSTS_GO_MEMORY_LIMIT" TSTS_GO_MAX_PROCS="$TSTS_GO_MAX_PROCS" \
+  TSTS_NODE_OLD_SPACE_MIB="$TSTS_NODE_OLD_SPACE_MIB" \
+  NODE_OPTIONS="--max-old-space-size=$TSTS_NODE_OLD_SPACE_MIB" \
   "$bootstrap_node" "$root/scripts/verify-target-manifest.mjs" \
   "$root" "$canonical" "$target" "$toolchain_digest" "$toolchain_root")"
 IFS=$'\t' read -r \

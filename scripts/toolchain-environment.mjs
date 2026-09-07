@@ -120,7 +120,7 @@ function closedBase(stateRoot, paths, hostUtilityPath) {
     HOME: join(stateRoot, "home"),
     LANG: "C",
     LC_ALL: "C",
-    NODE_OPTIONS: "",
+    ...guardedProcessLimits(),
     NODE_PATH: "",
     NO_COLOR: "1",
     NPM_CONFIG_CACHE: join(stateRoot, "npm-cache"),
@@ -133,6 +133,25 @@ function closedBase(stateRoot, paths, hostUtilityPath) {
     TMP: join(stateRoot, "tmp"),
     TMPDIR: join(stateRoot, "tmp"),
     TZ: "UTC",
+  };
+}
+
+function guardedProcessLimits() {
+  const memory = process.env.TSTS_GO_MEMORY_LIMIT;
+  const processors = process.env.TSTS_GO_MAX_PROCS;
+  const oldSpace = process.env.TSTS_NODE_OLD_SPACE_MIB;
+  if (!/^[1-9][0-9]*GiB$/u.test(memory ?? "") ||
+      !/^[1-9][0-9]*$/u.test(processors ?? "") ||
+      !/^[1-9][0-9]*$/u.test(oldSpace ?? "")) {
+    throw new Error("Exact toolchain environment requires the committed guarded process limits");
+  }
+  return {
+    TSTS_GO_MEMORY_LIMIT: memory,
+    TSTS_GO_MAX_PROCS: processors,
+    TSTS_NODE_OLD_SPACE_MIB: oldSpace,
+    GOMEMLIMIT: memory,
+    GOMAXPROCS: processors,
+    NODE_OPTIONS: `--max-old-space-size=${oldSpace}`,
   };
 }
 

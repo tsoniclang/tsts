@@ -33,6 +33,7 @@ export const selectedSubmodules = Object.freeze([
 ]);
 
 const selectedPackages = [
+  ["tools/gotots/abi", "@gotots/abi"],
   ["tools/gotots/gostdlib", "@gotots/gostdlib"],
   ["tools/gotots/externals", "@gotots/externals"],
   ["tools/tsonic/packages/host", "@tsonic/host"],
@@ -44,6 +45,9 @@ const selectedPackages = [
 ];
 
 const packageDependencies = new Map([
+  ["@gotots/abi", { peerDependencies: {
+    "@tsonic/source-core": "0.0.0", "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.0.0",
+  } }],
   ["@gotots/gostdlib", { peerDependencies: { "@gotots/runtime": "0.0.0" } }],
   ["@gotots/externals", { peerDependencies: { "@gotots/gostdlib": "0.0.0" } }],
   ["@tsonic/host", { dependencies: {
@@ -51,11 +55,12 @@ const packageDependencies = new Map([
     "@tsonic/target-api": "0.0.0",
     "@tsonic/tsts": "0.0.0",
   } }],
-  ["@tsonic/source-core", { dependencies: { "@tsonic/tsts": "0.0.0" } }],
+  ["@tsonic/source-core", { dependencies: { "@tsonic/target-api": "0.0.0", "@tsonic/tsts": "0.0.0" } }],
   ["@tsonic/target-api", { dependencies: { "@tsonic/tsts": "0.0.0" } }],
   ["@tsonic/target-typescript", {
     dependencies: { "@tsonic/typescript-runtime": "0.0.1" },
     peerDependencies: {
+      "@tsonic/source-core": "0.0.0",
       "@tsonic/target-api": "0.0.0",
       "@tsonic/tsts": "0.0.0",
     },
@@ -86,6 +91,9 @@ export async function createToolchainFixture(prefix) {
 
   for (const path of selectedSubmodules) await createSubmodule(repositoryRoot, path);
   for (const [path, name] of selectedPackages) await createPackage(join(repositoryRoot, path), name);
+  const bundledCopy = join(repositoryRoot, "tools/tsts-legacy/packages/tsts/tools/package/copy-bundled-libraries.mjs");
+  await mkdir(dirname(bundledCopy), { recursive: true });
+  await writeFile(bundledCopy, 'process.stdout.write("fixture bundled libraries\\n");\n');
   await createDistributionInputs(repositoryRoot);
 
   const vendorRoot = join(repositoryRoot, "vendor", "typescript-go");

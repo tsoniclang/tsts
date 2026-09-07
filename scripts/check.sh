@@ -27,14 +27,19 @@ if [[ -n "${TSTS_GUARDED:-}" ]]; then
   exit 2
 fi
 
-"$host/bash" "$root/scripts/run-guarded.sh" \
-  "$host/env" -i \
+if [[ "${TSTS_ASSEMBLY_GUARDED:-0}" = "1" ]]; then
+  exec "$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="${TSTS_NODE_BUILDER%/*}:$host" LANG=C LC_ALL=C \
-  TZ=UTC NODE_OPTIONS= NODE_PATH= NPM_CONFIG_CACHE="$bootstrap_state/npm-cache" \
+  TZ=UTC NODE_OPTIONS="--max-old-space-size=$TSTS_NODE_OLD_SPACE_MIB" NODE_PATH= NPM_CONFIG_CACHE="$bootstrap_state/npm-cache" \
+  TSTS_GO_MEMORY_LIMIT="$TSTS_GO_MEMORY_LIMIT" TSTS_GO_MAX_PROCS="$TSTS_GO_MAX_PROCS" \
+  TSTS_NODE_OLD_SPACE_MIB="$TSTS_NODE_OLD_SPACE_MIB" \
   TSTS_GO_BUILDER="$TSTS_GO_BUILDER" \
   TSTS_GO_MODULE_CACHE="$TSTS_GO_MODULE_CACHE" \
   TSTS_HOST_PLATFORM_PATH="$host" \
-  "$TSTS_NODE_BUILDER" --test "$root"/test/*.test.mjs
+  "$TSTS_NODE_BUILDER" --test --test-concurrency=1 "$root"/test/*.test.mjs
+fi
+"$host/env" TSTS_ASSEMBLY_GUARDED=1 "$host/bash" "$root/scripts/run-guarded.sh" \
+  "$host/bash" "$root/scripts/check.sh"
 "$host/bash" "$root/scripts/build.sh"
 "$host/bash" "$root/scripts/replay.sh"

@@ -35,6 +35,14 @@ returns transformed AST artifacts, and the product exact-joins target source
 paths to canonical TypeScript paths before publication. Neither product
 assembly nor the printer recognizes marker names or patches source text.
 
+Checked provider declarations carrying neutral marker facts join the same
+target lowering transaction. Their output paths must join existing declaration
+members of the selected sealed provider package; they cannot add or rewrite
+provider JavaScript. Assembly installs the exact provider package first, then
+its selected lowered declaration artifacts in the unpublished transaction.
+It never reinstalls canonical declarations over lowered ones. Source-membership
+evidence and strict output checking include this declaration surface.
+
 The canonical manifest's TypeScript members are the exact target source
 artifact set. Every non-package member and the product runner are explicit TSTS
 roots. Canonical Go runtime members are selected exactly once through the
@@ -48,10 +56,16 @@ one isolated module graph. That graph contains exactly one `@tsonic/tsts`
 package: the target-AST-enabled bootstrap. The semantic host, source-core,
 target API, TypeScript target, and encoder therefore share one AST runtime. The
 TypeScript target consumes finalized facts through the checked TSTS/target-API
-contract and has no direct `@tsonic/source-core` package dependency. Every
+contract, including shared-core finalized pointer/layout queries. The selected
+Go ABI capability supplies data-layout registrations to the host's one core
+extension. Neither component defines alternative marker semantics. Every
 declared internal edge is exact-owned in the sealed graph; an undeclared,
 unneeded, or stale edge fails toolchain construction.
 Nested dependency copies and whole-`dist` test leakage are not assembly paths.
+Build-time internal dependencies use that same registry and pinned bootstrap,
+not older wrapper declarations. The bootstrap builds before its dependents;
+its selected compiler and bundled-library copier run without a recursive shell
+deletion. Displaced build links and outputs stay in the guarded transaction.
 
 ## Selected Profile
 
@@ -132,10 +146,10 @@ failed-transaction retention are permanent gates.
 `gotots.json` selects one project-wide implementation-certification source at
 `implementations/certification/tsonic-core.d.ts`. It is a deterministic,
 checked-in projection of the complete virtual declaration model supplied by
-the exact pinned `@tsonic/source-core`; it is not an independent declaration
+the exact pinned `@tsonic/source-core` and `@gotots/abi`; it is not an independent declaration
 authority. `scripts/tsonic-core-certification.mjs` fails closed on an unknown
 module, declaration, member, type, or binding shape and byte-compares the
-projection at every assembly checkpoint. The denominator gate pins all 53
+projection at every assembly checkpoint. The denominator gate pins all 74
 provider declarations and their exact names. Independently, GoToTS seals this
 source into every package and callable implementation verifier, and the guarded
 full-product TS-Go transaction strict-typechecks every selected implementation
