@@ -34,6 +34,10 @@ distribution with the same version string does not. The bootstrap archive
 selected by the current callable contracts is recorded in `README.md`.
 Changing it requires re-certifying the source snapshot while retaining and
 checking each callable's declaration, signature, and body claims.
+That inspection must use the sealed product toolchain, including its read-only
+file modes, source snapshot, module cache, and closed environment. A digest
+measured against the writable bootstrap installation is not the product's
+source digest and must never replace a callable contract's selected digest.
 
 GoToTS canonical output remains sealed. Product assembly copies those exact
 manifest members into an isolated checking workspace before installing local
