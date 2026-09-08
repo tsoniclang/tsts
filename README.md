@@ -39,6 +39,28 @@ strictly checked target output.
 
 ## Build
 
+Select the bootstrap inputs explicitly before building. The current callable
+contracts select the official `go1.26.4.linux-amd64.tar.gz` distribution
+(SHA-256 `1153d3d50e0ac764b447adfe05c2bcf08e889d42a02e0fe0259bd47f6733ad7f`).
+The automatically downloaded `golang.org/toolchain` package is a different
+distribution even when `go version` agrees: the exact source snapshot includes
+the complete Go root, not just its version or executable.
+
+```sh
+export TSTS_GO_BUILDER=/path/to/go1.26.4/bin/go
+export TSTS_GO_MODULE_CACHE=/path/to/populated/go-module-cache
+export TSTS_NODE_BUILDER="$(command -v node)"
+export TSTS_NPM_CLI="$(readlink -f "$(command -v npm)")"
+export TSTS_HOST_PLATFORM_PATH=/usr/bin
+```
+
+The module cache must already contain the dependencies selected by the pinned
+GoToTS and TS-Go `go.mod`/`go.sum` files. Toolchain assembly resolves that cache
+offline. The npm selection must be the real package-owned `npm-cli.js`, not a
+wrapper from a previously sealed toolchain. Go installation, Node installation,
+and the supplied module cache are inputs; assembly snapshots and seals them
+without changing the installed tools.
+
 ```sh
 git submodule update --init --recursive
 npm run build

@@ -28,6 +28,13 @@ The gitlinks are authoritative:
 
 A pin changes only with differential product evidence.
 
+Callable source snapshots also bind the complete selected Go distribution.
+Relocating identical bytes preserves that identity; choosing another
+distribution with the same version string does not. The bootstrap archive
+selected by the current callable contracts is recorded in `README.md`.
+Changing it requires re-certifying the source snapshot while retaining and
+checking each callable's declaration, signature, and body claims.
+
 GoToTS canonical output remains sealed. Product assembly copies those exact
 manifest members into an isolated checking workspace before installing local
 provider packages. TSTS checks that immutable byte set, the TypeScript target

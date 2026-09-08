@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "sourceProgramDigest": "ff3fa13f67f9b291217096a7f0ca213b0a8da79c1d6ee012581af30f0195cae2",
+  "sourceProgramDigest": "a5c2444dbbf8a099e00b93f6e2ec874315ec90e25129b9525c811d94e928dabc",
   "package": {
     "importPath": "github.com/microsoft/typescript-go/internal/core",
     "modulePath": "github.com/microsoft/typescript-go",
