@@ -148,7 +148,7 @@ measured target optimizations. These values never select source or permit an
 optimization: the target decides solely from finalized facts and emits its own
 count. TSTS exact-joins that count before installing output. The current pinned
 product accepts exactly 72 complete canonical pointer-key map rewrites and
-2,849 eliminated dominated nil checks. It also accepts exactly 11 neutral
+2,792 eliminated dominated nil checks. It also accepts exactly 11 neutral
 primitive type-reference rewrites and 11 fully consumed type-only marker
 bindings. A source, compiler, or target-pin change that produces any other
 denominator must be re-reviewed and recertified rather than silently widening
@@ -156,6 +156,24 @@ or shrinking the selected class. Acceptance is checked after path-validated
 private staging, but before manifest sealing and publication. A failed count
 or primitive-evidence join preserves the unpublished printed candidate for
 inspection and leaves the previously published product untouched.
+
+The pointer/record integration recalibrates the previous 2,849 nil-check
+eliminations to 2,792. Both revision-specific planners see the same 52,281
+candidates. The full -57 delta is confined to extended configuration caching
+(-1), session telemetry (-16), language service (-1) and generated LSP records
+(-39). Explicit canonical value-storage projections and retained locations no
+longer meet the unchanged first-evaluation proof; their checks remain present.
+Four newly checked reflection/ABI declaration files contribute no guards.
+This recalibration does not relax the exact acceptance check or certify runtime
+performance by itself; the generated compiler must still pass the workload
+and performance comparisons.
+
+Each product build also translates GoToTS's package-state record fixture from
+the toolchain's exact pinned Git object. The real shared checker and TypeScript
+target lower its canonical `struct`/`field` declarations; strict checking and
+execution compare both calls with native Go. A missing-initialization control
+must disagree. GoToTS retains the canonical golden and typecheck, but never
+executes resolution-only marker bodies to simulate a target.
 
 Target-neutral primitive facts are required lowering rather than an optional
 optimization. The checked source selects each primitive by exact declaration
