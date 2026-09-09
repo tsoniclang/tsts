@@ -74,6 +74,16 @@ Intentional internal equivalence envelopes must be named, bounded, and proven
 not to escape into observable output. Compile-only success is not runtime
 parity.
 
+Canonical preservation and JavaScript execution are separate obligations.
+C# and Rust consume GoToTS's canonical output, never the TypeScript target's
+lowered output. Preserve required source distinctions through ordinary types
+and shared target-neutral markers. This does not require implementing every
+corresponding byte-addressable operation in JavaScript. The JavaScript product
+must retain its established workload behavior and benchmark requirements;
+additional raw-memory emulation requires a demonstrated product need, not
+merely the existence of canonical layout or pointer facts. Never weaken the
+canonical contract to accommodate a JavaScript representation.
+
 ## Verification
 
 Every product checkpoint must:

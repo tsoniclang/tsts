@@ -82,6 +82,22 @@ in the guarded transaction.
 
 ## Selected Profile
 
+Canonical preservation and executable product support are different contracts.
+C# and Rust targets consume GoToTS's canonical output directly, not the lowered
+JavaScript-profile TypeScript. Required pointer, pointee, aliasing, layout and
+lifetime distinctions belong in ordinary types or shared target-neutral
+markers. A target-specific representation must not erase those distinctions
+from the canonical artifact.
+
+Preserving a memory contract does not require a general JavaScript byte-memory
+emulator. The JavaScript product must compile, execute and preserve its
+established workload behavior and benchmark requirements. Add raw-memory
+runtime behavior only for demonstrated product needs; do not make arbitrary
+array/header codecs or native pinning prerequisites merely because canonical
+facts describe them. Canonical fact admission and preservation proofs are
+separate from executing those operations in JavaScript. Existing selected
+profile boundaries remain explicit, never silent substitutions for Go meaning.
+
 `gotots.json` selects `./cmd/tsgo` for Linux/amd64 with cgo disabled and the
 `noasm` build tag. Fixed-width `int64` and `uint64` use the exact
 `fixed64-bigint` profile while native `int`, `uint`, `uintptr`, and narrower
