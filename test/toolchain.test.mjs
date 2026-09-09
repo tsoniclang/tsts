@@ -491,6 +491,9 @@ test("product check isolates guarded phase lifetimes", async () => {
     );
   }
   assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|package-state-proof|generation|target|typecheck)\b/gu)?.length, 5);
+  assert.match(buildScript, /verify-generated-package-state\.mjs" \\\n\s*"\$root" "\$host\/git"/u);
+  const packageStateProof = await readFile(join(repositoryRoot, "scripts", "verify-generated-package-state.mjs"), "utf8");
+  assert.doesNotMatch(packageStateProof, /process\.env\.TSTS_HOST_PLATFORM_PATH/u);
 
   const constructorScript = await readFile(
     join(repositoryRoot, "scripts", "construct-toolchain.mjs"),

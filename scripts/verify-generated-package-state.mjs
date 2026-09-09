@@ -15,11 +15,10 @@ import {
 import { canonicalTargetSourcePath, createTargetSourceLayout } from "./target-source-layout.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 
-const [repositoryArgument, ...toolchainArguments] = process.argv.slice(2);
+const [repositoryArgument, gitExecutable, ...toolchainArguments] = process.argv.slice(2);
 assert.equal(typeof repositoryArgument, "string");
 const repositoryRoot = resolve(repositoryArgument);
-const hostUtilities = process.env.TSTS_HOST_PLATFORM_PATH;
-assert.ok(typeof hostUtilities === "string" && isAbsolute(hostUtilities) && !hostUtilities.includes(":"));
+assert.ok(typeof gitExecutable === "string" && isAbsolute(gitExecutable) && !gitExecutable.includes(":"));
 const runRoot = join(repositoryRoot, ".temp", "package-state-proof", `${Date.now()}-${process.pid}`);
 const sourceRoot = join(runRoot, "go");
 const canonicalRoot = join(runRoot, "canonical");
@@ -31,7 +30,7 @@ const selection = toolchain.manifest.selection.submodules.find(record => record.
 assert.ok(selection);
 
 const fixture = "testdata/projects/package-state";
-const tree = await run(join(hostUtilities, "git"), [
+const tree = await run(gitExecutable, [
   "-C", join(repositoryRoot, "tools", "gotots"), "ls-tree", "-r", "-z",
   `${selection.gitlink}:${fixture}`,
 ], sourceRoot, "source-membership");
@@ -43,7 +42,7 @@ for (const entry of fixtureFiles) {
   assert.ok(mode === "100644" || mode === "100755");
   assert.equal(kind, "blob");
   assert.equal(typeof path, "string");
-  const content = await run(join(hostUtilities, "git"), [
+  const content = await run(gitExecutable, [
     "-C", join(repositoryRoot, "tools", "gotots"), "show",
     `${selection.gitlink}:${fixture}/${path}`,
   ], sourceRoot, `source-${path.replaceAll("/", "-")}`);

@@ -96,7 +96,7 @@ run_measured_toolchain target-proof \
   "$root" "$toolchain_digest" "$toolchain_root"
 run_measured_toolchain package-state-proof \
   "$node" "$root/scripts/verify-generated-package-state.mjs" \
-  "$root" "$toolchain_digest" "$toolchain_root"
+  "$root" "$host/git" "$toolchain_digest" "$toolchain_root"
 run_measured_toolchain generation "$gotots" build -c "$root/gotots.json" \
   --distribution-root "$distribution_workspace" \
   --project-root "$immutable_source" \
