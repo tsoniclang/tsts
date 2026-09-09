@@ -9,7 +9,7 @@ import type {
   uint64,
 } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
-import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
+import { allocatePointer, field, loadPointer, struct } from "@tsonic/core/lang.js";
 import type { Pointer } from "@tsonic/core/types.js";
 
 const laneBase = 67_108_864;
@@ -177,10 +177,14 @@ function encodeWord(value: uint64): number[] {
   return result;
 }
 
-export type Uint128$Storage = {
+export const Uint128$Storage: {
   Hi: uint64;
   Lo: uint64;
-};
+} = struct({
+  Hi: field<uint64>(),
+  Lo: field<uint64>(),
+});
+export type Uint128$Storage = typeof Uint128$Storage;
 
 export class Uint128 {
   declare private readonly $goType: void;
