@@ -152,7 +152,10 @@ product accepts exactly 72 complete canonical pointer-key map rewrites and
 primitive type-reference rewrites and 11 fully consumed type-only marker
 bindings. A source, compiler, or target-pin change that produces any other
 denominator must be re-reviewed and recertified rather than silently widening
-or shrinking the selected class.
+or shrinking the selected class. Acceptance is checked after path-validated
+private staging, but before manifest sealing and publication. A failed count
+or primitive-evidence join preserves the unpublished printed candidate for
+inspection and leaves the previously published product untouched.
 
 Target-neutral primitive facts are required lowering rather than an optional
 optimization. The checked source selects each primitive by exact declaration

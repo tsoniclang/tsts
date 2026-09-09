@@ -117,8 +117,6 @@ const artifacts = compileResult.value.artifacts.map((artifact) =>
     : artifact
 );
 const sourceLayout = withProviderDeclarationArtifacts(canonicalLayout, artifacts, toolchain.packages);
-verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
-verifyNoSelectedPrimitiveMarkerDependency(artifacts);
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
@@ -168,6 +166,8 @@ const expectedPaths = [...installedPaths, ...physicalPaths.filter((path) =>
   path.startsWith("node_modules/")
 )].sort(compareCodeUnits);
 assertEqualPaths("target source assembly", [...new Set(expectedPaths)], physicalPaths);
+verifyOptimizationEvidence(artifacts, targetProfile, sourceLayout);
+verifyNoSelectedPrimitiveMarkerDependency(artifacts);
 const sealedTarget = await sealTargetManifest(
   stagedTarget,
   canonical.semanticDigest,
