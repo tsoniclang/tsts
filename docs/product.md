@@ -28,6 +28,17 @@ The gitlinks are authoritative:
 
 A pin changes only with differential product evidence.
 
+Callable source snapshots also bind the complete selected Go distribution.
+Relocating identical bytes preserves that identity; choosing another
+distribution with the same version string does not. The bootstrap archive
+selected by the current callable contracts is recorded in `README.md`.
+Changing it requires re-certifying the source snapshot while retaining and
+checking each callable's declaration, signature, and body claims.
+That inspection must use the sealed product toolchain, including its read-only
+file modes, source snapshot, module cache, and closed environment. A digest
+measured against the writable bootstrap installation is not the product's
+source digest and must never replace a callable contract's selected digest.
+
 GoToTS canonical output remains sealed. Product assembly copies those exact
 manifest members into an isolated checking workspace before installing local
 provider packages. TSTS checks that immutable byte set, the TypeScript target
@@ -70,6 +81,22 @@ bytes are copied and sealed. Displaced build links and build-owned outputs stay
 in the guarded transaction.
 
 ## Selected Profile
+
+Canonical preservation and executable product support are different contracts.
+C# and Rust targets consume GoToTS's canonical output directly, not the lowered
+JavaScript-profile TypeScript. Required pointer, pointee, aliasing, layout and
+lifetime distinctions belong in ordinary types or shared target-neutral
+markers. A target-specific representation must not erase those distinctions
+from the canonical artifact.
+
+Preserving a memory contract does not require a general JavaScript byte-memory
+emulator. The JavaScript product must compile, execute and preserve its
+established workload behavior and benchmark requirements. Add raw-memory
+runtime behavior only for demonstrated product needs; do not make arbitrary
+array/header codecs or native pinning prerequisites merely because canonical
+facts describe them. Canonical fact admission and preservation proofs are
+separate from executing those operations in JavaScript. Existing selected
+profile boundaries remain explicit, never silent substitutions for Go meaning.
 
 `gotots.json` selects `./cmd/tsgo` for Linux/amd64 with cgo disabled and the
 `noasm` build tag. Fixed-width `int64` and `uint64` use the exact
@@ -121,11 +148,32 @@ measured target optimizations. These values never select source or permit an
 optimization: the target decides solely from finalized facts and emits its own
 count. TSTS exact-joins that count before installing output. The current pinned
 product accepts exactly 72 complete canonical pointer-key map rewrites and
-2,849 eliminated dominated nil checks. It also accepts exactly 11 neutral
+2,792 eliminated dominated nil checks. It also accepts exactly 11 neutral
 primitive type-reference rewrites and 11 fully consumed type-only marker
 bindings. A source, compiler, or target-pin change that produces any other
 denominator must be re-reviewed and recertified rather than silently widening
-or shrinking the selected class.
+or shrinking the selected class. Acceptance is checked after path-validated
+private staging, but before manifest sealing and publication. A failed count
+or primitive-evidence join preserves the unpublished printed candidate for
+inspection and leaves the previously published product untouched.
+
+The pointer/record integration recalibrates the previous 2,849 nil-check
+eliminations to 2,792. Both revision-specific planners see the same 52,281
+candidates. The full -57 delta is confined to extended configuration caching
+(-1), session telemetry (-16), language service (-1) and generated LSP records
+(-39). Explicit canonical value-storage projections and retained locations no
+longer meet the unchanged first-evaluation proof; their checks remain present.
+Four newly checked reflection/ABI declaration files contribute no guards.
+This recalibration does not relax the exact acceptance check or certify runtime
+performance by itself; the generated compiler must still pass the workload
+and performance comparisons.
+
+Each product build also translates GoToTS's package-state record fixture from
+the toolchain's exact pinned Git object. The real shared checker and TypeScript
+target lower its canonical `struct`/`field` declarations; strict checking and
+execution compare both calls with native Go. A missing-initialization control
+must disagree. GoToTS retains the canonical golden and typecheck, but never
+executes resolution-only marker bodies to simulate a target.
 
 Target-neutral primitive facts are required lowering rather than an optional
 optimization. The checked source selects each primitive by exact declaration

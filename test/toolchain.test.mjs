@@ -418,13 +418,13 @@ test("product consumers have one immutable path and a closed environment", async
   for (const script of [
     "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs",
     "seal-executable.mjs", "target.mjs",
-    "verify-target-manifest.mjs", "verify-typescript-target.mjs",
+    "verify-target-manifest.mjs", "verify-typescript-target.mjs", "verify-generated-package-state.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
   }
   for (const script of [
     "build.sh", "check-scalar.sh", "replay.sh", "run-exact-toolchain.sh", "target.mjs",
-    "verify-typescript-target.mjs", "assemble.mjs", "differential.mjs",
+    "verify-typescript-target.mjs", "verify-generated-package-state.mjs", "assemble.mjs", "differential.mjs",
     "seal-executable.mjs",
   ]) {
     const text = await readFile(join(repositoryRoot, "scripts", script), "utf8");
@@ -481,16 +481,19 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
   assert.match(
     buildScript,
-    /run_measured_toolchain\(\)[\s\S]*target-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
+    /run_measured_toolchain\(\)[\s\S]*target-proof\|package-state-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
   );
-  for (const phase of ["target-proof", "generation", "target", "typecheck"]) {
+  for (const phase of ["target-proof", "package-state-proof", "generation", "target", "typecheck"]) {
     assert.match(
       buildScript,
       new RegExp(`run_measured_toolchain ${phase}\\b`, "u"),
       `${phase} lacks an exact measured owner`,
     );
   }
-  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|generation|target|typecheck)\b/gu)?.length, 4);
+  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|package-state-proof|generation|target|typecheck)\b/gu)?.length, 5);
+  assert.match(buildScript, /verify-generated-package-state\.mjs" \\\n\s*"\$root" "\$host\/git"/u);
+  const packageStateProof = await readFile(join(repositoryRoot, "scripts", "verify-generated-package-state.mjs"), "utf8");
+  assert.doesNotMatch(packageStateProof, /process\.env\.TSTS_HOST_PLATFORM_PATH/u);
 
   const constructorScript = await readFile(
     join(repositoryRoot, "scripts", "construct-toolchain.mjs"),

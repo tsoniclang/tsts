@@ -12,7 +12,7 @@
   },
   "acceptance": {
     "pointerKeyMapCount": 72,
-    "dominatingNilCheckEliminationCount": 2849,
+    "dominatingNilCheckEliminationCount": 2792,
     "sourcePrimitiveTypeReferenceCount": 11,
     "sourcePrimitiveImportBindingCount": 11
   },

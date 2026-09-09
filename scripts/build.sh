@@ -67,7 +67,7 @@ run_measured_toolchain() {
   local phase="$1"
   shift
   case "$phase" in
-    target-proof|generation|target|typecheck) ;;
+    target-proof|package-state-proof|generation|target|typecheck) ;;
     *)
       echo "unknown measured build phase: $phase" >&2
       exit 2
@@ -94,6 +94,9 @@ run_measured_toolchain() {
 run_measured_toolchain target-proof \
   "$node" "$root/scripts/verify-typescript-target.mjs" \
   "$root" "$toolchain_digest" "$toolchain_root"
+run_measured_toolchain package-state-proof \
+  "$node" "$root/scripts/verify-generated-package-state.mjs" \
+  "$root" "$host/git" "$toolchain_digest" "$toolchain_root"
 run_measured_toolchain generation "$gotots" build -c "$root/gotots.json" \
   --distribution-root "$distribution_workspace" \
   --project-root "$immutable_source" \
