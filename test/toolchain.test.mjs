@@ -481,16 +481,16 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
   assert.match(
     buildScript,
-    /run_measured_toolchain\(\)[\s\S]*target-proof\|package-state-proof\|array-storage-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
+    /run_measured_toolchain\(\)[\s\S]*target-proof\|package-state-proof\|array-storage-proof\|provider-storage-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
   );
-  for (const phase of ["target-proof", "package-state-proof", "array-storage-proof", "generation", "target", "typecheck"]) {
+  for (const phase of ["target-proof", "package-state-proof", "array-storage-proof", "provider-storage-proof", "generation", "target", "typecheck"]) {
     assert.match(
       buildScript,
       new RegExp(`run_measured_toolchain ${phase}\\b`, "u"),
       `${phase} lacks an exact measured owner`,
     );
   }
-  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|package-state-proof|array-storage-proof|generation|target|typecheck)\b/gu)?.length, 6);
+  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|package-state-proof|array-storage-proof|provider-storage-proof|generation|target|typecheck)\b/gu)?.length, 7);
   assert.match(buildScript, /verify-generated-storage\.mjs" \\\n\s*"\$root" "\$host\/git" array-storage/u);
   const packageStateProof = await readFile(join(repositoryRoot, "scripts", "verify-generated-storage.mjs"), "utf8");
   assert.doesNotMatch(packageStateProof, /process\.env\.TSTS_HOST_PLATFORM_PATH/u);

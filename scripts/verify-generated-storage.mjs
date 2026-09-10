@@ -19,7 +19,7 @@ const [repositoryArgument, gitExecutable, proofKind, ...toolchainArguments] = pr
 assert.equal(typeof repositoryArgument, "string");
 const repositoryRoot = resolve(repositoryArgument);
 assert.ok(typeof gitExecutable === "string" && isAbsolute(gitExecutable) && !gitExecutable.includes(":"));
-assert.ok(proofKind === "package-state" || proofKind === "array-storage");
+assert.ok(proofKind === "package-state" || proofKind === "array-storage" || proofKind === "provider-storage");
 const arrayCalls = [
   "Direct", "Replacement", "Nested", "Empty", "Allocated", "Named",
   "RecordReplacement", "ElementReplacement", "AnonymousReplacement", "Overlap",
@@ -37,6 +37,15 @@ const selected = proofKind === "package-state" ? {
   calls: ["Run", "Run"],
   expected: "341413514\n341423615\n",
   profiles: ["location"],
+} : proofKind === "provider-storage" ? {
+  fixture: "testdata/constructs/value/providerstorage",
+  importPath: "example.com/providerstorage",
+  package: ".",
+  mode: "package",
+  exportedModule: "./packages/example.com/providerstorage/_root/package.js",
+  calls: ["Descriptors", "LiveLocations"],
+  expected: "true\ntrue\n",
+  profiles: ["location", "closed-direct"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",
   importPath: "example.com/arraystorage",
@@ -97,7 +106,7 @@ await writeFile(config, JSON.stringify({
   source: { root: sourceRoot, package: selected.package, mode: selected.mode },
   go: toolchain.manifest.profile,
   semantics: { integers: "fixed64-bigint", evaluationOrder: "preserve-go" },
-  providers: { standardLibrary: false, externals: false },
+  providers: { standardLibrary: proofKind === "provider-storage", externals: false },
   output: { directory: canonicalRoot },
 }));
 await run(toolchain.binaries.gotots, [
@@ -108,6 +117,7 @@ const manifest = JSON.parse(await readFile(join(canonicalRoot, "gotots-manifest.
 const sourceFiles = manifest.files.filter(path => path.endsWith(".ts"));
 const layout = createTargetSourceLayout(sourceFiles);
 await installGeneratedGoRuntime(join(canonicalRoot, "runtime"), canonicalRoot);
+if (proofKind === "provider-storage") await installToolchainPackage(toolchain, "gostdlib", canonicalRoot);
 await writeFile(join(canonicalRoot, "runner.ts"), `import "./program.js";
 import * as fixture from ${JSON.stringify(selected.exportedModule)};
 export const result = [${selected.calls.map(name => `fixture.${name}()`).join(", ")}];
@@ -142,6 +152,7 @@ for (const pointerFlows of selected.profiles) {
     await copyFile(join(canonicalRoot, path), await owned(targetRoot, path));
   }
   await installGeneratedGoRuntime(join(targetRoot, "runtime"), targetRoot);
+  if (proofKind === "provider-storage") await installToolchainPackage(toolchain, "gostdlib", targetRoot);
   await installToolchainPackage(toolchain, "typeScriptRuntime", targetRoot);
   await writeFile(join(targetRoot, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
