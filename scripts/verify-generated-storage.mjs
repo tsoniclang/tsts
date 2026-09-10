@@ -36,7 +36,7 @@ const selected = proofKind === "package-state" ? {
   exportedModule: "./packages/example.com/package-state/api/package.js",
   calls: ["Run", "Run"],
   expected: "341413514\n341423615\n",
-  profiles: ["off"],
+  profiles: ["location"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",
   importPath: "example.com/arraystorage",
@@ -48,7 +48,7 @@ const selected = proofKind === "package-state" ? {
     "true", "556", "true", "true", "true", "34", "4456", "65", "34", "112",
     "31", "34", "true", "34", "56", "14", "true", "456", "34", "2", "1234", "",
   ].join("\n"),
-  profiles: ["off", "closed-direct"],
+  profiles: ["location", "closed-direct"],
 };
 const runRoot = join(repositoryRoot, ".temp", `${proofKind}-proof`, `${Date.now()}-${process.pid}`);
 const sourceRoot = join(runRoot, "go");
