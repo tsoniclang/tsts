@@ -66,7 +66,7 @@ declare module "@tsonic/core/types.js" {
     readonly __tsonicSourceType: (value: TArgs) => TReturn;
   }
 
-  export interface FixedArray<T, TLength extends number> {
+  export interface FixedArray<T, TLength extends number | bigint> {
     [index: number]: T;
     readonly length: TLength;
     [Symbol.iterator](): globalThis.Iterator<T>;
@@ -74,7 +74,7 @@ declare module "@tsonic/core/types.js" {
 }
 
 declare module "@tsonic/core/lang.js" {
-  import type { DataLayout, MemoryFieldLayout, MemoryLayout, NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
+  import type { DataLayout, FixedArray, MemoryFieldLayout, MemoryLayout, NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
 
   export interface __TsonicAttributeBuilder<TOwner> {
     add(attribute: object, ...args: unknown[]): void;
@@ -100,6 +100,8 @@ declare module "@tsonic/core/lang.js" {
   export function addressIntegerToRawPointer<TAddress extends number | bigint>(address: TAddress, dataLayout: DataLayout): RawPointer | undefined;
 
   export function memoryLayout<T>(dataLayout: DataLayout, byteSize: number, byteAlignment: number, stride: number, ...fields: MemoryFieldLayout<T>[]): MemoryLayout<T>;
+
+  export function memoryArrayLayout<T, TLength extends number | bigint>(dataLayout: DataLayout, byteSize: number, byteAlignment: number, stride: number, elementLayout: MemoryLayout<T>, length: TLength): MemoryLayout<FixedArray<T, TLength>>;
 
   export function memoryField<T, TField>(select: (value: T) => TField, byteOffset: number, byteAlignment: number, fieldLayout: MemoryLayout<TField>): MemoryFieldLayout<T>;
 

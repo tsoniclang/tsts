@@ -199,7 +199,7 @@ checked-in projection of the complete virtual declaration model supplied by
 the exact pinned `@tsonic/source-core` and `@gotots/abi`; it is not an independent declaration
 authority. `scripts/tsonic-core-certification.mjs` fails closed on an unknown
 module, declaration, member, type, or binding shape and byte-compares the
-projection at every assembly checkpoint. The denominator gate pins all 74
+projection at every assembly checkpoint. The denominator gate pins all 75
 provider declarations and their exact names. Independently, GoToTS seals this
 source into every package and callable implementation verifier, and the guarded
 full-product TS-Go transaction strict-typechecks every selected implementation
