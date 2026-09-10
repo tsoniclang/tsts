@@ -125,6 +125,7 @@ export const result = [${selected.calls.map(name => `fixture.${name}()`).join(",
 const { compileProject } = await import(toolchain.packages.host.entry);
 const { createTargetRegistry } = await import(toolchain.packages.targetApi.entry);
 const { createTypeScriptTargetPack } = await import(toolchain.packages.targetTypeScript.entry);
+const { createGoAbiCapability } = await import(toolchain.packages.goAbi.entry);
 const profiles = [];
 for (const pointerFlows of selected.profiles) {
   const targetRoot = join(runRoot, "target", pointerFlows);
@@ -138,6 +139,7 @@ for (const pointerFlows of selected.profiles) {
     },
     projectFilePath: join(canonicalRoot, "tsonic.json"),
     registry: createTargetRegistry([createTypeScriptTargetPack()]),
+    installedCapabilities: [createGoAbiCapability("typescript")],
   });
   const errors = result.diagnostics.filter(diagnostic => diagnostic.category === "error");
   await writeFile(join(runRoot, `diagnostics-${pointerFlows}.json`), JSON.stringify(errors, null, 2));
