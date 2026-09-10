@@ -151,6 +151,17 @@ assert.deepEqual(
   [128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
 );
 assertSameDigest(implementation.Uint128.$copy(wide), wide, "wide-word copy");
+const assigned = implementation.Uint128.$zero();
+const retainedStorage = implementation.Uint128.$storageOf(assigned);
+implementation.Uint128.$assign(assigned, wide);
+assert.equal(implementation.Uint128.$storageOf(assigned), retainedStorage);
+assert.deepEqual(retainedStorage, { Hi: wide.Hi, Lo: wide.Lo });
+const independent = implementation.Uint128.$copy(assigned);
+implementation.Uint128.$assign(assigned, implementation.Uint128.$zero());
+assert.deepEqual(retainedStorage, { Hi: 0n, Lo: 0n });
+assertSameDigest(independent, wide, "assignment preserves an independent copy");
+implementation.Uint128.$assign(independent, independent);
+assertSameDigest(independent, wide, "self assignment preserves both words");
 const zeroStorage = implementation.Uint128.$zeroStorage();
 assert.deepEqual(zeroStorage, { Hi: 0n, Lo: 0n });
 assertSameDigest(

@@ -231,6 +231,11 @@ export class Uint128 {
     return Uint128.$make(source.Hi, source.Lo);
   }
 
+  static $assign(target: Uint128, source: Uint128): void {
+    target.Hi = source.Hi;
+    target.Lo = source.Lo;
+  }
+
   public static $equal(left: Uint128, right: Uint128): bool {
     return left.Hi === right.Hi && left.Lo === right.Lo;
   }

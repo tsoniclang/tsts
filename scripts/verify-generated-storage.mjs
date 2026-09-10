@@ -46,8 +46,9 @@ const selected = proofKind === "package-state" ? {
   calls: [
     "Descriptors", "LiveLocations", "MutationConditions", "SyncReset",
     "AtomicReset", "MemStatsFields", "StructFields", "MetricsFields",
+    "LoopConditions", "EmptyAssignments",
   ],
-  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
+  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
   profiles: ["location", "closed-direct"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",

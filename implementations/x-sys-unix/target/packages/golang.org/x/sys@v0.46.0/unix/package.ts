@@ -516,10 +516,13 @@ class Statfs_t {
 }
 
 class FileHandle {
-  private constructor(
-    private readonly handleType: int32,
-    private readonly bytes: RuntimeSlice<uint8>,
-  ) {}
+  private handleType: int32;
+  private bytes: RuntimeSlice<uint8>;
+
+  private constructor(handleType: int32, bytes: RuntimeSlice<uint8>) {
+    this.handleType = handleType;
+    this.bytes = bytes;
+  }
 
   static $zero(): FileHandle {
     return new FileHandle(0, RuntimeSlice.nil<uint8>());
@@ -527,6 +530,11 @@ class FileHandle {
 
   static $copy(source: FileHandle): FileHandle {
     return new FileHandle(source.handleType, source.bytes);
+  }
+
+  static $assign(target: FileHandle, source: FileHandle): void {
+    target.handleType = source.handleType;
+    target.bytes = source.bytes;
   }
 
   static Bytes(handle: Pointer<FileHandle> | undefined): RuntimeSlice<uint8> {

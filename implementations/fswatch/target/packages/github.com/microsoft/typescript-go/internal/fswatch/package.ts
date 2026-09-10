@@ -181,6 +181,11 @@ export class Event {
   static $copy(source: Event): Event {
     return Event.$make(source.Kind, source.Path);
   }
+
+  static $assign(target: Event, source: Event): void {
+    target.$storage.Kind = source.$storage.Kind;
+    target.$storage.Path = source.$storage.Path;
+  }
 }
 
 interface WatchOptions {
