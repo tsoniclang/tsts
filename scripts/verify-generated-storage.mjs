@@ -43,8 +43,11 @@ const selected = proofKind === "package-state" ? {
   package: ".",
   mode: "package",
   exportedModule: "./packages/example.com/providerstorage/_root/package.js",
-  calls: ["Descriptors", "LiveLocations", "MutationConditions"],
-  expected: "true\ntrue\ntrue\n",
+  calls: [
+    "Descriptors", "LiveLocations", "MutationConditions", "SyncReset",
+    "AtomicReset", "MemStatsFields", "StructFields", "MetricsFields",
+  ],
+  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
   profiles: ["location", "closed-direct"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",
