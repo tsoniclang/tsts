@@ -12,7 +12,7 @@ import {
   openToolchainArguments,
   typeScriptAstPrinterConfig,
 } from "./toolchain.mjs";
-import { canonicalTargetSourcePath, createTargetSourceLayout } from "./target-source-layout.mjs";
+import { canonicalTargetSourcePath, createTargetSourceLayout, withProviderDeclarationArtifacts } from "./target-source-layout.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 
 const [repositoryArgument, gitExecutable, proofKind, ...toolchainArguments] = process.argv.slice(2);
@@ -146,15 +146,20 @@ for (const pointerFlows of selected.profiles) {
   assert.equal(errors.length, 0, `${proofKind} target rejected; evidence: ${runRoot}`);
   const compiled = result.targets[0]?.compileResult;
   assert.equal(compiled?.kind, "resolved");
-  for (const artifact of compiled.value.artifacts) {
-    const path = canonicalTargetSourcePath(artifact.path, layout.canonicalSet);
-    await writeFile(await owned(targetRoot, path), artifact.text);
+  const artifacts = compiled.value.artifacts.map(artifact => artifact.kind === "source"
+    ? { ...artifact, path: canonicalTargetSourcePath(artifact.path, layout.canonicalSet) }
+    : artifact);
+  const sourceLayout = withProviderDeclarationArtifacts(layout, artifacts, toolchain.packages);
+  assert.deepEqual(artifacts.filter(artifact => artifact.kind === "source").map(artifact => artifact.path).sort(),
+    [...sourceLayout.expectedArtifacts].sort());
+  if (proofKind === "provider-storage") await installToolchainPackage(toolchain, "gostdlib", targetRoot);
+  for (const artifact of artifacts) {
+    await writeFile(await owned(targetRoot, artifact.path), artifact.text);
   }
   for (const path of manifest.files.filter(path => !path.endsWith(".ts") && path !== "package.json")) {
     await copyFile(join(canonicalRoot, path), await owned(targetRoot, path));
   }
   await installGeneratedGoRuntime(join(targetRoot, "runtime"), targetRoot);
-  if (proofKind === "provider-storage") await installToolchainPackage(toolchain, "gostdlib", targetRoot);
   await installToolchainPackage(toolchain, "typeScriptRuntime", targetRoot);
   await writeFile(join(targetRoot, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
@@ -162,7 +167,7 @@ for (const pointerFlows of selected.profiles) {
       noUncheckedIndexedAccess: true, exactOptionalPropertyTypes: true, skipLibCheck: false,
       noEmit: true, types: [],
     },
-    files: layout.rootFiles,
+    files: sourceLayout.expectedArtifacts,
   }));
   await run(toolchain.binaries.tsgo, ["-p", "tsconfig.json"], targetRoot, `strict-${pointerFlows}`);
   const executable = join(runRoot, `${proofKind}-${pointerFlows}.mjs`);

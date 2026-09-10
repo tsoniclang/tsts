@@ -55,9 +55,9 @@ It never reinstalls canonical declarations over lowered ones. Source-membership
 evidence and strict output checking include this declaration surface.
 
 The canonical manifest's TypeScript members are the exact target source
-artifact set. Every non-package member and the product runner are explicit TSTS
-roots. Canonical Go runtime members are selected exactly once through the
-installed `@gotots/runtime` source package, then their target artifacts are
+artifact set. Every member and the product runner are explicit TSTS roots.
+Canonical Go runtime members are rooted exactly once at their installed
+`@gotots/runtime` source paths, without relying on incidental imports; their target artifacts are
 rejoined to canonical `runtime/` paths. This supports library products whose
 generated `program.ts` is empty without manufacturing imports, duplicating the
 runtime package, or dropping unreferenced package modules.
