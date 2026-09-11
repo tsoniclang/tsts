@@ -56,8 +56,12 @@ const selected = proofKind === "package-state" ? {
   package: ".",
   mode: "package",
   exportedModule: "./packages/example.com/memoryviews/_root/package.js",
-  calls: ["ByteString", "EmptyString", "RetainedStringLocation", "EmptyPointerView"],
-  expected: "true\ntrue\ntrue\ntrue\n",
+  calls: [
+    "ByteString", "EmptyString", "RetainedStringLocation", "EmptyPointerView",
+    "StringBeyondSliceLength", "SliceBackingAlias", "NamedBacking", "OrderedBacking",
+    "InvalidAddress", "EmptyElementView",
+  ],
+  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
   profiles: ["location", "closed-direct"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",
