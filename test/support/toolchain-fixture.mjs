@@ -544,6 +544,18 @@ if (args.includes("ci")) {
   }
   process.exit(0);
 }
+if (args.includes("core:resolve")) {
+  for (const [name, files, peerDependencies] of [
+    ["@tsonic/core", ["lang.d.ts", "lang.js", "types.d.ts", "types.js"], {}],
+    ["@gotots/abi", ["layout.d.ts", "layout.js"], { "@tsonic/core": "0.0.0" }],
+  ]) {
+    const root = join(prefix, "node_modules", name);
+    mkdirSync(root, { recursive: true });
+    writeFileSync(join(root, "package.json"), JSON.stringify({ name, version: "0.0.0", private: true, type: "module", files, peerDependencies }));
+    for (const file of files) writeFileSync(join(root, file), "export {};\\n");
+  }
+  process.exit(0);
+}
 if (!args.includes("build")) process.exit(2);
 const nested = spawnSync("npm", ["--version"], { encoding: "utf8", env: process.env });
 if (nested.status !== 0 || nested.stdout.trim() !== "10.0.0") process.exit(3);

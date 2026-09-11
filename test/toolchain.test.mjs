@@ -103,6 +103,15 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     await readFile(join(first.distributionRoot, "gostdlib", "dist", "index.js"), "utf8"),
     await readFile(join(first.packages.gostdlib.root, "dist", "index.js"), "utf8"),
   );
+  const distribution = first.manifest.distribution;
+  for (const key of ["coreResolution", "goAbiResolution"]) {
+    const selected = distribution.dependencies.find(entry => entry.key === key);
+    assert.ok(selected);
+    assert.equal(selected.version, "0.0.0");
+    assert.equal(Object.hasOwn(first.packages, key), false);
+    assert.deepEqual(selected.dependencies.map(entry => entry.key),
+      key === "goAbiResolution" ? ["coreResolution"] : []);
+  }
   for (const path of [
     join(first.goRoot, "version-link"),
     join(first.goRoot, "source-link"),
@@ -204,6 +213,8 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
     join(reopened.goModuleCache, module.metadata.zip),
     join(reopened.sourceRoot, "cmd", "tsgo", "main.go"),
     join(reopened.distributionRoot, "gostdlib", "node_modules", "@types", "node", "index.d.ts"),
+    join(reopened.distributionRoot, "gostdlib", "node_modules", "@tsonic", "core", "types.d.ts"),
+    join(reopened.distributionRoot, "gostdlib", "node_modules", "@gotots", "abi", "layout.d.ts"),
   ]) {
     await mutateAndRestore(path, async () => {
       await assert.rejects(openExact(fixture, reopened), /membership|content|digest|differs/u);
@@ -211,6 +222,11 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
   }
 
   const moduleParent = dirname(join(reopened.goModuleCache, module.sourceRoot, module.sourceFiles[0]));
+  await moveAndRestore(
+    join(reopened.distributionRoot, "gostdlib/node_modules/@tsonic/core/types.d.ts"),
+    join(fixture.repositoryRoot, ".temp", "preserved-core-types.d.ts"),
+    async () => assert.rejects(openExact(fixture, reopened), /membership|ENOENT/u),
+  );
   await withWritable(moduleParent, async () => {
     const extra = join(moduleParent, "unowned.go");
     await writeFile(extra, "package dependency\n", "utf8");
