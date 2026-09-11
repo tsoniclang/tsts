@@ -12,6 +12,8 @@ export async function buildJavaScriptPackages(repositoryRoot, tsgo, node, enviro
     run(node.npmExecutable, ["--prefix", join(repositoryRoot, path), "ci"],
       repositoryRoot, environment, `install ${path}`);
   }
+  run(node.npmExecutable, ["--prefix", join(repositoryRoot, "tools/gotots/gostdlib"), "run", "core:resolve"],
+    repositoryRoot, environment, "resolve canonical provider marker declarations");
   await bindPackageBuildDependencies(repositoryRoot, runRoot);
   for (const config of [
     "tools/gotots/gostdlib/test/runtime-package/tsconfig.json",
