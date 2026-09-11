@@ -19,7 +19,7 @@ const [repositoryArgument, gitExecutable, proofKind, ...toolchainArguments] = pr
 assert.equal(typeof repositoryArgument, "string");
 const repositoryRoot = resolve(repositoryArgument);
 assert.ok(typeof gitExecutable === "string" && isAbsolute(gitExecutable) && !gitExecutable.includes(":"));
-assert.ok(proofKind === "package-state" || proofKind === "array-storage" || proofKind === "provider-storage");
+assert.ok(["package-state", "array-storage", "provider-storage", "memory-views"].includes(proofKind));
 const arrayCalls = [
   "Direct", "Replacement", "Nested", "Empty", "Allocated", "Named",
   "RecordReplacement", "ElementReplacement", "AnonymousReplacement", "Overlap",
@@ -46,9 +46,18 @@ const selected = proofKind === "package-state" ? {
   calls: [
     "Descriptors", "LiveLocations", "MutationConditions", "SyncReset",
     "AtomicReset", "MemStatsFields", "StructFields", "MetricsFields",
-    "LoopConditions", "EmptyAssignments",
+    "LoopConditions", "EmptyAssignments", "ProjectedProviderRegion",
   ],
-  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
+  expected: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n",
+  profiles: ["location", "closed-direct"],
+} : proofKind === "memory-views" ? {
+  fixture: "testdata/constructs/value/memoryviews",
+  importPath: "example.com/memoryviews",
+  package: ".",
+  mode: "package",
+  exportedModule: "./packages/example.com/memoryviews/_root/package.js",
+  calls: ["ByteString", "EmptyString", "RetainedStringLocation", "EmptyPointerView"],
+  expected: "true\ntrue\ntrue\ntrue\n",
   profiles: ["location", "closed-direct"],
 } : {
   fixture: "testdata/constructs/value/arraystorage",

@@ -1,4 +1,5 @@
 import type { Errno } from "@gotots/gostdlib/syscall.js";
+import type { GoString } from "@gotots/runtime/string-value.js";
 import type {
   $goInterface$Interface_Method_Error_void_to_string as GoInterface,
 } from "../../interface-contracts.js";
@@ -16,5 +17,5 @@ export class $goInterfaceAdapter$Named_syscall$Errno implements GoInterface {
     flags: string,
     precision: number | undefined,
   ): string;
-  Error(): string;
+  Error(): GoString;
 }

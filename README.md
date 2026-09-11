@@ -90,7 +90,8 @@ never the editing surface.
 All package and callable implementations share the certified source-core
 declaration projection at `implementations/certification/tsonic-core.d.ts`.
 Run `node scripts/tsonic-core-certification.mjs --check` to verify that it is
-byte-exact with the selected provider model; bundle-local declaration files
+byte-exact with the verified, built toolchain's provider model (after toolchain
+construction); bundle-local declaration files
 contain only implementation-private dependencies.
 
 The target profile also pins measured product-acceptance denominators. They

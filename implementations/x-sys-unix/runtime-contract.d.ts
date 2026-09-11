@@ -1,3 +1,16 @@
+declare module "@gotots/runtime/string-value.js" {
+  export class GoString {
+    private constructor();
+    private readonly backing: object;
+    static readonly empty: GoString;
+    static fromText(bytes: string): GoString;
+    text(): string;
+    read(index: number | bigint): number;
+    sourceLength(): number | bigint;
+    slice(low: number | bigint, high?: number | bigint): GoString;
+  }
+}
+
 declare module "@gotots/runtime/array.js" {
   export class GoArray<T, N extends number> {
     static zero<T, N extends number>(length: N, zero: T): GoArray<T, N>;
@@ -23,7 +36,7 @@ declare module "@gotots/runtime/interface-value.js" {
   }
 
   export interface GoError extends GoInterfaceValue {
-    Error(): string;
+    Error(): import("@gotots/runtime/string-value.js").GoString;
   }
 }
 
@@ -34,7 +47,7 @@ declare module "@gotots/runtime/panic.js" {
 }
 
 declare module "@gotots/runtime/scalars.js" {
-  export type gostring = string;
+  export type gostring = import("@gotots/runtime/string-value.js").GoString;
   export type int = number;
   export type int8 = number;
   export type int16 = number;
@@ -67,7 +80,7 @@ declare module "@gotots/runtime/slice.js" {
 
 declare module "@gotots/gostdlib/internal/scalars.js" {
   export type bool = boolean;
-  export type gostring = string;
+  export type gostring = import("@gotots/runtime/string-value.js").GoString;
   export type int = bigint;
   export type int64 = bigint;
   export type uint32 = bigint;
@@ -128,6 +141,6 @@ declare module "@gotots/gostdlib/syscall.js" {
   export class Errno {
     readonly value: bigint;
     constructor(value: bigint);
-    Error(): string;
+    Error(): import("@gotots/runtime/string-value.js").GoString;
   }
 }

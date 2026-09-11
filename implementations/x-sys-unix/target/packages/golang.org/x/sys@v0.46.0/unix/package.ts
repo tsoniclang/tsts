@@ -634,12 +634,12 @@ export function $initialize(): void {
 const $state = {};
 
 function ByteSliceFromString(value: gostring): [RuntimeSlice<uint8>, GoFailure] {
-  if (value.includes("\0")) {
+  if (value.text().includes("\0")) {
     return [RuntimeSlice.nil<uint8>(), errnoFailure(22n)];
   }
-  const bytes = RuntimeSlice.make<uint8>(value.length + 1, null, 0);
-  for (let index = 0; index < value.length; index++) {
-    bytes.set(index, value.charCodeAt(index));
+  const bytes = RuntimeSlice.make<uint8>(Number(value.sourceLength()) + 1, null, 0);
+  for (let index = 0; index < value.sourceLength(); index++) {
+    bytes.set(index, value.read(index));
   }
   return [bytes, undefined];
 }
@@ -703,9 +703,9 @@ export function Readlink(path: gostring, buffer: RuntimeSlice<uint8>): [int, GoF
   if (failure !== undefined) {
     return [0, providerFailure(failure)];
   }
-  const count = Math.min(resolved.length, buffer.length);
+  const count = Math.min(Number(resolved.sourceLength()), buffer.length);
   for (let index = 0; index < count; index++) {
-    buffer.set(index, resolved.charCodeAt(index));
+    buffer.set(index, resolved.read(index));
   }
   return [count, undefined];
 }

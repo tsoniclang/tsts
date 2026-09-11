@@ -14,6 +14,10 @@ declare module "@tsonic/core/types.js" {
     readonly __tsonicMemoryFieldLayout: (value: T) => T;
   }
 
+  export interface MemoryFieldBinding<T> {
+    readonly __tsonicMemoryFieldBinding: (value: T) => T;
+  }
+
   export interface NativePointer<T> {
     readonly __tsonicNativePointer: (value: T) => T;
   }
@@ -74,7 +78,7 @@ declare module "@tsonic/core/types.js" {
 }
 
 declare module "@tsonic/core/lang.js" {
-  import type { DataLayout, FixedArray, MemoryFieldLayout, MemoryLayout, NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
+  import type { DataLayout, FixedArray, MemoryFieldBinding, MemoryFieldLayout, MemoryLayout, NativePointer, Pointer, RawPointer } from "@tsonic/core/types.js";
 
   export interface __TsonicAttributeBuilder<TOwner> {
     add(attribute: object, ...args: unknown[]): void;
@@ -105,6 +109,10 @@ declare module "@tsonic/core/lang.js" {
 
   export function memoryField<T, TField>(select: (value: T) => TField, byteOffset: number, byteAlignment: number, fieldLayout: MemoryLayout<TField>): MemoryFieldLayout<T>;
 
+  export function bindMemoryField<T, TField>(field: MemoryFieldLayout<T>, pointer: Pointer<TField>): MemoryFieldBinding<T>;
+
+  export function bindMemoryRecord<T>(layout: MemoryLayout<T>, ...fields: MemoryFieldBinding<T>[]): T;
+
   export function sizeOf<T>(layout: MemoryLayout<T>): number;
 
   export function alignOf<T>(layout: MemoryLayout<T>): number;
@@ -114,6 +122,9 @@ declare module "@tsonic/core/lang.js" {
   export function fieldOffsetOf<T, TField>(layout: MemoryLayout<T>, select: (value: T) => TField): number;
 
   export function keepAlive<T>(value: T): void;
+
+  export function viewPointer<F, T>(pointer: Pointer<F>, read: () => T, write: (value: T) => void): Pointer<T>;
+  export function viewPointer<F, T>(pointer: Pointer<F> | undefined, read: () => T, write: (value: T) => void): Pointer<T> | undefined;
 
   export function comptime<T>(value: T): T;
   export function comptime<T>(): T;

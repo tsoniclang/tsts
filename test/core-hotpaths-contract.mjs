@@ -34,6 +34,9 @@ const { Arena } = await import(
 const { RuntimeSlice } = await import(
   pathToFileURL(join(outputRoot, "runtime", "slice.js")).href
 );
+const { GoPanic, GoRuntimePanicValue } = await import(
+  pathToFileURL(join(outputRoot, "runtime", "panic.js")).href
+);
 const { location, sameLocation } = await import(
   pathToFileURL(
     join(
@@ -111,9 +114,9 @@ function goRuntimePanicPayload(action) {
   try {
     action();
   } catch (failure) {
-    const errorMethod = failure?.value?.Error;
-    assert.equal(typeof errorMethod, "function");
-    return errorMethod.call(failure.value);
+    assert.ok(failure instanceof GoPanic);
+    assert.ok(failure.value instanceof GoRuntimePanicValue);
+    return failure.value.Error().text();
   }
   assert.fail("nil Arena receiver did not panic");
 }
