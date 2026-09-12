@@ -8,7 +8,7 @@ const { Event, EventUpdate$constant, EventDelete$constant } = await import(pathT
   repositoryRoot, ".temp/target/out/packages/github.com/microsoft/typescript-go/internal/fswatch/package.js",
 )).href);
 const { GoString } = await import(pathToFileURL(join(
-  repositoryRoot, ".temp/target/out/runtime/string-value.js",
+  repositoryRoot, ".temp/target/out/node_modules/@gotots/runtime/string-value.js",
 )).href);
 const before = GoString.fromText("before.ts");
 const after = GoString.fromText("after.ts");

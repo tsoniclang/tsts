@@ -27,11 +27,11 @@ const implementation = await import(
   pathToFileURL(join(outputRoot, emittedImplementation)).href
 );
 const { RuntimeSlice } = await import(
-  pathToFileURL(join(outputRoot, "runtime", "slice.js")).href
+  pathToFileURL(join(outputRoot, "node_modules", "@gotots", "runtime", "slice.js")).href
 );
 
 const { GoString } = await import(
-  pathToFileURL(join(outputRoot, "runtime", "string-value.js")).href
+  pathToFileURL(join(outputRoot, "node_modules", "@gotots", "runtime", "string-value.js")).href
 );
 
 function utf8Bytes(value) {
