@@ -14,10 +14,15 @@ export function createTargetSourceLayout(canonicalSources) {
   if (canonicalSet.has(targetRunnerPath)) {
     throw new Error(`Canonical output collides with product runner '${targetRunnerPath}'`);
   }
+  if (canonicalSources.some(path => path.startsWith(installedRuntimePrefix))) {
+    throw new Error("Canonical output cannot contain an installed runtime alias");
+  }
   return Object.freeze({
     canonicalSet,
     rootFiles: Object.freeze([
-      ...canonicalSources.filter((path) => !path.startsWith(canonicalRuntimePrefix)),
+      ...canonicalSources.map(path => path.startsWith(canonicalRuntimePrefix)
+        ? `${installedRuntimePrefix}${path.slice(canonicalRuntimePrefix.length)}`
+        : path),
       targetRunnerPath,
     ].sort(compareCodeUnits)),
     expectedArtifacts: Object.freeze(

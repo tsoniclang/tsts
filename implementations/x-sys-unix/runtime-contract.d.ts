@@ -1,3 +1,16 @@
+declare module "@gotots/runtime/string-value.js" {
+  export class GoString {
+    private constructor();
+    private readonly backing: object;
+    static readonly empty: GoString;
+    static fromText(bytes: string): GoString;
+    text(): string;
+    read(index: number | bigint): number;
+    sourceLength(): number | bigint;
+    slice(low: number | bigint, high?: number | bigint): GoString;
+  }
+}
+
 declare module "@gotots/runtime/array.js" {
   export class GoArray<T, N extends number> {
     static zero<T, N extends number>(length: N, zero: T): GoArray<T, N>;
@@ -23,7 +36,7 @@ declare module "@gotots/runtime/interface-value.js" {
   }
 
   export interface GoError extends GoInterfaceValue {
-    Error(): string;
+    Error(): import("@gotots/runtime/string-value.js").GoString;
   }
 }
 
@@ -34,7 +47,7 @@ declare module "@gotots/runtime/panic.js" {
 }
 
 declare module "@gotots/runtime/scalars.js" {
-  export type gostring = string;
+  export type gostring = import("@gotots/runtime/string-value.js").GoString;
   export type int = number;
   export type int8 = number;
   export type int16 = number;
@@ -67,7 +80,7 @@ declare module "@gotots/runtime/slice.js" {
 
 declare module "@gotots/gostdlib/internal/scalars.js" {
   export type bool = boolean;
-  export type gostring = string;
+  export type gostring = import("@gotots/runtime/string-value.js").GoString;
   export type int = bigint;
   export type int64 = bigint;
   export type uint32 = bigint;
@@ -93,6 +106,7 @@ declare module "@gotots/gostdlib/io/fs.js" {
 declare module "@gotots/gostdlib/os.js" {
   import type { GoError } from "@gotots/runtime/interface-value.js";
   import type { RuntimeSlice } from "@gotots/runtime/slice.js";
+  import type { GoString } from "@gotots/runtime/string-value.js";
   import type { FileMode, FileInfo } from "@gotots/gostdlib/io/fs.js";
 
   export class File {
@@ -108,26 +122,27 @@ declare module "@gotots/gostdlib/os.js" {
     ): [bigint, GoError | undefined];
   }
 
-  export function Lstat(name: string): [FileInfo | undefined, GoError | undefined];
-  export function Open(name: string): [File | undefined, GoError | undefined];
+  export function Lstat(name: GoString): [FileInfo | undefined, GoError | undefined];
+  export function Open(name: GoString): [File | undefined, GoError | undefined];
   export function OpenFile(
-    name: string,
+    name: GoString,
     flags: bigint,
     permissions: FileMode,
   ): [File | undefined, GoError | undefined];
-  export function Stat(name: string): [FileInfo | undefined, GoError | undefined];
+  export function Stat(name: GoString): [FileInfo | undefined, GoError | undefined];
 }
 
 declare module "@gotots/gostdlib/path/filepath.js" {
   import type { GoError } from "@gotots/runtime/interface-value.js";
+  import type { GoString } from "@gotots/runtime/string-value.js";
 
-  export function EvalSymlinks(path: string): [string, GoError | undefined];
+  export function EvalSymlinks(path: GoString): [GoString, GoError | undefined];
 }
 
 declare module "@gotots/gostdlib/syscall.js" {
   export class Errno {
     readonly value: bigint;
     constructor(value: bigint);
-    Error(): string;
+    Error(): import("@gotots/runtime/string-value.js").GoString;
   }
 }

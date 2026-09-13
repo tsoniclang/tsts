@@ -152,7 +152,7 @@ test("product runner seals the fixed serial execution contract", async () => {
   );
   assert.match(
     runner,
-    /osState\.Args = osState\.Args\.append\("", \["--singleThreaded"\]\);/u,
+    /osState\.Args = osState\.Args\.append\(GoString\.empty, \[GoString\.fromText\("--singleThreaded"\)\]\);/u,
   );
   assert.equal(runner.match(/"--singleThreaded"/gu)?.length, 1);
   assert.doesNotMatch(runner, /process\.argv/u);

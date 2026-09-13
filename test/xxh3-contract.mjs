@@ -27,8 +27,16 @@ const implementation = await import(
   pathToFileURL(join(outputRoot, emittedImplementation)).href
 );
 const { RuntimeSlice } = await import(
-  pathToFileURL(join(outputRoot, "runtime", "slice.js")).href
+  pathToFileURL(join(outputRoot, "node_modules", "@gotots", "runtime", "slice.js")).href
 );
+
+const { GoString } = await import(
+  pathToFileURL(join(outputRoot, "node_modules", "@gotots", "runtime", "string-value.js")).href
+);
+
+function utf8Bytes(value) {
+  return String.fromCharCode(...new TextEncoder().encode(value));
+}
 
 function digestKey(value) {
   return `${value.Hi}:${value.Lo}`;
@@ -48,10 +56,10 @@ const corpus = [
   "TypeScript",
   "typescript\0",
   "typescript-go",
-  "Δcompiler🙂",
-  "\ud800",
-  "\udc00",
-  "a\ud800b",
+  utf8Bytes("Δcompiler🙂"),
+  "\xff",
+  "\x80",
+  "a\xc3b",
   "x".repeat(31),
   "x".repeat(32),
   "x".repeat(33),
@@ -61,8 +69,8 @@ const corpus = [
 ];
 const digests = new Set();
 for (const value of corpus) {
-  const first = implementation.HashString128(value);
-  const second = implementation.HashString128(value);
+  const first = implementation.HashString128(GoString.fromText(value));
+  const second = implementation.HashString128(GoString.fromText(value));
   assertSameDigest(second, first, `determinism for ${JSON.stringify(value)}`);
   const key = digestKey(first);
   assert.equal(digests.has(key), false, `collision for ${JSON.stringify(value)}`);
@@ -74,30 +82,30 @@ for (const chunks of [
   ["a"],
   ["type", "script"],
   ["one:", "two:", "three"],
-  ["Δ", "compiler", "🙂"],
-  ["\ud83d", "\ude42"],
-  ["\ud83d", "", "\ude42"],
-  ["\ud800", "x"],
+  [utf8Bytes("Δ"), "compiler", utf8Bytes("🙂")],
+  ["\xf0\x9f", "\x99\x82"],
+  ["\xf0\x9f", "", "\x99\x82"],
+  ["\xff", "x"],
   ["x".repeat(2048), "x".repeat(2049)],
 ]) {
   const value = chunks.join("");
   const hasher = implementation.New();
   let written = 0;
   for (const chunk of chunks) {
-    const [count, error] = implementation.Hasher.WriteString(hasher, chunk);
+    const [count, error] = implementation.Hasher.WriteString(hasher, GoString.fromText(chunk));
     written += count;
     assert.equal(error, undefined);
   }
-  assert.equal(written, new TextEncoder().encode(value).length);
+  assert.equal(written, value.length);
   assertSameDigest(
     implementation.Hasher.Sum128(hasher),
-    implementation.HashString128(value),
+    implementation.HashString128(GoString.fromText(value)),
     `streaming for ${JSON.stringify(value)}`,
   );
   implementation.Hasher.Reset(hasher);
   assertSameDigest(
     implementation.Hasher.Sum128(hasher),
-    implementation.HashString128(""),
+    implementation.HashString128(GoString.empty),
     `reset for ${JSON.stringify(value)}`,
   );
 }
@@ -123,6 +131,12 @@ assertSameDigest(
   implementation.Hasher.Sum128(secondByteHasher),
   "byte-slice determinism",
 );
+assertSameDigest(
+  implementation.Hasher.Sum128(firstByteHasher),
+  implementation.HashString128(GoString.fromText(String.fromCharCode(...bytes))),
+  "all-byte string and slice hashing",
+);
+
 const unicode = "Δcompiler🙂";
 const unicodeHasher = implementation.New();
 const [unicodeByteCount, unicodeByteError] = implementation.Hasher.Write(
@@ -133,11 +147,11 @@ assert.equal(unicodeByteCount, new TextEncoder().encode(unicode).length);
 assert.equal(unicodeByteError, undefined);
 assertSameDigest(
   implementation.Hasher.Sum128(unicodeHasher),
-  implementation.HashString128(unicode),
+  implementation.HashString128(GoString.fromText(utf8Bytes(unicode))),
   "string and UTF-8 byte hashing",
 );
 
-const projected = implementation.HashString128("canonical-bytes").Bytes();
+const projected = implementation.HashString128(GoString.fromText("canonical-bytes")).Bytes();
 assert.equal(projected.length, 16);
 const projectedBytes = Array.from(
   { length: 16 },
@@ -151,6 +165,17 @@ assert.deepEqual(
   [128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
 );
 assertSameDigest(implementation.Uint128.$copy(wide), wide, "wide-word copy");
+const assigned = implementation.Uint128.$zero();
+const retainedStorage = implementation.Uint128.$storageOf(assigned);
+implementation.Uint128.$assign(assigned, wide);
+assert.equal(implementation.Uint128.$storageOf(assigned), retainedStorage);
+assert.deepEqual(retainedStorage, { Hi: wide.Hi, Lo: wide.Lo });
+const independent = implementation.Uint128.$copy(assigned);
+implementation.Uint128.$assign(assigned, implementation.Uint128.$zero());
+assert.deepEqual(retainedStorage, { Hi: 0n, Lo: 0n });
+assertSameDigest(independent, wide, "assignment preserves an independent copy");
+implementation.Uint128.$assign(independent, independent);
+assertSameDigest(independent, wide, "self assignment preserves both words");
 const zeroStorage = implementation.Uint128.$zeroStorage();
 assert.deepEqual(zeroStorage, { Hi: 0n, Lo: 0n });
 assertSameDigest(

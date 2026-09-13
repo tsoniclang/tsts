@@ -16,10 +16,13 @@ test("target source layout roots every canonical module exactly once", () => {
   ]);
   assert.deepEqual(layout.rootFiles, [
     "modules/application.ts",
+    "node_modules/@gotots/runtime/scalars.ts",
     "packages/unreferenced/package.ts",
     "program.ts",
     "runner.ts",
   ]);
+  assert.deepEqual(layout.rootFiles.map(path => canonicalTargetSourcePath(path, layout.canonicalSet)).sort(),
+    [...layout.expectedArtifacts].sort());
   assert.deepEqual(layout.expectedArtifacts, [
     "modules/application.ts",
     "packages/unreferenced/package.ts",
@@ -68,5 +71,9 @@ test("target source layout fails closed on an unowned runtime package artifact",
   assert.throws(
     () => createTargetSourceLayout(["program.ts", "runner.ts"]),
     /collides with product runner/u,
+  );
+  assert.throws(
+    () => createTargetSourceLayout(["runtime/scalars.ts", "node_modules/@gotots/runtime/scalars.ts"]),
+    /installed runtime alias/u,
   );
 });

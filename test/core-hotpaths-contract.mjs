@@ -12,6 +12,7 @@ if (repositoryRoot === undefined) {
 }
 
 const outputRoot = join(repositoryRoot, ".temp", "target", "out");
+const runtimeRoot = join(outputRoot, "node_modules", "@gotots", "runtime");
 const { arenaNew, linkStoreGet } = await import(
   pathToFileURL(
     join(outputRoot, "implementations", "tsts", "core-hotpaths.js"),
@@ -32,7 +33,10 @@ const { Arena } = await import(
   ).href
 );
 const { RuntimeSlice } = await import(
-  pathToFileURL(join(outputRoot, "runtime", "slice.js")).href
+  pathToFileURL(join(runtimeRoot, "slice.js")).href
+);
+const { GoPanic, GoRuntimePanicValue } = await import(
+  pathToFileURL(join(runtimeRoot, "panic.js")).href
 );
 const { location, sameLocation } = await import(
   pathToFileURL(
@@ -111,9 +115,9 @@ function goRuntimePanicPayload(action) {
   try {
     action();
   } catch (failure) {
-    const errorMethod = failure?.value?.Error;
-    assert.equal(typeof errorMethod, "function");
-    return errorMethod.call(failure.value);
+    assert.ok(failure instanceof GoPanic);
+    assert.ok(failure.value instanceof GoRuntimePanicValue);
+    return failure.value.Error().text();
   }
   assert.fail("nil Arena receiver did not panic");
 }

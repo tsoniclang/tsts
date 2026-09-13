@@ -1,16 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import {
-  tsonicCoreSourceSemanticsModules,
-} from "../tools/tsonic/packages/source-core/dist/public/index.js";
-import {
-  providerExportDeclarationsForSourceModule,
-} from "../tools/tsonic/packages/source-core/dist/public/extension.js";
-import {
-  goAbiModule,
-  goAbiProviderDeclarations,
-} from "../tools/gotots/abi/dist/index.js";
+import { openSelectedToolchain } from "./toolchain.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -19,14 +10,23 @@ export const tsonicCoreCertificationPath = resolve(
   "implementations/certification/tsonic-core.d.ts",
 );
 
-export function buildTsonicCoreCertificationSource() {
-  const modules = [
+export async function selectedTsonicCoreCertificationModules() {
+  const toolchain = await openSelectedToolchain(repositoryRoot);
+  const { tsonicCoreSourceSemanticsModules } = await import(toolchain.packages.sourceCore.entry);
+  const { providerExportDeclarationsForSourceModule } = await import(pathToFileURL(
+    join(toolchain.packages.sourceCore.root, "dist/public/extension.js"),
+  ).href);
+  const { goAbiModule, goAbiProviderDeclarations } = await import(toolchain.packages.goAbi.entry);
+  return [
     ...tsonicCoreSourceSemanticsModules().map(module => ({
       moduleSpecifier: module.moduleSpecifier,
       declarations: providerExportDeclarationsForSourceModule(module),
     })),
     { moduleSpecifier: goAbiModule, declarations: goAbiProviderDeclarations() },
   ];
+}
+
+export function buildTsonicCoreCertificationSource(modules) {
   assertExactModuleSet(modules);
   return [
     "// Certified projection of the selected source-core and Go ABI provider models.",
@@ -318,7 +318,7 @@ function indent(text) {
 
 async function main() {
   const mode = process.argv[2];
-  const expected = buildTsonicCoreCertificationSource();
+  const expected = buildTsonicCoreCertificationSource(await selectedTsonicCoreCertificationModules());
   if (mode === "--write") {
     await mkdir(dirname(tsonicCoreCertificationPath), { recursive: true });
     await writeFile(tsonicCoreCertificationPath, expected, "utf8");

@@ -20,6 +20,8 @@ const definitions = [
   component("snapshot", "compilerDistribution", "compiler-distribution"),
   component("snapshot", "typescriptGoSource", "typescript-go-source"),
   distributionPackage("certificationRuntime", "tools/gotots/gostdlib/test/runtime-package", "@gotots/runtime", "compiler-distribution/gostdlib/node_modules/@gotots/runtime", []),
+  distributionPackage("coreResolution", "tools/gotots/gostdlib/node_modules/@tsonic/core", "@tsonic/core", "compiler-distribution/gostdlib/node_modules/@tsonic/core", []),
+  distributionPackage("goAbiResolution", "tools/gotots/gostdlib/node_modules/@gotots/abi", "@gotots/abi", "compiler-distribution/gostdlib/node_modules/@gotots/abi", ["coreResolution"]),
   distributionPackage("nodeTypes", "tools/gotots/gostdlib/node_modules/@types/node", "@types/node", "compiler-distribution/gostdlib/node_modules/@types/node", ["undiciTypes"]),
   distributionPackage("undiciTypes", "tools/gotots/gostdlib/node_modules/undici-types", "undici-types", "compiler-distribution/gostdlib/node_modules/undici-types", []),
   component("metadata", "rootPackage", "package.json"),

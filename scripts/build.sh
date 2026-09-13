@@ -67,7 +67,7 @@ run_measured_toolchain() {
   local phase="$1"
   shift
   case "$phase" in
-    target-proof|package-state-proof|generation|target|typecheck) ;;
+    core-contract-proof|target-proof|package-state-proof|array-storage-proof|provider-storage-proof|memory-views-proof|generation|target|typecheck) ;;
     *)
       echo "unknown measured build phase: $phase" >&2
       exit 2
@@ -91,12 +91,23 @@ run_measured_toolchain() {
   ' "$record"
 }
 
+run_measured_toolchain core-contract-proof \
+  "$node" --test "$root/test/tsonic-core-certification.mjs"
 run_measured_toolchain target-proof \
   "$node" "$root/scripts/verify-typescript-target.mjs" \
   "$root" "$toolchain_digest" "$toolchain_root"
 run_measured_toolchain package-state-proof \
-  "$node" "$root/scripts/verify-generated-package-state.mjs" \
-  "$root" "$host/git" "$toolchain_digest" "$toolchain_root"
+  "$node" "$root/scripts/verify-generated-storage.mjs" \
+  "$root" "$host/git" package-state "$toolchain_digest" "$toolchain_root"
+run_measured_toolchain array-storage-proof \
+  "$node" "$root/scripts/verify-generated-storage.mjs" \
+  "$root" "$host/git" array-storage "$toolchain_digest" "$toolchain_root"
+run_measured_toolchain provider-storage-proof \
+  "$node" "$root/scripts/verify-generated-storage.mjs" \
+  "$root" "$host/git" provider-storage "$toolchain_digest" "$toolchain_root"
+run_measured_toolchain memory-views-proof \
+  "$node" "$root/scripts/verify-generated-storage.mjs" \
+  "$root" "$host/git" memory-views "$toolchain_digest" "$toolchain_root"
 run_measured_toolchain generation "$gotots" build -c "$root/gotots.json" \
   --distribution-root "$distribution_workspace" \
   --project-root "$immutable_source" \

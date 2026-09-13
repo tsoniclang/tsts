@@ -90,7 +90,6 @@ const project = {
 const result = compileProject({
   project,
   projectFilePath: join(sourceWorkspace, "tsonic.json"),
-  rootFiles: canonicalSources,
   registry: createTargetRegistry([createTypeScriptTargetPack()]),
   installedCapabilities: [createGoAbiCapability("typescript")],
 });

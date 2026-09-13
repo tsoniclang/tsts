@@ -103,6 +103,15 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     await readFile(join(first.distributionRoot, "gostdlib", "dist", "index.js"), "utf8"),
     await readFile(join(first.packages.gostdlib.root, "dist", "index.js"), "utf8"),
   );
+  const distribution = first.manifest.distribution;
+  for (const key of ["coreResolution", "goAbiResolution"]) {
+    const selected = distribution.dependencies.find(entry => entry.key === key);
+    assert.ok(selected);
+    assert.equal(selected.version, "0.0.0");
+    assert.equal(Object.hasOwn(first.packages, key), false);
+    assert.deepEqual(selected.dependencies.map(entry => entry.key),
+      key === "goAbiResolution" ? ["coreResolution"] : []);
+  }
   for (const path of [
     join(first.goRoot, "version-link"),
     join(first.goRoot, "source-link"),
@@ -204,6 +213,8 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
     join(reopened.goModuleCache, module.metadata.zip),
     join(reopened.sourceRoot, "cmd", "tsgo", "main.go"),
     join(reopened.distributionRoot, "gostdlib", "node_modules", "@types", "node", "index.d.ts"),
+    join(reopened.distributionRoot, "gostdlib", "node_modules", "@tsonic", "core", "types.d.ts"),
+    join(reopened.distributionRoot, "gostdlib", "node_modules", "@gotots", "abi", "layout.d.ts"),
   ]) {
     await mutateAndRestore(path, async () => {
       await assert.rejects(openExact(fixture, reopened), /membership|content|digest|differs/u);
@@ -211,6 +222,11 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
   }
 
   const moduleParent = dirname(join(reopened.goModuleCache, module.sourceRoot, module.sourceFiles[0]));
+  await moveAndRestore(
+    join(reopened.distributionRoot, "gostdlib/node_modules/@tsonic/core/types.d.ts"),
+    join(fixture.repositoryRoot, ".temp", "preserved-core-types.d.ts"),
+    async () => assert.rejects(openExact(fixture, reopened), /membership|ENOENT/u),
+  );
   await withWritable(moduleParent, async () => {
     const extra = join(moduleParent, "unowned.go");
     await writeFile(extra, "package dependency\n", "utf8");
@@ -418,13 +434,13 @@ test("product consumers have one immutable path and a closed environment", async
   for (const script of [
     "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs",
     "seal-executable.mjs", "target.mjs",
-    "verify-target-manifest.mjs", "verify-typescript-target.mjs", "verify-generated-package-state.mjs",
+    "verify-target-manifest.mjs", "verify-typescript-target.mjs", "verify-generated-storage.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
   }
   for (const script of [
     "build.sh", "check-scalar.sh", "replay.sh", "run-exact-toolchain.sh", "target.mjs",
-    "verify-typescript-target.mjs", "verify-generated-package-state.mjs", "assemble.mjs", "differential.mjs",
+    "verify-typescript-target.mjs", "verify-generated-storage.mjs", "assemble.mjs", "differential.mjs",
     "seal-executable.mjs",
   ]) {
     const text = await readFile(join(repositoryRoot, "scripts", script), "utf8");
@@ -481,18 +497,18 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
   assert.match(
     buildScript,
-    /run_measured_toolchain\(\)[\s\S]*target-proof\|package-state-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
+    /run_measured_toolchain\(\)[\s\S]*core-contract-proof\|target-proof\|package-state-proof\|array-storage-proof\|provider-storage-proof\|memory-views-proof\|generation\|target\|typecheck[\s\S]*phase=%s elapsed=%s peak_rss_kib=%s/u,
   );
-  for (const phase of ["target-proof", "package-state-proof", "generation", "target", "typecheck"]) {
+  for (const phase of ["core-contract-proof", "target-proof", "package-state-proof", "array-storage-proof", "provider-storage-proof", "memory-views-proof", "generation", "target", "typecheck"]) {
     assert.match(
       buildScript,
       new RegExp(`run_measured_toolchain ${phase}\\b`, "u"),
       `${phase} lacks an exact measured owner`,
     );
   }
-  assert.equal(buildScript.match(/run_measured_toolchain (?:target-proof|package-state-proof|generation|target|typecheck)\b/gu)?.length, 5);
-  assert.match(buildScript, /verify-generated-package-state\.mjs" \\\n\s*"\$root" "\$host\/git"/u);
-  const packageStateProof = await readFile(join(repositoryRoot, "scripts", "verify-generated-package-state.mjs"), "utf8");
+  assert.equal(buildScript.match(/run_measured_toolchain (?:core-contract-proof|target-proof|package-state-proof|array-storage-proof|provider-storage-proof|memory-views-proof|generation|target|typecheck)\b/gu)?.length, 9);
+  assert.match(buildScript, /verify-generated-storage\.mjs" \\\n\s*"\$root" "\$host\/git" array-storage/u);
+  const packageStateProof = await readFile(join(repositoryRoot, "scripts", "verify-generated-storage.mjs"), "utf8");
   assert.doesNotMatch(packageStateProof, /process\.env\.TSTS_HOST_PLATFORM_PATH/u);
 
   const constructorScript = await readFile(

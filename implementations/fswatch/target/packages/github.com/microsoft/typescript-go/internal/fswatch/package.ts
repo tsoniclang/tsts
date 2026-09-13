@@ -1,4 +1,6 @@
-import { New as newError } from "@gotots/gostdlib/errors.js";
+import { New as createError } from "@gotots/gostdlib/errors.js";
+import { fromHostString, toHostString } from "@gotots/gostdlib/internal/portable/utf8/codec.js";
+import { GoString } from "@gotots/runtime/string-value.js";
 import { GoInterfaceValue } from "@gotots/runtime/interface-value.js";
 import type { bool, gostring, int } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
@@ -16,6 +18,10 @@ import {
 import type {
   $goInterface$Interface_Method_Error_void_to_string as GoInterface,
 } from "../../../../../../support/interface-contracts.js";
+
+function newError(message: string): GoInterface | undefined {
+  return createError(fromHostString(message));
+}
 
 interface NodeStats {
   isDirectory(): boolean;
@@ -116,12 +122,12 @@ export class EventKind {
 
   String(): gostring {
     if (this.$value === 1) {
-      return "update";
+      return GoString.fromText("update");
     }
     if (this.$value === 2) {
-      return "delete";
+      return GoString.fromText("delete");
     }
-    return "unknown";
+    return GoString.fromText("unknown");
   }
 }
 
@@ -175,11 +181,16 @@ export class Event {
   }
 
   static $zero(): Event {
-    return Event.$make(new EventKind(0), "");
+    return Event.$make(new EventKind(0), GoString.empty);
   }
 
   static $copy(source: Event): Event {
     return Event.$make(source.Kind, source.Path);
+  }
+
+  static $assign(target: Event, source: Event): void {
+    target.$storage.Kind = source.$storage.Kind;
+    target.$storage.Path = source.$storage.Path;
   }
 }
 
@@ -325,37 +336,39 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     fn: WatchCallback,
     selected: RuntimeSlice<WatchOption | undefined>,
   ): [Watch | undefined, GoInterface | undefined] {
+    const directory = toHostString(dir);
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
     if (fn.$value === undefined) {
       return [undefined, newError("fswatch: callback must not be nil")];
     }
-    if (!nodePath.isAbsolute(dir)) {
+    if (!nodePath.isAbsolute(directory)) {
       return [undefined, newError("fswatch: path must be absolute")];
     }
-    if (!nodeFS.existsSync(dir)) {
-      return [undefined, newError(`fswatch: directory does not exist: ${dir}`)];
+    if (!nodeFS.existsSync(directory)) {
+      return [undefined, newError(`fswatch: directory does not exist: ${directory}`)];
     }
     try {
-      if (!nodeFS.statSync(dir).isDirectory()) {
-        return [undefined, newError(`fswatch: path is not a directory: ${dir}`)];
+      if (!nodeFS.statSync(directory).isDirectory()) {
+        return [undefined, newError(`fswatch: path is not a directory: ${directory}`)];
       }
     } catch {
-      return [undefined, newError(`fswatch: cannot inspect directory: ${dir}`)];
+      return [undefined, newError(`fswatch: cannot inspect directory: ${directory}`)];
     }
 
     const options: WatchOptions = { ignore: undefined, recursive: false };
     for (let index = 0; index < selected.length; index++) {
       selected.get(index)?.applyWatchOption(options);
     }
-    return this.watchPath(dir, undefined, fn, options);
+    return this.watchPath(directory, undefined, fn, options);
   }
 
   WatchFile(
-    path: gostring,
+    sourcePath: gostring,
     fn: WatchCallback,
   ): [Watch | undefined, GoInterface | undefined] {
+    const path = toHostString(sourcePath);
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
@@ -396,7 +409,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
         return;
       }
       const events = [...pending.entries()].map(([path, kind]) =>
-        Event.$storageOf(Event.$make(kind, path))
+        Event.$storageOf(Event.$make(kind, fromHostString(path)))
       );
       pending.clear();
       fn.$value(RuntimeSlice.literal<Event$Storage>(events), undefined);
@@ -412,7 +425,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
             return;
           }
           const path = nodePath.resolve(root, fileName);
-          if (options.ignore !== undefined && options.ignore(path)) {
+          if (options.ignore !== undefined && options.ignore(fromHostString(path))) {
             return;
           }
           const kind = event === "rename" && !nodeFS.existsSync(path)
@@ -437,11 +450,11 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
   }
 }
 
-const inotify = new NodeWatcher("inotify", true, true);
-const unavailableFSEvents = new NodeWatcher("fsevents", false, true);
-const unavailableFanotify = new NodeWatcher("fanotify", false, true);
-const unavailableKqueue = new NodeWatcher("kqueue", false, false);
-const unavailableWindows = new NodeWatcher("windows", false, true);
+const inotify = new NodeWatcher(GoString.fromText("inotify"), true, true);
+const unavailableFSEvents = new NodeWatcher(GoString.fromText("fsevents"), false, true);
+const unavailableFanotify = new NodeWatcher(GoString.fromText("fanotify"), false, true);
+const unavailableKqueue = new NodeWatcher(GoString.fromText("kqueue"), false, false);
+const unavailableWindows = new NodeWatcher(GoString.fromText("windows"), false, true);
 
 function Inotify(): Watcher | undefined {
   return inotify;

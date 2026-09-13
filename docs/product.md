@@ -55,9 +55,9 @@ It never reinstalls canonical declarations over lowered ones. Source-membership
 evidence and strict output checking include this declaration surface.
 
 The canonical manifest's TypeScript members are the exact target source
-artifact set. Every non-package member and the product runner are explicit TSTS
-roots. Canonical Go runtime members are selected exactly once through the
-installed `@gotots/runtime` source package, then their target artifacts are
+artifact set. Every member and the product runner are explicit TSTS roots.
+Canonical Go runtime members are rooted exactly once at their installed
+`@gotots/runtime` source paths, without relying on incidental imports; their target artifacts are
 rejoined to canonical `runtime/` paths. This supports library products whose
 generated `program.ts` is empty without manufacturing imports, duplicating the
 runtime package, or dropping unreferenced package modules.
@@ -147,9 +147,9 @@ The profile separately records exact product-acceptance denominators for
 measured target optimizations. These values never select source or permit an
 optimization: the target decides solely from finalized facts and emits its own
 count. TSTS exact-joins that count before installing output. The current pinned
-product accepts exactly 72 complete canonical pointer-key map rewrites and
-2,792 eliminated dominated nil checks. It also accepts exactly 11 neutral
-primitive type-reference rewrites and 11 fully consumed type-only marker
+product accepts exactly 62 complete canonical pointer-key map rewrites and
+8,141 eliminated dominated nil checks. It also accepts exactly 9,517 neutral
+primitive type-reference rewrites and 15 fully consumed type-only marker
 bindings. A source, compiler, or target-pin change that produces any other
 denominator must be re-reviewed and recertified rather than silently widening
 or shrinking the selected class. Acceptance is checked after path-validated
@@ -157,16 +157,27 @@ private staging, but before manifest sealing and publication. A failed count
 or primitive-evidence join preserves the unpublished printed candidate for
 inspection and leaves the previously published product untouched.
 
-The pointer/record integration recalibrates the previous 2,849 nil-check
-eliminations to 2,792. Both revision-specific planners see the same 52,281
-candidates. The full -57 delta is confined to extended configuration caching
-(-1), session telemetry (-16), language service (-1) and generated LSP records
-(-39). Explicit canonical value-storage projections and retained locations no
-longer meet the unchanged first-evaluation proof; their checks remain present.
-Four newly checked reflection/ABI declaration files contribute no guards.
-This recalibration does not relax the exact acceptance check or certify runtime
-performance by itself; the generated compiler must still pass the workload
-and performance comparisons.
+The canonical slice/string integration changes the previous 72 location-map
+rewrites to 62: eleven maps now use object/cell identity instead of location
+normalization, and one map newly uses locations. The local checker map remains
+selected; support/maps accounts for the complete 71-to-61 difference. This is
+not a claim that the remaining object-identity hashing is equally fast.
+
+The same canonical integration changes 8,319 nil-check eliminations to 8,141.
+Both plans see 52,281 candidates. Both canonical sources contain 63,263 nil
+failure sites; their printed targets contain 54,935 and 55,113 respectively,
+accounting for all 178 additionally retained checks. The nine other eliminated
+failure sites are unchanged. Explicit storage projections and retained
+locations change first-evaluation proof; guards without proof remain present.
+The map and nil-check planners themselves are unchanged from that baseline.
+
+Real neutral numeric annotations replace erased local aliases, accounting for
+9,515 primitive references and 15 consumed imports in the canonical migration.
+The exact string-materialization fix adds two `uint8` references: its numeric
+region read and bounded character batch. The final exact count is 9,517. These
+revision-specific snapshots do not widen optimization admission, weaken strict
+checking or certify runtime performance. Fresh generation, exact joins,
+workload parity and performance comparisons remain mandatory before acceptance.
 
 Each product build also translates GoToTS's package-state record fixture from
 the toolchain's exact pinned Git object. The real shared checker and TypeScript
@@ -199,7 +210,8 @@ checked-in projection of the complete virtual declaration model supplied by
 the exact pinned `@tsonic/source-core` and `@gotots/abi`; it is not an independent declaration
 authority. `scripts/tsonic-core-certification.mjs` fails closed on an unknown
 module, declaration, member, type, or binding shape and byte-compares the
-projection at every assembly checkpoint. The denominator gate pins all 74
+projection in every exact-toolchain product transaction, never against ignored
+submodule build outputs. The denominator gate pins all 79
 provider declarations and their exact names. Independently, GoToTS seals this
 source into every package and callable implementation verifier, and the guarded
 full-product TS-Go transaction strict-typechecks every selected implementation

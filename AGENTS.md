@@ -1,5 +1,8 @@
 # Agent Notes (TSTS)
 
+Read and follow `../tsonic/docs/architecture/workspace-agent-policy.md` before
+any work.
+
 `AGENTS.md` and `CLAUDE.md` must remain byte-identical. Apply every change
 to both and verify with `cmp`.
 
@@ -122,3 +125,12 @@ counters or bounded phase timing, then profile only the isolated phase.
 - Never commit `.analysis/`, `.temp/`, or local logs.
 - Never commit generated TypeScript or JavaScript.
 - Never use `git stash`.
+
+## Pull Request Workflow
+
+Never use the GitHub CLI (`gh`), install it, or request its authentication.
+Do not create pull requests through APIs or other automation. When a PR is
+requested, provide the GitHub creation URL for the pushed feature branch:
+`https://github.com/<owner>/<repo>/compare/<base>...<branch>?quick_pull=1`.
+The user creates and merges the PR. Clearly distinguish a creation link from
+an existing PR; a pushed branch does not mean a PR has been opened.
